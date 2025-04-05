@@ -54,7 +54,7 @@ class Post extends Model
 
     public function getOptionOnePercentageAttribute()
     {
-        if ($this->total_votes === 0) {
+        if (empty($this->total_votes) || $this->total_votes == 0) {
             return 0;
         }
         return round(($this->option_one_votes / $this->total_votes) * 100, 1);
@@ -62,7 +62,7 @@ class Post extends Model
 
     public function getOptionTwoPercentageAttribute()
     {
-        if ($this->total_votes === 0) {
+        if (empty($this->total_votes) || $this->total_votes == 0) {
             return 0;
         }
         return round(($this->option_two_votes / $this->total_votes) * 100, 1);
