@@ -84,6 +84,7 @@ class PostController extends Controller
             'option_two_image' => $optionTwoImagePath,
         ]);
 
+
         return response()->json($post->load('user:id,username,profile_picture'), 201);
     }
 
