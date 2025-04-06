@@ -33,8 +33,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/posts/{post}/save', [PostController::class, 'savePost']);
     Route::delete('/posts/{post}/save', [PostController::class, 'unsavePost']);
     Route::get('/user/posts', [PostController::class, 'getUserPosts']);
-    Route::get('/user/saved-posts', [PostController::class, 'getSavedPosts']);
-    Route::get('/user/voted-posts', [PostController::class, 'getVotedPosts']);
 
     Route::post('/comments/{post}', [CommentController::class, 'store']);
     Route::put('/comments/{comment}', [CommentController::class, 'update']);

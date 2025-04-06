@@ -106,7 +106,6 @@ class UserController extends Controller
             $posts->getCollection()->transform(function ($post) use ($request) {
                 $vote = $post->votes()->where('user_id', $request->user()->id)->first();
                 $post->user_vote = $vote ? $vote->vote_option : null;
-                $post->is_saved = $request->user()->savedPosts()->where('post_id', $post->id)->exists();
                 return $post;
             });
         }

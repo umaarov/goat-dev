@@ -19,6 +19,7 @@ class Post extends Model
         'option_one_votes',
         'option_two_votes',
         'total_votes',
+        'view_count',
     ];
 
     protected $appends = [
@@ -44,12 +45,6 @@ class Post extends Model
     public function shares()
     {
         return $this->hasMany(Share::class);
-    }
-
-    public function savedByUsers()
-    {
-        return $this->belongsToMany(User::class, 'user_saved_posts')
-            ->withTimestamps();
     }
 
     public function getOptionOnePercentageAttribute()
