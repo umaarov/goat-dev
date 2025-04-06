@@ -37,6 +37,13 @@ class Post extends Model
         return $this->hasMany(Vote::class);
     }
 
+    public function voters()
+    {
+        return $this->belongsToMany(User::class, 'votes', 'post_id', 'user_id')
+            ->withPivot('vote_option')
+            ->withTimestamps();
+    }
+
     public function comments()
     {
         return $this->hasMany(Comment::class);

@@ -96,7 +96,10 @@ class UserController extends Controller
         $user = User::where('username', $username)->firstOrFail();
 
         $posts = $user->posts()
-            ->with(['user:id,username,profile_picture'])
+            ->with([
+                'user:id,username,profile_picture',
+                'voters:id,username,profile_picture' // Add voters
+            ])
             ->withCount(['comments', 'shares'])
             ->latest()
             ->paginate(15);
