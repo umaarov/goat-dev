@@ -7,17 +7,20 @@ use App\Models\RefreshToken;
 use App\Models\User;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
+    final function register(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
@@ -49,7 +52,7 @@ class AuthController extends Controller
         return $this->createTokenAndCookies($user);
     }
 
-    public function login(Request $request)
+    final function login(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|string|email',
@@ -69,12 +72,10 @@ class AuthController extends Controller
         return $this->createTokenAndCookies($user);
     }
 
-    public function logout(Request $request)
+    final function logout(Request $request): JsonResponse
     {
-        // Revoke current access token
         $request->user()->currentAccessToken()->delete();
 
-        // Revoke refresh token from cookie if it exists
         if ($request->hasCookie('refresh_token')) {
             $tokenValue = $request->cookie('refresh_token');
             $refreshToken = RefreshToken::where('token', $tokenValue)->first();
@@ -85,13 +86,12 @@ class AuthController extends Controller
             }
         }
 
-        // Clear cookies
         $cookie = Cookie::forget('refresh_token');
 
         return response()->json(['message' => 'Logged out successfully'])->withCookie($cookie);
     }
 
-    public function refresh(Request $request)
+    final function refresh(Request $request): JsonResponse
     {
         if (!$request->hasCookie('refresh_token')) {
             return response()->json(['message' => 'Refresh token not found'], 401);
@@ -108,20 +108,18 @@ class AuthController extends Controller
 
         $user = $refreshToken->user;
 
-        // Revoke old refresh token
         $refreshToken->revoked = true;
         $refreshToken->save();
 
-        // Create new tokens and cookies
         return $this->createTokenAndCookies($user);
     }
 
-    public function googleRedirect()
+    final function googleRedirect(): RedirectResponse
     {
         return Socialite::driver('google')->redirect();
     }
 
-    public function googleCallback()
+    final function googleCallback(): Redirector|\Illuminate\Http\RedirectResponse
     {
         try {
             $googleUser = Socialite::driver('google')->user();
@@ -129,16 +127,13 @@ class AuthController extends Controller
             $user = User::where('google_id', $googleUser->id)->first();
 
             if (!$user) {
-                // Check if email exists
                 $existingUser = User::where('email', $googleUser->email)->first();
 
                 if ($existingUser) {
-                    // Link Google account to existing user
                     $existingUser->google_id = $googleUser->id;
                     $existingUser->save();
                     $user = $existingUser;
                 } else {
-                    // Create new user
                     $username = $this->generateUniqueUsername($googleUser->name);
 
                     $user = User::create([
@@ -153,7 +148,7 @@ class AuthController extends Controller
                 }
             }
 
-            $response = $this->createTokenAndCookies($user);
+//            $response = $this->createTokenAndCookies($user);
 
             return redirect(config('app.frontend_url') . '?auth=success');
 
@@ -162,7 +157,7 @@ class AuthController extends Controller
         }
     }
 
-    public function user(Request $request)
+    final function user(Request $request): JsonResponse
     {
         return response()->json($request->user()->load([
             'posts' => function ($query) {
@@ -174,26 +169,22 @@ class AuthController extends Controller
         ]));
     }
 
-    private function createTokenAndCookies(User $user)
+    private function createTokenAndCookies(User $user): JsonResponse
     {
-        // Revoke any existing tokens for this user
         $user->tokens()->delete();
 
-        // Create new access token
         $token = $user->createToken('api-token', ['*'], Carbon::now()->addMinutes(60));
 
-        // Create new refresh token
         $refreshToken = Str::random(60);
         $user->refreshTokens()->create([
             'token' => $refreshToken,
             'expires_at' => Carbon::now()->addDays(30),
         ]);
 
-        // Create HTTP-only cookie for refresh token
         $cookie = cookie(
             'refresh_token',
             $refreshToken,
-            43200, // 30 days in minutes
+            43200,
             '/',
             null,
             true,
@@ -205,12 +196,12 @@ class AuthController extends Controller
         return response()->json([
             'access_token' => $token->plainTextToken,
             'token_type' => 'Bearer',
-            'expires_in' => 60 * 60, // 1 hour in seconds
+            'expires_in' => 60 * 60,
             'user' => $user,
         ])->withCookie($cookie);
     }
 
-    private function generateUniqueUsername($name)
+    private function generateUniqueUsername($name): string
     {
         $baseUsername = Str::slug(strtolower($name));
         $username = $baseUsername;

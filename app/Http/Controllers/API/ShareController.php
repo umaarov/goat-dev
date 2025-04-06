@@ -5,12 +5,13 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Post;
 use App\Models\Share;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class ShareController extends Controller
 {
-    public function store(Request $request, Post $post)
+    final function store(Request $request, Post $post): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'platform' => 'required|string|in:twitter,facebook,whatsapp,telegram,email',
