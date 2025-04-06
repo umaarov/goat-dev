@@ -42,7 +42,6 @@ class PostController extends Controller
                     ->first();
 
                 $post->user_vote = $vote ? $vote->vote_option : null;
-                $post->is_saved = $request->user()->savedPosts()->where('post_id', $post->id)->exists();
 
                 return $post;
             });
@@ -90,6 +89,9 @@ class PostController extends Controller
 
     public function show(Post $post, Request $request)
     {
+        // Increment view count
+        $post->increment('view_count');
+
         $post->load(['user:id,username,profile_picture', 'comments.user:id,username,profile_picture'])
             ->loadCount(['comments', 'shares']);
 
@@ -100,7 +102,7 @@ class PostController extends Controller
                 ->first();
 
             $post->user_vote = $vote ? $vote->vote_option : null;
-            $post->is_saved = $request->user()->savedPosts()->where('post_id', $post->id)->exists();
+
         }
 
         return response()->json($post);
@@ -228,29 +230,6 @@ class PostController extends Controller
         return response()->json($post);
     }
 
-    public function savePost(Post $post, Request $request)
-    {
-        // Check if post is already saved
-        $isSaved = $request->user()->savedPosts()->where('post_id', $post->id)->exists();
-
-        if ($isSaved) {
-            return response()->json(['message' => 'Post is already saved'], 400);
-        }
-
-        // Save the post
-        $request->user()->savedPosts()->attach($post->id);
-
-        return response()->json(['message' => 'Post saved successfully']);
-    }
-
-    public function unsavePost(Post $post, Request $request)
-    {
-        // Remove the saved post
-        $request->user()->savedPosts()->detach($post->id);
-
-        return response()->json(['message' => 'Post removed from saved']);
-    }
-
     public function getUserPosts(Request $request)
     {
         $posts = Post::where('user_id', $request->user()->id)
@@ -266,30 +245,6 @@ class PostController extends Controller
                 ->first();
 
             $post->user_vote = $vote ? $vote->vote_option : null;
-            $post->is_saved = true; // User's own posts are considered "saved"
-
-            return $post;
-        });
-
-        return response()->json($posts);
-    }
-
-    public function getSavedPosts(Request $request)
-    {
-        $posts = $request->user()->savedPosts()
-            ->with(['user:id,username,profile_picture'])->withCount(['comments', 'shares'])
-            ->latest('user_saved_posts.created_at')
-            ->paginate(15);
-
-        // Add user vote information
-        $posts->getCollection()->transform(function ($post) use ($request) {
-            $vote = Vote::where('user_id', $request->user()->id)
-                ->where('post_id', $post->id)
-                ->first();
-
-            $post->user_vote = $vote ? $vote->vote_option : null;
-            $post->is_saved = true; // These are saved posts
-
             return $post;
         });
 
@@ -307,7 +262,6 @@ class PostController extends Controller
         // Add user vote information
         $posts->getCollection()->transform(function ($post) use ($request) {
             $post->user_vote = $post->pivot->vote_option;
-            $post->is_saved = $request->user()->savedPosts()->where('post_id', $post->id)->exists();
 
             return $post;
         });

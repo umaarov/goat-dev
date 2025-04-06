@@ -52,12 +52,6 @@ class User extends Authenticatable
         return $this->hasMany(Share::class);
     }
 
-    public function savedPosts()
-    {
-        return $this->belongsToMany(Post::class, 'user_saved_posts')
-            ->withTimestamps();
-    }
-
     public function votedPosts()
     {
         return $this->belongsToMany(Post::class, 'votes')

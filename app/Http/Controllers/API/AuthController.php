@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\RefreshToken;
 use App\Models\User;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
@@ -152,13 +153,11 @@ class AuthController extends Controller
                 }
             }
 
-            // Generate response with tokens and cookies
             $response = $this->createTokenAndCookies($user);
 
-            // Redirect to frontend with the access token
             return redirect(config('app.frontend_url') . '?auth=success');
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return redirect(config('app.frontend_url') . '?auth=failed');
         }
     }
@@ -167,9 +166,6 @@ class AuthController extends Controller
     {
         return response()->json($request->user()->load([
             'posts' => function ($query) {
-                $query->latest()->take(5);
-            },
-            'savedPosts' => function ($query) {
                 $query->latest()->take(5);
             },
             'votedPosts' => function ($query) {

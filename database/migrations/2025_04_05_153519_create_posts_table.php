@@ -18,6 +18,7 @@ return new class extends Migration {
             $table->integer('option_one_votes')->default(0);
             $table->integer('option_two_votes')->default(0);
             $table->integer('total_votes')->default(0);
+            $table->integer('view_count')->default(0);
             $table->timestamps();
         });
     }
