@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
-    public function update(Request $request)
+    final function update(Request $request): JsonResponse
     {
         $user = $request->user();
 
@@ -33,7 +34,6 @@ class UserController extends Controller
         ];
 
         if ($request->hasFile('profile_picture')) {
-            // Delete old profile picture if exists
             if ($user->profile_picture && !str_starts_with($user->profile_picture, 'http')) {
                 Storage::disk('public')->delete($user->profile_picture);
             }
@@ -48,7 +48,7 @@ class UserController extends Controller
         ]);
     }
 
-    public function changePassword(Request $request)
+    final function changePassword(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'current_password' => 'required|string',
@@ -61,12 +61,10 @@ class UserController extends Controller
 
         $user = $request->user();
 
-        // Check if user has a password (might not if using social login only)
         if (!$user->password) {
             return response()->json(['message' => 'You do not have a password set up. Please set up a password first.'], 400);
         }
 
-        // Check current password
         if (!Hash::check($request->current_password, $user->password)) {
             return response()->json(['message' => 'Current password is incorrect'], 401);
         }
@@ -78,33 +76,31 @@ class UserController extends Controller
         return response()->json(['message' => 'Password changed successfully']);
     }
 
-    public function getProfile($username)
+    final function getProfile($username): JsonResponse
     {
         $user = User::where('username', $username)
             ->select(['id', 'first_name', 'last_name', 'username', 'profile_picture', 'created_at'])
             ->firstOrFail();
 
-        // Get stats
         $user->posts_count = $user->posts()->count();
         $user->votes_received = $user->posts()->sum('total_votes');
 
         return response()->json($user);
     }
 
-    public function getUserPosts($username, Request $request)
+    final function getUserPosts($username, Request $request): JsonResponse
     {
         $user = User::where('username', $username)->firstOrFail();
 
         $posts = $user->posts()
             ->with([
                 'user:id,username,profile_picture',
-                'voters:id,username,profile_picture' // Add voters
+                'voters:id,username,profile_picture'
             ])
             ->withCount(['comments', 'shares'])
             ->latest()
             ->paginate(15);
 
-        // Add user vote information if authenticated
         if ($request->user()) {
             $posts->getCollection()->transform(function ($post) use ($request) {
                 $vote = $post->votes()->where('user_id', $request->user()->id)->first();

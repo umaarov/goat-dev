@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Share extends Model
 {
@@ -15,12 +16,12 @@ class Share extends Model
         'platform',
     ];
 
-    public function user()
+    final function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function post()
+    final function post(): BelongsTo
     {
         return $this->belongsTo(Post::class);
     }

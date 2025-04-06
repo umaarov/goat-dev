@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Post extends Model
 {
@@ -27,34 +29,34 @@ class Post extends Model
         'option_two_percentage',
     ];
 
-    public function user()
+    final function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function votes()
+    final function votes(): HasMany
     {
         return $this->hasMany(Vote::class);
     }
 
-    public function voters()
+    final function voters(): HasMany
     {
         return $this->belongsToMany(User::class, 'votes', 'post_id', 'user_id')
             ->withPivot('vote_option')
             ->withTimestamps();
     }
 
-    public function comments()
+    final function comments(): HasMany
     {
         return $this->hasMany(Comment::class);
     }
 
-    public function shares()
+    final function shares(): HasMany
     {
         return $this->hasMany(Share::class);
     }
 
-    public function getOptionOnePercentageAttribute()
+    final function getOptionOnePercentageAttribute(): float|int
     {
         if (empty($this->total_votes) || $this->total_votes == 0) {
             return 0;
@@ -62,7 +64,7 @@ class Post extends Model
         return round(($this->option_one_votes / $this->total_votes) * 100, 1);
     }
 
-    public function getOptionTwoPercentageAttribute()
+    final function getOptionTwoPercentageAttribute(): float|int
     {
         if (empty($this->total_votes) || $this->total_votes == 0) {
             return 0;

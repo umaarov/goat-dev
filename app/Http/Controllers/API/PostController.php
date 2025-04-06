@@ -5,21 +5,21 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Post;
 use App\Models\Vote;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class PostController extends Controller
 {
-    public function index(Request $request)
+    final function index(Request $request): JsonResponse
     {
         $query = Post::with([
             'user:id,username,profile_picture',
             'comments.user:id,username,profile_picture',
-            'voters:id,username,profile_picture' // Add voters relationship
+            'voters:id,username,profile_picture'
         ])->withCount(['comments', 'shares']);
 
-        // Apply filter if provided
         if ($request->has('filter')) {
             switch ($request->filter) {
                 case 'trending':
@@ -37,7 +37,6 @@ class PostController extends Controller
 
         $posts = $query->paginate(15);
 
-        // Add user vote information if authenticated
         if ($request->user()) {
             $posts->getCollection()->transform(function ($post) use ($request) {
                 $vote = Vote::where('user_id', $request->user()->id)
@@ -52,7 +51,8 @@ class PostController extends Controller
 
         return response()->json($posts);
     }
-    public function store(Request $request)
+
+    final function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'question' => 'required|string|max:255',
@@ -89,18 +89,16 @@ class PostController extends Controller
         return response()->json($post->load('user:id,username,profile_picture'), 201);
     }
 
-    public function show(Post $post, Request $request)
+    final function show(Post $post, Request $request): JsonResponse
     {
-        // Increment view count
         $post->increment('view_count');
 
         $post->load([
             'user:id,username,profile_picture',
             'comments.user:id,username,profile_picture',
-            'voters:id,username,profile_picture' // Add voters relationship
+            'voters:id,username,profile_picture'
         ])->loadCount(['comments', 'shares']);
 
-        // Add user vote information if authenticated
         if ($request->user()) {
             $vote = Vote::where('user_id', $request->user()->id)
                 ->where('post_id', $post->id)
@@ -112,9 +110,8 @@ class PostController extends Controller
         return response()->json($post);
     }
 
-    public function update(Request $request, Post $post)
+    final function update(Request $request, Post $post): JsonResponse
     {
-        // Check if the authenticated user is the post owner
         if ($request->user()->id !== $post->user_id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
@@ -133,7 +130,6 @@ class PostController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Check if the post has votes - if it does, certain updates are restricted
         if ($post->total_votes > 0) {
             return response()->json(['message' => 'Cannot update a post that has already received votes'], 403);
         }
@@ -144,9 +140,7 @@ class PostController extends Controller
             'option_two_title' => $request->option_two_title,
         ];
 
-        // Handle option one image
         if ($request->hasFile('option_one_image')) {
-            // Delete old image if exists
             if ($post->option_one_image) {
                 Storage::disk('public')->delete($post->option_one_image);
             }
@@ -156,9 +150,7 @@ class PostController extends Controller
             $data['option_one_image'] = null;
         }
 
-        // Handle option two image
         if ($request->hasFile('option_two_image')) {
-            // Delete old image if exists
             if ($post->option_two_image) {
                 Storage::disk('public')->delete($post->option_two_image);
             }
@@ -173,14 +165,12 @@ class PostController extends Controller
         return response()->json($post->load('user:id,username,profile_picture'));
     }
 
-    public function destroy(Post $post, Request $request)
+    final function destroy(Post $post, Request $request): JsonResponse
     {
-        // Check if the authenticated user is the post owner
         if ($request->user()->id !== $post->user_id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // Delete associated images if they exist
         if ($post->option_one_image) {
             Storage::disk('public')->delete($post->option_one_image);
         }
@@ -193,7 +183,7 @@ class PostController extends Controller
         return response()->json(['message' => 'Post deleted successfully']);
     }
 
-    public function vote(Post $post, Request $request)
+    final function vote(Post $post, Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'option' => 'required|in:option_one,option_two',
@@ -203,7 +193,6 @@ class PostController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Check if user has already voted on this post
         $existingVote = Vote::where('user_id', $request->user()->id)
             ->where('post_id', $post->id)
             ->first();
@@ -212,14 +201,12 @@ class PostController extends Controller
             return response()->json(['message' => 'You have already voted on this post'], 403);
         }
 
-        // Create the vote
-        $vote = Vote::create([
-            'user_id' => $request->user()->id,
-            'post_id' => $post->id,
-            'vote_option' => $request->option,
-        ]);
+//        $vote = Vote::create([
+//            'user_id' => $request->user()->id,
+//            'post_id' => $post->id,
+//            'vote_option' => $request->option,
+//        ]);
 
-        // Update the post vote counts
         if ($request->option === 'option_one') {
             $post->increment('option_one_votes');
         } else {
@@ -227,10 +214,9 @@ class PostController extends Controller
         }
         $post->increment('total_votes');
 
-        // Refresh the post model
         $post->refresh()->load([
             'user:id,username,profile_picture',
-            'voters:id,username,profile_picture' // Add voters
+            'voters:id,username,profile_picture'
         ]);
         $post->user_vote = $request->option;
 
@@ -242,13 +228,12 @@ class PostController extends Controller
         $posts = Post::where('user_id', $request->user()->id)
             ->with([
                 'user:id,username,profile_picture',
-                'voters:id,username,profile_picture' // Add voters
+                'voters:id,username,profile_picture'
             ])
             ->withCount(['comments', 'shares'])
             ->latest()
             ->paginate(15);
 
-        // Add user vote information
         $posts->getCollection()->transform(function ($post) use ($request) {
             $vote = Vote::where('user_id', $request->user()->id)
                 ->where('post_id', $post->id)
@@ -261,18 +246,17 @@ class PostController extends Controller
         return response()->json($posts);
     }
 
-    public function getVotedPosts(Request $request)
+    final function getVotedPosts(Request $request): JsonResponse
     {
         $posts = $request->user()->votedPosts()
             ->with([
                 'user:id,username,profile_picture',
-                'voters:id,username,profile_picture' // Add voters
+                'voters:id,username,profile_picture'
             ])
             ->withCount(['comments', 'shares'])
             ->latest('votes.created_at')
             ->paginate(15);
 
-        // Add user vote information
         $posts->getCollection()->transform(function ($post) use ($request) {
             $post->user_vote = $post->pivot->vote_option;
 

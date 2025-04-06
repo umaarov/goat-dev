@@ -5,12 +5,13 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Comment;
 use App\Models\Post;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class CommentController extends Controller
 {
-    public function index(Post $post)
+    final function index(Post $post): JsonResponse
     {
         $comments = $post->comments()
             ->with('user:id,username,profile_picture')
@@ -20,7 +21,7 @@ class CommentController extends Controller
         return response()->json($comments);
     }
 
-    public function store(Request $request, Post $post)
+    final function store(Request $request, Post $post): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'content' => 'required|string|max:1000',
@@ -39,9 +40,8 @@ class CommentController extends Controller
         return response()->json($comment->load('user:id,username,profile_picture'), 201);
     }
 
-    public function update(Request $request, Comment $comment)
+    final function update(Request $request, Comment $comment): JsonResponse
     {
-        // Check if the authenticated user is the comment owner
         if ($request->user()->id !== $comment->user_id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
@@ -61,9 +61,8 @@ class CommentController extends Controller
         return response()->json($comment->load('user:id,username,profile_picture'));
     }
 
-    public function destroy(Comment $comment, Request $request)
+    final function destroy(Comment $comment, Request $request): JsonResponse
     {
-        // Check if the authenticated user is the comment owner
         if ($request->user()->id !== $comment->user_id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }

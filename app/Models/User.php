@@ -1,7 +1,9 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -32,34 +34,34 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    public function posts()
+    final function posts(): HasMany
     {
         return $this->hasMany(Post::class);
     }
 
-    public function votes()
+    final function votes(): HasMany
     {
         return $this->hasMany(Vote::class);
     }
 
-    public function comments()
+    final function comments(): HasMany
     {
         return $this->hasMany(Comment::class);
     }
 
-    public function shares()
+    final function shares(): HasMany
     {
         return $this->hasMany(Share::class);
     }
 
-    public function votedPosts()
+    final function votedPosts(): HasMany
     {
         return $this->belongsToMany(Post::class, 'votes')
             ->withPivot('vote_option')
             ->withTimestamps();
     }
 
-    public function refreshTokens()
+    final function refreshTokens(): HasMany
     {
         return $this->hasMany(RefreshToken::class);
     }
