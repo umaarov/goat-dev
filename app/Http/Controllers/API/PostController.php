@@ -13,8 +13,11 @@ class PostController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Post::with(['user:id,username,profile_picture', 'comments.user:id,username,profile_picture'])
-            ->withCount(['comments', 'shares']);
+        $query = Post::with([
+            'user:id,username,profile_picture',
+            'comments.user:id,username,profile_picture',
+            'voters:id,username,profile_picture' // Add voters relationship
+        ])->withCount(['comments', 'shares']);
 
         // Apply filter if provided
         if ($request->has('filter')) {
@@ -49,7 +52,6 @@ class PostController extends Controller
 
         return response()->json($posts);
     }
-
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -92,8 +94,11 @@ class PostController extends Controller
         // Increment view count
         $post->increment('view_count');
 
-        $post->load(['user:id,username,profile_picture', 'comments.user:id,username,profile_picture'])
-            ->loadCount(['comments', 'shares']);
+        $post->load([
+            'user:id,username,profile_picture',
+            'comments.user:id,username,profile_picture',
+            'voters:id,username,profile_picture' // Add voters relationship
+        ])->loadCount(['comments', 'shares']);
 
         // Add user vote information if authenticated
         if ($request->user()) {
@@ -102,7 +107,6 @@ class PostController extends Controller
                 ->first();
 
             $post->user_vote = $vote ? $vote->vote_option : null;
-
         }
 
         return response()->json($post);
@@ -224,7 +228,10 @@ class PostController extends Controller
         $post->increment('total_votes');
 
         // Refresh the post model
-        $post->refresh()->load('user:id,username,profile_picture');
+        $post->refresh()->load([
+            'user:id,username,profile_picture',
+            'voters:id,username,profile_picture' // Add voters
+        ]);
         $post->user_vote = $request->option;
 
         return response()->json($post);
@@ -233,7 +240,10 @@ class PostController extends Controller
     public function getUserPosts(Request $request)
     {
         $posts = Post::where('user_id', $request->user()->id)
-            ->with(['user:id,username,profile_picture'])
+            ->with([
+                'user:id,username,profile_picture',
+                'voters:id,username,profile_picture' // Add voters
+            ])
             ->withCount(['comments', 'shares'])
             ->latest()
             ->paginate(15);
@@ -254,7 +264,10 @@ class PostController extends Controller
     public function getVotedPosts(Request $request)
     {
         $posts = $request->user()->votedPosts()
-            ->with(['user:id,username,profile_picture'])
+            ->with([
+                'user:id,username,profile_picture',
+                'voters:id,username,profile_picture' // Add voters
+            ])
             ->withCount(['comments', 'shares'])
             ->latest('votes.created_at')
             ->paginate(15);
