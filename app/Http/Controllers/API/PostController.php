@@ -201,12 +201,6 @@ class PostController extends Controller
             return response()->json(['message' => 'You have already voted on this post'], 403);
         }
 
-//        $vote = Vote::create([
-//            'user_id' => $request->user()->id,
-//            'post_id' => $post->id,
-//            'vote_option' => $request->option,
-//        ]);
-
         if ($request->option === 'option_one') {
             $post->increment('option_one_votes');
         } else {
@@ -223,7 +217,7 @@ class PostController extends Controller
         return response()->json($post);
     }
 
-    public function getUserPosts(Request $request)
+    final function getUserPosts(Request $request): JsonResponse
     {
         $posts = Post::where('user_id', $request->user()->id)
             ->with([
@@ -240,26 +234,6 @@ class PostController extends Controller
                 ->first();
 
             $post->user_vote = $vote ? $vote->vote_option : null;
-            return $post;
-        });
-
-        return response()->json($posts);
-    }
-
-    final function getVotedPosts(Request $request): JsonResponse
-    {
-        $posts = $request->user()->votedPosts()
-            ->with([
-                'user:id,username,profile_picture',
-                'voters:id,username,profile_picture'
-            ])
-            ->withCount(['comments', 'shares'])
-            ->latest('votes.created_at')
-            ->paginate(15);
-
-        $posts->getCollection()->transform(function ($post) use ($request) {
-            $post->user_vote = $post->pivot->vote_option;
-
             return $post;
         });
 
