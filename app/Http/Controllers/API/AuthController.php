@@ -148,8 +148,7 @@ class AuthController extends Controller
                 }
             }
 
-//            $response = $this->createTokenAndCookies($user);
-
+            $response = $this->createTokenAndCookies($user);
             return redirect(config('app.frontend_url') . '?auth=success');
 
         } catch (Exception $e) {
