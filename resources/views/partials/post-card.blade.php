@@ -105,7 +105,7 @@
     @endauth
 
     <div class="post-comments">
-        @if($post->relationLoaded('comments') && $post->comments->count() > 0)
+        @if(/* $post->relationLoaded('comments') && */ $post->comments->count() > 0)
             <h4>Comments</h4>
             @foreach($post->comments as $comment)
                 <div class="comment" id="comment-{{ $comment->id }}">

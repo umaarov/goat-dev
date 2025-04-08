@@ -28,10 +28,17 @@ class CommentController extends Controller
                 ->with('error', 'Failed to add comment. Please check the errors.');
         }
 
+        $content = $request->input('content');
+        if (empty($content)) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Content cannot be empty.');
+        }
+
         $comment = Comment::create([
             'user_id' => Auth::id(),
             'post_id' => $post->id,
-            'content' => $request->content,
+            'content' => $content,
         ]);
 
         $comment->load('user:id,username,profile_picture');
