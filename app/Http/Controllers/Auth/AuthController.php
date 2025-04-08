@@ -17,12 +17,12 @@ use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
-    final function showRegistrationForm(): View
+    final public function showRegistrationForm(): View
     {
         return view('auth.register');
     }
 
-    final function register(Request $request): RedirectResponse
+    final public function register(Request $request): RedirectResponse
     {
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
@@ -30,7 +30,7 @@ class AuthController extends Controller
             'username' => 'required|string|max:255|unique:users',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'profile_picture' => 'nullable|image|max:2048',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -55,15 +55,15 @@ class AuthController extends Controller
 
         Auth::login($user);
 
-        return redirect()->route('dashboard')->with('success', 'Registration successful!');
+        return redirect()->route('home')->with('success', 'Registration successful! Welcome!');
     }
 
-    final function showLoginForm(): View
+    final public function showLoginForm(): View
     {
         return view('auth.login');
     }
 
-    final function login(Request $request): RedirectResponse
+    final public function login(Request $request): RedirectResponse
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|string|email',
@@ -81,7 +81,7 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
-            return redirect()->intended(route('dashboard'))->with('success', 'Logged in successfully!');
+            return redirect()->intended(route('home'))->with('success', 'Logged in successfully!');
         }
 
         return redirect()->back()
@@ -89,22 +89,22 @@ class AuthController extends Controller
             ->withInput($request->only('email'));
     }
 
-    final function logout(Request $request): RedirectResponse
+    final public function logout(Request $request): RedirectResponse
     {
         Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/')->with('success', 'Logged out successfully!');
+        return redirect()->route('home')->with('success', 'Logged out successfully!');
     }
 
-    final function googleRedirect(): \Symfony\Component\HttpFoundation\RedirectResponse
+    final public function googleRedirect(): \Symfony\Component\HttpFoundation\RedirectResponse
     {
         return Socialite::driver('google')->redirect();
     }
 
-    final function googleCallback(Request $request): RedirectResponse
+    final public function googleCallback(Request $request): RedirectResponse
     {
         try {
             $googleUser = Socialite::driver('google')->user();
@@ -126,13 +126,13 @@ class AuthController extends Controller
 
                     $user = User::create([
                         'first_name' => $googleUser->user['given_name'] ?? explode(' ', $googleUser->name)[0],
-                        'last_name' => $googleUser->user['family_name'] ?? (count(explode(' ', $googleUser->name)) > 1 ? explode(' ', $googleUser->name)[1] : null),
+                        'last_name' => $googleUser->user['family_name'] ?? (count(explode(' ', $googleUser->name)) > 1 ? implode(' ', array_slice(explode(' ', $googleUser->name), 1)) : null),
                         'username' => $username,
                         'email' => $googleUser->email,
                         'google_id' => $googleUser->id,
                         'profile_picture' => $googleUser->avatar,
                         'email_verified_at' => now(),
-                        'password' => Hash::make(Str::random(16)),
+                        'password' => null,
                     ]);
                 }
             }
@@ -140,7 +140,7 @@ class AuthController extends Controller
             Auth::login($user, true);
             $request->session()->regenerate();
 
-            return redirect()->intended(route('dashboard'))->with('success', 'Logged in with Google successfully!');
+            return redirect()->intended(route('home'))->with('success', 'Logged in with Google successfully!');
 
         } catch (Exception $e) {
             Log::error('Google Auth Failed: ' . $e->getMessage());
@@ -157,15 +157,20 @@ class AuthController extends Controller
         $username = $baseUsername;
         $counter = 1;
 
-        $maxLength = 255 - (strlen((string)$counter) + 1);
+        $maxLength = 255;
 
         while (User::where('username', $username)->exists()) {
-            $baseUsernameCurrent = substr($baseUsername, 0, $maxLength);
-            $username = $baseUsernameCurrent . $counter;
+            $potentialLength = strlen($baseUsername) + strlen((string)$counter) + 1;
+            if ($potentialLength > $maxLength) {
+                $baseUsername = substr($baseUsername, 0, $maxLength - (strlen((string)$counter) + 1));
+            }
+
+            $username = $baseUsername . $counter;
             $counter++;
-            $maxLength = 255 - (strlen((string)$counter) + 1);
+
             if ($counter > 1000) {
-                throw new Exception("Could not generate a unique username for '{$name}'");
+                Log::error("Could not generate a unique username for '{$name}' after 1000 attempts.");
+                return 'user' . Str::random(10);
             }
         }
 
