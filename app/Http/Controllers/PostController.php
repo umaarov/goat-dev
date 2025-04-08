@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use App\Models\Vote;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,13 +16,9 @@ use Illuminate\Support\Facades\Validator;
 
 class PostController extends Controller
 {
-    final function index(Request $request): View
+    final public function index(Request $request): View
     {
-        $query = Post::with([
-            'user:id,username,profile_picture',
-//            'voters:id,username,profile_picture'
-        ])
-            ->withCount(['comments', 'shares', 'voters']);
+        $query = Post::query()->withPostData();
 
         switch ($request->input('filter')) {
             case 'trending':
@@ -31,39 +30,21 @@ class PostController extends Controller
             default:
                 $query->latest();
                 break;
-            // Add more filters like 'popular' (all time votes), 'most_commented' etc.
         }
 
         $posts = $query->paginate(15)->withQueryString();
 
-        if (Auth::check()) {
-            $loggedInUserId = Auth::id();
-            $postIds = $posts->pluck('id');
+        $this->attachUserVoteStatus($posts);
 
-            $userVotes = Vote::where('user_id', $loggedInUserId)
-                ->whereIn('post_id', $postIds)
-                ->pluck('vote_option', 'post_id');
-
-            $posts->getCollection()->transform(function ($post) use ($userVotes) {
-                $post->user_vote = $userVotes->get($post->id);
-                return $post;
-            });
-        } else {
-            $posts->getCollection()->transform(function ($post) {
-                $post->user_vote = null;
-                return $post;
-            });
-        }
-
-        return view('posts.index', compact('posts'));
+        return view('home', compact('posts'));
     }
 
-    final function create(): View
+    final public function create(): View
     {
         return view('posts.create');
     }
 
-    final function store(Request $request): RedirectResponse
+    final public function store(Request $request): RedirectResponse
     {
         $validator = Validator::make($request->all(), [
             'question' => 'required|string|max:255',
@@ -98,56 +79,33 @@ class PostController extends Controller
             'option_two_image' => $optionTwoImagePath,
         ]);
 
-        return redirect()->route('posts.show', $post)->with('success', 'Post created successfully!');
+        return redirect()->route('home')->with('success', 'Post created successfully!');
     }
 
-    final function show(Post $post): View
-    {
-        $post->increment('view_count');
-
-        $post->load([
-            'user:id,username,profile_picture',
-            'comments' => function ($query) {
-                $query->with('user:id,username,profile_picture')->latest();
-            },
-            'voters:id,username,profile_picture'
-        ])->loadCount(['comments', 'shares']);
-
-        $post->user_vote = null;
-        if (Auth::check()) {
-            $vote = Vote::where('user_id', Auth::id())
-                ->where('post_id', $post->id)
-                ->first();
-            $post->user_vote = $vote ? $vote->vote_option : null;
-        }
-
-        return view('posts.show', compact('post'));
-    }
-
-    final function edit(Post $post): View|RedirectResponse
+    final public function edit(Post $post): View|RedirectResponse
     {
         if (Auth::id() !== $post->user_id) {
             abort(403, 'Unauthorized action.');
         }
 
         if ($post->total_votes > 0) {
-            return redirect()->route('posts.show', $post)->with('error', 'Cannot edit a post that has already received votes.');
+            return redirect()->route('profile.show', ['username' => Auth::user()->username])
+                ->with('error', 'Cannot edit a post that has already received votes.');
         }
-
 
         return view('posts.edit', compact('post'));
     }
 
-    final function update(Request $request, Post $post): RedirectResponse
+    final public function update(Request $request, Post $post): RedirectResponse
     {
         if (Auth::id() !== $post->user_id) {
             abort(403, 'Unauthorized action.');
         }
 
         if ($post->total_votes > 0) {
-            return redirect()->route('posts.show', $post)->with('error', 'Cannot update a post that has already received votes.');
+            return redirect()->route('profile.show', ['username' => Auth::user()->username])
+                ->with('error', 'Cannot update a post that has already received votes.');
         }
-
 
         $validator = Validator::make($request->all(), [
             'question' => 'required|string|max:255',
@@ -165,12 +123,7 @@ class PostController extends Controller
                 ->withInput();
         }
 
-
-        $data = [
-            'question' => $request->question,
-            'option_one_title' => $request->option_one_title,
-            'option_two_title' => $request->option_two_title,
-        ];
+        $data = $request->only(['question', 'option_one_title', 'option_two_title']);
 
         if ($request->boolean('remove_option_one_image') && $post->option_one_image) {
             Storage::disk('public')->delete($post->option_one_image);
@@ -194,12 +147,13 @@ class PostController extends Controller
 
         $post->update($data);
 
-        return redirect()->route('posts.show', $post)->with('success', 'Post updated successfully.');
+        return redirect()->route('profile.show', ['username' => $post->user->username])
+            ->with('success', 'Post updated successfully.');
     }
 
-    final function destroy(Post $post): RedirectResponse
+    final public function destroy(Post $post): RedirectResponse
     {
-        if (Auth::id() !== $post->user_id) {
+        if (Auth::id() !== $post->user_id /* && !Auth::user()->isAdmin() */) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -212,17 +166,25 @@ class PostController extends Controller
 
         $post->delete();
 
-        return redirect()->route('posts.index')->with('success', 'Post deleted successfully.');
+        if (url()->previous() == route('profile.show', ['username' => Auth::user()->username])) {
+            return redirect()->route('profile.show', ['username' => Auth::user()->username])
+                ->with('success', 'Post deleted successfully.');
+        }
+
+        return redirect()->route('home')->with('success', 'Post deleted successfully.');
     }
 
-    final function vote(Request $request, Post $post): RedirectResponse
+    final public function vote(Request $request, Post $post): RedirectResponse|JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'option' => 'required|in:option_one,option_two',
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator);
+            if ($request->expectsJson()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+            return redirect()->back()->withErrors($validator)->with('error', 'Invalid vote option.');
         }
 
         $loggedInUserId = Auth::id();
@@ -232,12 +194,42 @@ class PostController extends Controller
             ->first();
 
         if ($existingVote) {
+            // Optional: Allow changing vote?
+            /*
+            if ($existingVote->vote_option !== $request->option) {
+                // Decrement old count, increment new count, update vote record
+                if ($existingVote->vote_option === 'option_one') {
+                    $post->decrement('option_one_votes');
+                    $post->increment('option_two_votes');
+                } else {
+                    $post->decrement('option_two_votes');
+                    $post->increment('option_one_votes');
+                }
+                $existingVote->update(['vote_option' => $request->option]);
+                // Don't increment total_votes here as it's a change, not a new vote
+
+                 if ($request->expectsJson()) {
+                     // Return updated post counts and user vote status
+                      return response()->json([
+                          'message' => 'Vote changed successfully!',
+                          'option_one_votes' => $post->option_one_votes,
+                          'option_two_votes' => $post->option_two_votes,
+                          'user_vote' => $request->option,
+                      ]);
+                  }
+                return redirect()->back()->with('success', 'Vote changed successfully!');
+            } else {
+                 if ($request->expectsJson()) {
+                     return response()->json(['message' => 'Your vote remains the same.'], 200);
+                 }
+                return redirect()->back()->with('info', 'Your vote remains the same.');
+            }
+            */
+
+            if ($request->expectsJson()) {
+                return response()->json(['error' => 'You have already voted on this post.'], 409); // 409 Conflict
+            }
             return redirect()->back()->with('error', 'You have already voted on this post.');
-            // if ($existingVote->vote_option !== $request->option) {
-            //     // Decrement old count, increment new count, update vote record
-            // } else {
-            //     return redirect()->back()->with('info', 'Your vote remains the same.');
-            // }
         }
 
         Vote::create([
@@ -253,7 +245,67 @@ class PostController extends Controller
         }
         $post->increment('total_votes');
 
-        return redirect()->route('posts.show', $post)->with('success', 'Your vote has been registered!');
-        // return redirect()->back()->with('success', 'Vote registered!');
+        if ($request->expectsJson()) {
+            $post->refresh();
+            return response()->json([
+                'message' => 'Vote registered successfully!',
+                'option_one_votes' => $post->option_one_votes,
+                'option_two_votes' => $post->option_two_votes,
+                'total_votes' => $post->total_votes,
+                'user_vote' => $request->option,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Your vote has been registered!');
+    }
+
+    final public function search(Request $request): View|JsonResponse
+    {
+        $queryTerm = $request->input('q');
+
+        if (!$queryTerm) {
+            return view('search.results', ['posts' => collect(), 'queryTerm' => null]);
+        }
+
+        $query = Post::query()->withPostData();
+
+        $query->where(function (Builder $subQuery) use ($queryTerm) {
+            $subQuery->where('question', 'LIKE', "%{$queryTerm}%")
+                ->orWhere('option_one_title', 'LIKE', "%{$queryTerm}%")
+                ->orWhere('option_two_title', 'LIKE', "%{$queryTerm}%")
+                ->orWhereHas('user', function (Builder $userQuery) use ($queryTerm) {
+                    $userQuery->where('username', 'LIKE', "%{$queryTerm}%");
+                });
+        });
+
+        $posts = $query->latest()->paginate(15)->withQueryString();
+
+        $this->attachUserVoteStatus($posts);
+
+        if ($request->expectsJson()) {
+            return response()->json($posts);
+        }
+
+        return view('search.results', compact('posts', 'queryTerm')); // Assumes resources/views/search/results.blade.php
+    }
+
+    private function attachUserVoteStatus(LengthAwarePaginator $posts): void
+    {
+        $userVoteMap = [];
+        if (Auth::check()) {
+            $loggedInUserId = Auth::id();
+            $postIds = $posts->pluck('id')->all();
+
+            if (!empty($postIds)) {
+                $userVoteMap = Vote::where('user_id', $loggedInUserId)
+                    ->whereIn('post_id', $postIds)
+                    ->pluck('vote_option', 'post_id');
+            }
+        }
+
+        $posts->getCollection()->transform(function ($post) use ($userVoteMap) {
+            $post->user_vote = $userVoteMap->get($post->id);
+            return $post;
+        });
     }
 }
