@@ -291,7 +291,7 @@ class PostController extends Controller
 
     private function attachUserVoteStatus(LengthAwarePaginator $posts): void
     {
-        $userVoteMap = [];
+        $userVoteMap = collect();
         if (Auth::check()) {
             $loggedInUserId = Auth::id();
             $postIds = $posts->pluck('id')->all();
