@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Auth; // Changed Namespace
+namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -10,23 +10,18 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Laravel\Socialite\Facades\Socialite; // Keep if using Socialite
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
-    /**
-     * Show the registration form.
-     */
     final function showRegistrationForm(): View
     {
-        return view('auth.register'); // Assumes view exists at resources/views/auth/register.blade.php
+        return view('auth.register');
     }
 
-    /**
-     * Handle a registration request for the application.
-     */
     final function register(Request $request): RedirectResponse
     {
         $validator = Validator::make($request->all(), [
@@ -34,14 +29,14 @@ class AuthController extends Controller
             'last_name' => 'nullable|string|max:255',
             'username' => 'required|string|max:255|unique:users',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed', // Add password confirmation
+            'password' => 'required|string|min:8|confirmed',
             'profile_picture' => 'nullable|image|max:2048',
         ]);
 
         if ($validator->fails()) {
             return redirect()->back()
                 ->withErrors($validator)
-                ->withInput($request->except('password', 'password_confirmation')); // Don't flash passwords
+                ->withInput($request->except('password', 'password_confirmation'));
         }
 
         $profilePicturePath = null;
@@ -58,23 +53,16 @@ class AuthController extends Controller
             'profile_picture' => $profilePicturePath,
         ]);
 
-        Auth::login($user); // Log the user in using session
+        Auth::login($user);
 
-        // Redirect to a dashboard or home page after registration
-        return redirect()->route('dashboard')->with('success', 'Registration successful!'); // Assumes a route named 'dashboard'
+        return redirect()->route('dashboard')->with('success', 'Registration successful!');
     }
 
-    /**
-     * Show the login form.
-     */
     final function showLoginForm(): View
     {
-        return view('auth.login'); // Assumes view exists at resources/views/auth/login.blade.php
+        return view('auth.login');
     }
 
-    /**
-     * Handle a login request to the application.
-     */
     final function login(Request $request): RedirectResponse
     {
         $validator = Validator::make($request->all(), [
@@ -89,45 +77,33 @@ class AuthController extends Controller
         }
 
         $credentials = $request->only('email', 'password');
-        $remember = $request->filled('remember'); // Check if remember me is checked
+        $remember = $request->filled('remember');
 
         if (Auth::attempt($credentials, $remember)) {
-            $request->session()->regenerate(); // Regenerate session ID for security
-            // Redirect to intended page or dashboard
+            $request->session()->regenerate();
             return redirect()->intended(route('dashboard'))->with('success', 'Logged in successfully!');
         }
 
-        // If login fails
         return redirect()->back()
-            ->withErrors(['email' => 'Invalid login credentials.']) // General error message
+            ->withErrors(['email' => 'Invalid login credentials.'])
             ->withInput($request->only('email'));
     }
 
-    /**
-     * Log the user out of the application.
-     */
     final function logout(Request $request): RedirectResponse
     {
         Auth::logout();
 
-        $request->session()->invalidate(); // Invalidate the session
-        $request->session()->regenerateToken(); // Regenerate CSRF token
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
-        // Redirect to home page after logout
         return redirect('/')->with('success', 'Logged out successfully!');
     }
 
-    /**
-     * Redirect the user to the Google authentication page.
-     */
     final function googleRedirect(): \Symfony\Component\HttpFoundation\RedirectResponse
     {
         return Socialite::driver('google')->redirect();
     }
 
-    /**
-     * Obtain the user information from Google.
-     */
     final function googleCallback(Request $request): RedirectResponse
     {
         try {
@@ -139,16 +115,13 @@ class AuthController extends Controller
                 $existingUser = User::where('email', $googleUser->email)->first();
 
                 if ($existingUser) {
-                    // Link Google ID to existing email account
                     $existingUser->google_id = $googleUser->id;
-                    // Optionally update profile picture if missing or desired
                     if (!$existingUser->profile_picture && $googleUser->avatar) {
                         $existingUser->profile_picture = $googleUser->avatar;
                     }
                     $existingUser->save();
                     $user = $existingUser;
                 } else {
-                    // Create a new user
                     $username = $this->generateUniqueUsername($googleUser->name);
 
                     $user = User::create([
@@ -158,47 +131,39 @@ class AuthController extends Controller
                         'email' => $googleUser->email,
                         'google_id' => $googleUser->id,
                         'profile_picture' => $googleUser->avatar,
-                        'email_verified_at' => now(), // Mark email as verified
-                        // Password can be null for social logins, or set a random one if required
-                        // 'password' => Hash::make(Str::random(16)),
+                        'email_verified_at' => now(),
+                        'password' => Hash::make(Str::random(16)),
                     ]);
                 }
             }
 
-            Auth::login($user, true); // Log the user in (true enables remember me)
+            Auth::login($user, true);
             $request->session()->regenerate();
 
-            // Redirect to intended page or dashboard
             return redirect()->intended(route('dashboard'))->with('success', 'Logged in with Google successfully!');
 
         } catch (Exception $e) {
-            // Log the error: \Log::error('Google Auth Failed: ' . $e->getMessage());
+            Log::error('Google Auth Failed: ' . $e->getMessage());
             return redirect()->route('login')->with('error', 'Unable to login using Google. Please try again.');
         }
     }
 
-    /**
-     * Generate a unique username from a given name.
-     */
     private function generateUniqueUsername(string $name): string
     {
         $baseUsername = Str::slug(strtolower($name));
         if (empty($baseUsername)) {
-            $baseUsername = 'user'; // Fallback if name is empty or yields empty slug
+            $baseUsername = 'user';
         }
         $username = $baseUsername;
         $counter = 1;
 
-        // Ensure username doesn't exceed max length (e.g., 255) during generation
-        $maxLength = 255 - (strlen((string)$counter) + 1); // Max length for base part
+        $maxLength = 255 - (strlen((string)$counter) + 1);
 
         while (User::where('username', $username)->exists()) {
-            // Shorten base if needed to accommodate counter
             $baseUsernameCurrent = substr($baseUsername, 0, $maxLength);
             $username = $baseUsernameCurrent . $counter;
             $counter++;
             $maxLength = 255 - (strlen((string)$counter) + 1);
-            // Add a safety break for extremely unlikely infinite loops
             if ($counter > 1000) {
                 throw new Exception("Could not generate a unique username for '{$name}'");
             }

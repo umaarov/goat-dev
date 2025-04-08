@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers; // Changed Namespace
+namespace App\Http\Controllers;
 
 use App\Models\Post;
 use App\Models\Vote;
@@ -13,37 +13,29 @@ use Illuminate\Support\Facades\Validator;
 
 class PostController extends Controller
 {
-    /**
-     * Display a listing of the posts.
-     */
     final function index(Request $request): View
     {
-        $query = Post::with([ // Eager load common relationships
+        $query = Post::with([
             'user:id,username,profile_picture',
-            // Load voters count instead of the full list for index pages
-            // 'voters:id,username,profile_picture'
+//            'voters:id,username,profile_picture'
         ])
-            ->withCount(['comments', 'shares', 'voters']); // Eager load counts
+            ->withCount(['comments', 'shares', 'voters']);
 
-        // Apply filters
         switch ($request->input('filter')) {
             case 'trending':
-                // Simple trending: order by votes in a recent period (e.g., last 7 days)
-                // For more complex trending, consider a dedicated score calculation
                 $query->where('created_at', '>=', now()->subDays(7))
                     ->orderByDesc('total_votes')
                     ->orderByDesc('created_at');
                 break;
             case 'latest':
             default:
-                $query->latest(); // Order by creation date, newest first
+                $query->latest();
                 break;
             // Add more filters like 'popular' (all time votes), 'most_commented' etc.
         }
 
-        $posts = $query->paginate(15)->withQueryString(); // Paginate and keep filter parameters
+        $posts = $query->paginate(15)->withQueryString();
 
-        // Determine if the logged-in user voted on these posts
         if (Auth::check()) {
             $loggedInUserId = Auth::id();
             $postIds = $posts->pluck('id');
@@ -63,27 +55,20 @@ class PostController extends Controller
             });
         }
 
-        return view('posts.index', compact('posts')); // Assumes view at resources/views/posts/index.blade.php
+        return view('posts.index', compact('posts'));
     }
 
-    /**
-     * Show the form for creating a new post.
-     */
     final function create(): View
     {
-        return view('posts.create'); // Assumes view at resources/views/posts/create.blade.php
+        return view('posts.create');
     }
 
-
-    /**
-     * Store a newly created post in storage.
-     */
     final function store(Request $request): RedirectResponse
     {
         $validator = Validator::make($request->all(), [
             'question' => 'required|string|max:255',
             'option_one_title' => 'required|string|max:100',
-            'option_one_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048', // Be specific with mimes
+            'option_one_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'option_two_title' => 'required|string|max:100',
             'option_two_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
@@ -105,7 +90,7 @@ class PostController extends Controller
         }
 
         $post = Post::create([
-            'user_id' => Auth::id(), // Use logged-in user's ID
+            'user_id' => Auth::id(),
             'question' => $request->question,
             'option_one_title' => $request->option_one_title,
             'option_one_image' => $optionOneImagePath,
@@ -113,28 +98,21 @@ class PostController extends Controller
             'option_two_image' => $optionTwoImagePath,
         ]);
 
-        // Redirect to the newly created post's page
         return redirect()->route('posts.show', $post)->with('success', 'Post created successfully!');
     }
 
-    /**
-     * Display the specified post.
-     */
-    final function show(Post $post): View // Use route model binding
+    final function show(Post $post): View
     {
-        // Increment view count (consider rate limiting or uniqueness if needed)
         $post->increment('view_count');
 
-        // Load necessary relationships for the detail view
         $post->load([
             'user:id,username,profile_picture',
-            'comments' => function ($query) { // Load comments with their users, ordered
+            'comments' => function ($query) {
                 $query->with('user:id,username,profile_picture')->latest();
             },
-            'voters:id,username,profile_picture' // Load users who voted
-        ])->loadCount(['comments', 'shares']); // Load counts
+            'voters:id,username,profile_picture'
+        ])->loadCount(['comments', 'shares']);
 
-        // Determine if the logged-in user voted on this post
         $post->user_vote = null;
         if (Auth::check()) {
             $vote = Vote::where('user_id', Auth::id())
@@ -143,39 +121,29 @@ class PostController extends Controller
             $post->user_vote = $vote ? $vote->vote_option : null;
         }
 
-        return view('posts.show', compact('post')); // Assumes view at resources/views/posts/show.blade.php
+        return view('posts.show', compact('post'));
     }
 
-    /**
-     * Show the form for editing the specified post.
-     */
-    final function edit(Post $post): View|RedirectResponse // Use route model binding
+    final function edit(Post $post): View|RedirectResponse
     {
-        // Authorization check: Only the owner can edit
         if (Auth::id() !== $post->user_id) {
             abort(403, 'Unauthorized action.');
         }
 
-        // Prevent editing if votes exist
         if ($post->total_votes > 0) {
             return redirect()->route('posts.show', $post)->with('error', 'Cannot edit a post that has already received votes.');
         }
 
 
-        return view('posts.edit', compact('post')); // Assumes view at resources/views/posts/edit.blade.php
+        return view('posts.edit', compact('post'));
     }
 
-    /**
-     * Update the specified post in storage.
-     */
-    final function update(Request $request, Post $post): RedirectResponse // Use route model binding
+    final function update(Request $request, Post $post): RedirectResponse
     {
-        // Authorization check
         if (Auth::id() !== $post->user_id) {
             abort(403, 'Unauthorized action.');
         }
 
-        // Prevent editing if votes exist (double check)
         if ($post->total_votes > 0) {
             return redirect()->route('posts.show', $post)->with('error', 'Cannot update a post that has already received votes.');
         }
@@ -187,7 +155,7 @@ class PostController extends Controller
             'option_one_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'option_two_title' => 'required|string|max:100',
             'option_two_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'remove_option_one_image' => 'nullable|boolean', // Checkbox/hidden input to signal removal
+            'remove_option_one_image' => 'nullable|boolean',
             'remove_option_two_image' => 'nullable|boolean',
         ]);
 
@@ -204,19 +172,16 @@ class PostController extends Controller
             'option_two_title' => $request->option_two_title,
         ];
 
-        // Handle Option One Image Update/Removal
         if ($request->boolean('remove_option_one_image') && $post->option_one_image) {
             Storage::disk('public')->delete($post->option_one_image);
             $data['option_one_image'] = null;
         } elseif ($request->hasFile('option_one_image')) {
-            // Delete old if exists before storing new
             if ($post->option_one_image) {
                 Storage::disk('public')->delete($post->option_one_image);
             }
             $data['option_one_image'] = $request->file('option_one_image')->store('post_images', 'public');
         }
 
-        // Handle Option Two Image Update/Removal
         if ($request->boolean('remove_option_two_image') && $post->option_two_image) {
             Storage::disk('public')->delete($post->option_two_image);
             $data['option_two_image'] = null;
@@ -232,17 +197,12 @@ class PostController extends Controller
         return redirect()->route('posts.show', $post)->with('success', 'Post updated successfully.');
     }
 
-    /**
-     * Remove the specified post from storage.
-     */
-    final function destroy(Post $post): RedirectResponse // Use route model binding
+    final function destroy(Post $post): RedirectResponse
     {
-        // Authorization check
         if (Auth::id() !== $post->user_id) {
             abort(403, 'Unauthorized action.');
         }
 
-        // Delete associated images from storage
         if ($post->option_one_image) {
             Storage::disk('public')->delete($post->option_one_image);
         }
@@ -250,36 +210,29 @@ class PostController extends Controller
             Storage::disk('public')->delete($post->option_two_image);
         }
 
-        $post->delete(); // This should cascade delete related votes, comments via model events or DB constraints
+        $post->delete();
 
         return redirect()->route('posts.index')->with('success', 'Post deleted successfully.');
     }
 
-    /**
-     * Record a vote for the specified post.
-     */
-    final function vote(Request $request, Post $post): RedirectResponse // Use route model binding
+    final function vote(Request $request, Post $post): RedirectResponse
     {
         $validator = Validator::make($request->all(), [
             'option' => 'required|in:option_one,option_two',
         ]);
 
         if ($validator->fails()) {
-            // Usually voting is done via JS, but for non-JS fallback:
             return redirect()->back()->withErrors($validator);
         }
 
         $loggedInUserId = Auth::id();
 
-        // Check if user already voted
         $existingVote = Vote::where('user_id', $loggedInUserId)
             ->where('post_id', $post->id)
             ->first();
 
         if ($existingVote) {
-            // Optionally allow changing vote, or prevent voting again
             return redirect()->back()->with('error', 'You have already voted on this post.');
-            // If allowing vote change:
             // if ($existingVote->vote_option !== $request->option) {
             //     // Decrement old count, increment new count, update vote record
             // } else {
@@ -287,24 +240,20 @@ class PostController extends Controller
             // }
         }
 
-        // Record the new vote
         Vote::create([
             'user_id' => $loggedInUserId,
             'post_id' => $post->id,
             'vote_option' => $request->option,
         ]);
 
-        // Update post vote counts
         if ($request->option === 'option_one') {
             $post->increment('option_one_votes');
         } else {
             $post->increment('option_two_votes');
         }
-        $post->increment('total_votes'); // Update total votes as well
+        $post->increment('total_votes');
 
-        // Redirect back to the post page
         return redirect()->route('posts.show', $post)->with('success', 'Your vote has been registered!');
-        // Or just redirect back if voting happens on the index page:
         // return redirect()->back()->with('success', 'Vote registered!');
     }
 }
