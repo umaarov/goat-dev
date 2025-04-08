@@ -1,38 +1,47 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\Auth; // Changed Namespace
 
 use App\Http\Controllers\Controller;
-use App\Models\RefreshToken;
 use App\Models\User;
-use Carbon\Carbon;
 use Exception;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Laravel\Socialite\Facades\Socialite;
-use Symfony\Component\HttpFoundation\RedirectResponse;
+use Laravel\Socialite\Facades\Socialite; // Keep if using Socialite
 
 class AuthController extends Controller
 {
-    final function register(Request $request): JsonResponse
+    /**
+     * Show the registration form.
+     */
+    final function showRegistrationForm(): View
+    {
+        return view('auth.register'); // Assumes view exists at resources/views/auth/register.blade.php
+    }
+
+    /**
+     * Handle a registration request for the application.
+     */
+    final function register(Request $request): RedirectResponse
     {
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'username' => 'required|string|max:255|unique:users',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
+            'password' => 'required|string|min:8|confirmed', // Add password confirmation
             'profile_picture' => 'nullable|image|max:2048',
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput($request->except('password', 'password_confirmation')); // Don't flash passwords
         }
 
         $profilePicturePath = null;
@@ -49,10 +58,24 @@ class AuthController extends Controller
             'profile_picture' => $profilePicturePath,
         ]);
 
-        return $this->createTokenAndCookies($user);
+        Auth::login($user); // Log the user in using session
+
+        // Redirect to a dashboard or home page after registration
+        return redirect()->route('dashboard')->with('success', 'Registration successful!'); // Assumes a route named 'dashboard'
     }
 
-    final function login(Request $request): JsonResponse
+    /**
+     * Show the login form.
+     */
+    final function showLoginForm(): View
+    {
+        return view('auth.login'); // Assumes view exists at resources/views/auth/login.blade.php
+    }
+
+    /**
+     * Handle a login request to the application.
+     */
+    final function login(Request $request): RedirectResponse
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|string|email',
@@ -60,66 +83,52 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput($request->only('email'));
         }
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            return response()->json(['message' => 'Invalid login credentials'], 401);
+        $credentials = $request->only('email', 'password');
+        $remember = $request->filled('remember'); // Check if remember me is checked
+
+        if (Auth::attempt($credentials, $remember)) {
+            $request->session()->regenerate(); // Regenerate session ID for security
+            // Redirect to intended page or dashboard
+            return redirect()->intended(route('dashboard'))->with('success', 'Logged in successfully!');
         }
 
-        $user = User::where('email', $request->email)->firstOrFail();
-
-        return $this->createTokenAndCookies($user);
+        // If login fails
+        return redirect()->back()
+            ->withErrors(['email' => 'Invalid login credentials.']) // General error message
+            ->withInput($request->only('email'));
     }
 
-    final function logout(Request $request): JsonResponse
+    /**
+     * Log the user out of the application.
+     */
+    final function logout(Request $request): RedirectResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        Auth::logout();
 
-        if ($request->hasCookie('refresh_token')) {
-            $tokenValue = $request->cookie('refresh_token');
-            $refreshToken = RefreshToken::where('token', $tokenValue)->first();
+        $request->session()->invalidate(); // Invalidate the session
+        $request->session()->regenerateToken(); // Regenerate CSRF token
 
-            if ($refreshToken) {
-                $refreshToken->revoked = true;
-                $refreshToken->save();
-            }
-        }
-
-        $cookie = Cookie::forget('refresh_token');
-
-        return response()->json(['message' => 'Logged out successfully'])->withCookie($cookie);
+        // Redirect to home page after logout
+        return redirect('/')->with('success', 'Logged out successfully!');
     }
 
-    final function refresh(Request $request): JsonResponse
-    {
-        if (!$request->hasCookie('refresh_token')) {
-            return response()->json(['message' => 'Refresh token not found'], 401);
-        }
-
-        $tokenValue = $request->cookie('refresh_token');
-        $refreshToken = RefreshToken::where('token', $tokenValue)
-            ->where('revoked', false)
-            ->first();
-
-        if (!$refreshToken || $refreshToken->isExpired()) {
-            return response()->json(['message' => 'Invalid or expired refresh token'], 401);
-        }
-
-        $user = $refreshToken->user;
-
-        $refreshToken->revoked = true;
-        $refreshToken->save();
-
-        return $this->createTokenAndCookies($user);
-    }
-
-    final function googleRedirect(): RedirectResponse
+    /**
+     * Redirect the user to the Google authentication page.
+     */
+    final function googleRedirect(): \Symfony\Component\HttpFoundation\RedirectResponse
     {
         return Socialite::driver('google')->redirect();
     }
 
-    final function googleCallback(): Redirector|\Illuminate\Http\RedirectResponse
+    /**
+     * Obtain the user information from Google.
+     */
+    final function googleCallback(Request $request): RedirectResponse
     {
         try {
             $googleUser = Socialite::driver('google')->user();
@@ -130,10 +139,16 @@ class AuthController extends Controller
                 $existingUser = User::where('email', $googleUser->email)->first();
 
                 if ($existingUser) {
+                    // Link Google ID to existing email account
                     $existingUser->google_id = $googleUser->id;
+                    // Optionally update profile picture if missing or desired
+                    if (!$existingUser->profile_picture && $googleUser->avatar) {
+                        $existingUser->profile_picture = $googleUser->avatar;
+                    }
                     $existingUser->save();
                     $user = $existingUser;
                 } else {
+                    // Create a new user
                     $username = $this->generateUniqueUsername($googleUser->name);
 
                     $user = User::create([
@@ -143,72 +158,50 @@ class AuthController extends Controller
                         'email' => $googleUser->email,
                         'google_id' => $googleUser->id,
                         'profile_picture' => $googleUser->avatar,
-                        'email_verified_at' => now(),
+                        'email_verified_at' => now(), // Mark email as verified
+                        // Password can be null for social logins, or set a random one if required
+                        // 'password' => Hash::make(Str::random(16)),
                     ]);
                 }
             }
 
-            $response = $this->createTokenAndCookies($user);
-            return redirect(config('app.frontend_url') . '?auth=success');
+            Auth::login($user, true); // Log the user in (true enables remember me)
+            $request->session()->regenerate();
+
+            // Redirect to intended page or dashboard
+            return redirect()->intended(route('dashboard'))->with('success', 'Logged in with Google successfully!');
 
         } catch (Exception $e) {
-            return redirect(config('app.frontend_url') . '?auth=failed');
+            // Log the error: \Log::error('Google Auth Failed: ' . $e->getMessage());
+            return redirect()->route('login')->with('error', 'Unable to login using Google. Please try again.');
         }
     }
 
-    final function user(Request $request): JsonResponse
-    {
-        return response()->json($request->user()->load([
-            'posts' => function ($query) {
-                $query->latest()->take(5);
-            },
-            'votedPosts' => function ($query) {
-                $query->latest()->take(5);
-            }
-        ]));
-    }
-
-    private function createTokenAndCookies(User $user): JsonResponse
-    {
-        $user->tokens()->delete();
-
-        $token = $user->createToken('api-token', ['*'], Carbon::now()->addMinutes(60));
-
-        $refreshToken = Str::random(60);
-        $user->refreshTokens()->create([
-            'token' => $refreshToken,
-            'expires_at' => Carbon::now()->addDays(30),
-        ]);
-
-        $cookie = cookie(
-            'refresh_token',
-            $refreshToken,
-            43200,
-            '/',
-            null,
-            true,
-            true,
-            false,
-            'none'
-        );
-
-        return response()->json([
-            'access_token' => $token->plainTextToken,
-            'token_type' => 'Bearer',
-            'expires_in' => 60 * 60,
-            'user' => $user,
-        ])->withCookie($cookie);
-    }
-
-    private function generateUniqueUsername($name): string
+    /**
+     * Generate a unique username from a given name.
+     */
+    private function generateUniqueUsername(string $name): string
     {
         $baseUsername = Str::slug(strtolower($name));
+        if (empty($baseUsername)) {
+            $baseUsername = 'user'; // Fallback if name is empty or yields empty slug
+        }
         $username = $baseUsername;
         $counter = 1;
 
+        // Ensure username doesn't exceed max length (e.g., 255) during generation
+        $maxLength = 255 - (strlen((string)$counter) + 1); // Max length for base part
+
         while (User::where('username', $username)->exists()) {
-            $username = $baseUsername . $counter;
+            // Shorten base if needed to accommodate counter
+            $baseUsernameCurrent = substr($baseUsername, 0, $maxLength);
+            $username = $baseUsernameCurrent . $counter;
             $counter++;
+            $maxLength = 255 - (strlen((string)$counter) + 1);
+            // Add a safety break for extremely unlikely infinite loops
+            if ($counter > 1000) {
+                throw new Exception("Could not generate a unique username for '{$name}'");
+            }
         }
 
         return $username;
