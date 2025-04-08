@@ -23,8 +23,7 @@
             @if ($isOwnProfile)
                 <a href="{{ route('profile.edit') }}" class="button-link">Edit Profile</a>
                 @if(Auth::user()->password)
-                    <a href="{{ route('password.change.form') }}" class="button-link" style="background-color:#6c757d;">Change
-                        Password</a>
+                    <a href="{{ route('password.change.form') }}" class="button-link">Change Password</a>
                 @endif
             @endif
         </div>
@@ -32,7 +31,7 @@
 
     <hr>
 
-    <div class="profile-tabs" style="margin-bottom: 1.5em; display: flex; gap: 1em;">
+    <div class="profile-tabs">
         <button id="load-my-posts" data-url="{{ route('profile.posts.data', $user->username) }}">
             {{ $isOwnProfile ? 'My Posts' : $user->username . "'s Posts" }}
         </button>

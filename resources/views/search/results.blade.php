@@ -7,7 +7,7 @@
 
     <form action="{{ route('search') }}" method="GET" class="form-group">
         <input type="search" name="q" value="{{ old('q', $queryTerm) }}"
-               placeholder="Search question, options, or username..." style="width: 70%; padding: 0.6em;">
+               placeholder="Search question, options, or username...">
         <button type="submit">Search</button>
     </form>
 

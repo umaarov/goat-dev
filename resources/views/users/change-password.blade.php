@@ -31,7 +31,7 @@
 
         <div class="form-group">
             <button type="submit">Change Password</button>
-            <a href="{{ route('profile.edit') }}" class="button-link" style="background-color: #6c757d;">Cancel</a>
+            <a href="{{ route('profile.edit') }}" class="button-link">Cancel</a>
         </div>
     </form>
 @endsection

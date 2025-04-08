@@ -7,10 +7,12 @@
 
     <div>
         Filter:
-        <a href="{{ route('home', ['filter' => 'latest']) }}" class="{{ request('filter', 'latest') == 'latest' ? 'font-bold' : '' }}">Latest</a> |
-        <a href="{{ route('home', ['filter' => 'trending']) }}" class="{{ request('filter') == 'trending' ? 'font-bold' : '' }}">Trending</a>
+        <a href="{{ route('home', ['filter' => 'latest']) }}"
+           class="{{ request('filter', 'latest') == 'latest' ? 'font-bold' : '' }}">Latest</a> |
+        <a href="{{ route('home', ['filter' => 'trending']) }}"
+           class="{{ request('filter') == 'trending' ? 'font-bold' : '' }}">Trending</a>
     </div>
-    <hr style="margin: 1em 0;">
+    <hr>
 
     @forelse ($posts as $post)
         @include('partials.post-card', ['post' => $post])

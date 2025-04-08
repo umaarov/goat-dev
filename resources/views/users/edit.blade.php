@@ -1,3 +1,4 @@
+@php use Illuminate\Support\Str; @endphp
 @extends('layouts.app')
 
 @section('title', 'Edit Profile')
@@ -43,8 +44,7 @@
                         : asset('storage/' . $user->profile_picture))
                     : asset('images/default-pfp.png');
             @endphp
-            <p>Current: <img src="{{ $profilePic }}" alt="Current Profile Picture"
-                             style="max-height: 60px; vertical-align: middle; border-radius: 50%;"></p>
+            <p>Current: <img src="{{ $profilePic }}" alt="Current Profile Picture"></p>
             <input id="profile_picture" type="file" name="profile_picture"
                    accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
             @error('profile_picture')
@@ -53,20 +53,18 @@
         </div>
 
 
-        <div class="form-group" style="margin-top: 1.5em;">
+        <div class="form-group">
             <button type="submit">Update Profile</button>
-            <a href="{{ route('profile.show', $user->username) }}" class="button-link"
-               style="background-color: #6c757d;">Cancel</a>
+            <a href="{{ route('profile.show', $user->username) }}" class="button-link">Cancel</a>
         </div>
     </form>
 
-    {{-- Link to Change Password if applicable --}}
     @if($user->password)
-        <p style="margin-top: 2em;">
+        <p>
             <a href="{{ route('password.change.form') }}">Change Your Password</a>
         </p>
     @elseif($user->google_id)
-        <p style="margin-top: 2em; font-style: italic;">
+        <p>
             Password change is not available for accounts created via Google login unless a password has been set.
         </p>
     @endif
