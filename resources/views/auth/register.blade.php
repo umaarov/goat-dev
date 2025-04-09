@@ -5,7 +5,7 @@
 @section('content')
     <div class="max-w-md mx-auto bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4">
         <div class="p-6">
-            <h2 class="text-2xl font-semibold mb-4 text-black">Register</h2>
+            <h2 class="text-2xl font-semibold mb-4 text-blue-800">Register</h2>
 
             <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data">
                 @csrf

@@ -14,8 +14,10 @@
 <nav
     class="fixed top-0 left-0 right-0 bg-white rounded-b-xl shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] z-10 h-16 flex items-center px-4 max-w-[450px] mx-auto">
     <div class="w-full max-w-md mx-auto flex items-center justify-between">
-        <div class="w-6"></div> <!-- Spacer for alignment -->
-        <h1 class="text-xl font-bold text-black">GOAT</h1>
+        <div class="w-6"></div>
+        <a href="{{route('home')}}">
+            <img src="{{ asset('images/main_logo.png') }}" alt="Logo" class="h-23 w-23 cursor-pointer">
+        </a>
         <div>
             @auth
                 <a href="{{ route('profile.show', ['username' => Auth::user()->username]) }}" class="text-black">

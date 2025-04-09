@@ -5,7 +5,7 @@
 @section('content')
     <div class="max-w-md mx-auto bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden">
         <div class="p-6">
-            <h2 class="text-2xl font-semibold mb-6 text-black">Change Password</h2>
+            <h2 class="text-2xl font-semibold mb-6 text-blue-800">Change Password</h2>
 
             <form method="POST" action="{{ route('password.change') }}">
                 @csrf
