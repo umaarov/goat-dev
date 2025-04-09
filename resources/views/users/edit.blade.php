@@ -14,7 +14,8 @@
 
                 <div class="mb-4">
                     <label for="first_name" class="block text-gray-700 mb-2">First Name</label>
-                    <input id="first_name" type="text" name="first_name" value="{{ old('first_name', $user->first_name) }}"
+                    <input id="first_name" type="text" name="first_name"
+                           value="{{ old('first_name', $user->first_name) }}"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                            required>
                     @error('first_name')
@@ -42,7 +43,8 @@
                 </div>
 
                 <div class="mb-6">
-                    <label for="profile_picture" class="block text-gray-700 mb-2">Update Profile Picture (Optional)</label>
+                    <label for="profile_picture" class="block text-gray-700 mb-2">Update Profile Picture
+                        (Optional)</label>
                     @php
                         $profilePic = $user->profile_picture
                             ? (Str::startsWith($user->profile_picture, ['http', 'https'])
@@ -54,15 +56,19 @@
                     <div class="flex items-center mb-3">
                         <span class="mr-2 text-sm text-gray-600">Current:</span>
                         <div class="h-16 w-16 rounded-full overflow-hidden border border-gray-200">
-                            <img src="{{ $profilePic }}" alt="Current Profile Picture" class="h-full w-full object-cover">
+                            <img src="{{ $profilePic }}" alt="Current Profile Picture"
+                                 class="h-full w-full object-cover">
                         </div>
                     </div>
 
                     <div class="relative border border-gray-300 rounded-md p-2">
                         <div class="flex items-center">
-                            <div id="profile_picture_preview" class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            <div id="profile_picture_preview"
+                                 class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none"
+                                     viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M12 4v16m8-8H4"/>
                                 </svg>
                             </div>
                             <div class="flex-1">
@@ -85,7 +91,8 @@
                 </div>
 
                 <div class="flex items-center justify-between">
-                    <button type="submit" class="px-6 py-2 bg-blue-800 text-white rounded-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="submit"
+                            class="px-6 py-2 bg-blue-800 text-white rounded-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         Update Profile
                     </button>
                     <a href="{{ route('profile.show', $user->username) }}"
@@ -96,18 +103,28 @@
             </form>
 
             @if($user->password)
-                <div class="mt-6 pt-6 border-t border-gray-200">
+                <div class="mt-6 pt-6 border-t border-gray-200 flex justify-between">
                     <a href="{{ route('password.change.form') }}" class="text-blue-800 hover:underline">
                         Change Your Password
                     </a>
+
+                    <form action="{{ route('logout') }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit" class="text-red-600 hover:underline cursor-pointer">
+                            Logout
+                        </button>
+                    </form>
+
                 </div>
             @elseif($user->google_id)
                 <div class="mt-6 pt-6 border-t border-gray-200">
                     <p class="text-gray-600 text-sm">
-                        Password change is not available for accounts created via Google login unless a password has been set.
+                        Password change is not available for accounts created via Google login unless a password has
+                        been set.
                     </p>
                 </div>
             @endif
+
         </div>
     </div>
 
@@ -118,7 +135,7 @@
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
 
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     // Create an image element and set its source
                     preview.innerHTML = '';
                     const img = document.createElement('img');
