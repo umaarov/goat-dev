@@ -21,8 +21,8 @@
                 @enderror
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2em;">
-                <fieldset style="border: 1px solid #ccc; padding: 1em;">
+            <div>
+                <fieldset>
                     <legend>Option 1</legend>
                     <div class="form-group">
                         <label for="option_one_title">Title</label>
@@ -37,7 +37,7 @@
                         @if($post->option_one_image)
                             <p>Current: <img src="{{ asset('storage/' . $post->option_one_image) }}"
                                              alt="Current Option 1 Image"
-                                             style="max-height: 50px; vertical-align: middle;"></p>
+                                             ></p>
                             <label>
                                 <input type="checkbox" name="remove_option_one_image" value="1"> Remove current image
                             </label>
@@ -50,7 +50,7 @@
                     </div>
                 </fieldset>
 
-                <fieldset style="border: 1px solid #ccc; padding: 1em;">
+                <fieldset>
                     <legend>Option 2</legend>
                     <div class="form-group">
                         <label for="option_two_title">Title</label>
@@ -64,8 +64,7 @@
                         <label for="option_two_image">Replace Image (Optional)</label>
                         @if($post->option_two_image)
                             <p>Current: <img src="{{ asset('storage/' . $post->option_two_image) }}"
-                                             alt="Current Option 2 Image"
-                                             style="max-height: 50px; vertical-align: middle;"></p>
+                                             alt="Current Option 2 Image"></p>
                             <label>
                                 <input type="checkbox" name="remove_option_two_image" value="1"> Remove current image
                             </label>
@@ -79,10 +78,10 @@
                 </fieldset>
             </div>
 
-            <div class="form-group" style="margin-top: 1.5em;">
+            <div class="form-group">
                 <button type="submit">Update Post</button>
-                <a href="{{ route('profile.show', ['username' => Auth::user()->username]) }}" class="button-link"
-                   style="background-color: #6c757d;">Cancel</a>
+                <a href="{{ route('profile.show', ['username' => Auth::user()->username]) }}"
+                   class="button-link">Cancel</a>
             </div>
         </form>
     @endif
