@@ -125,12 +125,8 @@ class AuthController extends Controller
 
     final public function logout(Request $request): RedirectResponse
     {
-        // Add debugging information
-        Log::info('Logout - Session ID: ' . $request->session()->getId());
-
         Auth::logout();
 
-        // Invalidate and regenerate the session
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
@@ -139,9 +135,6 @@ class AuthController extends Controller
 
     final public function googleRedirect()
     {
-        // Add debugging information
-        Log::info('Google redirect - Session ID: ' . Session::getId());
-
         try {
             return Socialite::driver('google')->redirect();
         } catch (Exception $e) {
@@ -152,9 +145,6 @@ class AuthController extends Controller
 
     final public function googleCallback(Request $request): RedirectResponse
     {
-        // Add debugging information
-        Log::info('Google callback - Session ID: ' . $request->session()->getId());
-
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
             Log::info('Google user retrieved', ['email' => $googleUser->getEmail()]);
@@ -180,7 +170,6 @@ class AuthController extends Controller
                     $firstName = $nameParts[0] ?? '';
                     $lastName = count($nameParts) > 1 ? implode(' ', array_slice($nameParts, 1)) : null;
 
-                    // Try to get given_name and family_name if available
                     if (isset($googleUser->user['given_name'])) {
                         $firstName = $googleUser->user['given_name'];
                     }
@@ -196,7 +185,7 @@ class AuthController extends Controller
                         'google_id' => $googleUser->getId(),
                         'profile_picture' => $googleUser->getAvatar(),
                         'email_verified_at' => now(),
-                        'password' => Hash::make(Str::random(24)), // Create a random password for security
+                        'password' => Hash::make(Str::random(24)),
                     ]);
                     Log::info('Created new user from Google', ['email' => $user->email]);
                 }
