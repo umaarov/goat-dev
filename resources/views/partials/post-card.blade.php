@@ -266,19 +266,18 @@
         border-color: #2563eb;
     }
 
-    .pagination .page-item.loading .page-link {
-        pointer-events: none;
+    .pagination .page-item.disabled {
         opacity: 0.7;
+        cursor: not-allowed;
+    }
+
+    .pagination .page-item.disabled .page-link {
+        pointer-events: none;
     }
 
     .comments-list {
         transition: opacity 0.3s ease;
         min-height: 50px;
-    }
-
-    button[type="submit"].submit-success {
-        background-color: #10B981;
-        transition: background-color 0.3s ease;
     }
 
     #comments-loading {
@@ -478,6 +477,11 @@
         if (comments.current_page > 1) {
             const prevLink = createPageLink('&laquo;', comments.current_page - 1, postId);
             pagination.appendChild(prevLink);
+        } else {
+            const disabledPrev = document.createElement('div');
+            disabledPrev.className = 'page-item disabled';
+            disabledPrev.innerHTML = '<span class="page-link">&laquo;</span>';
+            pagination.appendChild(disabledPrev);
         }
 
         const startPage = Math.max(1, comments.current_page - 2);
@@ -511,6 +515,11 @@
         if (comments.current_page < comments.last_page) {
             const nextLink = createPageLink('&raquo;', comments.current_page + 1, postId);
             pagination.appendChild(nextLink);
+        } else {
+            const disabledNext = document.createElement('div');
+            disabledNext.className = 'page-item disabled';
+            disabledNext.innerHTML = '<span class="page-link">&raquo;</span>';
+            pagination.appendChild(disabledNext);
         }
 
         container.appendChild(pagination);
@@ -526,15 +535,46 @@
         link.innerHTML = text;
         link.onclick = (e) => {
             e.preventDefault();
-            if (pageItem.classList.contains('loading')) {
+            if (pageItem.classList.contains('active')) {
                 return;
             }
-            pageItem.classList.add('loading');
 
-            setTimeout(() => {
+            const commentsSection = document.getElementById(`comments-section-${postId}`);
+            const scrollPosition = commentsSection.scrollTop;
+
+            const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
+            if (paginationContainer) {
+                const overlay = document.createElement('div');
+                overlay.style.position = 'absolute';
+                overlay.style.top = '0';
+                overlay.style.left = '0';
+                overlay.style.right = '0';
+                overlay.style.bottom = '0';
+                overlay.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+                overlay.style.zIndex = '10';
+                overlay.style.transition = 'opacity 0.2s ease';
+
+                const commentsListContainer = commentsSection.querySelector('.comments-list');
+                if (commentsListContainer && getComputedStyle(commentsListContainer).position === 'static') {
+                    commentsListContainer.style.position = 'relative';
+                }
+
+                commentsListContainer.appendChild(overlay);
+
+                setTimeout(() => {
+                    loadComments(postId, page);
+
+                    setTimeout(() => {
+                        overlay.style.opacity = '0';
+                        setTimeout(() => {
+                            overlay.remove();
+                            commentsSection.scrollTop = scrollPosition;
+                        }, 200);
+                    }, 300);
+                }, 50);
+            } else {
                 loadComments(postId, page);
-                pageItem.classList.remove('loading');
-            }, 100);
+            }
         };
 
         pageItem.appendChild(link);
@@ -555,10 +595,6 @@
         submitButton.disabled = true;
         submitButton.innerHTML = '<div class="inline-block animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>';
 
-        const commentsSection = document.getElementById(`comments-section-${postId}`);
-        const commentsContainer = commentsSection.querySelector('.comments-list');
-        const currentHTML = commentsContainer.innerHTML;
-
         const url = `/posts/${postId}/comments`;
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
@@ -577,30 +613,63 @@
 
                 submitButton.disabled = false;
                 submitButton.innerHTML = 'Comment';
-                submitButton.classList.add('submit-success');
-                setTimeout(() => {
-                    submitButton.classList.remove('submit-success');
-                }, 1500);
 
                 if (data.errors) {
                     alert('Error: ' + Object.values(data.errors).join('\n'));
                     return;
                 }
 
-                const existingComments = commentsContainer.querySelectorAll('.comment');
-                existingComments.forEach(comment => {
-                    comment.style.opacity = '0.7';
-                    comment.style.transition = 'opacity 0.3s ease';
-                });
+                const currentUserId = {{ Auth::id() ?? 'null' }};
+                const currentUsername = '{{ Auth::check() ? Auth::user()->username : "" }}';
+                const currentUserProfilePic = '{{ Auth::check() ? (Auth::user()->profile_picture ? (Str::startsWith(Auth::user()->profile_picture, ["http", "https"]) ? Auth::user()->profile_picture : asset("storage/" . Auth::user()->profile_picture)) : asset("images/default-pfp.png")) : "" }}';
+
+                const newComment = {
+                    id: data.comment.id,
+                    content: data.comment.content,
+                    created_at: data.comment.created_at,
+                    user: {
+                        id: currentUserId,
+                        username: currentUsername,
+                        profile_picture: currentUserProfilePic
+                    },
+                    post: {
+                        user_id: data.comment.post.user_id
+                    },
+                    user_id: currentUserId
+                };
+
+                const commentsSection = document.getElementById(`comments-section-${postId}`);
+                const commentsContainer = commentsSection.querySelector('.comments-list');
+
+                const noCommentsMessage = commentsContainer.querySelector('p.text-center');
+                if (noCommentsMessage) {
+                    commentsContainer.innerHTML = '';
+                }
+
+                const commentElement = createCommentElement(newComment, postId);
+                if (commentsContainer.firstChild) {
+                    commentsContainer.insertBefore(commentElement, commentsContainer.firstChild);
+                } else {
+                    commentsContainer.appendChild(commentElement);
+                }
 
                 setTimeout(() => {
-                    loadComments(postId, 1);
-                }, 300);
+                    commentElement.classList.add('visible');
+                }, 10);
 
                 const commentCountElement = document.querySelector(`#post-${postId} .flex.justify-between.items-center.px-8.py-3 button:first-child span`);
                 if (commentCountElement) {
                     const currentCount = parseInt(commentCountElement.textContent);
                     commentCountElement.textContent = currentCount + 1;
+                }
+
+                const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
+                if (paginationContainer && commentsSection.dataset.currentPage !== '1') {
+                    fetch(`/posts/${postId}/comments?page=1`)
+                        .then(response => response.json())
+                        .then(pageData => {
+                            renderPagination(pageData.comments, postId, paginationContainer);
+                        });
                 }
             })
             .catch(error => {
