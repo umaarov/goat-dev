@@ -174,17 +174,14 @@ class PostController extends Controller
         return redirect()->route('home')->with('success', 'Post deleted successfully.');
     }
 
-    final public function vote(Request $request, Post $post): RedirectResponse|JsonResponse
+    final public function vote(Request $request, Post $post): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'option' => 'required|in:option_one,option_two',
         ]);
 
         if ($validator->fails()) {
-            if ($request->expectsJson()) {
-                return response()->json(['errors' => $validator->errors()], 422);
-            }
-            return redirect()->back()->withErrors($validator)->with('error', 'Invalid vote option.');
+            return response()->json(['errors' => $validator->errors()], 422);
         }
 
         $loggedInUserId = Auth::id();
@@ -194,42 +191,7 @@ class PostController extends Controller
             ->first();
 
         if ($existingVote) {
-            // Optional: Allow changing vote?
-            /*
-            if ($existingVote->vote_option !== $request->option) {
-                // Decrement old count, increment new count, update vote record
-                if ($existingVote->vote_option === 'option_one') {
-                    $post->decrement('option_one_votes');
-                    $post->increment('option_two_votes');
-                } else {
-                    $post->decrement('option_two_votes');
-                    $post->increment('option_one_votes');
-                }
-                $existingVote->update(['vote_option' => $request->option]);
-                // Don't increment total_votes here as it's a change, not a new vote
-
-                 if ($request->expectsJson()) {
-                     // Return updated post counts and user vote status
-                      return response()->json([
-                          'message' => 'Vote changed successfully!',
-                          'option_one_votes' => $post->option_one_votes,
-                          'option_two_votes' => $post->option_two_votes,
-                          'user_vote' => $request->option,
-                      ]);
-                  }
-                return redirect()->back()->with('success', 'Vote changed successfully!');
-            } else {
-                 if ($request->expectsJson()) {
-                     return response()->json(['message' => 'Your vote remains the same.'], 200);
-                 }
-                return redirect()->back()->with('info', 'Your vote remains the same.');
-            }
-            */
-
-            if ($request->expectsJson()) {
-                return response()->json(['error' => 'You have already voted on this post.'], 409); // 409 Conflict
-            }
-            return redirect()->back()->with('error', 'You have already voted on this post.');
+            return response()->json(['error' => 'You have already voted on this post.'], 409);
         }
 
         Vote::create([
@@ -245,18 +207,14 @@ class PostController extends Controller
         }
         $post->increment('total_votes');
 
-        if ($request->expectsJson()) {
-            $post->refresh();
-            return response()->json([
-                'message' => 'Vote registered successfully!',
-                'option_one_votes' => $post->option_one_votes,
-                'option_two_votes' => $post->option_two_votes,
-                'total_votes' => $post->total_votes,
-                'user_vote' => $request->option,
-            ]);
-        }
-
-        return redirect()->back()->with('success', 'Your vote has been registered!');
+        $post->refresh();
+        return response()->json([
+            'message' => 'Vote registered successfully!',
+            'option_one_votes' => $post->option_one_votes,
+            'option_two_votes' => $post->option_two_votes,
+            'total_votes' => $post->total_votes,
+            'user_vote' => $request->option,
+        ]);
     }
 
     final public function search(Request $request): View|JsonResponse

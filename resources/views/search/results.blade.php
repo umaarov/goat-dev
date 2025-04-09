@@ -3,7 +3,7 @@
 @section('title', $queryTerm ? 'Search Results for "' . e($queryTerm) . '"' : 'Search')
 
 @section('content')
-    <div class="flex flex-col items-center justify-center">
+    <div class="flex flex-col items-center justify-center mb-4">
         <form action="{{ route('search') }}" method="GET" class="w-full max-w-md mx-auto">
             <div class="relative">
                 <input

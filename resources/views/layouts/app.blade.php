@@ -8,6 +8,7 @@
     @stack('styles')
     @vite('resources/css/app.css')
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body class="flex flex-col min-h-screen bg-gray-100">
 <!-- Fixed top toolbar -->
@@ -75,7 +76,7 @@
 
 <!-- Fixed bottom navbar -->
 <nav
-    class="fixed bottom-0 left-0 right-0 bg-white shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] rounded-t-xl z-10 h-16 max-w-[450px] mx-auto">
+    class="fixed bottom-0 left-0 right-0 bg-white shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] rounded-t-xl z-10 h-20 max-w-[450px] mx-auto">
     <div class="w-full max-w-md mx-auto flex items-center justify-around h-full">
         <a href="{{ route('home') }}"
            class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-800">

@@ -1,6 +1,8 @@
 @php use Illuminate\Support\Facades\Auth;use Illuminate\Support\Str; @endphp
 <article class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4"
-         id="post-{{ $post->id }}">
+         id="post-{{ $post->id }}"
+         data-option-one-title="{{ $post->option_one_title }}"
+         data-option-two-title="{{ $post->option_two_title }}">
     <!-- Header: Profile pic, username and date -->
     <header class="p-4">
         <div class="flex">
@@ -142,7 +144,8 @@
         <!-- Comment form for authenticated users -->
         @auth
             <div class="p-4 border-b border-gray-200">
-                <form action="{{ route('comments.store', $post) }}" method="POST" class="flex flex-col space-y-2">
+                <form id="comment-form-{{ $post->id }}" onsubmit="submitComment('{{ $post->id }}', event)"
+                      class="flex flex-col space-y-2">
                     @csrf
                     <textarea name="content" rows="2" placeholder="Write a comment..." required
                               class="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
@@ -186,9 +189,7 @@
 
                             @if (Auth::check() && (Auth::id() === $comment->user_id || Auth::id() === $post->user_id))
                                 <div class="ml-auto">
-                                    <form action="{{ route('comments.destroy', $comment) }}" method="POST"
-                                          class="inline"
-                                          onsubmit="return confirm('Delete this comment?');">
+                                    <form onsubmit="deleteComment('{{ $comment->id }}', event)" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-gray-400 hover:text-red-500 text-xs">
@@ -233,7 +234,110 @@
 </article>
 
 <script>
-    // Toggle comments visibility
+
+    function submitComment(postId, event) {
+        event.preventDefault();
+        const form = event.target;
+        const content = form.elements.content.value;
+        const url = `{{ url('/posts') }}/${postId}/comments`;
+        const csrfToken = '{{ csrf_token() }}';
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({content: content})
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.errors) {
+                    alert('Error: ' + Object.values(data.errors).join('\n'));
+                    return;
+                }
+
+                form.elements.content.value = '';
+
+                const commentsSection = document.querySelector(`#comments-section-${postId}`);
+
+                const commentForm = commentsSection.querySelector('form#comment-form-' + postId);
+                const commentsContainer = commentForm ?
+                    commentForm.closest('div').nextElementSibling :
+                    commentsSection.querySelector('.p-4');
+
+                const commentDiv = document.createElement('div');
+                commentDiv.className = 'comment mb-3 border-b border-gray-200 pb-3';
+                commentDiv.id = 'comment-' + data.comment.id;
+
+                const profilePic = data.comment.user.profile_picture
+                    ? (data.comment.user.profile_picture.startsWith('http')
+                        ? data.comment.user.profile_picture
+                        : '{{ asset("storage") }}/' + data.comment.user.profile_picture)
+                    : '{{ asset("images/default-pfp.png") }}';
+
+                commentDiv.innerHTML = `
+    <div class="flex items-center mb-2">
+        <img src="${profilePic}" alt="${data.comment.user.username}'s profile picture" class="w-8 h-8 rounded-full mr-2">
+        <div>
+            <div class="flex items-center">
+                <a href="{{ url('/@') }}${data.comment.user.username}" class="text-sm font-medium text-gray-800 hover:underline">${data.comment.user.username}</a>
+                <span class="mx-1 text-gray-400">·</span>
+                <small class="text-xs text-gray-500" title="${data.comment.created_at}">Just now</small>
+            </div>
+        </div>
+        <div class="ml-auto">
+            <form onsubmit="deleteComment('${data.comment.id}', event)" class="inline">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="text-gray-400 hover:text-red-500 text-xs">Delete</button>
+            </form>
+        </div>
+    </div>
+    <p class="text-sm text-gray-700 pl-10">${data.comment.content}</p>
+    `;
+
+                const existingComments = commentsContainer.querySelectorAll('.comment');
+
+                if (existingComments.length === 0) {
+                    if (commentsContainer.querySelector('p.text-center')) {
+                        commentsContainer.innerHTML = '';
+                    }
+
+                    const existingHeading = commentsContainer.querySelector('h4.text-sm.font-semibold');
+                    if (!existingHeading) {
+                        const heading = document.createElement('h4');
+                        heading.className = 'text-sm font-semibold text-gray-700 mb-3';
+                        heading.textContent = 'Comments';
+                        commentsContainer.appendChild(heading);
+                    }
+                }
+
+                const firstComment = commentsContainer.querySelector('.comment');
+                if (firstComment) {
+                    commentsContainer.insertBefore(commentDiv, firstComment);
+                } else {
+                    commentsContainer.appendChild(commentDiv);
+                }
+
+
+                const commentCountElement = document.querySelector(`#post-${postId} .flex.justify-between.items-center.px-8.py-3 button:first-child span`);
+                commentCountElement.textContent = parseInt(commentCountElement.textContent) + 1;
+
+                const headings = commentsSection.querySelectorAll('h4.text-sm.font-semibold');
+                if (headings.length > 1) {
+                    for (let i = 1; i < headings.length; i++) {
+                        headings[i].remove();
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to add comment. Please try again.');
+            });
+    }
+
     function toggleComments(postId) {
         const commentsSection = document.getElementById(`comments-section-${postId}`);
         if (commentsSection.classList.contains('hidden')) {
@@ -243,44 +347,123 @@
         }
     }
 
-    // Vote function
+    function deleteComment(commentId, event) {
+        event.preventDefault();
+
+        if (!confirm('Delete this comment?')) {
+            return;
+        }
+
+        const url = `{{ url('/comments') }}/${commentId}`;
+        const csrfToken = '{{ csrf_token() }}';
+
+        fetch(url, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                // Find and remove the comment element
+                const commentElement = document.getElementById('comment-' + commentId);
+                const postId = commentElement.closest('[id^="post-"]').id.split('-')[1];
+                const commentsContainer = document.querySelector(`#comments-section-${postId} .p-4`);
+
+                commentElement.remove();
+
+                // Update the comment count
+                const commentCountElement = document.querySelector(`#post-${postId} .flex.justify-between.items-center.px-8.py-3 button:first-child span`);
+                const currentCount = parseInt(commentCountElement.textContent);
+                commentCountElement.textContent = currentCount - 1;
+
+                // If there are no more comments, show the "no comments" message
+                const remainingComments = commentsContainer.querySelectorAll('.comment');
+                if (remainingComments.length === 0) {
+                    // Remove the heading
+                    const heading = commentsContainer.querySelector('h4.text-sm.font-semibold');
+                    if (heading) {
+                        heading.remove();
+                    }
+
+                    // Add the "no comments" message
+                    commentsContainer.innerHTML = '<p class="text-sm text-gray-500 text-center">No comments yet. Be the first to comment!</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to delete comment. Please try again.');
+            });
+    }
+
     function voteForOption(postId, option) {
         // For authenticated users, submit the form
         if ({{ Auth::check() ? 'true' : 'false' }}) {
-            // Create a form dynamically
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '{{ url("/posts") }}/' + postId + '/vote';
+            const url = '{{ url("/posts") }}/' + postId + '/vote';
+            const csrfToken = '{{ csrf_token() }}';
 
-            // Add CSRF token
-            const csrfToken = document.createElement('input');
-            csrfToken.type = 'hidden';
-            csrfToken.name = '_token';
-            csrfToken.value = '{{ csrf_token() }}';
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({option: option})
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
 
-            // Add option
-            const optionInput = document.createElement('input');
-            optionInput.type = 'hidden';
-            optionInput.name = 'option';
-            optionInput.value = option;
+                    // Update the buttons and percentages
+                    const post = document.getElementById('post-' + postId);
+                    const optionOneBtn = post.querySelector('.grid.grid-cols-2.gap-4.px-4.pb-4 button:first-child');
+                    const optionTwoBtn = post.querySelector('.grid.grid-cols-2.gap-4.px-4.pb-4 button:last-child');
 
-            // Append to document and submit
-            form.appendChild(csrfToken);
-            form.appendChild(optionInput);
-            document.body.appendChild(form);
-            form.submit();
+                    // Reset button styles
+                    optionOneBtn.className = 'p-3 text-center rounded-md bg-white border border-gray-300 hover:bg-gray-50';
+                    optionTwoBtn.className = 'p-3 text-center rounded-md bg-white border border-gray-300 hover:bg-gray-50';
+
+                    // Apply selected style to the voted option
+                    if (option === 'option_one') {
+                        optionOneBtn.className = 'p-3 text-center rounded-md bg-blue-800 text-white';
+                    } else {
+                        optionTwoBtn.className = 'p-3 text-center rounded-md bg-blue-800 text-white';
+                    }
+
+                    // Update the text with percentages
+                    const percentOne = data.total_votes > 0 ? Math.round((data.option_one_votes / data.total_votes) * 100) : 0;
+                    const percentTwo = data.total_votes > 0 ? Math.round((data.option_two_votes / data.total_votes) * 100) : 0;
+
+                    optionOneBtn.querySelector('p').textContent = post.dataset.optionOneTitle + ' (' + percentOne + '%)';
+                    optionTwoBtn.querySelector('p').textContent = post.dataset.optionTwoTitle + ' (' + percentTwo + '%)';
+
+                    // Update the vote count
+                    post.querySelector('.flex.justify-between.items-center.px-8.py-3 .flex.flex-col.items-center.gap-1 .text-lg').textContent = data.total_votes;
+                    // alert('Vote registered successfully!');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to register vote. Please try again.');
+                });
         } else {
             // Redirect to login for non-authenticated users
             window.location.href = '{{ route("login") }}';
         }
     }
 
-    // Share post function
     function sharePost(postId) {
-        // Get the current URL
         const url = window.location.origin + '/posts/' + postId;
 
-        // Check if the browser supports the clipboard API
         if (navigator.clipboard) {
             navigator.clipboard.writeText(url)
                 .then(() => {
@@ -290,10 +473,9 @@
                     console.error('Could not copy text: ', err);
                 });
         } else {
-            // Fallback for browsers that don't support clipboard API
             const textarea = document.createElement('textarea');
             textarea.value = url;
-            textarea.style.position = 'fixed';  // Prevent scrolling to bottom
+            textarea.style.position = 'fixed';
             document.body.appendChild(textarea);
             textarea.focus();
             textarea.select();
