@@ -760,6 +760,68 @@
         }, 300);
     }
 
+    function voteForOption(postId, option) {
+        // Don't proceed if user is not logged in
+        if (!{{ Auth::check() ? 'true' : 'false' }}) {
+            alert('You need to be logged in to vote.');
+            return;
+        }
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        fetch(`/posts/${postId}/vote`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({option: option})
+        })
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 409) {
+                        return response.json().then(data => {
+                            throw new Error(data.error || 'You have already voted on this post.');
+                        });
+                    }
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const postElement = document.getElementById(`post-${postId}`);
+                const optionOneBtn = postElement.querySelector('.grid.grid-cols-2.gap-4.px-4.pb-4 button:first-child');
+                const optionTwoBtn = postElement.querySelector('.grid.grid-cols-2.gap-4.px-4.pb-4 button:last-child');
+
+                const percentOne = data.total_votes > 0 ? Math.round((data.option_one_votes / data.total_votes) * 100) : 0;
+                const percentTwo = data.total_votes > 0 ? Math.round((data.option_two_votes / data.total_votes) * 100) : 0;
+
+                optionOneBtn.className = option === 'option_one' ?
+                    'p-3 text-center rounded-md bg-blue-800 text-white' :
+                    'p-3 text-center rounded-md bg-white border border-gray-300 hover:bg-gray-50';
+
+                optionTwoBtn.className = option === 'option_two' ?
+                    'p-3 text-center rounded-md bg-blue-800 text-white' :
+                    'p-3 text-center rounded-md bg-white border border-gray-300 hover:bg-gray-50';
+
+                const optionOneTitle = postElement.getAttribute('data-option-one-title');
+                const optionTwoTitle = postElement.getAttribute('data-option-two-title');
+
+                optionOneBtn.querySelector('p').textContent = `${optionOneTitle} (${percentOne}%)`;
+                optionTwoBtn.querySelector('p').textContent = `${optionTwoTitle} (${percentTwo}%)`;
+
+                const votesCountElement = postElement.querySelector('.flex.justify-between.items-center.px-8.py-3 .flex.flex-col.items-center.gap-1 span:first-child');
+                if (votesCountElement) {
+                    votesCountElement.textContent = data.total_votes;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(error.message || 'Failed to register vote. Please try again.');
+            });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         const commentsSections = document.querySelectorAll('[id^="comments-section-"]');
         commentsSections.forEach(section => {
