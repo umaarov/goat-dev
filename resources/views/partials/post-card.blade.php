@@ -40,8 +40,9 @@
             @else
                 <div class="bg-gray-100 h-full flex items-center justify-center">
                     <div class="bg-gray-200 rounded-full p-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
                     </div>
                 </div>
@@ -57,8 +58,9 @@
             @else
                 <div class="bg-gray-100 h-full flex items-center justify-center">
                     <div class="bg-gray-200 rounded-full p-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
                     </div>
                 </div>
@@ -83,7 +85,7 @@
             {{ !Auth::check() ? 'disabled' : '' }}
             onclick="voteForOption('{{ $post->id }}', 'option_one')"
         >
-            <p>{{ $post->option_one_title }} ({{ $percentOne }}%)</p>
+            <p>{{ $post->option_one_title }} {{ $hasVoted ? "($percentOne%)" : "" }}</p>
         </button>
 
         <!-- Option 2 Button -->
@@ -92,7 +94,7 @@
             {{ !Auth::check() ? 'disabled' : '' }}
             onclick="voteForOption('{{ $post->id }}', 'option_two')"
         >
-            <p>{{ $post->option_two_title }} ({{ $percentTwo }}%)</p>
+            <p>{{ $post->option_two_title }} {{ $hasVoted ? "($percentTwo%)" : "" }}</p>
         </button>
     </div>
 
