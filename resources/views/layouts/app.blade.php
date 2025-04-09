@@ -7,10 +7,12 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @stack('styles')
     @vite('resources/css/app.css')
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="flex flex-col min-h-screen bg-[#f7f7f7]">
 <!-- Fixed top toolbar -->
-<nav class="fixed top-0 left-0 right-0 bg-white rounded-b-4xl z-10 h-18 flex items-center px-4 max-w-[450px] mx-auto">
+<nav
+    class="fixed top-0 left-0 right-0 bg-white rounded-b-4xl shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] z-10 h-18 flex items-center px-4 max-w-[450px] mx-auto">
     <div class="w-full max-w-md mx-auto flex items-center justify-between">
         <div class="w-6"></div> <!-- Spacer for alignment -->
         <h1 class="text-xl font-bold">GOAT</h1>
@@ -70,7 +72,8 @@
 </main>
 
 <!-- Fixed bottom navbar -->
-<nav class="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl z-10 h-16 max-w-[450px] mx-auto">
+<nav
+    class="fixed bottom-0 left-0 right-0 bg-white shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] rounded-t-2xl z-10 h-18 max-w-[450px] mx-auto">
     <div class="w-full max-w-md mx-auto flex items-center justify-around h-full">
         <a href="{{ route('home') }}"
            class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-500">
