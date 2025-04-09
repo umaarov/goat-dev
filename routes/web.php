@@ -40,7 +40,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/posts/{post}/vote', [PostController::class, 'vote'])
         ->where('post', '[0-9]+')
         ->name('posts.vote');
-
     Route::post('/posts/{post}/comments', [CommentController::class, 'store'])
         ->where('post', '[0-9]+')
         ->name('comments.store');
@@ -50,6 +49,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])
         ->where('comment', '[0-9]+')
         ->name('comments.destroy');
+    Route::get('/posts/{post}/comments', [CommentController::class, 'index'])->name('comments.index');
 
     Route::get('/profile/edit', [UserController::class, 'edit'])->name('profile.edit');
     Route::put('/profile/update', [UserController::class, 'update'])->name('profile.update');
