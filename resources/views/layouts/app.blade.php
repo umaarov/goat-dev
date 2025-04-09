@@ -75,7 +75,7 @@
 
 <!-- Fixed bottom navbar -->
 <nav
-    class="fixed bottom-0 left-0 right-0 bg-white shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] rounded-t-xl z-10 h-16 max-w-[450px] mx-auto">
+    class="fixed bottom-0 left-0 right-0 bg-white shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] rounded-t-xl z-10 h-20 max-w-[450px] mx-auto">
     <div class="w-full max-w-md mx-auto flex items-center justify-around h-full">
         <a href="{{ route('home') }}"
            class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-800">
