@@ -12,6 +12,22 @@ use Illuminate\Support\Facades\Validator;
 
 class CommentController extends Controller
 {
+    // Add this new method to get paginated comments for a post
+    public function index(Request $request, Post $post)
+    {
+        // Get paginated comments, 10 per page or as specified
+        $perPage = $request->input('per_page', 10);
+        $comments = Comment::where('post_id', $post->id)
+            ->with('user:id,username,profile_picture')
+            ->with('post:id,user_id') // Include post to check if user can delete
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
+
+        return response()->json([
+            'comments' => $comments
+        ]);
+    }
+
     final public function store(Request $request, Post $post)
     {
         $validator = Validator::make($request->all(), [
@@ -45,6 +61,7 @@ class CommentController extends Controller
         ]);
 
         $comment->load('user:id,username,profile_picture');
+        $comment->load('post:id,user_id');
 
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
@@ -92,9 +109,6 @@ class CommentController extends Controller
         }
 
         return redirect()->back()->with('success', 'Comment updated successfully!');
-        // Or redirect to post show page with anchor:
-        // return redirect()->route('posts.show', $comment->post_id) . '#comment-' . $comment->id
-        //           ->with('success', 'Comment updated successfully!');
     }
 
     final public function destroy(Request $request, Comment $comment): RedirectResponse|JsonResponse
