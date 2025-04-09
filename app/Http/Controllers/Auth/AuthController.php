@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
@@ -20,21 +19,11 @@ class AuthController extends Controller
 {
     final public function showRegistrationForm(): View
     {
-        // Add debugging information
-        Log::info('Session ID in registration form: ' . Session::getId());
-        Log::info('CSRF Token in registration form: ' . Session::token());
-
         return view('auth.register');
     }
 
     final public function register(Request $request): RedirectResponse
     {
-        // Add debugging information
-        Log::info('Register - Session ID: ' . $request->session()->getId());
-        Log::info('Register - CSRF Token: ' . $request->session()->token());
-        Log::info('Register - Submitted CSRF: ' . $request->input('_token'));
-
-        // Validate form input
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name' => 'nullable|string|max:255',
@@ -67,12 +56,10 @@ class AuthController extends Controller
 
             Auth::login($user);
 
-            // Force regenerate the session
             $request->session()->regenerate();
 
             return redirect()->route('home')->with('success', 'Registration successful! Welcome!');
         } catch (Exception $e) {
-            Log::error('Registration failed: ' . $e->getMessage());
             return redirect()->back()
                 ->withErrors(['error' => 'Registration failed. Please try again.'])
                 ->withInput($request->except('password', 'password_confirmation'));
@@ -81,20 +68,11 @@ class AuthController extends Controller
 
     final public function showLoginForm(): View
     {
-        // Add debugging information
-        Log::info('Session ID in login form: ' . Session::getId());
-        Log::info('CSRF Token in login form: ' . Session::token());
-
         return view('auth.login');
     }
 
     final public function login(Request $request): RedirectResponse
     {
-        // Add debugging information
-        Log::info('Login - Session ID: ' . $request->session()->getId());
-        Log::info('Login - CSRF Token: ' . $request->session()->token());
-        Log::info('Login - Submitted CSRF: ' . $request->input('_token'));
-
         $validator = Validator::make($request->all(), [
             'email' => 'required|string|email',
             'password' => 'required|string',
@@ -110,10 +88,7 @@ class AuthController extends Controller
         $remember = $request->filled('remember');
 
         if (Auth::attempt($credentials, $remember)) {
-            // Force regenerate the session to prevent session fixation attacks
             $request->session()->regenerate();
-
-            Log::info('Login successful for email: ' . $request->email);
             return redirect()->intended(route('home'))->with('success', 'Logged in successfully!');
         }
 
@@ -138,7 +113,6 @@ class AuthController extends Controller
         try {
             return Socialite::driver('google')->redirect();
         } catch (Exception $e) {
-            Log::error('Google redirect failed: ' . $e->getMessage());
             return redirect()->route('login')->with('error', 'Google authentication failed. Please try again.');
         }
     }
@@ -147,8 +121,6 @@ class AuthController extends Controller
     {
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
-            Log::info('Google user retrieved', ['email' => $googleUser->getEmail()]);
-
             $user = User::where('google_id', $googleUser->getId())->first();
 
             if (!$user) {
@@ -161,7 +133,6 @@ class AuthController extends Controller
                     }
                     $existingUser->save();
                     $user = $existingUser;
-                    Log::info('Updated existing user with Google ID', ['email' => $user->email]);
                 } else {
                     $username = $this->generateUniqueUsername($googleUser->getName());
 
@@ -187,10 +158,7 @@ class AuthController extends Controller
                         'email_verified_at' => now(),
                         'password' => Hash::make(Str::random(24)),
                     ]);
-                    Log::info('Created new user from Google', ['email' => $user->email]);
                 }
-            } else {
-                Log::info('Found existing Google user', ['email' => $user->email]);
             }
 
             Auth::login($user, true);
@@ -225,7 +193,6 @@ class AuthController extends Controller
             $counter++;
 
             if ($counter > 1000) {
-                Log::error("Could not generate a unique username for '{$name}' after 1000 attempts.");
                 return 'user' . Str::random(10);
             }
         }

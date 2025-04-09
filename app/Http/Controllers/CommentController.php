@@ -12,14 +12,14 @@ use Illuminate\Support\Facades\Validator;
 
 class CommentController extends Controller
 {
-    final public function store(Request $request, Post $post): RedirectResponse|JsonResponse
+    final public function store(Request $request, Post $post)
     {
         $validator = Validator::make($request->all(), [
             'content' => 'required|string|max:1000',
         ]);
 
         if ($validator->fails()) {
-            if ($request->expectsJson()) {
+            if ($request->expectsJson() || $request->ajax()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
             return redirect()->back()
@@ -30,6 +30,9 @@ class CommentController extends Controller
 
         $content = $request->input('content');
         if (empty($content)) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['errors' => ['content' => 'Content cannot be empty.']], 422);
+            }
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Content cannot be empty.');
@@ -43,7 +46,7 @@ class CommentController extends Controller
 
         $comment->load('user:id,username,profile_picture');
 
-        if ($request->expectsJson()) {
+        if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
                 'message' => 'Comment added successfully!',
                 'comment' => $comment

@@ -8,6 +8,7 @@
     @stack('styles')
     @vite('resources/css/app.css')
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body class="flex flex-col min-h-screen bg-gray-100">
 <!-- Fixed top toolbar -->
