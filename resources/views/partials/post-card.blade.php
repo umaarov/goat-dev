@@ -1,5 +1,5 @@
 @php use Illuminate\Support\Facades\Auth;use Illuminate\Support\Str; @endphp
-<article class="bg-white rounded-[16px] overflow-hidden shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] mb-4 p-2"
+<article class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4"
          id="post-{{ $post->id }}">
     <!-- Header: Profile pic, username and date -->
     <header class="p-4">
@@ -12,7 +12,7 @@
                 : asset('images/default-pfp.png');
             @endphp
             <img src="{{ $profilePic }}" alt="{{ $post->user->username }}'s profile picture"
-                 class="w-10 h-10 rounded-full border border-[#1E447A]">
+                 class="w-10 h-10 rounded-full border border-gray-300">
             <div class="ml-3">
                 <a href="{{ route('profile.show', $post->user->username) }}"
                    class="font-medium text-gray-800 hover:underline">{{ '@' . $post->user->username }}</a>
@@ -22,29 +22,45 @@
     </header>
 
     <!-- Horizontal line -->
-    <div class="border-b w-[90%] mx-auto border-gray-200"></div>
+    <div class="border-b w-full border-gray-200"></div>
 
     <!-- Question -->
-    <div class="pt-4 px-4 font-medium text-center">
-        <p class="text-gray-800">{{ $post->question }}</p>
+    <div class="pt-4 px-4 font-semibold text-center">
+        <p class="text-lg text-gray-800">{{ $post->question }}</p>
     </div>
 
     <!-- Two images side by side -->
     <div class="grid grid-cols-2 gap-4 p-4 h-52">
-        <div class="rounded-[16px] overflow-hidden shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)]">
+        <div class="rounded-md overflow-hidden">
             @if($post->option_one_image)
                 <div class="bg-gray-100 flex justify-center">
                     <img src="{{ asset('storage/' . $post->option_one_image) }}" alt="Option 1 Image"
                          class="h-52 object-cover object-center w-full">
                 </div>
+            @else
+                <div class="bg-gray-100 h-full flex items-center justify-center">
+                    <div class="bg-gray-200 rounded-full p-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                    </div>
+                </div>
             @endif
         </div>
 
-        <div class="rounded-[16px] overflow-hidden shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)]">
+        <div class="rounded-md overflow-hidden">
             @if($post->option_two_image)
                 <div class="bg-gray-100 flex justify-center">
                     <img src="{{ asset('storage/' . $post->option_two_image) }}" alt="Option 2 Image"
                          class="h-52 object-cover object-center w-full">
+                </div>
+            @else
+                <div class="bg-gray-100 h-full flex items-center justify-center">
+                    <div class="bg-gray-200 rounded-full p-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                    </div>
                 </div>
             @endif
         </div>
@@ -63,7 +79,7 @@
 
             <!-- Option 1 Button -->
         <button
-            class="p-3 text-center rounded-[16px] {{ $hasVoted && $post->user_vote == 'option_one' ? 'bg-[#1E447A] text-white' : 'bg-white hover:accent-gray-100' }} text-[#1E447A] shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] {{ !Auth::check() ? 'opacity-75 cursor-not-allowed' : '' }}"
+            class="p-3 text-center rounded-md {{ $hasVoted && $post->user_vote == 'option_one' ? 'bg-blue-800 text-white' : 'bg-white border border-gray-300 hover:bg-gray-50' }} {{ !Auth::check() ? 'opacity-75 cursor-not-allowed' : '' }}"
             {{ !Auth::check() ? 'disabled' : '' }}
             onclick="voteForOption('{{ $post->id }}', 'option_one')"
         >
@@ -72,7 +88,7 @@
 
         <!-- Option 2 Button -->
         <button
-            class="p-3 text-center rounded-[16px] {{ $hasVoted && $post->user_vote == 'option_two' ? 'bg-[#1E447A] text-white' : 'bg-white hover:accent-gray-100' }} text-[#1E447A] shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] {{ !Auth::check() ? 'opacity-75 cursor-not-allowed' : '' }}"
+            class="p-3 text-center rounded-md {{ $hasVoted && $post->user_vote == 'option_two' ? 'bg-blue-800 text-white' : 'bg-white border border-gray-300 hover:bg-gray-50' }} {{ !Auth::check() ? 'opacity-75 cursor-not-allowed' : '' }}"
             {{ !Auth::check() ? 'disabled' : '' }}
             onclick="voteForOption('{{ $post->id }}', 'option_two')"
         >
@@ -81,14 +97,14 @@
     </div>
 
     <!-- Horizontal line -->
-    <div class="border-b w-[90%] mx-auto border-gray-200"></div>
+    <div class="border-b w-full border-gray-200"></div>
 
     <!-- Interaction buttons: Comment, Total Votes, Share -->
-    <div class="flex justify-between items-center px-8 py-3 text-sm text-black">
+    <div class="flex justify-between items-center px-8 py-3 text-sm text-gray-600">
         <!-- Comment button with count -->
         <button class="flex flex-col items-center gap-1" onclick="toggleComments('{{ $post->id }}')">
             <div class="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                      stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
@@ -98,15 +114,15 @@
         </button>
 
         <!-- Total votes counter -->
-        <div class="flex flex-col items-center gap-1 text-black">
-            <span class="text-2xl">{{ $post->total_votes }}</span>
+        <div class="flex flex-col items-center gap-1">
+            <span class="text-lg font-semibold">{{ $post->total_votes }}</span>
             <span>Votes</span>
         </div>
 
         <!-- Share button with count -->
         <button class="flex flex-col items-center gap-1" onclick="sharePost('{{ $post->id }}')">
             <div class="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                      stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
@@ -127,13 +143,13 @@
                 <form action="{{ route('comments.store', $post) }}" method="POST" class="flex flex-col space-y-2">
                     @csrf
                     <textarea name="content" rows="2" placeholder="Write a comment..." required
-                              class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                              class="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
                     <div class="flex justify-between">
                         <button type="button" onclick="toggleComments('{{ $post->id }}')"
-                                class="bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm py-1 px-4 rounded">Close
+                                class="bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm py-1 px-4 rounded-md">Close
                         </button>
                         <button type="submit"
-                                class="bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-4 rounded">Comment
+                                class="bg-blue-800 hover:bg-blue-900 text-white text-sm py-1 px-4 rounded-md">Comment
                         </button>
                     </div>
                 </form>
@@ -198,7 +214,7 @@
         <div class="flex justify-end space-x-2 p-4 border-t border-gray-200">
             @if($post->total_votes === 0)
                 <a href="{{ route('posts.edit', $post) }}"
-                   class="bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm py-1 px-3 rounded">Edit</a>
+                   class="bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm py-1 px-3 rounded-md">Edit</a>
             @else
                 <small class="text-gray-500 text-xs self-center">(Cannot edit post with votes)</small>
             @endif
@@ -206,7 +222,7 @@
                   onsubmit="return confirm('Are you sure you want to delete this post? This cannot be undone.');">
                 @csrf
                 @method('DELETE')
-                <button type="submit" class="bg-red-100 hover:bg-red-200 text-red-700 text-sm py-1 px-3 rounded">
+                <button type="submit" class="bg-red-100 hover:bg-red-200 text-red-700 text-sm py-1 px-3 rounded-md">
                     Delete
                 </button>
             </form>
