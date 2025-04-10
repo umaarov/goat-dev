@@ -61,8 +61,10 @@ class UserController extends Controller
                 $this->attachUserVoteStatus($posts);
             }
 
+            $showManagementOptions = Auth::check() && Auth::id() === $user->id;
+
             try {
-                $postsHtml = view('users.partials.posts-list', compact('posts'))->render();
+                $postsHtml = view('users.partials.posts-list', compact('posts', 'showManagementOptions'))->render();
                 Log::info('View rendered successfully');
             } catch (Exception $e) {
                 Log::error('View rendering failed: ' . $e->getMessage());
@@ -119,8 +121,10 @@ class UserController extends Controller
                 $this->attachUserVoteStatus($posts);
             }
 
+            $showManagementOptions = true;
+
             try {
-                $postsHtml = view('users.partials.posts-list', compact('posts'))->render();
+                $postsHtml = view('users.partials.posts-list', compact('posts', 'showManagementOptions'))->render();
                 Log::info('View rendered successfully');
             } catch (Exception $e) {
                 Log::error('View rendering failed: ' . $e->getMessage());

@@ -1,4 +1,8 @@
-@php use Illuminate\Support\Facades\Auth;use Illuminate\Support\Str; @endphp
+@php
+    use Illuminate\Support\Facades\Auth;
+    use Illuminate\Support\Str;
+    $showManagementOptions = $showManagementOptions ?? false;
+@endphp
 <article class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4"
          id="post-{{ $post->id }}"
          data-option-one-title="{{ $post->option_one_title }}"
@@ -36,6 +40,19 @@
                 </div>
                 <p class="text-xs text-gray-500">{{ $post->created_at->format('Y-m-d H:i:s') }}</p>
             </div>
+            @if ($showManagementOptions && Auth::check() && Auth::id() === $post->user_id)
+                <div class="flex justify-end border-gray-200 pl-4 ml-auto">
+                    <form action="{{ route('posts.destroy', $post) }}" method="POST"
+                          onsubmit="return confirm('Are you sure you want to delete this post? This cannot be undone.');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
+                                class="bg-red-100 hover:bg-red-200 text-red-700 text-sm py-1 px-3 rounded-md">
+                            Delete
+                        </button>
+                    </form>
+                </div>
+            @endif
         </div>
     </header>
 
@@ -189,26 +206,6 @@
             <div id="pagination-container-<?php echo e($post->id); ?>" class="mt-4"></div>
         </div>
     </div>
-
-    <!-- Post management options for the post owner -->
-    @if (Auth::check() && Auth::id() === $post->user_id && request()->routeIs('profile.show'))
-        <div class="flex justify-end space-x-2 p-4 border-t border-gray-200">
-            @if($post->total_votes === 0)
-                <a href="{{ route('posts.edit', $post) }}"
-                   class="bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm py-1 px-3 rounded-md">Edit</a>
-            @else
-                <small class="text-gray-500 text-xs self-center">(Cannot edit post with votes)</small>
-            @endif
-            <form action="{{ route('posts.destroy', $post) }}" method="POST"
-                  onsubmit="return confirm('Are you sure you want to delete this post? This cannot be undone.');">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="bg-red-100 hover:bg-red-200 text-red-700 text-sm py-1 px-3 rounded-md">
-                    Delete
-                </button>
-            </form>
-        </div>
-    @endif
 </article>
 
 <style>
@@ -430,10 +427,8 @@
                 : '/storage/' + comment.user.profile_picture)
             : '/images/default-pfp.png';
 
-        // Check if user is verified (same logic as in post header)
         const isVerified = ['goat', 'umarov'].includes(comment.user.username);
 
-        // Verified icon HTML - same SVG used in the post header
         const verifiedIconHTML = isVerified ? `
         <span class="ml-1" title="Verified Account">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
