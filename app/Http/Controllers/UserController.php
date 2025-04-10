@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Vote;
+use App\Services\AvatarService;
+use Exception;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -18,6 +20,13 @@ use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
+    protected AvatarService $avatarService;
+
+    public function __construct(AvatarService $avatarService)
+    {
+        $this->avatarService = $avatarService;
+    }
+
     final public function showProfile(string $username): View
     {
         $user = User::where('username', $username)
@@ -32,7 +41,6 @@ class UserController extends Controller
     final public function getUserPosts(Request $request, string $username): JsonResponse
     {
         try {
-            // Debug logging
             Log::info('getUserPosts called', [
                 'username' => $username,
                 'page' => $request->input('page')
@@ -53,7 +61,6 @@ class UserController extends Controller
                 $this->attachUserVoteStatus($posts);
             }
 
-            // Try rendering the view separately to isolate view issues
             try {
                 $postsHtml = view('users.partials.posts-list', compact('posts'))->render();
                 Log::info('View rendered successfully');
@@ -85,7 +92,6 @@ class UserController extends Controller
     final public function getUserVotedPosts(Request $request, string $username): JsonResponse
     {
         try {
-            // Debug logging
             Log::info('getUserVotedPosts called', [
                 'username' => $username,
                 'page' => $request->input('page')
@@ -102,7 +108,6 @@ class UserController extends Controller
 
             Log::info('User authenticated and authorized');
 
-            // Use the corrected votedPosts relationship
             $posts = $user->votedPosts()
                 ->withPostData()
                 ->latest()
@@ -181,6 +186,20 @@ class UserController extends Controller
                 }
             }
             $data['profile_picture'] = $request->file('profile_picture')->store('profile_pictures', 'public');
+        } else if ($request->boolean('remove_profile_picture') ||
+            ($request->first_name !== $user->first_name || $request->last_name !== $user->last_name) &&
+            strpos($user->profile_picture, 'initial_') !== false) {
+            if ($user->profile_picture && !filter_var($user->profile_picture, FILTER_VALIDATE_URL)) {
+                if (Storage::disk('public')->exists($user->profile_picture)) {
+                    Storage::disk('public')->delete($user->profile_picture);
+                }
+            }
+
+            $data['profile_picture'] = $this->avatarService->generateInitialsAvatar(
+                $request->first_name,
+                $request->last_name ?? '',
+                $user->id
+            );
         }
 
         $user->update($data);
