@@ -12,7 +12,7 @@
             </p>
 
             <h5 class="text-lg font-semibold mb-1 mt-6">Our Mission</h5>
-            <p class="text-gray-600 text-sm mb-4">
+            <p class="text-gray-600 text-sm">
                 Our goal is to spark conversation and curiosity by making it easy for anyone to create interactive
                 posts.
                 Whether you're crowdsourcing opinions or just having fun — we’ve got you covered.
