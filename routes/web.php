@@ -20,6 +20,22 @@ Route::get('/auth/google/callback', [AuthController::class, 'googleCallback']);
 Route::get('/', [PostController::class, 'index'])->name('home');
 Route::get('/search', [PostController::class, 'search'])->name('search');
 
+Route::get('about', function () {
+    return view('about');
+})->name('about');
+
+Route::get('terms', function () {
+    return view('terms');
+})->name('terms');
+
+Route::get('sponsorship', function () {
+    return view('sponsorship');
+})->name('sponsorship');
+
+Route::get('ads', function () {
+    return view('ads');
+})->name('ads');
+
 Route::get('/@{username}', [UserController::class, 'showProfile'])
     ->where('username', '[a-zA-Z0-9_\-]+')
     ->name('profile.show');

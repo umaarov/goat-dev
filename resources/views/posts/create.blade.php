@@ -3,7 +3,7 @@
 @section('title', 'Create New Post')
 
 @section('content')
-    <div class="max-w-md mx-auto bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden">
+    <div class="max-w-md mx-auto bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4">
         <div class="p-6">
             <h5 class="text-lg font-semibold mb-1">Ask a unique question!</h5>
             <p class="text-gray-600 text-sm mb-4">Choose titles, images and categories to fit your subjects for the world to vote on.</p>

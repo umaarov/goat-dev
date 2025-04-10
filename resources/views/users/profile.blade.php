@@ -4,7 +4,7 @@
 @section('title', e($user->username) . "'s Profile")
 
 @section('content')
-    <div class="max-w-3xl mx-auto pb-4">
+    <div class="max-w-3xl mx-auto">
         <!-- Profile Header -->
         <div
             class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] border border-gray-100 overflow-hidden mb-6">
