@@ -16,15 +16,31 @@
                                 ? $user->profile_picture
                                 : asset('storage/' . $user->profile_picture))
                             : asset('images/default-pfp.png');
+
+                        $isVerified = in_array($user->username, ['goat', 'umarov']);
                     @endphp
                     <img src="{{ $profilePic }}" alt="{{ $user->username }}'s profile picture"
                          class="h-24 w-24 rounded-full object-cover border border-gray-200">
 
                     <div class="ml-6 flex-1">
                         @if($user->first_name)
-                            <h2 class="text-2xl font-semibold text-gray-800">{{ $user->first_name }} {{ $user->last_name }}</h2>
+                            <div class="flex items-center">
+                                <h2 class="text-2xl font-semibold text-gray-800">{{ $user->first_name }} {{ $user->last_name }}</h2>
+                                @if($isVerified)
+                                    <span class="ml-1" title="Verified Account">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500"
+                                         viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                              d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                              clip-rule="evenodd"/>
+                                    </svg>
+                                </span>
+                                @endif
+                            </div>
                         @endif
-                        <p class="text-gray-600">{{ "@$user->username" }}</p>
+                        <div class="flex items-center">
+                            <p class="text-gray-600">{{ "@$user->username" }}</p>
+                        </div>
                         <p class="text-gray-500 text-sm">Joined: {{ $user->created_at->format('M d, Y') }}</p>
 
                         @if ($isOwnProfile)
