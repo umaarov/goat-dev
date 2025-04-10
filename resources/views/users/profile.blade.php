@@ -28,13 +28,13 @@
                                 <h2 class="text-2xl font-semibold text-gray-800">{{ $user->first_name }} {{ $user->last_name }}</h2>
                                 @if($isVerified)
                                     <span class="ml-1" title="Verified Account">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500"
-                                         viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd"
-                                              d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                              clip-rule="evenodd"/>
-                                    </svg>
-                                </span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500"
+                                             viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd"
+                                                  d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                  clip-rule="evenodd"/>
+                                        </svg>
+                                    </span>
                                 @endif
                             </div>
                         @endif
@@ -76,17 +76,76 @@
             </div>
         </div>
 
-        <!-- Posts directly displayed -->
+        <!-- Posts container -->
         <div id="posts-container" class="space-y-4">
             <p class="text-gray-500 text-center py-8">Loading posts...</p>
         </div>
-
-        <!-- Load more button will be appended here by JavaScript -->
     </div>
 @endsection
 
 @push('scripts')
     <script>
+        function initializePostInteractions() {
+            const commentsSections = document.querySelectorAll('[id^="comments-section-"]');
+            commentsSections.forEach(section => {
+                if (!section.classList.contains('comments-section')) {
+                    section.classList.add('comments-section');
+                    section.classList.add('hidden');
+
+                    const formContainer = section.querySelector('form')?.closest('div');
+                    if (formContainer) {
+                        formContainer.classList.add('comment-form-container');
+                    }
+                }
+            });
+
+            const shareButtons = document.querySelectorAll('[onclick^="sharePost"]');
+            shareButtons.forEach(button => {
+                const postId = button.getAttribute('onclick').match(/'([^']+)'/)[1];
+                button.onclick = () => sharePost(postId);
+            });
+        }
+
+        function sharePost(postId) {
+            const postElement = document.getElementById(`post-${postId}`);
+            const question = postElement.querySelector('.pt-4.px-4.font-semibold.text-center p').textContent;
+            const url = `${window.location.origin}/posts/${postId}`;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: question,
+                    url: url
+                }).catch(error => {
+                    console.error('Error sharing:', error);
+                    fallbackShare(url);
+                });
+            } else {
+                fallbackShare(url);
+            }
+        }
+
+        function fallbackShare(url) {
+            const tempInput = document.createElement('input');
+            document.body.appendChild(tempInput);
+            tempInput.value = url;
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-md text-sm z-50';
+            toast.textContent = 'Link copied to clipboard!';
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 500);
+            }, 2000);
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             const postsContainer = document.getElementById('posts-container');
             const myPostsButton = document.getElementById('load-my-posts');
@@ -117,7 +176,6 @@
                     activeButton.classList.remove('text-gray-700');
                     activeButton.classList.add('text-blue-800', 'font-semibold');
 
-                    // Find the matching indicator
                     const buttonId = activeButton.id;
                     const indicatorId = buttonId + '-indicator';
                     const indicator = document.getElementById(indicatorId);
@@ -173,6 +231,8 @@
                         }
                         postsContainer.insertAdjacentHTML('beforeend', data.html || '');
                     }
+
+                    initializePostInteractions();
 
                     hasMorePages[type] = data.hasMorePages;
 
