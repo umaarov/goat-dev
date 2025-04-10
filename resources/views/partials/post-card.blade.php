@@ -12,12 +12,28 @@
                 ? $post->user->profile_picture
                 : asset('storage/' . $post->user->profile_picture))
                 : asset('images/default-pfp.png');
+
+                // Check if user is verified
+                $isVerified = in_array($post->user->username, ['goat', 'umarov'])
             @endphp
             <img src="{{ $profilePic }}" alt="{{ $post->user->username }}'s profile picture"
                  class="w-10 h-10 rounded-full border border-gray-300">
             <div class="ml-3">
-                <a href="{{ route('profile.show', $post->user->username) }}"
-                   class="font-medium text-gray-800 hover:underline">{{ '@' . $post->user->username }}</a>
+                <div class="flex items-center">
+                    <a href="{{ route('profile.show', $post->user->username) }}"
+                       class="font-medium text-gray-800 hover:underline">{{ '@' . $post->user->username }}</a>
+
+                    @if($isVerified)
+                        <span class="ml-1" title="Verified Account">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" viewBox="0 0 20 20"
+                                 fill="currentColor">
+                                <path fill-rule="evenodd"
+                                      d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                      clip-rule="evenodd"/>
+                            </svg>
+                        </span>
+                    @endif
+                </div>
                 <p class="text-xs text-gray-500">{{ $post->created_at->format('Y-m-d H:i:s') }}</p>
             </div>
         </div>
@@ -106,7 +122,7 @@
     <!-- Interaction buttons: Comment, Total Votes, Share -->
     <div class="flex justify-between items-center px-8 py-3 text-sm text-gray-600">
         <!-- Comment button with count -->
-        <button class="flex flex-col items-center gap-1" onclick="toggleComments('{{ $post->id }}')">
+        <button class="flex flex-col items-center gap-1 cursor-pointer" onclick="toggleComments('{{ $post->id }}')">
             <div class="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                      stroke="currentColor">
@@ -124,7 +140,7 @@
         </div>
 
         <!-- Share button with count -->
-        <button class="flex flex-col items-center gap-1" onclick="sharePost('{{ $post->id }}')">
+        <button class="flex flex-col items-center gap-1 cursor-pointer" onclick="sharePost('{{ $post->id }}')">
             <div class="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                      stroke="currentColor">
@@ -414,12 +430,27 @@
                 : '/storage/' + comment.user.profile_picture)
             : '/images/default-pfp.png';
 
+        // Check if user is verified (same logic as in post header)
+        const isVerified = ['goat', 'umarov'].includes(comment.user.username);
+
+        // Verified icon HTML - same SVG used in the post header
+        const verifiedIconHTML = isVerified ? `
+        <span class="ml-1" title="Verified Account">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd"
+                      d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clip-rule="evenodd"/>
+            </svg>
+        </span>
+    ` : '';
+
         commentDiv.innerHTML = `
     <div class="flex items-center mb-2">
         <img src="${profilePic}" alt="${comment.user.username}'s profile picture" class="w-8 h-8 rounded-full mr-2">
         <div>
             <div class="flex items-center">
                 <a href="/@${comment.user.username}" class="text-sm font-medium text-gray-800 hover:underline">${comment.user.username}</a>
+                ${verifiedIconHTML}
                 <span class="mx-1 text-gray-400">·</span>
                 <small class="text-xs text-gray-500" title="${comment.created_at}">${formatTimestamp(comment.created_at)}</small>
             </div>

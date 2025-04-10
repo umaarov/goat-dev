@@ -42,7 +42,7 @@
 </nav>
 
 <!-- Main content area with fixed width -->
-<main class="flex-grow pt-20 pb-16 mx-auto w-full max-w-[450px] px-4">
+<main class="flex-grow pt-20 mx-auto w-full max-w-[450px] px-4 pb-16">
     @if (session('success'))
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md mb-4">
             {{ session('success') }}
@@ -72,7 +72,11 @@
     @endif
 
     @yield('content')
+    <footer class="mt-8 mb-20 text-center text-gray-500 text-sm">
+        <p>This is footer</p>
+    </footer>
 </main>
+
 
 <!-- Fixed bottom navbar -->
 <nav
