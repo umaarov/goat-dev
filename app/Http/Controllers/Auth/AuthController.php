@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\AvatarService;
 use Exception;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -17,6 +18,13 @@ use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
+    protected AvatarService $avatarService;
+
+    public function __construct(AvatarService $avatarService)
+    {
+        $this->avatarService = $avatarService;
+    }
+
     final public function showRegistrationForm(): View
     {
         return view('auth.register');
@@ -39,20 +47,32 @@ class AuthController extends Controller
                 ->withInput($request->except('password', 'password_confirmation'));
         }
 
-        $profilePicturePath = null;
-        if ($request->hasFile('profile_picture')) {
-            $profilePicturePath = $request->file('profile_picture')->store('profile_pictures', 'public');
-        }
-
         try {
+            // Create user first to get the ID
             $user = User::create([
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'username' => $request->username,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'profile_picture' => $profilePicturePath,
+                'profile_picture' => null, // Set initially to null
             ]);
+
+            // Handle profile picture
+            if ($request->hasFile('profile_picture')) {
+                $profilePicturePath = $request->file('profile_picture')->store('profile_pictures', 'public');
+                $user->profile_picture = $profilePicturePath;
+            } else {
+                // Generate initials avatar if no profile picture provided
+                $profilePicturePath = $this->avatarService->generateInitialsAvatar(
+                    $user->first_name,
+                    $user->last_name ?? '',
+                    $user->id
+                );
+                $user->profile_picture = $profilePicturePath;
+            }
+
+            $user->save();
 
             Auth::login($user);
 
@@ -60,6 +80,7 @@ class AuthController extends Controller
 
             return redirect()->route('home')->with('success', 'Registration successful! Welcome!');
         } catch (Exception $e) {
+            Log::error('Registration failed: ' . $e->getMessage());
             return redirect()->back()
                 ->withErrors(['error' => 'Registration failed. Please try again.'])
                 ->withInput($request->except('password', 'password_confirmation'));
@@ -154,10 +175,24 @@ class AuthController extends Controller
                         'username' => $username,
                         'email' => $googleUser->getEmail(),
                         'google_id' => $googleUser->getId(),
-                        'profile_picture' => $googleUser->getAvatar(),
                         'email_verified_at' => now(),
                         'password' => Hash::make(Str::random(24)),
                     ]);
+
+                    // Check if Google provides an avatar
+                    if ($googleUser->getAvatar()) {
+                        $user->profile_picture = $googleUser->getAvatar();
+                    } else {
+                        // Generate initials avatar if no Google avatar
+                        $profilePicturePath = $this->avatarService->generateInitialsAvatar(
+                            $user->first_name,
+                            $user->last_name ?? '',
+                            $user->id
+                        );
+                        $user->profile_picture = $profilePicturePath;
+                    }
+
+                    $user->save();
                 }
             }
 
