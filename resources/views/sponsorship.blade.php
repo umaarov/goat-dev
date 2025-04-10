@@ -12,7 +12,7 @@
 
             <h6 class="text-md font-semibold mb-1">Reach Out</h6>
             <p class="text-gray-600 text-sm">
-                Contact our team at <a href="mailto:info@goat.uz" class="text-blue-600 hover:underline">info@goat.uz</a>
+                Contact us at <a href="mailto:info@goat.uz" class="text-blue-600 hover:underline">info@goat.uz</a>
                 for proposals and inquiries.
             </p>
         </div>
