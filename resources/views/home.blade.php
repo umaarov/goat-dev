@@ -3,7 +3,7 @@
 @section('title', 'Home - Posts')
 
 @section('content')
-    <div class="pb-4">
+    <div class="">
         @forelse ($posts as $post)
             @include('partials.post-card', ['post' => $post])
         @empty

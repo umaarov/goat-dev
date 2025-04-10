@@ -3,7 +3,7 @@
 @section('title', $queryTerm ? 'Search Results for "' . e($queryTerm) . '"' : 'Search')
 
 @section('content')
-    <div class="flex flex-col items-center justify-center mb-4">
+    <div class="flex flex-col items-center justify-center">
         <form action="{{ route('search') }}" method="GET" class="w-full max-w-md mx-auto">
             <div class="relative">
                 <input
@@ -42,7 +42,7 @@
                     {{ $posts->appends(['q' => $queryTerm])->links() }}
                 </div>
                 @else
-                    <p class="mt-2">Enter a term above to search for posts.</p>
+                    <p class="mt-2 mb-8">Enter a term above to search for posts.</p>
                 @endif
             </div>
 

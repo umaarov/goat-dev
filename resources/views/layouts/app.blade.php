@@ -72,9 +72,19 @@
     @endif
 
     @yield('content')
-    <footer class="mt-8 mb-20 text-center text-gray-500 text-sm">
-        <p>This is footer</p>
+    <footer class="mb-8 text-center text-gray-500 text-xs leading-relaxed px-4">
+        <div class="space-y-4">
+            <div class="flex flex-wrap justify-center gap-4 text-sm text-blue-800">
+                <a href="{{ route('about') }}" class="hover:underline">About Us</a>
+                <a href="{{ route('terms') }}" class="hover:underline">Terms of Use</a>
+                <a href="{{ route('sponsorship') }}" class="hover:underline">Sponsorship</a>
+                <a href="{{ route('ads') }}" class="hover:underline">Ads</a>
+            </div>
+
+            <p class="font-semibold">GOAT © 2025</p>
+        </div>
     </footer>
+
 </main>
 
 
