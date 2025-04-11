@@ -165,7 +165,7 @@
                           d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
                 </svg>
             </div>
-            <span>0</span>
+            <span>{{ $post->shares_count ?? 0 }}</span>
         </button>
     </div>
 
@@ -195,14 +195,11 @@
         </div>
         <?php endif; ?>
 
-            <!-- Comments list with header -->
         <div class="p-4">
             <h4 class="text-sm font-semibold text-gray-700 mb-3">Comments</h4>
 
-            <!-- Comments container - this will be populated by JavaScript -->
             <div class="comments-list"></div>
 
-            <!-- Pagination container -->
             <div id="pagination-container-<?php echo e($post->id); ?>" class="mt-4"></div>
         </div>
     </div>
@@ -306,9 +303,133 @@
             opacity: 1;
         }
     }
+
+    .highlight-post {
+        animation: micro-lift 0.8s ease-out;
+    }
+
+    @keyframes micro-lift {
+        0% {
+            transform: translateY(1px);
+        }
+        100% {
+            transform: translateY(0);
+        }
+    }
 </style>
 
 <script>
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Check if we need to scroll to a specific post
+        @if(session('scrollToPost'))
+        scrollToPost({{ session('scrollToPost') }});
+        @endif
+    });
+
+    function scrollToPost(postId) {
+        const postElement = document.getElementById(`post-${postId}`);
+        if (!postElement) return;
+
+        // Wait for all images to load before scrolling
+        setTimeout(() => {
+            // Scroll to the post with a slight offset from the top
+            window.scrollTo({
+                top: postElement.offsetTop - 100,
+                behavior: 'smooth'
+            });
+
+            // Add a more subtle but effective highlight animation
+            postElement.classList.add('highlight-post');
+            setTimeout(() => {
+                postElement.classList.remove('highlight-post');
+            }, 1500);
+        }, 300);
+    }
+
+    function sharePost(postId) {
+        // Get the post element
+        const postElement = document.getElementById(`post-${postId}`);
+        if (!postElement) return;
+
+        // Get question text which we'll use in the URL slug
+        const question = postElement.querySelector('.pt-4.px-4.font-semibold.text-center p').textContent;
+        const slug = question.toLowerCase()
+            .replace(/[^\w\s-]/g, '') // Remove special chars
+            .replace(/\s+/g, '-') // Replace spaces with dashes
+            .substring(0, 60); // Limit length
+
+        // Create a cleaner, more professional URL
+        const shareUrl = `${window.location.origin}/p/${postId}/${slug}`;
+
+        // Check if we can use the Web Share API (mobile devices)
+        if (navigator.share) {
+            navigator.share({
+                title: question,
+                url: shareUrl
+            }).catch(error => {
+                console.log('Error sharing:', error);
+                fallbackShare(shareUrl);
+            });
+        } else {
+            fallbackShare(shareUrl);
+        }
+
+        // Track share count
+        updateShareCount(postId);
+    }
+
+    function fallbackShare(url) {
+        // Create a temporary input element
+        const input = document.createElement('input');
+        input.value = url;
+        document.body.appendChild(input);
+
+        // Select and copy the URL
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+
+        // Show feedback to user
+        const toast = document.createElement('div');
+        toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white py-2 px-4 rounded-md shadow-lg z-50';
+        toast.textContent = 'Link copied to clipboard!';
+        document.body.appendChild(toast);
+
+        // Remove toast after 3 seconds
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.5s';
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 500);
+        }, 3000);
+    }
+
+    function updateShareCount(postId) {
+        const shareCountElement = document.querySelector(`#post-${postId} .flex.justify-between.items-center.px-8.py-3 button:last-child span`);
+        if (shareCountElement) {
+            // Get current share count, increment it
+            const currentCount = parseInt(shareCountElement.textContent);
+            const newCount = isNaN(currentCount) ? 1 : currentCount + 1;
+            shareCountElement.textContent = newCount;
+
+            // Also update the count in the database
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            fetch(`/posts/${postId}/share`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                }
+            }).catch(error => {
+                console.error('Error updating share count:', error);
+            });
+        }
+    }
+
     let currentlyOpenCommentsId = null;
 
     function toggleComments(postId) {
@@ -728,66 +849,68 @@
         const url = `/comments/${commentId}`;
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-        setTimeout(() => {
-            fetch(url, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json'
+        fetch(url, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    commentElement.style.opacity = '1';
+                    commentElement.style.transform = 'translateY(0)';
+                    return;
                 }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        alert(data.error);
-                        commentElement.style.opacity = '1';
-                        commentElement.style.transform = 'translateY(0)';
-                        return;
-                    }
 
-                    commentElement.addEventListener('transitionend', () => {
-                        commentElement.remove();
-                    }, {once: true});
+                // Add a definite transitionend listener
+                const handleTransitionEnd = function () {
+                    commentElement.remove();
+                    commentElement.removeEventListener('transitionend', handleTransitionEnd);
+                };
+                commentElement.addEventListener('transitionend', handleTransitionEnd);
 
-                    const commentCountElement = document.querySelector(`#post-${postId} .flex.justify-between.items-center.px-8.py-3 button:first-child span`);
-                    if (commentCountElement) {
-                        const currentCount = parseInt(commentCountElement.textContent);
-                        commentCountElement.textContent = currentCount - 1;
-                    }
+                const commentCountElement = document.querySelector(`#post-${postId} .flex.justify-between.items-center.px-8.py-3 button:first-child span`);
+                if (commentCountElement) {
+                    const currentCount = parseInt(commentCountElement.textContent);
+                    commentCountElement.textContent = currentCount - 1;
+                }
 
-                    const commentsSection = document.getElementById(`comments-section-${postId}`);
-                    const commentsContainer = commentsSection.querySelector('.comments-list');
-                    const remainingComments = commentsContainer.querySelectorAll('.comment');
+                const commentsSection = document.getElementById(`comments-section-${postId}`);
+                const commentsContainer = commentsSection.querySelector('.comments-list');
+                const remainingComments = commentsContainer.querySelectorAll('.comment:not(#comment-${commentId})');
 
-                    if (remainingComments.length <= 1) {
-                        const currentPage = parseInt(commentsSection.dataset.currentPage) || 1;
-                        if (currentPage > 1) {
-                            setTimeout(() => {
-                                loadComments(postId, currentPage - 1);
-                            }, 300);
-                        } else {
-                            setTimeout(() => {
+                if (remainingComments.length === 0) {
+                    const currentPage = parseInt(commentsSection.dataset.currentPage) || 1;
+                    if (currentPage > 1) {
+                        setTimeout(() => {
+                            loadComments(postId, currentPage - 1);
+                        }, 300);
+                    } else {
+                        setTimeout(() => {
+                            if (commentsContainer.querySelectorAll('.comment').length === 0) {
                                 commentsContainer.innerHTML = '<p class="text-sm text-gray-500 text-center">No comments yet. Be the first to comment!</p>';
 
                                 const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
                                 if (paginationContainer) {
                                     paginationContainer.innerHTML = '';
                                 }
-                            }, 300);
-                        }
+                            }
+                        }, 300);
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    commentElement.style.opacity = '1';
-                    commentElement.style.transform = 'translateY(0)';
-                    alert('Failed to delete comment. Please try again.');
-                });
-        }, 300);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                commentElement.style.opacity = '1';
+                commentElement.style.transform = 'translateY(0)';
+                // alert('Failed to delete comment. Please try again.');
+            });
     }
 
     function voteForOption(postId, option) {
-        // Don't proceed if user is not logged in
         if (!{{ Auth::check() ? 'true' : 'false' }}) {
             alert('You need to be logged in to vote.');
             return;
