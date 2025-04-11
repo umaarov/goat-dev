@@ -241,7 +241,7 @@ class PostController extends Controller
     public function incrementShareCount(Post $post)
     {
         $post->increment('shares_count');
-        return response()->json(['shares_count' => $post->shares_count]);
+        return response()->json(['shares_count' => $post->shares()->count()]);
     }
 
     final public function search(Request $request): View|JsonResponse
