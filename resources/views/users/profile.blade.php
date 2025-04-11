@@ -157,6 +157,101 @@
 
 @push('scripts')
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            @if(session('scrollToPost'))
+            scrollToPost({{ session('scrollToPost') }});
+            @endif
+        });
+
+        function scrollToPost(postId) {
+            const postElement = document.getElementById(`post-${postId}`);
+            if (!postElement) return;
+
+            setTimeout(() => {
+                window.scrollTo({
+                    top: postElement.offsetTop - 100,
+                    behavior: 'smooth'
+                });
+
+                postElement.classList.add('highlight-post');
+                setTimeout(() => {
+                    postElement.classList.remove('highlight-post');
+                }, 1500);
+            }, 300);
+        }
+
+        function sharePost(postId) {
+            const postElement = document.getElementById(`post-${postId}`);
+            if (!postElement) return;
+
+            const question = postElement.querySelector('.pt-4.px-4.font-semibold.text-center p').textContent;
+            const slug = question.toLowerCase()
+                .replace(/[^\w\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .substring(0, 60);
+
+            const shareUrl = `${window.location.origin}/p/${postId}/${slug}`;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: question,
+                    url: shareUrl
+                }).catch(error => {
+                    console.log('Error sharing:', error);
+                    fallbackShare(shareUrl);
+                });
+            } else {
+                fallbackShare(shareUrl);
+            }
+
+            updateShareCount(postId);
+        }
+
+        function fallbackShare(url) {
+            const input = document.createElement('input');
+            input.value = url;
+            document.body.appendChild(input);
+
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white py-2 px-4 rounded-md shadow-lg z-50';
+            toast.textContent = 'Link copied to clipboard!';
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.5s';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 500);
+            }, 3000);
+        }
+
+        function updateShareCount(postId) {
+            const shareCountElement = document.querySelector(`#post-${postId} .flex.justify-between.items-center.px-8.py-3 button:last-child span`);
+            if (shareCountElement) {
+                const currentCount = parseInt(shareCountElement.textContent);
+                const newCount = isNaN(currentCount) ? 1 : currentCount + 1;
+                shareCountElement.textContent = newCount;
+
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+                fetch(`/posts/${postId}/share`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    }
+                }).catch(error => {
+                    console.error('Error updating share count:', error);
+                });
+            }
+        }
+
         function formatTimestamp(timestamp) {
             const date = new Date(timestamp);
             const now = new Date();
@@ -179,7 +274,6 @@
         }
 
         function initializePostInteractions() {
-            // Initialize comments sections
             const commentsSections = document.querySelectorAll('[id^="comments-section-"]');
             commentsSections.forEach(section => {
                 if (!section.classList.contains('comments-section')) {
@@ -422,7 +516,7 @@
                     }
 
                     // Add a definite transitionend listener
-                    const handleTransitionEnd = function() {
+                    const handleTransitionEnd = function () {
                         commentElement.remove();
                         commentElement.removeEventListener('transitionend', handleTransitionEnd);
                     };
