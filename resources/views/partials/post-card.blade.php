@@ -390,20 +390,7 @@
         document.execCommand('copy');
         document.body.removeChild(input);
 
-        // Show feedback to user
-        const toast = document.createElement('div');
-        toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white py-2 px-4 rounded-md shadow-lg z-50';
-        toast.textContent = 'Link copied to clipboard!';
-        document.body.appendChild(toast);
-
-        // Remove toast after 3 seconds
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transition = 'opacity 0.5s';
-            setTimeout(() => {
-                document.body.removeChild(toast);
-            }, 500);
-        }, 3000);
+        showToast("Link copied to clipboard!")
     }
 
     function updateShareCount(postId) {
@@ -735,7 +722,7 @@
         const content = form.elements.content.value;
 
         if (!content.trim()) {
-            alert('Comment cannot be empty');
+            showToast('Comment cannot be empty');
             return;
         }
 
@@ -762,7 +749,7 @@
                 submitButton.innerHTML = 'Comment';
 
                 if (data.errors) {
-                    alert('Error: ' + Object.values(data.errors).join('\n'));
+                    showToast('Error: ' + Object.values(data.errors).join('\n'));
                     return;
                 }
 
@@ -823,7 +810,7 @@
                 console.error('Error:', error);
                 submitButton.disabled = false;
                 submitButton.innerHTML = 'Comment';
-                alert('Failed to add comment. Please try again.');
+                showToast('Failed to add comment. Please try again.');
             });
     }
 
@@ -859,7 +846,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
-                    alert(data.error);
+                    showToast(data.error);
                     commentElement.style.opacity = '1';
                     commentElement.style.transform = 'translateY(0)';
                     return;
@@ -912,7 +899,7 @@
 
     function voteForOption(postId, option) {
         if (!{{ Auth::check() ? 'true' : 'false' }}) {
-            alert('You need to be logged in to vote.');
+            showToast('You need to be logged in to vote.');
             return;
         }
 
@@ -967,7 +954,8 @@
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert(error.message || 'Failed to register vote. Please try again.');
+                // showToast(error.message || 'Failed to register vote. Please try again.');
+                showToast('Failed to register vote. Please try again.');
             });
     }
 

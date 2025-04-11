@@ -407,7 +407,7 @@
         function voteForOption(postId, option) {
             // Don't proceed if user is not logged in
             if (!{{ Auth::check() ? 'true' : 'false' }}) {
-                alert('You need to be logged in to vote.');
+                showToast('You need to be logged in to vote.');
                 return;
             }
 
@@ -462,7 +462,7 @@
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert(error.message || 'Failed to register vote. Please try again.');
+                    showToast('Failed to register vote. Please try again.');
                 });
         }
 
@@ -498,7 +498,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
-                        alert(data.error);
+                        showToast(data.error);
                         commentElement.style.opacity = '1';
                         commentElement.style.transform = 'translateY(0)';
                         return;
@@ -556,7 +556,7 @@
             const content = form.elements.content.value;
 
             if (!content.trim()) {
-                alert('Comment cannot be empty');
+                showToast('Comment cannot be empty');
                 return;
             }
 
@@ -583,7 +583,7 @@
                     submitButton.innerHTML = 'Comment';
 
                     if (data.errors) {
-                        alert('Error: ' + Object.values(data.errors).join('\n'));
+                        showToast('Error: ' + Object.values(data.errors).join('\n'));
                         return;
                     }
 
@@ -635,7 +635,7 @@
                     console.error('Error:', error);
                     submitButton.disabled = false;
                     submitButton.innerHTML = 'Comment';
-                    alert('Failed to add comment. Please try again.');
+                    showToast('Failed to add comment. Please try again.');
                 });
         }
 
