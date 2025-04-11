@@ -470,6 +470,20 @@
             return;
         }
 
+        // Check if user is logged in
+        const isLoggedIn = {{ Auth::check() ? 'true' : 'false' }};
+
+        if (!isLoggedIn) {
+            commentsContainer.innerHTML = '<div class="text-center py-4"><p class="text-sm text-gray-500">Please <a class="text-blue-800 hover:underline" href="{{ route("login") }}">log in</a> to view and post comments.</p></div>';
+            const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
+            if (paginationContainer) {
+                paginationContainer.innerHTML = '';
+            }
+
+            commentsSection.dataset.loaded = "true";
+            return;
+        }
+
         const loadingIndicator = document.createElement('div');
         loadingIndicator.className = 'text-center py-4';
         loadingIndicator.id = 'comments-loading';

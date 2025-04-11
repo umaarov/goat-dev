@@ -157,6 +157,7 @@
 
 @push('scripts')
     <script>
+        window.isLoggedIn = {{ Auth::check() ? 'true' : 'false' }};
         document.addEventListener('DOMContentLoaded', function () {
             @if(session('scrollToPost'))
             scrollToPost({{ session('scrollToPost') }});
@@ -848,10 +849,24 @@
                     } else if (postsContainer.children.length === 0 && !loadMore) {
                         postsContainer.innerHTML = '<p class="text-gray-500 text-center py-8">No posts found.</p>';
                     }
-
                 } catch (error) {
+                    const isLoggedIn = window.isLoggedIn === true || window.isLoggedIn === 'true';
+
+                    if (!isLoggedIn) {
+                        postsContainer.innerHTML = `
+            <div class="text-center py-4">
+                <p class="text-sm text-gray-500">
+                    Please <a class="text-blue-800 hover:underline" href="/login">log in</a> to see {{$user->username}}'s post.
+                </p>
+            </div>`;
+                    } else {
+                        postsContainer.innerHTML = `
+            <p class="text-red-500 text-center py-8">
+                Error loading posts. Please try again.
+            </p>`;
+                    }
+
                     console.error('Error loading posts:', error);
-                    postsContainer.innerHTML = '<p class="text-red-500 text-center py-8">Error loading posts. Please try again.</p>';
                 } finally {
                     isLoading[type] = false;
                 }
