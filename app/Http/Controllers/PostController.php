@@ -221,19 +221,15 @@ class PostController extends Controller
     {
         $post = Post::findOrFail($id);
 
-        // Get the posts for the page where this post should appear
-        $perPage = 10; // Match your pagination settings
+        $perPage = 10;
         $allPosts = Post::orderBy('created_at', 'desc')->get();
 
-        // Find the index of the current post
         $postIndex = $allPosts->search(function ($item) use ($id) {
             return $item->id == $id;
         });
 
-        // Calculate which page this post should be on
         $page = floor($postIndex / $perPage) + 1;
 
-        // Redirect to the posts page, with the page number and a fragment identifier
         return redirect()->route('home', ['page' => $page])
             ->with('scrollToPost', $id);
     }
