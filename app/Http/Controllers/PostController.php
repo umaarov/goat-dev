@@ -217,6 +217,33 @@ class PostController extends Controller
         ]);
     }
 
+    public function showBySlug($id, $slug = null)
+    {
+        $post = Post::findOrFail($id);
+
+        // Get the posts for the page where this post should appear
+        $perPage = 10; // Match your pagination settings
+        $allPosts = Post::orderBy('created_at', 'desc')->get();
+
+        // Find the index of the current post
+        $postIndex = $allPosts->search(function ($item) use ($id) {
+            return $item->id == $id;
+        });
+
+        // Calculate which page this post should be on
+        $page = floor($postIndex / $perPage) + 1;
+
+        // Redirect to the posts page, with the page number and a fragment identifier
+        return redirect()->route('home', ['page' => $page])
+            ->with('scrollToPost', $id);
+    }
+
+    public function incrementShareCount(Post $post)
+    {
+        $post->increment('shares_count');
+        return response()->json(['shares_count' => $post->shares_count]);
+    }
+
     final public function search(Request $request): View|JsonResponse
     {
         $queryTerm = $request->input('q');
