@@ -9,7 +9,7 @@
     @vite('resources/css/app.css')
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
 <body class="flex flex-col min-h-screen bg-gray-100">
 <!-- Fixed top toolbar -->
@@ -142,7 +142,8 @@
         @endauth
     </div>
 </nav>
-
+<x-toast/>
 @stack('scripts')
+<script src="{{ asset('js/toast.js') }}"></script>
 </body>
 </html>
