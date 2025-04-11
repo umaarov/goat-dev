@@ -78,11 +78,10 @@ class Post extends Model
     {
         $query->with([
             'user:id,username,profile_picture',
-            // 'voters:id,username,profile_picture'
         ])
             ->withCount([
                 'comments',
-                'shares',
+                'shares as shares_relation_count',
             ]);
     }
 }
