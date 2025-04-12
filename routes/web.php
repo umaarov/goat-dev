@@ -43,6 +43,8 @@ Route::get('/@{username}', [UserController::class, 'showProfile'])
     ->where('username', '[a-zA-Z0-9_\-]+')
     ->name('profile.show');
 
+Route::get('/check-username', [UserController::class, 'checkUsername'])->name('check.username');
+
 Route::middleware('auth')->group(function () {
     Route::get('/posts/create', [PostController::class, 'create'])->name('posts.create');
     Route::post('/posts', [PostController::class, 'store'])->name('posts.store');

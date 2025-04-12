@@ -168,9 +168,13 @@ class UserController extends Controller
             'username' => [
                 'required',
                 'string',
-                'max:255',
+                'min:5',
+                'max:24',
                 'alpha_dash',
                 Rule::unique('users')->ignore($user->id),
+                'regex:/^[a-zA-Z][a-zA-Z0-9_-]*$/',
+                'not_regex:/^\d+$/',
+                'not_regex:/(.)\1{2,}/',
             ],
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
@@ -267,5 +271,28 @@ class UserController extends Controller
             $post->user_vote = $userVoteMap->get($post->id);
             return $post;
         });
+    }
+
+    public function checkUsername(Request $request)
+    {
+        $username = $request->input('username');
+
+        // Basic validation
+        if (empty($username)) {
+            return response()->json(['available' => false]);
+        }
+
+        // Check if username is taken, excluding the current user when editing profile
+        $query = User::where('username', $username);
+
+        if (auth()->check()) {
+            $query->where('id', '!=', auth()->id());
+        }
+
+        $exists = $query->exists();
+
+        return response()->json([
+            'available' => !$exists
+        ]);
     }
 }
