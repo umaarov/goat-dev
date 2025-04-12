@@ -168,5 +168,128 @@
                 reader.readAsDataURL(input.files[0]);
             }
         }
+
+        function initUsernameChecker() {
+            const usernameInput = document.getElementById('username');
+            const debounceTimeout = 500;
+            let typingTimer;
+            let lastCheckedUsername = '';
+
+            const statusElement = document.createElement('div');
+            statusElement.id = 'username-status';
+            statusElement.className = 'mt-1 text-sm';
+
+            usernameInput.parentNode.insertBefore(statusElement, usernameInput.nextSibling);
+
+            function checkUsername() {
+                const username = usernameInput.value.trim();
+
+                if (username === '' || username === lastCheckedUsername) {
+                    return;
+                }
+
+                // Client-side validation
+                const minLength = 5;
+                const maxLength = 24;
+                const startsWithLetter = /^[a-zA-Z]/.test(username);
+                const onlyValidChars = /^[a-zA-Z0-9_-]+$/.test(username);
+                const notOnlyNumbers = !/^\d+$/.test(username);
+                const noConsecutiveChars = !/(.)\1{2,}/.test(username);
+
+                if (username.length < minLength) {
+                    statusElement.className = 'mt-1 text-sm text-red-600';
+                    statusElement.textContent = 'Username must be at least 5 characters';
+                    usernameInput.classList.remove('border-green-500');
+                    usernameInput.classList.add('border-red-500');
+                    return;
+                }
+                if (username.length > maxLength) {
+                    statusElement.className = 'mt-1 text-sm text-red-600';
+                    statusElement.textContent = 'Username must be at most 24 characters';
+                    usernameInput.classList.remove('border-green-500');
+                    usernameInput.classList.add('border-red-500');
+                    return;
+                }
+
+                if (!startsWithLetter) {
+                    statusElement.className = 'mt-1 text-sm text-red-600';
+                    statusElement.textContent = 'Username must start with a letter';
+                    usernameInput.classList.remove('border-green-500');
+                    usernameInput.classList.add('border-red-500');
+                    return;
+                }
+
+                if (!onlyValidChars) {
+                    statusElement.className = 'mt-1 text-sm text-red-600';
+                    statusElement.textContent = 'Username can only contain letters, numbers, underscores, and hyphens';
+                    usernameInput.classList.remove('border-green-500');
+                    usernameInput.classList.add('border-red-500');
+                    return;
+                }
+
+                if (!notOnlyNumbers) {
+                    statusElement.className = 'mt-1 text-sm text-red-600';
+                    statusElement.textContent = 'Username cannot consist of only numbers';
+                    usernameInput.classList.remove('border-green-500');
+                    usernameInput.classList.add('border-red-500');
+                    return;
+                }
+
+                if (!noConsecutiveChars) {
+                    statusElement.className = 'mt-1 text-sm text-red-600';
+                    statusElement.textContent = 'Username cannot contain consecutive identical characters';
+                    usernameInput.classList.remove('border-green-500');
+                    usernameInput.classList.add('border-red-500');
+                    return;
+                }
+
+                lastCheckedUsername = username;
+
+                statusElement.className = 'mt-1 text-sm text-gray-500';
+                statusElement.textContent = 'Checking availability...';
+
+                // Proceed with the AJAX request only if client-side validation passes
+                fetch('/check-username?username=' + encodeURIComponent(username), {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.available) {
+                            statusElement.className = 'mt-1 text-sm text-green-600';
+                            statusElement.textContent = 'Username is available';
+                            usernameInput.classList.remove('border-red-500');
+                            usernameInput.classList.add('border-green-500');
+                        } else {
+                            statusElement.className = 'mt-1 text-sm text-red-600';
+                            statusElement.textContent = 'Username is already taken';
+                            usernameInput.classList.remove('border-green-500');
+                            usernameInput.classList.add('border-red-500');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error checking username:', error);
+                        statusElement.className = 'mt-1 text-sm text-gray-500';
+                        statusElement.textContent = 'Could not verify username';
+                    });
+            }
+
+            usernameInput.addEventListener('input', function () {
+                clearTimeout(typingTimer);
+                typingTimer = setTimeout(checkUsername, debounceTimeout);
+            });
+
+            usernameInput.addEventListener('blur', checkUsername);
+
+            const currentPageUrl = window.location.pathname;
+            if (currentPageUrl.includes('/profile/edit')) {
+                lastCheckedUsername = usernameInput.value.trim();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initUsernameChecker);
     </script>
 @endsection
