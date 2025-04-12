@@ -463,7 +463,7 @@
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    showToast('Failed to register vote. Please try again.');
+                    showToast('You have already voted on this post.');
                 });
         }
 
