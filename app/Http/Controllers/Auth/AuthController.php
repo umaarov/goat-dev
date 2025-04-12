@@ -57,29 +57,25 @@ class AuthController extends Controller
         }
 
         try {
-            // Create user first to get the ID
             $user = User::create([
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'username' => $request->username,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'profile_picture' => null, // Set initially to null
+                'profile_picture' => null,
             ]);
 
-            // Handle profile picture
             if ($request->hasFile('profile_picture')) {
                 $profilePicturePath = $request->file('profile_picture')->store('profile_pictures', 'public');
-                $user->profile_picture = $profilePicturePath;
             } else {
-                // Generate initials avatar if no profile picture provided
                 $profilePicturePath = $this->avatarService->generateInitialsAvatar(
                     $user->first_name,
                     $user->last_name ?? '',
                     $user->id
                 );
-                $user->profile_picture = $profilePicturePath;
             }
+            $user->profile_picture = $profilePicturePath;
 
             $user->save();
 
@@ -138,7 +134,7 @@ class AuthController extends Controller
         return redirect()->route('home')->with('success', 'Logged out successfully!');
     }
 
-    final public function googleRedirect()
+    final public function googleRedirect(): \Symfony\Component\HttpFoundation\RedirectResponse|RedirectResponse
     {
         try {
             return Socialite::driver('google')->redirect();
@@ -188,11 +184,9 @@ class AuthController extends Controller
                         'password' => Hash::make(Str::random(24)),
                     ]);
 
-                    // Check if Google provides an avatar
                     if ($googleUser->getAvatar()) {
                         $user->profile_picture = $googleUser->getAvatar();
                     } else {
-                        // Generate initials avatar if no Google avatar
                         $profilePicturePath = $this->avatarService->generateInitialsAvatar(
                             $user->first_name,
                             $user->last_name ?? '',

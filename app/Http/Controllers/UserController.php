@@ -196,7 +196,7 @@ class UserController extends Controller
             $data['profile_picture'] = $request->file('profile_picture')->store('profile_pictures', 'public');
         } else if ($request->boolean('remove_profile_picture') ||
             ($request->first_name !== $user->first_name || $request->last_name !== $user->last_name) &&
-            strpos($user->profile_picture, 'initial_') !== false) {
+            str_contains($user->profile_picture, 'initial_')) {
             if ($user->profile_picture && !filter_var($user->profile_picture, FILTER_VALIDATE_URL)) {
                 if (Storage::disk('public')->exists($user->profile_picture)) {
                     Storage::disk('public')->delete($user->profile_picture);
@@ -277,12 +277,10 @@ class UserController extends Controller
     {
         $username = $request->input('username');
 
-        // Basic validation
         if (empty($username)) {
             return response()->json(['available' => false]);
         }
 
-        // Check if username is taken, excluding the current user when editing profile
         $query = User::where('username', $username);
 
         if (auth()->check()) {
