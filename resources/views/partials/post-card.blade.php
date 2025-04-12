@@ -969,7 +969,7 @@
             .catch(error => {
                 console.error('Error:', error);
                 // showToast(error.message || 'Failed to register vote. Please try again.');
-                showToast('Failed to register vote. Please try again.');
+                showToast('You have already voted on this post.');
             });
     }
 
