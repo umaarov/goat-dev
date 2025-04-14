@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\AvatarService;
+use App\Services\EmailVerificationService;
 use Exception;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -19,10 +20,12 @@ use Laravel\Socialite\Facades\Socialite;
 class AuthController extends Controller
 {
     protected AvatarService $avatarService;
+    protected EmailVerificationService $emailVerificationService;
 
-    public function __construct(AvatarService $avatarService)
+    public function __construct(AvatarService $avatarService, EmailVerificationService $emailVerificationService)
     {
         $this->avatarService = $avatarService;
+        $this->emailVerificationService = $emailVerificationService;
     }
 
     final public function showRegistrationForm(): View
@@ -64,6 +67,7 @@ class AuthController extends Controller
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'profile_picture' => null,
+                'email_verification_token' => $this->emailVerificationService->generateToken(),
             ]);
 
             if ($request->hasFile('profile_picture')) {
@@ -79,17 +83,57 @@ class AuthController extends Controller
 
             $user->save();
 
-            Auth::login($user);
+            $this->emailVerificationService->sendVerificationEmail($user);
 
-            $request->session()->regenerate();
-
-            return redirect()->route('home')->with('success', 'Registration successful! Welcome!');
+            return redirect()->route('login')
+                ->with('success', 'Registration successful! Please check your email to verify your account.');
         } catch (Exception $e) {
             Log::error('Registration failed: ' . $e->getMessage());
             return redirect()->back()
                 ->withErrors(['error' => 'Registration failed. Please try again.'])
                 ->withInput($request->except('password', 'password_confirmation'));
         }
+    }
+
+    final public function verifyEmail(Request $request): RedirectResponse
+    {
+        $user = User::findOrFail($request->id);
+
+        if (!$request->hasValidSignature()) {
+            return redirect()->route('verification.notice')
+                ->with('error', 'Invalid verification link or the link has expired.');
+        }
+
+        if ($this->emailVerificationService->verify($user, $request->token)) {
+            if (Auth::check()) {
+                return redirect()->route('home')
+                    ->with('success', 'Your email has been verified!');
+            } else {
+                return redirect()->route('login')
+                    ->with('success', 'Your email has been verified! You can now log in.');
+            }
+        }
+
+        return redirect()->route('verification.notice')
+            ->with('error', 'Invalid verification token.');
+    }
+
+    final public function showVerificationNotice(): View
+    {
+        return view('auth.verify');
+    }
+
+    final public function resendVerificationEmail(Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+
+        if ($user->hasVerifiedEmail()) {
+            return redirect()->route('home');
+        }
+
+        $this->emailVerificationService->sendVerificationEmail($user);
+
+        return back()->with('success', 'Verification link sent! Please check your email.');
     }
 
     final public function showLoginForm(): View
@@ -114,6 +158,16 @@ class AuthController extends Controller
         $remember = $request->filled('remember');
 
         if (Auth::attempt($credentials, $remember)) {
+            $user = Auth::user();
+
+            if (!$user->email_verified_at) {
+                Auth::logout();
+
+                return redirect()->route('login')
+                    ->withErrors(['email' => 'Email not verified. Please check your email for verification link.'])
+                    ->withInput($request->only('email'));
+            }
+
             $request->session()->regenerate();
             return redirect()->intended(route('home'))->with('success', 'Logged in successfully!');
         }
@@ -138,7 +192,7 @@ class AuthController extends Controller
     {
         try {
             return Socialite::driver('google')->redirect();
-        } catch (Exception $e) {
+        } catch (Exception) {
             return redirect()->route('login')->with('error', 'Google authentication failed. Please try again.');
         }
     }
@@ -157,6 +211,7 @@ class AuthController extends Controller
                     if (!$existingUser->profile_picture && $googleUser->getAvatar()) {
                         $existingUser->profile_picture = $googleUser->getAvatar();
                     }
+                    $existingUser->email_verified_at = $existingUser->email_verified_at ?? now();
                     $existingUser->save();
                     $user = $existingUser;
                 } else {
@@ -194,14 +249,13 @@ class AuthController extends Controller
                         );
                         $user->profile_picture = $profilePicturePath;
                     }
-
+                    $user->email_verified_at = now();
                     $user->save();
                 }
             }
 
             Auth::login($user, true);
             $request->session()->regenerate();
-
             return redirect()->intended(route('home'))->with('success', 'Logged in with Google successfully!');
 
         } catch (Exception $e) {
