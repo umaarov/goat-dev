@@ -2,20 +2,20 @@
 
 namespace App\Services;
 
-use App\Models\User;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\Mail;
 use App\Mail\EmailVerification;
+use App\Models\User;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 class EmailVerificationService
 {
-    public function generateToken(): string
+    final public function generateToken(): string
     {
         return Str::random(64);
     }
 
-    public function generateVerificationUrl(User $user): string
+    final public function generateVerificationUrl(User $user): string
     {
         return URL::temporarySignedRoute(
             'verification.verify',
@@ -27,9 +27,8 @@ class EmailVerificationService
         );
     }
 
-    public function sendVerificationEmail(User $user): void
+    final public function sendVerificationEmail(User $user): void
     {
-        // Generate a new token if one doesn't exist
         if (!$user->email_verification_token) {
             $user->email_verification_token = $this->generateToken();
             $user->save();
@@ -40,7 +39,7 @@ class EmailVerificationService
         Mail::to($user->email)->send(new EmailVerification($user, $verificationUrl));
     }
 
-    public function verify(User $user, string $token): bool
+    final public function verify(User $user, string $token): bool
     {
         if ($user->email_verification_token !== $token) {
             return false;
