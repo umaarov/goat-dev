@@ -4,20 +4,21 @@ namespace App\Console\Commands;
 
 use App\Mail\RegistrationExpired;
 use App\Models\User;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Symfony\Component\Console\Command\Command as CommandAlias;
 
 class CleanupUnverifiedUsers extends Command
 {
     protected $signature = 'users:cleanup-unverified';
     protected $description = 'Remove users who have not verified their email within 1 hour';
 
-    public function handle()
+    final public function handle(): int
     {
         $this->info('Starting cleanup of unverified users...');
 
-        // Find users created more than 1 hour ago who haven't verified their email
         $users = User::whereNull('email_verified_at')
             ->where('created_at', '<', now()->subHour())
             ->get();
@@ -27,27 +28,24 @@ class CleanupUnverifiedUsers extends Command
 
         foreach ($users as $user) {
             try {
-                // Send notification email before deleting
                 $this->sendExpirationNotification($user);
 
-                // Log the removal
                 Log::info("Removing unverified user: {$user->email} (ID: {$user->id})");
 
-                // Delete the user
                 $user->delete();
 
                 $this->info("Removed user: {$user->email}");
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->error("Error processing user {$user->email}: {$e->getMessage()}");
                 Log::error("Failed to process unverified user {$user->email}: {$e->getMessage()}");
             }
         }
 
         $this->info('Unverified users cleanup completed');
-        return Command::SUCCESS;
+        return CommandAlias::SUCCESS;
     }
 
-    private function sendExpirationNotification(User $user)
+    final public function sendExpirationNotification(User $user): void
     {
         Mail::to($user->email)->send(new RegistrationExpired($user));
     }

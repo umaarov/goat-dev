@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureEmailIsVerified
 {
-    public function handle(Request $request, Closure $next): Response
+    final public function handle(Request $request, Closure $next): Response
     {
         if (!$request->user() ||
             ($request->user() instanceof MustVerifyEmail &&

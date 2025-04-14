@@ -11,14 +11,14 @@ class RegistrationExpired extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $user;
+    public User $user;
 
     public function __construct(User $user)
     {
         $this->user = $user;
     }
 
-    public function build()
+    final public function build(): RegistrationExpired
     {
         return $this->subject('Your Registration Has Expired')
             ->markdown('emails.registration-expired');

@@ -7,7 +7,7 @@ use Intervention\Image\Facades\Image;
 
 class AvatarService
 {
-    public function generateInitialsAvatar(string $firstName, string $lastName, string $userId, int $size = 200): string
+    final public function generateInitialsAvatar(string $firstName, string $lastName, string $userId, int $size = 200): string
     {
         $firstInitial = mb_substr($firstName, 0, 1);
         $lastInitial = !empty($lastName) ? mb_substr($lastName, 0, 1) : '';

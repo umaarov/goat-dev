@@ -273,7 +273,7 @@ class UserController extends Controller
         });
     }
 
-    public function checkUsername(Request $request)
+    final public function checkUsername(Request $request): JsonResponse
     {
         $username = $request->input('username');
 
