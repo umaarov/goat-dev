@@ -19,7 +19,7 @@ class EmailVerificationService
     {
         return URL::temporarySignedRoute(
             'verification.verify',
-            now()->addDays(7),
+            now()->addHour(),
             [
                 'id' => $user->id,
                 'token' => $user->email_verification_token

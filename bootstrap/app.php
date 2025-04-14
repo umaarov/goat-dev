@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Middleware\EnsureEmailIsVerified;
+use App\Console\Commands\CleanupUnverifiedUsers;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,4 +19,19 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
-    })->create();
+    })->withCommands(
+        (array)CleanupUnverifiedUsers::class,
+    )->withSchedule(
+        function ($schedule) {
+            $schedule->command('users:cleanup-unverified')
+                ->everyTenMinutes()
+                ->between('00:00', '23:59')
+                ->timezone('UTC')
+                ->emailOutputOnFailure()
+                ->sendOutputTo(storage_path('logs/cleanup_unverified_users.log'))
+                ->appendOutputTo(storage_path('logs/cleanup_unverified_users.log'))
+                ->runInBackground()
+                ->withoutOverlapping();
+        }
+    )
+    ->create();

@@ -9,7 +9,7 @@
         Verify Email Address
     @endcomponent
 
-    This verification link will expire in 7 days.
+    **Important:** This verification link will expire in 1 hour. If you don't verify your email within this timeframe, your registration will be cancelled and you'll need to register again.
 
     If you did not create an account, no further action is required.
 
