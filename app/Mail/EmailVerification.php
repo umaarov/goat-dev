@@ -11,8 +11,8 @@ class EmailVerification extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $user;
-    public $verificationUrl;
+    public User $user;
+    public string $verificationUrl;
 
     public function __construct(User $user, string $verificationUrl)
     {
@@ -20,7 +20,7 @@ class EmailVerification extends Mailable
         $this->verificationUrl = $verificationUrl;
     }
 
-    public function build()
+    final public function build(): EmailVerification
     {
         return $this->subject('Verify Your Email Address')
             ->markdown('emails.verification');
