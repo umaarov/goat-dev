@@ -22,6 +22,7 @@ class User extends Authenticatable
         'profile_picture',
         'google_id',
         'email_verified_at',
+        'email_verification_token',
     ];
 
     protected $hidden = [

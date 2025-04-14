@@ -12,6 +12,17 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 
+Route::get('/email/verify', [AuthController::class, 'showVerificationNotice'])
+    ->middleware('auth')
+    ->name('verification.notice');
+
+Route::get('/email/verify/{id}/{token}', [AuthController::class, 'verifyEmail'])
+    ->name('verification.verify');
+
+Route::post('/email/resend', [AuthController::class, 'resendVerificationEmail'])
+    ->middleware('auth')
+    ->name('verification.resend');
+
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::get('/auth/google', [AuthController::class, 'googleRedirect'])->name('auth.google');
@@ -45,7 +56,7 @@ Route::get('/@{username}', [UserController::class, 'showProfile'])
 
 Route::get('/check-username', [UserController::class, 'checkUsername'])->name('check.username');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/posts/create', [PostController::class, 'create'])->name('posts.create');
     Route::post('/posts', [PostController::class, 'store'])->name('posts.store');
     Route::get('/posts/{post}/edit', [PostController::class, 'edit'])
