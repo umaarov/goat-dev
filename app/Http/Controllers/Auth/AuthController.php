@@ -36,7 +36,6 @@ class AuthController extends Controller
 
     public function register(Request $request): RedirectResponse
     {
-        // Extract validation rules to a separate method for cleaner code
         $validator = Validator::make($request->all(), $this->getRegistrationRules());
 
         if ($validator->fails()) {
@@ -46,13 +45,8 @@ class AuthController extends Controller
         }
 
         try {
-            // Create user
             $user = $this->createUser($request);
-
-            // Set profile picture
             $this->setProfilePicture($user, $request);
-
-            // Send verification email
             $this->emailVerificationService->sendVerificationEmail($user);
 
             return redirect()->route('login')
@@ -192,11 +186,6 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * Get the registration validation rules.
-     *
-     * @return array
-     */
     private function getRegistrationRules(): array
     {
         return [
@@ -218,12 +207,6 @@ class AuthController extends Controller
         ];
     }
 
-    /**
-     * Create a new user from registration data.
-     *
-     * @param Request $request
-     * @return User
-     */
     private function createUser(Request $request): User
     {
         return User::create([
@@ -237,13 +220,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Set the user's profile picture.
-     *
-     * @param User $user
-     * @param Request $request
-     * @return void
-     */
     private function setProfilePicture(User $user, Request $request): void
     {
         if ($request->hasFile('profile_picture')) {
@@ -260,12 +236,6 @@ class AuthController extends Controller
         $user->save();
     }
 
-    /**
-     * Handle Google user login and registration.
-     *
-     * @param mixed $googleUser
-     * @return User
-     */
     private function handleGoogleUser($googleUser): User
     {
         $existingUser = User::where('email', $googleUser->getEmail())->first();
@@ -277,13 +247,6 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * Update existing user with Google information.
-     *
-     * @param User $user
-     * @param mixed $googleUser
-     * @return User
-     */
     private function updateExistingUserWithGoogle(User $user, $googleUser): User
     {
         $user->google_id = $googleUser->getId();
@@ -298,12 +261,6 @@ class AuthController extends Controller
         return $user;
     }
 
-    /**
-     * Create a new user from Google information.
-     *
-     * @param mixed $googleUser
-     * @return User
-     */
     private function createUserFromGoogle($googleUser): User
     {
         $username = $this->generateUniqueUsername($googleUser->getName());
@@ -347,12 +304,6 @@ class AuthController extends Controller
         return $user;
     }
 
-    /**
-     * Generate a unique username based on the given name.
-     *
-     * @param string $name
-     * @return string
-     */
     private function generateUniqueUsername(string $name): string
     {
         $cacheKey = 'username_check_' . md5($name);
@@ -369,7 +320,7 @@ class AuthController extends Controller
 
         $username = $baseUsername;
         $counter = 1;
-        $maxLength = 24; // Reduced from 255 to match username validation
+        $maxLength = 24;
 
         while (User::where('username', $username)->exists()) {
             $potentialLength = strlen($baseUsername) + strlen((string)$counter) + 1;
@@ -380,13 +331,12 @@ class AuthController extends Controller
             $username = $baseUsername . $counter;
             $counter++;
 
-            if ($counter > 100) { // Reduced from 1000 to 100 for efficiency
-                $username = 'user' . Str::random(6); // Shorter random string
+            if ($counter > 100) {
+                $username = 'user' . Str::random(6);
                 break;
             }
         }
 
-        // Cache the result for 5 minutes
         Cache::put($cacheKey, $username, 300);
 
         return $username;

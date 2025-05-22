@@ -12,14 +12,12 @@ use Illuminate\Support\Facades\Validator;
 
 class CommentController extends Controller
 {
-    // Add this new method to get paginated comments for a post
     public function index(Request $request, Post $post)
     {
-        // Get paginated comments, 10 per page or as specified
         $perPage = $request->input('per_page', 10);
         $comments = Comment::where('post_id', $post->id)
             ->with('user:id,username,profile_picture')
-            ->with('post:id,user_id') // Include post to check if user can delete
+            ->with('post:id,user_id')
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
 
