@@ -25,6 +25,7 @@ class UserController extends Controller
 {
     protected AvatarService $avatarService;
     private const PROFILE_IMAGE_SIZE = 300;
+    private const PROFILE_IMAGE_QUALITY = 75;
 
     public function __construct(AvatarService $avatarService)
     {
@@ -33,31 +34,41 @@ class UserController extends Controller
 
     private function processAndStoreProfileImage(UploadedFile $uploadedFile, string $directory, string $baseFilename): string
     {
-        $manager = ImageManager::gd(); // Or ImageManager::imagick();
+        $manager = ImageManager::gd();
         $image = $manager->read($uploadedFile->getRealPath());
 
-        $filename = $baseFilename . '.' . $uploadedFile->getClientOriginalExtension();
+        // $image = Image::make($uploadedFile->getRealPath());
+
+        $image->cover(self::PROFILE_IMAGE_SIZE, self::PROFILE_IMAGE_SIZE);
+
+        $originalExtension = $uploadedFile->getClientOriginalExtension();
+        $extension = strtolower($originalExtension);
+
+        $allowedExtensions = ['jpeg', 'jpg', 'png', 'webp'];
+        $outputExtension = in_array($extension, $allowedExtensions) ? $extension : 'jpg';
+
+        if ($extension === 'gif') {
+            $outputExtension = 'jpg';
+        }
+
+        $filename = $baseFilename . '.' . $outputExtension;
         $path = $directory . '/' . $filename;
 
-        $extension = strtolower($uploadedFile->getClientOriginalExtension());
-        switch ($extension) {
+        switch ($outputExtension) {
             case 'jpeg':
             case 'jpg':
-                $encodedImage = $image->toJpeg()->toString();
+                $encodedImage = $image->toJpeg(self::PROFILE_IMAGE_QUALITY)->toString();
                 break;
             case 'png':
-                $encodedImage = $image->toPng()->toString();
-                break;
-            case 'gif':
-                $encodedImage = $image->toGif()->toString();
+                $encodedImage = $image->toPng()->toString(); // ->toPng(['compression' => 6])
                 break;
             case 'webp':
-                $encodedImage = $image->toWebp()->toString();
+                $encodedImage = $image->toWebp(self::PROFILE_IMAGE_QUALITY)->toString();
                 break;
             default:
-                $filename = $baseFilename . '.png';
+                $filename = $baseFilename . '.jpg';
                 $path = $directory . '/' . $filename;
-                $encodedImage = $image->toPng()->toString();
+                $encodedImage = $image->toJpeg(self::PROFILE_IMAGE_QUALITY)->toString();
         }
 
         Storage::disk('public')->put($path, $encodedImage);

@@ -18,20 +18,30 @@ use Intervention\Image\ImageManager;
 
 class PostController extends Controller
 {
+
+    private const MAX_POST_IMAGE_WIDTH = 1024;
+    private const MAX_POST_IMAGE_HEIGHT = 1024;
+    private const POST_IMAGE_QUALITY = 75;
+
     private function processAndStoreImage(UploadedFile $uploadedFile, string $directory, string $baseFilename): string
     {
         $manager = ImageManager::gd();
         $image = $manager->read($uploadedFile->getRealPath());
 
+        // $image = Image::make($uploadedFile->getRealPath());
 
-        $filename = $baseFilename . '.' . $uploadedFile->getClientOriginalExtension();
+        $image->scaleDown(self::MAX_POST_IMAGE_WIDTH, self::MAX_POST_IMAGE_HEIGHT);
+
+        $originalExtension = $uploadedFile->getClientOriginalExtension();
+        $filename = $baseFilename . '.' . $originalExtension;
         $path = $directory . '/' . $filename;
 
-        $extension = strtolower($uploadedFile->getClientOriginalExtension());
+        $extension = strtolower($originalExtension);
+
         switch ($extension) {
             case 'jpeg':
             case 'jpg':
-                $encodedImage = $image->toJpeg()->toString();
+                $encodedImage = $image->toJpeg(self::POST_IMAGE_QUALITY)->toString();
                 break;
             case 'png':
                 $encodedImage = $image->toPng()->toString();
@@ -40,12 +50,13 @@ class PostController extends Controller
                 $encodedImage = $image->toGif()->toString();
                 break;
             case 'webp':
-                $encodedImage = $image->toWebp()->toString();
+                $encodedImage = $image->toWebp(self::POST_IMAGE_QUALITY)->toString();
                 break;
             default:
-                $filename = $baseFilename . '.png';
+                $newExtension = 'jpg';
+                $filename = $baseFilename . '.' . $newExtension;
                 $path = $directory . '/' . $filename;
-                $encodedImage = $image->toPng()->toString();
+                $encodedImage = $image->toJpeg(self::POST_IMAGE_QUALITY)->toString();
         }
 
         Storage::disk('public')->put($path, $encodedImage);
