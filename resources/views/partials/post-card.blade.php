@@ -113,12 +113,13 @@
             $percentOne = $totalVotes > 0 ? round(($optionOneVotes / $totalVotes) * 100) : 0;
             $percentTwo = $totalVotes > 0 ? round(($optionTwoVotes / $totalVotes) * 100) : 0;
             $hasVoted = Auth::check() && $post->user_vote;
+            $isNotLoggedIn = !Auth::check();
         @endphp
 
             <!-- Option 1 Button -->
         <button
             class="p-3 text-center rounded-md {{ $hasVoted && $post->user_vote == 'option_one' ? 'bg-blue-800 text-white' : 'bg-white border border-gray-300 hover:bg-gray-50' }} {{ !Auth::check() ? 'opacity-75 cursor-not-allowed' : '' }}"
-            {{ !Auth::check() ? 'disabled' : '' }}
+            {{--            {{ !Auth::check() ? 'disabled' : '' }}--}}
             onclick="voteForOption('{{ $post->id }}', 'option_one')"
         >
             <p>{{ $post->option_one_title }} {{ $hasVoted ? "($percentOne%)" : "" }}</p>
@@ -127,7 +128,7 @@
         <!-- Option 2 Button -->
         <button
             class="p-3 text-center rounded-md {{ $hasVoted && $post->user_vote == 'option_two' ? 'bg-blue-800 text-white' : 'bg-white border border-gray-300 hover:bg-gray-50' }} {{ !Auth::check() ? 'opacity-75 cursor-not-allowed' : '' }}"
-            {{ !Auth::check() ? 'disabled' : '' }}
+            {{--            {{ !Auth::check() ? 'disabled' : '' }}--}}
             onclick="voteForOption('{{ $post->id }}', 'option_two')"
         >
             <p>{{ $post->option_two_title }} {{ $hasVoted ? "($percentTwo%)" : "" }}</p>
@@ -919,7 +920,7 @@ ${canDeleteComment(comment) ? `
 
     function voteForOption(postId, option) {
         if (!{{ Auth::check() ? 'true' : 'false' }}) {
-            showToast('You need to be logged in to vote.');
+            window.showToast('You need to be logged in to vote.');
             return;
         }
 
@@ -938,6 +939,7 @@ ${canDeleteComment(comment) ? `
                 if (!response.ok) {
                     if (response.status === 409) {
                         return response.json().then(data => {
+                            updateVoteUI(postId, data.user_vote === option ? option : data.user_vote, data);
                             throw new Error(data.error || 'You have already voted on this post.');
                         });
                     }

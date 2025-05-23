@@ -10,7 +10,7 @@
     @vite('resources/css/app.css')
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
 </head>
 <body class="flex flex-col min-h-screen bg-gray-100">
 <!-- Fixed top toolbar -->
@@ -175,29 +175,28 @@
         function openModal(imageUrl) {
             modalImage.setAttribute('src', imageUrl);
             modal.classList.remove('hidden');
-            requestAnimationFrame(() => { // Ensure 'hidden' is removed before starting opacity transition
+            requestAnimationFrame(() => {
                 modal.classList.remove('opacity-0');
             });
-            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            document.body.style.overflow = 'hidden';
         }
 
         function closeModal() {
             modal.classList.add('opacity-0');
             setTimeout(() => {
                 modal.classList.add('hidden');
-                modalImage.setAttribute('src', ''); // Clear image src to free memory
-            }, 300); // Match duration of opacity transition
-            document.body.style.overflow = ''; // Restore background scrolling
+                modalImage.setAttribute('src', '');
+            }, 300);
+            document.body.style.overflow = '';
         }
 
         document.body.addEventListener('click', function (event) {
             let target = event.target;
-            // Traverse up to 3 levels to find a zoomable image (if image is wrapped in divs)
             for (let i = 0; i < 3 && target && target !== document.body; i++, target = target.parentNode) {
                 if (target.matches && target.matches('img.zoomable-image')) {
-                    event.preventDefault(); // Important if the image is wrapped in an <a> tag
+                    event.preventDefault();
                     const fullSrc = target.dataset.fullSrc || target.src;
-                    if (fullSrc && fullSrc !== window.location.href + '#') { // Avoid empty or '#' links
+                    if (fullSrc && fullSrc !== window.location.href + '#') {
                         openModal(fullSrc);
                     }
                     return;
@@ -208,7 +207,7 @@
         closeModalButton.addEventListener('click', closeModal);
 
         modal.addEventListener('click', function (event) {
-            if (event.target === modal) { // Click on the overlay itself
+            if (event.target === modal) {
                 closeModal();
             }
         });
