@@ -259,6 +259,7 @@
         overflow: hidden;
         transition: max-height 0.5s ease-in-out, opacity 0.3s ease-in-out;
         opacity: 0;
+        margin-bottom: -12px;
     }
 
     .comments-section.active {
@@ -289,6 +290,12 @@
     .comment.visible {
         opacity: 1;
         transform: translateY(0);
+    }
+
+    .comments-list .comment:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+        margin-bottom: 0;
     }
 
     .pagination {
@@ -385,21 +392,24 @@
         @if(session('scrollToPost'))
         scrollToPost({{ session('scrollToPost') }});
         @endif
+
+        const commentsSections = document.querySelectorAll('[id^="comments-section-"]');
+        commentsSections.forEach(section => {
+            if (!section.classList.contains('comments-section')) {
+                section.classList.add('comments-section');
+            }
+            if (!section.classList.contains('hidden')) {
+                section.classList.add('hidden');
+            }
+            section.classList.remove('active');
+        });
     });
 
     function scrollToPost(postId) {
         const postElement = document.getElementById(`post-${postId}`);
         if (!postElement) return;
-
-        // Wait for all images to load before scrolling
         setTimeout(() => {
-            // Scroll to the post with a slight offset from the top
-            window.scrollTo({
-                top: postElement.offsetTop - 100,
-                behavior: 'smooth'
-            });
-
-            // Add a more subtle but effective highlight animation
+            window.scrollTo({top: postElement.offsetTop - 100, behavior: 'smooth'});
             postElement.classList.add('highlight-post');
             setTimeout(() => {
                 postElement.classList.remove('highlight-post');
@@ -480,7 +490,6 @@
     function toggleComments(postId) {
         const clickedCommentsSection = document.getElementById(`comments-section-${postId}`);
         if (!clickedCommentsSection) return;
-
         const isActive = clickedCommentsSection.classList.contains('active');
 
         if (window.currentlyOpenCommentsId && window.currentlyOpenCommentsId !== postId) {
@@ -504,7 +513,6 @@
             setTimeout(() => {
                 clickedCommentsSection.classList.add('active');
                 window.currentlyOpenCommentsId = postId;
-
                 if (!clickedCommentsSection.dataset.loaded) {
                     loadComments(postId, 1);
                 }
@@ -604,9 +612,7 @@
         commentDiv.id = 'comment-' + comment.id;
 
         const profilePic = comment.user.profile_picture
-            ? (comment.user.profile_picture.startsWith('http')
-                ? comment.user.profile_picture
-                : '/storage/' + comment.user.profile_picture)
+            ? (comment.user.profile_picture.startsWith('http') ? comment.user.profile_picture : '/storage/' + comment.user.profile_picture)
             : '/images/default-pfp.png';
 
         const isVerified = ['goat', 'umarov'].includes(comment.user.username);
@@ -616,40 +622,46 @@
                         <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
                 </span>` : '';
-
         commentDiv.innerHTML = `
             <div class="flex items-start mb-2">
-        <img src="${profilePic}" alt="${comment.user.username}'s profile picture"
-                     class="w-8 h-8 rounded-full mr-2 mt-1 cursor-pointer zoomable-image"
-        data-full-src="${profilePic}">
-        <div class="flex-1">
-            <div class="flex items-center">
-                <a href="/@${comment.user.username}" class="text-sm font-medium text-gray-800 hover:underline">${comment.user.username}</a>
+                <img src="${profilePic}" alt="${comment.user.username}'s profile picture" class="w-8 h-8 rounded-full mr-2 mt-1 cursor-pointer zoomable-image" data-full-src="${profilePic}">
+                <div class="flex-1">
+                    <div class="flex items-center">
+                        <a href="/@${comment.user.username}" class="text-sm font-medium text-gray-800 hover:underline">${comment.user.username}</a>
                         ${verifiedIconHTML}
                         <span class="mx-1 text-gray-400 text-xs">·</span>
                         <small class="text-xs text-gray-500" title="${comment.created_at}">${formatTimestamp(comment.created_at)}</small>
                     </div>
                     <p class="text-sm text-gray-700 break-words">${comment.content}</p>
-        </div>
-${canDeleteComment(comment) ? `
+                </div>
+                ${canDeleteComment(comment) ? `
                 <div class="ml-auto pl-2">
                     <form onsubmit="deleteComment('${comment.id}', event)" class="inline">
                         <button type="submit" class="text-gray-400 hover:text-red-500 text-xs p-1" title="Delete comment">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
                     </form>
-                </div>
-                ` : ''}
-            </div>
-            `;
+                </div>` : ''}
+            </div>`;
         return commentDiv;
     }
 
     function canDeleteComment(comment) {
         const currentUserId = {{ Auth::id() ?? 'null' }};
-        return currentUserId === comment.user_id || currentUserId === comment.post.user_id;
+
+        if (currentUserId === null) {
+            return false;
+        }
+
+        if (comment.user_id === currentUserId) {
+            return true;
+        }
+
+        if (comment.post && typeof comment.post.user_id !== 'undefined' && comment.post.user_id === currentUserId) {
+            return true;
+        }
+
+        return false;
     }
 
     function formatTimestamp(timestamp) {
@@ -891,10 +903,7 @@ ${canDeleteComment(comment) ? `
 
     function deleteComment(commentId, event) {
         event.preventDefault();
-
-        if (!confirm('Delete this comment?')) {
-            return;
-        }
+        if (!confirm('Delete this comment?')) return;
 
         const commentElement = document.getElementById('comment-' + commentId);
         if (!commentElement) {
@@ -902,9 +911,15 @@ ${canDeleteComment(comment) ? `
             return;
         }
 
-        const postId = commentElement.closest('[id^="comments-section-"]').id.split('-')[2];
+        const postIdElement = commentElement.closest('[id^="comments-section-"]');
+        if (!postIdElement) {
+            console.error('Could not find parent post ID for comment');
+            return;
+        }
+        const postId = postIdElement.id.split('-')[2];
 
-        commentElement.style.transition = 'opacity 0.3s, transform 0.3s';
+
+        commentElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
         commentElement.style.opacity = '0';
         commentElement.style.transform = 'translateY(10px)';
 
@@ -913,12 +928,16 @@ ${canDeleteComment(comment) ? `
 
         fetch(url, {
             method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json'
-            }
+            headers: {'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json'}
         })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw err;
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.error) {
                     showToast(data.error);
@@ -927,48 +946,41 @@ ${canDeleteComment(comment) ? `
                     return;
                 }
 
-                // Add a definite transitionend listener
-                const handleTransitionEnd = function () {
-                    commentElement.remove();
-                    commentElement.removeEventListener('transitionend', handleTransitionEnd);
-                };
-                commentElement.addEventListener('transitionend', handleTransitionEnd);
-
                 const commentCountElement = document.querySelector(`#post-${postId} .flex.justify-between.items-center.px-8.py-3 button:first-child span`);
                 if (commentCountElement) {
                     const currentCount = parseInt(commentCountElement.textContent);
-                    commentCountElement.textContent = currentCount - 1;
-                }
-
-                const commentsSection = document.getElementById(`comments-section-${postId}`);
-                const commentsContainer = commentsSection.querySelector('.comments-list');
-                const remainingComments = commentsContainer.querySelectorAll('.comment:not(#comment-${commentId})');
-
-                if (remainingComments.length === 0) {
-                    const currentPage = parseInt(commentsSection.dataset.currentPage) || 1;
-                    if (currentPage > 1) {
-                        setTimeout(() => {
-                            loadComments(postId, currentPage - 1);
-                        }, 300);
-                    } else {
-                        setTimeout(() => {
-                            if (commentsContainer.querySelectorAll('.comment').length === 0) {
-                                commentsContainer.innerHTML = '<p class="text-sm text-gray-500 text-center">No comments yet. Be the first to comment!</p>';
-
-                                const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
-                                if (paginationContainer) {
-                                    paginationContainer.innerHTML = '';
-                                }
-                            }
-                        }, 300);
+                    if (!isNaN(currentCount) && currentCount > 0) {
+                        commentCountElement.textContent = currentCount - 1;
                     }
                 }
+
+                setTimeout(() => {
+                    commentElement.remove();
+
+                    const commentsSection = document.getElementById(`comments-section-${postId}`);
+                    const commentsContainer = commentsSection.querySelector('.comments-list');
+                    const remainingCommentElements = commentsContainer.querySelectorAll('.comment');
+
+                    if (remainingCommentElements.length === 0) {
+                        const currentPage = parseInt(commentsSection.dataset.currentPage) || 1;
+                        if (currentPage > 1) {
+                            loadComments(postId, currentPage - 1);
+                        } else {
+                            commentsContainer.innerHTML = '<p class="text-sm text-gray-500 text-center">No comments yet. Be the first to comment!</p>';
+                            const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
+                            if (paginationContainer) paginationContainer.innerHTML = '';
+                            commentsSection.dataset.loaded = "true";
+                        }
+                    }
+                }, 300);
+
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('Error deleting comment:', error);
                 commentElement.style.opacity = '1';
                 commentElement.style.transform = 'translateY(0)';
-                // alert('Failed to delete comment. Please try again.');
+                const errorMessage = error?.message || error?.error || 'Failed to delete comment. Please try again.';
+                showToast(String(errorMessage));
             });
     }
 
