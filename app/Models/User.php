@@ -23,6 +23,7 @@ class User extends Authenticatable
         'google_id',
         'email_verified_at',
         'email_verification_token',
+        'show_voted_posts_publicly',
     ];
 
     protected $hidden = [
@@ -34,6 +35,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'show_voted_posts_publicly' => 'boolean',
     ];
 
     final function posts(): HasMany

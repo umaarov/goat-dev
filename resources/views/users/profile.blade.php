@@ -65,7 +65,9 @@
                     <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-800 transition-all duration-300"
                           id="my-posts-indicator"></span>
                 </button>
-                @if ($isOwnProfile)
+
+                {{-- Voted Posts tab --}}
+                @if ($isOwnProfile || $user->show_voted_posts_publicly)
                     <button id="load-voted-posts" data-url="{{ route('profile.voted.data', $user->username) }}"
                             class="px-6 py-3 font-medium text-gray-700 hover:text-blue-800 focus:outline-none relative">
                         Voted Posts

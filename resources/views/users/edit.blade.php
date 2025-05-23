@@ -98,6 +98,22 @@
                     </div>
                 </div>
 
+                <div class="mb-6 pt-4 border-t border-gray-200">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Privacy Settings</label>
+                    <div class="flex items-center">
+                        <input type="hidden" name="show_voted_posts_publicly"
+                               value="0">
+                        <input type="checkbox" id="show_voted_posts_publicly" name="show_voted_posts_publicly" value="1"
+                               class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                               @if(old('show_voted_posts_publicly', $user->show_voted_posts_publicly ?? true)) checked @endif> {{-- Default to checked (public) if not set --}}
+                        <label for="show_voted_posts_publicly" class="ml-2 text-sm text-gray-700">Show "Voted Posts" tab
+                            publicly on my profile</label>
+                    </div>
+                    @error('show_voted_posts_publicly')
+                    <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
+                    @enderror
+                    <p class="text-xs text-gray-500 mt-1">If unchecked, this tab will only be visible to you.</p>
+                </div>
 
                 <div class="flex items-center justify-between">
                     <button type="submit"

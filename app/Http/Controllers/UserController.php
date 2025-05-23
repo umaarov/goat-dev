@@ -30,7 +30,7 @@ class UserController extends Controller
     final public function showProfile(string $username): View
     {
         $user = User::where('username', $username)
-            ->select(['id', 'first_name', 'last_name', 'username', 'profile_picture', 'created_at'])
+            ->select(['id', 'first_name', 'last_name', 'username', 'profile_picture', 'created_at', 'show_voted_posts_publicly'])
             ->firstOrFail();
 
         $isOwnProfile = Auth::check() && Auth::id() === $user->id;
@@ -99,20 +99,23 @@ class UserController extends Controller
                 'page' => $request->input('page')
             ]);
 
-            $user = User::where('username', $username)->firstOrFail();
+            $profileUser = User::where('username', $username)->firstOrFail();
 
-            if (!Auth::check() || Auth::id() !== $user->id) {
+            $isOwnProfile = Auth::check() && Auth::id() === $profileUser->id;
+
+            if (!$isOwnProfile && !$profileUser->show_voted_posts_publicly) {
+                Log::info('Access to voted posts denied due to privacy settings.', ['profile_user_id' => $profileUser->id]);
                 return response()->json([
-                    'html' => '<p>You can only view your own voted posts.</p>',
+                    'html' => '<p class="text-center text-gray-500 py-8">This user has chosen to keep their voted posts private.</p>',
                     'hasMorePages' => false
                 ], 403);
             }
 
-            Log::info('User authenticated and authorized');
+            Log::info('User authorized to view voted posts.', ['profile_user_id' => $profileUser->id, 'viewer_is_owner' => $isOwnProfile]);
 
-            $posts = $user->votedPosts()
+            $posts = $profileUser->votedPosts()
                 ->withPostData()
-                ->latest()
+                ->latest('votes.created_at')
                 ->paginate(10);
 
             Log::info('Voted posts retrieved', ['count' => $posts->count()]);
@@ -121,23 +124,17 @@ class UserController extends Controller
                 $this->attachUserVoteStatus($posts);
             }
 
-            $showManagementOptions = true;
+            $showManagementOptions = $isOwnProfile;
 
-            try {
-                $postsHtml = view('users.partials.posts-list', compact('posts', 'showManagementOptions'))->render();
-                Log::info('View rendered successfully');
-            } catch (Exception $e) {
-                Log::error('View rendering failed: ' . $e->getMessage());
-                return response()->json([
-                    'html' => '<p>Error rendering view: ' . $e->getMessage() . '</p>',
-                    'hasMorePages' => false
-                ], 500);
-            }
+            $postsHtml = view('users.partials.posts-list', compact('posts', 'showManagementOptions'))->render();
+            Log::info('View rendered successfully for voted posts');
+
 
             return response()->json([
                 'html' => $postsHtml,
                 'hasMorePages' => $posts->hasMorePages()
             ]);
+
         } catch (Exception $e) {
             Log::error('Error loading user voted posts: ' . $e->getMessage(), [
                 'user' => $username,
@@ -145,7 +142,7 @@ class UserController extends Controller
             ]);
 
             return response()->json([
-                'html' => '<p>Error loading voted posts: ' . $e->getMessage() . '</p>',
+                'html' => '<p class="text-red-500 text-center py-8">Error loading voted posts. Please try again.</p>',
                 'hasMorePages' => false
             ], 500);
         }
@@ -178,6 +175,7 @@ class UserController extends Controller
             ],
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'remove_profile_picture' => 'nullable|boolean',
+            'show_voted_posts_publicly' => 'required|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -187,6 +185,7 @@ class UserController extends Controller
         }
 
         $data = $request->only(['first_name', 'last_name', 'username']);
+        $data['show_voted_posts_publicly'] = $request->boolean('show_voted_posts_publicly');
 
         if ($request->hasFile('profile_picture')) {
             if ($user->profile_picture && !filter_var($user->profile_picture, FILTER_VALIDATE_URL)) {
@@ -204,7 +203,6 @@ class UserController extends Controller
                     Storage::disk('public')->delete($user->profile_picture);
                 }
             }
-
             $data['profile_picture'] = $this->avatarService->generateInitialsAvatar(
                 $request->first_name,
                 $request->last_name ?? '',
