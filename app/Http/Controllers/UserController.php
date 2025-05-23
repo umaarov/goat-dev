@@ -100,7 +100,6 @@ class UserController extends Controller
             ]);
 
             $profileUser = User::where('username', $username)->firstOrFail();
-
             $isOwnProfile = Auth::check() && Auth::id() === $profileUser->id;
 
             if (!$isOwnProfile && !$profileUser->show_voted_posts_publicly) {
@@ -125,9 +124,12 @@ class UserController extends Controller
             }
 
             $showManagementOptions = $isOwnProfile;
-
-            $postsHtml = view('users.partials.posts-list', compact('posts', 'showManagementOptions'))->render();
-            Log::info('View rendered successfully for voted posts');
+            $profileOwnerToDisplay = $profileUser;
+            $postsHtml = view('users.partials.posts-list', compact(
+                'posts',
+                'showManagementOptions',
+                'profileOwnerToDisplay'
+            ))->render();
 
 
             return response()->json([

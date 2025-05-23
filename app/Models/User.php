@@ -61,7 +61,7 @@ class User extends Authenticatable
     final function votedPosts(): BelongsToMany
     {
         return $this->belongsToMany(Post::class, 'votes', 'user_id', 'post_id')
-            ->withPivot('vote_option')
+            ->withPivot('vote_option', 'created_at',)
             ->withTimestamps();
     }
 
