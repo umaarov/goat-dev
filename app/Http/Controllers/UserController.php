@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Vote;
+use App\Models\Vote; // Keep this if used by attachUserVoteStatus
 use App\Services\AvatarService;
 use Exception;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -17,33 +17,67 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Intervention\Image\ImageManager; // <-- Updated use statement
 
 class UserController extends Controller
 {
     protected AvatarService $avatarService;
+    private const PROFILE_IMAGE_SIZE = 300;
 
     public function __construct(AvatarService $avatarService)
     {
         $this->avatarService = $avatarService;
     }
 
+    // Helper method to process and save image (can be generalized or duplicated if sizes differ significantly)
+    private function processAndStoreProfileImage(\Illuminate\Http\UploadedFile $uploadedFile, string $directory, string $baseFilename): string
+    {
+        $manager = ImageManager::gd(); // Or ImageManager::imagick();
+        $image = $manager->read($uploadedFile->getRealPath());
+        $image->coverDown(self::PROFILE_IMAGE_SIZE, self::PROFILE_IMAGE_SIZE);
+
+        $filename = $baseFilename . '.' . $uploadedFile->getClientOriginalExtension();
+        $path = $directory . '/' . $filename;
+
+        $encodedImage = '';
+        $extension = strtolower($uploadedFile->getClientOriginalExtension());
+        switch ($extension) {
+            case 'jpeg':
+            case 'jpg':
+                $encodedImage = $image->toJpeg()->toString();
+                break;
+            case 'png':
+                $encodedImage = $image->toPng()->toString();
+                break;
+            case 'gif':
+                $encodedImage = $image->toGif()->toString();
+                break;
+            case 'webp':
+                $encodedImage = $image->toWebp()->toString();
+                break;
+            default:
+                $filename = $baseFilename . '.png';
+                $path = $directory . '/' . $filename;
+                $encodedImage = $image->toPng()->toString();
+        }
+
+        Storage::disk('public')->put($path, $encodedImage);
+        return $path;
+    }
+
+
     final public function showProfile(string $username): View
     {
         $user = User::where('username', $username)
             ->withCount('posts')
-//            ->select([
-//                'id', 'first_name', 'last_name', 'username',
-//                'profile_picture', 'created_at',
-//                'show_voted_posts_publicly'
-//            ])
             ->firstOrFail();
 
-//        dd($user->toArray());
         $isOwnProfile = Auth::check() && Auth::id() === $user->id;
         $totalVotesOnUserPosts = $user->posts()->sum('total_votes');
         return view('users.profile', compact('user', 'isOwnProfile', 'totalVotesOnUserPosts'));
     }
 
+    // ... (getUserPosts, getUserVotedPosts - these don't handle image uploads directly)
     final public function getUserPosts(Request $request, string $username): JsonResponse
     {
         try {
@@ -53,7 +87,6 @@ class UserController extends Controller
             ]);
 
             $user = User::where('username', $username)->firstOrFail();
-
             Log::info('User found', ['user_id' => $user->id]);
 
             $posts = $user->posts()
@@ -166,20 +199,13 @@ class UserController extends Controller
     final public function update(Request $request): RedirectResponse
     {
         $user = Auth::user();
-
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'username' => [
-                'required',
-                'string',
-                'min:5',
-                'max:24',
-                'alpha_dash',
+                'required','string','min:5','max:24','alpha_dash',
                 Rule::unique('users')->ignore($user->id),
-                'regex:/^[a-zA-Z][a-zA-Z0-9_-]*$/',
-                'not_regex:/^\d+$/',
-                'not_regex:/(.)\1{2,}/',
+                'regex:/^[a-zA-Z][a-zA-Z0-9_-]*$/','not_regex:/^\d+$/','not_regex:/(.)\1{2,}/',
             ],
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'remove_profile_picture' => 'nullable|boolean',
@@ -187,9 +213,7 @@ class UserController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         $data = $request->only(['first_name', 'last_name', 'username']);
@@ -201,25 +225,25 @@ class UserController extends Controller
                     Storage::disk('public')->delete($user->profile_picture);
                 }
             }
-            $data['profile_picture'] = $request->file('profile_picture')->store('profile_pictures', 'public');
+            $data['profile_picture'] = $this->processAndStoreProfileImage(
+                $request->file('profile_picture'),
+                'profile_pictures',
+                uniqid('profile_') . '_' . $user->id
+            );
         } else if ($request->boolean('remove_profile_picture') ||
             (($request->first_name !== $user->first_name || $request->last_name !== $user->last_name) &&
                 $user->profile_picture && str_contains($user->profile_picture, 'initial_'))) {
-
             if ($user->profile_picture && !filter_var($user->profile_picture, FILTER_VALIDATE_URL)) {
                 if (Storage::disk('public')->exists($user->profile_picture)) {
                     Storage::disk('public')->delete($user->profile_picture);
                 }
             }
             $data['profile_picture'] = $this->avatarService->generateInitialsAvatar(
-                $request->first_name,
-                $request->last_name ?? '',
-                $user->id
+                $request->first_name, $request->last_name ?? '', $user->id
             );
         }
 
         $user->update($data);
-
         return redirect()->route('profile.edit')->with('success', 'Profile updated successfully.');
     }
 

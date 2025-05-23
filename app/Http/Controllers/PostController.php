@@ -13,9 +13,57 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Intervention\Image\ImageManager; // <-- Updated use statement
 
 class PostController extends Controller
 {
+    private const POST_IMAGE_SIZE = 500;
+
+    // Helper method to process and save image
+    private function processAndStoreImage(\Illuminate\Http\UploadedFile $uploadedFile, string $directory, string $baseFilename): string
+    {
+        // V3: Initialize ImageManager, optionally specifying a driver (e.g., GD)
+        $manager = ImageManager::gd(); // Or ImageManager::imagick();
+
+        // V3: Read the image from the uploaded file's path
+        $image = $manager->read($uploadedFile->getRealPath());
+
+        // V3: coverDown is similar to v2's fit() with upsize prevention
+        // It scales and crops to fill the dimensions, but does not upscale.
+        $image->coverDown(self::POST_IMAGE_SIZE, self::POST_IMAGE_SIZE);
+
+        $filename = $baseFilename . '.' . $uploadedFile->getClientOriginalExtension();
+        $path = $directory . '/' . $filename;
+
+        // V3: Encode the image to a string based on its original extension
+        $encodedImage = '';
+        $extension = strtolower($uploadedFile->getClientOriginalExtension());
+
+        switch ($extension) {
+            case 'jpeg':
+            case 'jpg':
+                $encodedImage = $image->toJpeg()->toString();
+                break;
+            case 'png':
+                $encodedImage = $image->toPng()->toString();
+                break;
+            case 'gif':
+                $encodedImage = $image->toGif()->toString();
+                break;
+            case 'webp':
+                $encodedImage = $image->toWebp()->toString();
+                break;
+            default:
+                // Fallback or throw error if needed
+                $filename = $baseFilename . '.png'; // Ensure correct extension for fallback
+                $path = $directory . '/' . $filename;
+                $encodedImage = $image->toPng()->toString();
+        }
+
+        Storage::disk('public')->put($path, $encodedImage);
+        return $path;
+    }
+
     final public function index(Request $request): View
     {
         $query = Post::query()->withPostData();
@@ -33,9 +81,7 @@ class PostController extends Controller
         }
 
         $posts = $query->paginate(15)->withQueryString();
-
         $this->attachUserVoteStatus($posts);
-
         return view('home', compact('posts'));
     }
 
@@ -55,22 +101,28 @@ class PostController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         $optionOneImagePath = null;
         if ($request->hasFile('option_one_image')) {
-            $optionOneImagePath = $request->file('option_one_image')->store('post_images', 'public');
+            $optionOneImagePath = $this->processAndStoreImage(
+                $request->file('option_one_image'),
+                'post_images',
+                uniqid('post_opt1_')
+            );
         }
 
         $optionTwoImagePath = null;
         if ($request->hasFile('option_two_image')) {
-            $optionTwoImagePath = $request->file('option_two_image')->store('post_images', 'public');
+            $optionTwoImagePath = $this->processAndStoreImage(
+                $request->file('option_two_image'),
+                'post_images',
+                uniqid('post_opt2_')
+            );
         }
 
-        $post = Post::create([
+        Post::create([
             'user_id' => Auth::id(),
             'question' => $request->question,
             'option_one_title' => $request->option_one_title,
@@ -87,12 +139,10 @@ class PostController extends Controller
         if (Auth::id() !== $post->user_id) {
             abort(403, 'Unauthorized action.');
         }
-
         if ($post->total_votes > 0) {
             return redirect()->route('profile.show', ['username' => Auth::user()->username])
                 ->with('error', 'Cannot edit a post that has already received votes.');
         }
-
         return view('posts.edit', compact('post'));
     }
 
@@ -101,7 +151,6 @@ class PostController extends Controller
         if (Auth::id() !== $post->user_id) {
             abort(403, 'Unauthorized action.');
         }
-
         if ($post->total_votes > 0) {
             return redirect()->route('profile.show', ['username' => Auth::user()->username])
                 ->with('error', 'Cannot update a post that has already received votes.');
@@ -118,9 +167,7 @@ class PostController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         $data = $request->only(['question', 'option_one_title', 'option_two_title']);
@@ -132,7 +179,11 @@ class PostController extends Controller
             if ($post->option_one_image) {
                 Storage::disk('public')->delete($post->option_one_image);
             }
-            $data['option_one_image'] = $request->file('option_one_image')->store('post_images', 'public');
+            $data['option_one_image'] = $this->processAndStoreImage(
+                $request->file('option_one_image'),
+                'post_images',
+                uniqid('post_opt1_')
+            );
         }
 
         if ($request->boolean('remove_option_two_image') && $post->option_two_image) {
@@ -142,15 +193,20 @@ class PostController extends Controller
             if ($post->option_two_image) {
                 Storage::disk('public')->delete($post->option_two_image);
             }
-            $data['option_two_image'] = $request->file('option_two_image')->store('post_images', 'public');
+            $data['option_two_image'] = $this->processAndStoreImage(
+                $request->file('option_two_image'),
+                'post_images',
+                uniqid('post_opt2_')
+            );
         }
 
         $post->update($data);
-
         return redirect()->route('profile.show', ['username' => $post->user->username])
             ->with('success', 'Post updated successfully.');
     }
 
+    // ... (rest of your PostController methods: destroy, vote, showBySlug, etc.)
+    // Make sure attachUserVoteStatus is present as in your original code
     final public function destroy(Post $post): RedirectResponse
     {
         if (Auth::id() !== $post->user_id /* && !Auth::user()->isAdmin() */) {
@@ -267,9 +323,8 @@ class PostController extends Controller
             return response()->json($posts);
         }
 
-        return view('search.results', compact('posts', 'queryTerm')); // Assumes resources/views/search/results.blade.php
+        return view('search.results', compact('posts', 'queryTerm'));
     }
-
     private function attachUserVoteStatus(LengthAwarePaginator $posts): void
     {
         $userVoteMap = collect();

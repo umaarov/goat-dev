@@ -29,7 +29,7 @@
                         <label for="option_one_image"
                                class="block mb-2">
                             <div id="option_one_preview"
-                                 class="bg-gray-100 h-40 rounded-md flex items-center justify-center cursor-pointer border-2 border-dashed @error('option_one_image') border-red-500 @else border-gray-300 hover:border-blue-500 @enderror">
+                                 class="bg-gray-100 w-40 h-40 rounded-md flex items-center justify-center cursor-pointer border-2 border-dashed @error('option_one_image') border-red-500 @else border-gray-300 hover:border-blue-500 @enderror">
                                 <div id="option_one_placeholder"
                                      class="text-center text-gray-500 p-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400"
@@ -64,7 +64,7 @@
                     <div>
                         <label for="option_two_image" class="block mb-2">
                             <div id="option_two_preview"
-                                 class="bg-gray-100 h-40 rounded-md flex items-center justify-center cursor-pointer border-2 border-dashed @error('option_two_image') border-red-500 @else border-gray-300 hover:border-blue-500 @enderror">
+                                 class="bg-gray-100 w-40 h-40 rounded-md flex items-center justify-center cursor-pointer border-2 border-dashed @error('option_two_image') border-red-500 @else border-gray-300 hover:border-blue-500 @enderror">
                                 <div id="option_two_placeholder" class="text-center text-gray-500 p-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400"
                                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
