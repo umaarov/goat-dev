@@ -7,6 +7,7 @@ use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Typography\FontFactory;
 
+
 class AvatarService
 {
     final public function generateInitialsAvatar(string $firstName, string $lastName, string $userId, int $size = 200): string
@@ -23,7 +24,6 @@ class AvatarService
 
         $image = $manager->create($size, $size)->fill($backgroundColor);
 
-
         $image->text($initials, $size / 2, $size / 2, function (FontFactory $font) use ($size) {
             $font->file(public_path('fonts/poppins.ttf'));
             $font->size($size * 0.4);
@@ -34,10 +34,7 @@ class AvatarService
 
         $path = 'profile_pictures/initial_' . $userId . '.png';
 
-        // $encodedImage = $image->toPng()->toString();
-
-        $encodedImage = $image->toPng(['compression' => 6])->toString();
-
+        $encodedImage = $image->toPng()->toString();
 
         Storage::disk('public')->put($path, $encodedImage);
 
@@ -82,6 +79,6 @@ class AvatarService
         $g = round($g_float * 255);
         $b = round($b_float * 255);
 
-        return "rgb($r, $g, $b)";
+        return "rgba($r, $g, $b, 1)";
     }
 }
