@@ -30,12 +30,18 @@ class UserController extends Controller
     final public function showProfile(string $username): View
     {
         $user = User::where('username', $username)
-            ->select(['id', 'first_name', 'last_name', 'username', 'profile_picture', 'created_at', 'show_voted_posts_publicly'])
+            ->withCount('posts')
+//            ->select([
+//                'id', 'first_name', 'last_name', 'username',
+//                'profile_picture', 'created_at',
+//                'show_voted_posts_publicly'
+//            ])
             ->firstOrFail();
 
+//        dd($user->toArray());
         $isOwnProfile = Auth::check() && Auth::id() === $user->id;
-
-        return view('users.profile', compact('user', 'isOwnProfile'));
+        $totalVotesOnUserPosts = $user->posts()->sum('total_votes');
+        return view('users.profile', compact('user', 'isOwnProfile', 'totalVotesOnUserPosts'));
     }
 
     final public function getUserPosts(Request $request, string $username): JsonResponse
