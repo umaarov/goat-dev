@@ -475,8 +475,6 @@
         }
     }
 
-    let currentlyOpenCommentsId = null;
-
     function toggleComments(postId) {
         const clickedCommentsSection = document.getElementById(`comments-section-${postId}`);
 
