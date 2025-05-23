@@ -3,7 +3,10 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Facades\Image;
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Typography\FontFactory;
+
 
 class AvatarService
 {
@@ -13,12 +16,15 @@ class AvatarService
         $lastInitial = !empty($lastName) ? mb_substr($lastName, 0, 1) : '';
         $initials = mb_strtoupper($firstInitial . $lastInitial);
 
+        $manager = new ImageManager(new GdDriver());
+
         $hash = md5($userId);
         $hue = hexdec(substr($hash, 0, 2)) % 360;
+        $backgroundColor = $this->hsvToRgb($hue, 0.7, 0.9);
 
-        $img = Image::canvas($size, $size, $this->hsvToRgb($hue, 0.7, 0.9));
+        $image = $manager->create($size, $size)->fill($backgroundColor);
 
-        $img->text($initials, $size / 2, $size / 2, function ($font) use ($size) {
+        $image->text($initials, $size / 2, $size / 2, function (FontFactory $font) use ($size) {
             $font->file(public_path('fonts/poppins.ttf'));
             $font->size($size * 0.4);
             $font->color('#ffffff');
@@ -27,12 +33,15 @@ class AvatarService
         });
 
         $path = 'profile_pictures/initial_' . $userId . '.png';
-        Storage::disk('public')->put($path, $img->encode('png'));
+
+        $encodedImage = $image->toPng()->toString();
+
+        Storage::disk('public')->put($path, $encodedImage);
 
         return $path;
     }
 
-    private function hsvToRgb($h, $s, $v): string
+    private function hsvToRgb(float $h, float $s, float $v): string
     {
         $h_i = floor($h / 60) % 6;
         $f = $h / 60 - $h_i;
@@ -40,30 +49,35 @@ class AvatarService
         $q = $v * (1 - $f * $s);
         $t = $v * (1 - (1 - $f) * $s);
 
+        $r_float = 0.0;
+        $g_float = 0.0;
+        $b_float = 0.0;
+
         switch ($h_i) {
             case 0:
-                [$r, $g, $b] = [$v, $t, $p];
+                [$r_float, $g_float, $b_float] = [$v, $t, $p];
                 break;
             case 1:
-                [$r, $g, $b] = [$q, $v, $p];
+                [$r_float, $g_float, $b_float] = [$q, $v, $p];
                 break;
             case 2:
-                [$r, $g, $b] = [$p, $v, $t];
+                [$r_float, $g_float, $b_float] = [$p, $v, $t];
                 break;
             case 3:
-                [$r, $g, $b] = [$p, $q, $v];
+                [$r_float, $g_float, $b_float] = [$p, $q, $v];
                 break;
             case 4:
-                [$r, $g, $b] = [$t, $p, $v];
+                [$r_float, $g_float, $b_float] = [$t, $p, $v];
                 break;
             case 5:
-                [$r, $g, $b] = [$v, $p, $q];
+            default:
+                [$r_float, $g_float, $b_float] = [$v, $p, $q];
                 break;
         }
 
-        $r = round($r * 255);
-        $g = round($g * 255);
-        $b = round($b * 255);
+        $r = round($r_float * 255);
+        $g = round($g_float * 255);
+        $b = round($b_float * 255);
 
         return "rgba($r, $g, $b, 1)";
     }
