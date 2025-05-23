@@ -664,10 +664,10 @@
                 </span>` : '';
 
             commentDiv.innerHTML = `
-            <div class="flex items-start mb-2"> {{-- Changed to items-start for better alignment with multiline comments --}}
+            <div class="flex items-start mb-2">
             <img src="${profilePic}" alt="${comment.user.username}'s profile picture"
-                     class="w-8 h-8 rounded-full mr-2 mt-1 cursor-pointer zoomable-image"  {{-- MODIFIED: Added zoomable-image, cursor-pointer, mt-1 --}}
-            data-full-src="${profilePic}"> {{-- MODIFIED: Added data-full-src --}}
+                     class="w-8 h-8 rounded-full mr-2 mt-1 cursor-pointer zoomable-image"
+            data-full-src="${profilePic}">
             <div class="flex-1">
                 <div class="flex items-center">
                     <a href="/@${comment.user.username}" class="text-sm font-medium text-gray-800 hover:underline">${comment.user.username}</a>
@@ -675,7 +675,7 @@
                         <span class="mx-1 text-gray-400 text-xs">·</span>
                         <small class="text-xs text-gray-500" title="${comment.created_at}">${formatTimestamp(comment.created_at)}</small>
                     </div>
-                    <p class="text-sm text-gray-700 break-words">${comment.content}</p> {{-- Added break-words for long comments --}}
+                    <p class="text-sm text-gray-700 break-words">${comment.content}</p>
             </div>
 ${canDeleteComment(comment) ? `
                 <div class="ml-auto pl-2">
