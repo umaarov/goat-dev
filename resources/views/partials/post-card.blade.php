@@ -377,14 +377,15 @@
 </style>
 
 <script>
-
+    if (typeof window.currentlyOpenCommentsId === 'undefined') {
+        window.currentlyOpenCommentsId = null;
+    }
     document.addEventListener('DOMContentLoaded', function () {
         // Check if we need to scroll to a specific post
         @if(session('scrollToPost'))
         scrollToPost({{ session('scrollToPost') }});
         @endif
     });
-    let currentlyOpenCommentsId = null;
 
     function scrollToPost(postId) {
         const postElement = document.getElementById(`post-${postId}`);
@@ -478,35 +479,36 @@
 
     function toggleComments(postId) {
         const clickedCommentsSection = document.getElementById(`comments-section-${postId}`);
+        if (!clickedCommentsSection) return;
 
+        const isActive = clickedCommentsSection.classList.contains('active');
 
-        if (currentlyOpenCommentsId && currentlyOpenCommentsId !== postId) {
-            const previousCommentsSection = document.getElementById(`comments-section-${currentlyOpenCommentsId}`);
+        if (window.currentlyOpenCommentsId && window.currentlyOpenCommentsId !== postId) {
+            const previousCommentsSection = document.getElementById(`comments-section-${window.currentlyOpenCommentsId}`);
             if (previousCommentsSection) {
                 previousCommentsSection.classList.remove('active');
-                previousCommentsSection.classList.add('hidden');
-                currentlyOpenCommentsId = null;
+                setTimeout(() => {
+                    previousCommentsSection.classList.add('hidden');
+                }, 500);
             }
         }
 
-        if (clickedCommentsSection.classList.contains('hidden')) {
+        if (isActive) {
+            clickedCommentsSection.classList.remove('active');
+            window.currentlyOpenCommentsId = null;
+            setTimeout(() => {
+                clickedCommentsSection.classList.add('hidden');
+            }, 500);
+        } else {
             clickedCommentsSection.classList.remove('hidden');
-
             setTimeout(() => {
                 clickedCommentsSection.classList.add('active');
-                currentlyOpenCommentsId = postId;
+                window.currentlyOpenCommentsId = postId;
 
                 if (!clickedCommentsSection.dataset.loaded) {
                     loadComments(postId, 1);
                 }
             }, 10);
-        } else {
-            clickedCommentsSection.classList.remove('active');
-
-            setTimeout(() => {
-                clickedCommentsSection.classList.add('hidden');
-                currentlyOpenCommentsId = null;
-            }, 500);
         }
     }
 

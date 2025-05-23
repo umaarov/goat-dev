@@ -20,7 +20,6 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Intervention\Image\ImageManager;
 
-
 class UserController extends Controller
 {
     protected AvatarService $avatarService;
