@@ -17,18 +17,19 @@
                     <input type="text"
                            class="w-full px-3 py-2 border @error('question') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                            id="question" name="question" placeholder="Question..."
-                           value="{{ old('question') }}">
+                           value="{{ old('question', isset($post) ? $post->question : '') }}"
+                           maxlength="255">
                     @error('question')
                     <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
                     @enderror
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="grid grid-cols-2 gap-4 mb-4 mx">
                     {{-- Option 1 --}}
                     <div>
                         <label for="option_one_image_trigger" class="block mb-2 cursor-pointer">
                             <div id="option_one_preview"
-                                 class="bg-gray-100 w-40 h-40 rounded-md flex items-center justify-center border-2 border-dashed @error('option_one_image') border-red-500 @else border-gray-300 hover:border-blue-500 @enderror">
+                                 class="bg-gray-100 h-40 rounded-md flex items-center justify-center border-2 border-dashed @error('option_one_image') border-red-500 @else border-gray-300 hover:border-blue-500 @enderror">
                                 <div id="option_one_placeholder" class="text-center text-gray-500 p-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400"
                                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -54,7 +55,8 @@
                         <input type="text"
                                class="mt-2 w-full px-3 py-2 border @error('option_one_title') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                id="option_one_title" name="option_one_title" placeholder="Subject 1"
-                               value="{{ old('option_one_title') }}">
+                               value="{{ old('option_one_title', isset($post) ? $post->option_one_title : '') }}"
+                               maxlength="40">
                         @error('option_one_title')
                         <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
                         @enderror
@@ -64,7 +66,7 @@
                     <div>
                         <label for="option_two_image_trigger" class="block mb-2 cursor-pointer">
                             <div id="option_two_preview"
-                                 class="bg-gray-100 w-40 h-40 rounded-md flex items-center justify-center border-2 border-dashed @error('option_two_image') border-red-500 @else border-gray-300 hover:border-blue-500 @enderror">
+                                 class="bg-gray-100 h-40 rounded-md flex items-center justify-center border-2 border-dashed @error('option_two_image') border-red-500 @else border-gray-300 hover:border-blue-500 @enderror">
                                 <div id="option_two_placeholder" class="text-center text-gray-500 p-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400"
                                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -90,7 +92,8 @@
                         <input type="text"
                                class="mt-2 w-full px-3 py-2 border @error('option_two_title') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                id="option_two_title" name="option_two_title" placeholder="Subject 2"
-                               value="{{ old('option_two_title') }}">
+                               value="{{ old('option_two_title', isset($post) ? $post->option_two_title : '') }}"
+                               maxlength="40">
                         @error('option_two_title')
                         <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
                         @enderror

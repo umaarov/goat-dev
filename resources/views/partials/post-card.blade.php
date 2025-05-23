@@ -133,7 +133,7 @@
 
             <!-- Option 1 Button -->
         <button
-            class="vote-button p-3 text-center rounded-md relative
+            class="vote-button p-2 text-[16px] text-center rounded-md relative
                    {{ $highlightOptionForViewer === 'option_one' ? 'bg-blue-800 text-white' : 'bg-white border border-gray-300 hover:bg-gray-50' }}
                    {{ $isNotLoggedIn ? 'opacity-75 cursor-not-allowed' : '' }}"
             onclick="voteForOption('{{ $post->id }}', 'option_one')"
@@ -141,7 +141,7 @@
             @if($showPercentagesOnButtons) data-tooltip-show-count="true" @endif
             @if($showVotedByOwnerIcon && $voteByProfileOwner === 'option_one') data-tooltip-is-owner-choice="true" @endif
         >
-            <p>{{ $post->option_one_title }} {{ $showPercentagesOnButtons ? "($percentOne%)" : "" }}</p>
+            <p class="button-text-truncate">{{ $post->option_one_title }} {{ $showPercentagesOnButtons ? "($percentOne%)" : "" }}</p>
             @if($showVotedByOwnerIcon && $voteByProfileOwner === 'option_one')
                 <span
                     class="absolute top-0 right-0 -mt-2 -mr-2 px-1.5 py-0.5 bg-indigo-500 text-white text-[9px] leading-none rounded-full shadow-md flex items-center justify-center pointer-events-none"
@@ -157,15 +157,16 @@
 
         <!-- Option 2 Button -->
         <button
-            class="vote-button p-3 text-center rounded-md relative
+            class="vote-button p-2 text-[16px] text-center rounded-md relative
                    {{ $highlightOptionForViewer === 'option_two' ? 'bg-blue-800 text-white' : 'bg-white border border-gray-300 hover:bg-gray-50' }}
                    {{ $isNotLoggedIn ? 'opacity-75 cursor-not-allowed' : '' }}"
             onclick="voteForOption('{{ $post->id }}', 'option_two')"
             data-option="option_two"
             @if($showPercentagesOnButtons) data-tooltip-show-count="true" @endif
-            @if($showVotedByOwnerIcon && $voteByProfileOwner === 'option_two') data-tooltip-is-owner-choice="true" @endif
+            @if($showVotedByOwnerIcon && $voteByProfileOwner === 'option_two') data-tooltip-is-owner-choice="true"
+            @endif
         >
-            <p>{{ $post->option_two_title }} {{ $showPercentagesOnButtons ? "($percentTwo%)" : "" }}</p>
+            <p class="button-text-truncate">{{ $post->option_two_title }} {{ $showPercentagesOnButtons ? "($percentTwo%)" : "" }}</p>
             @if($showVotedByOwnerIcon && $voteByProfileOwner === 'option_two')
                 <span
                     class="absolute top-0 right-0 -mt-2 -mr-2 px-1.5 py-0.5 bg-indigo-500 text-white text-[9px] leading-none rounded-full shadow-md flex items-center justify-center pointer-events-none"
@@ -366,6 +367,12 @@
 
     .zoomable-image {
         cursor: pointer;
+    }
+
+    .button-text-truncate {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
     }
 </style>
 

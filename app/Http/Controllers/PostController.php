@@ -82,9 +82,9 @@ class PostController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'question' => 'required|string|max:255',
-            'option_one_title' => 'required|string|max:100',
+            'option_one_title' => 'required|string|max:40',
             'option_one_image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'option_two_title' => 'required|string|max:100',
+            'option_two_title' => 'required|string|max:40',
             'option_two_image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
@@ -146,9 +146,9 @@ class PostController extends Controller
 
         $validator = Validator::make($request->all(), [
             'question' => 'required|string|max:255',
-            'option_one_title' => 'required|string|max:100',
+            'option_one_title' => 'required|string|max:40',
             'option_one_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'option_two_title' => 'required|string|max:100',
+            'option_two_title' => 'required|string|max:40',
             'option_two_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'remove_option_one_image' => 'nullable|boolean',
             'remove_option_two_image' => 'nullable|boolean',
