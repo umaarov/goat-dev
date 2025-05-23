@@ -177,6 +177,7 @@ class UserController extends Controller
                 'not_regex:/(.)\1{2,}/',
             ],
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'remove_profile_picture' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -195,8 +196,9 @@ class UserController extends Controller
             }
             $data['profile_picture'] = $request->file('profile_picture')->store('profile_pictures', 'public');
         } else if ($request->boolean('remove_profile_picture') ||
-            ($request->first_name !== $user->first_name || $request->last_name !== $user->last_name) &&
-            str_contains($user->profile_picture, 'initial_')) {
+            (($request->first_name !== $user->first_name || $request->last_name !== $user->last_name) &&
+                $user->profile_picture && str_contains($user->profile_picture, 'initial_'))) {
+
             if ($user->profile_picture && !filter_var($user->profile_picture, FILTER_VALIDATE_URL)) {
                 if (Storage::disk('public')->exists($user->profile_picture)) {
                     Storage::disk('public')->delete($user->profile_picture);
@@ -232,7 +234,6 @@ class UserController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            // 'current_password' => 'required|string|current_password',
             'current_password' => ['required', 'string', function ($attribute, $value, $fail) use ($user) {
                 if (!Hash::check($value, $user->password)) {
                     $fail('The :attribute is incorrect.');

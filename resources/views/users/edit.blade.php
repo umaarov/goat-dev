@@ -43,8 +43,7 @@
                 </div>
 
                 <div class="mb-6">
-                    <label for="profile_picture" class="block text-gray-700 mb-2">Update Profile Picture
-                        (Optional)</label>
+                    <label class="block text-gray-700 mb-2">Update Profile Picture (Optional)</label>
                     @php
                         $profilePic = $user->profile_picture
                             ? (Str::startsWith($user->profile_picture, ['http', 'https'])
@@ -57,14 +56,14 @@
                         <span class="mr-2 text-sm text-gray-600">Current:</span>
                         <div class="h-16 w-16 rounded-full overflow-hidden border border-gray-200">
                             <img src="{{ $profilePic }}" alt="Current Profile Picture"
-                                 class="h-full w-full object-cover">
+                                 class="h-full w-full object-cover" id="current_profile_picture_img">
                         </div>
                     </div>
 
                     <div class="relative border border-gray-300 rounded-md p-2">
                         <div class="flex items-center">
                             <div id="profile_picture_preview"
-                                 class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
+                                 class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3 overflow-hidden">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none"
                                      viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -86,9 +85,19 @@
                                onchange="previewProfilePicture(this)">
                     </div>
                     @error('profile_picture')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                    <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
                     @enderror
+
+                    <div class="mt-3 mb-2">
+                        <label for="remove_profile_picture"
+                               class="flex items-center text-sm text-gray-700 cursor-pointer">
+                            <input type="checkbox" id="remove_profile_picture" name="remove_profile_picture" value="1"
+                                   class="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <span>Revert to initials-based profile picture</span>
+                        </label>
+                    </div>
                 </div>
+
 
                 <div class="flex items-center justify-between">
                     <button type="submit"
@@ -129,24 +138,55 @@
     </div>
 
     <script>
+        const defaultPreviewIconSVG = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 4v16m8-8H4"/>
+            </svg>`;
+
         function previewProfilePicture(input) {
             const preview = document.getElementById('profile_picture_preview');
 
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
-
                 reader.onload = function (e) {
-                    // Create an image element and set its source
                     preview.innerHTML = '';
                     const img = document.createElement('img');
                     img.src = e.target.result;
+                    img.alt = "New profile picture preview";
                     img.classList.add('w-10', 'h-10', 'rounded-full', 'object-cover');
                     preview.appendChild(img);
                 }
-
                 reader.readAsDataURL(input.files[0]);
+            } else {
+                preview.innerHTML = defaultPreviewIconSVG;
             }
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            initUsernameChecker();
+
+            const profilePictureInput = document.getElementById('profile_picture');
+            const removeProfilePictureCheckbox = document.getElementById('remove_profile_picture');
+
+            if (profilePictureInput && removeProfilePictureCheckbox) {
+                profilePictureInput.addEventListener('change', function () {
+                    if (this.files && this.files.length > 0) {
+                        removeProfilePictureCheckbox.checked = false;
+                    }
+                });
+
+                removeProfilePictureCheckbox.addEventListener('change', function () {
+                    if (this.checked) {
+                        profilePictureInput.value = '';
+
+                        const changeEvent = new Event('change', {bubbles: true});
+                        profilePictureInput.dispatchEvent(changeEvent);
+                    }
+                });
+            }
+        });
 
         function initUsernameChecker() {
             const usernameInput = document.getElementById('username');
@@ -158,16 +198,24 @@
             statusElement.id = 'username-status';
             statusElement.className = 'mt-1 text-sm';
 
-            usernameInput.parentNode.insertBefore(statusElement, usernameInput.nextSibling);
+            if (!document.getElementById('username-status')) {
+                usernameInput.parentNode.insertBefore(statusElement, usernameInput.nextSibling);
+            }
+
 
             function checkUsername() {
                 const username = usernameInput.value.trim();
+                const currentStatusElement = document.getElementById('username-status'); // Re-fetch in case of DOM changes
 
                 if (username === '' || username === lastCheckedUsername) {
+                    if (username === '' && currentStatusElement) {
+                        currentStatusElement.textContent = ''; // Clear message if username is empty
+                        usernameInput.classList.remove('border-red-500', 'border-green-500');
+                    }
                     return;
                 }
 
-                // Client-side validation
+
                 const minLength = 5;
                 const maxLength = 24;
                 const startsWithLetter = /^[a-zA-Z]/.test(username);
@@ -175,59 +223,41 @@
                 const notOnlyNumbers = !/^\d+$/.test(username);
                 const noConsecutiveChars = !/(.)\1{2,}/.test(username);
 
+                let errorMessage = null;
+
                 if (username.length < minLength) {
-                    statusElement.className = 'mt-1 text-sm text-red-600';
-                    statusElement.textContent = 'Username must be at least 5 characters';
-                    usernameInput.classList.remove('border-green-500');
-                    usernameInput.classList.add('border-red-500');
-                    return;
+                    errorMessage = 'Username must be at least 5 characters';
+                } else if (username.length > maxLength) {
+                    errorMessage = 'Username must be at most 24 characters';
+                } else if (!startsWithLetter) {
+                    errorMessage = 'Username must start with a letter';
+                } else if (!onlyValidChars) {
+                    errorMessage = 'Username can only contain letters, numbers, underscores, and hyphens';
+                } else if (!notOnlyNumbers) {
+                    errorMessage = 'Username cannot consist of only numbers';
+                } else if (!noConsecutiveChars) {
+                    errorMessage = 'Username cannot contain more than 2 consecutive identical characters';
                 }
-                if (username.length > maxLength) {
-                    statusElement.className = 'mt-1 text-sm text-red-600';
-                    statusElement.textContent = 'Username must be at most 24 characters';
+
+                if (errorMessage) {
+                    if (currentStatusElement) {
+                        currentStatusElement.className = 'mt-1 text-sm text-red-600';
+                        currentStatusElement.textContent = errorMessage;
+                    }
                     usernameInput.classList.remove('border-green-500');
                     usernameInput.classList.add('border-red-500');
                     return;
                 }
 
-                if (!startsWithLetter) {
-                    statusElement.className = 'mt-1 text-sm text-red-600';
-                    statusElement.textContent = 'Username must start with a letter';
-                    usernameInput.classList.remove('border-green-500');
-                    usernameInput.classList.add('border-red-500');
-                    return;
-                }
-
-                if (!onlyValidChars) {
-                    statusElement.className = 'mt-1 text-sm text-red-600';
-                    statusElement.textContent = 'Username can only contain letters, numbers, underscores, and hyphens';
-                    usernameInput.classList.remove('border-green-500');
-                    usernameInput.classList.add('border-red-500');
-                    return;
-                }
-
-                if (!notOnlyNumbers) {
-                    statusElement.className = 'mt-1 text-sm text-red-600';
-                    statusElement.textContent = 'Username cannot consist of only numbers';
-                    usernameInput.classList.remove('border-green-500');
-                    usernameInput.classList.add('border-red-500');
-                    return;
-                }
-
-                if (!noConsecutiveChars) {
-                    statusElement.className = 'mt-1 text-sm text-red-600';
-                    statusElement.textContent = 'Username cannot contain consecutive identical characters';
-                    usernameInput.classList.remove('border-green-500');
-                    usernameInput.classList.add('border-red-500');
-                    return;
-                }
 
                 lastCheckedUsername = username;
 
-                statusElement.className = 'mt-1 text-sm text-gray-500';
-                statusElement.textContent = 'Checking availability...';
+                if (currentStatusElement) {
+                    currentStatusElement.className = 'mt-1 text-sm text-gray-500';
+                    currentStatusElement.textContent = 'Checking availability...';
+                }
 
-                // Proceed with the AJAX request only if client-side validation passes
+
                 fetch('/check-username?username=' + encodeURIComponent(username), {
                     method: 'GET',
                     headers: {
@@ -237,22 +267,27 @@
                 })
                     .then(response => response.json())
                     .then(data => {
-                        if (data.available) {
-                            statusElement.className = 'mt-1 text-sm text-green-600';
-                            statusElement.textContent = 'Username is available';
-                            usernameInput.classList.remove('border-red-500');
-                            usernameInput.classList.add('border-green-500');
-                        } else {
-                            statusElement.className = 'mt-1 text-sm text-red-600';
-                            statusElement.textContent = 'Username is already taken';
-                            usernameInput.classList.remove('border-green-500');
-                            usernameInput.classList.add('border-red-500');
+                        if (currentStatusElement) {
+                            if (data.available) {
+                                currentStatusElement.className = 'mt-1 text-sm text-green-600';
+                                currentStatusElement.textContent = 'Username is available';
+                                usernameInput.classList.remove('border-red-500');
+                                usernameInput.classList.add('border-green-500');
+                            } else {
+                                currentStatusElement.className = 'mt-1 text-sm text-red-600';
+                                currentStatusElement.textContent = 'Username is already taken';
+                                usernameInput.classList.remove('border-green-500');
+                                usernameInput.classList.add('border-red-500');
+                            }
                         }
                     })
                     .catch(error => {
                         console.error('Error checking username:', error);
-                        statusElement.className = 'mt-1 text-sm text-gray-500';
-                        statusElement.textContent = 'Could not verify username';
+                        if (currentStatusElement) {
+                            currentStatusElement.className = 'mt-1 text-sm text-gray-500';
+                            currentStatusElement.textContent = 'Could not verify username';
+                        }
+                        usernameInput.classList.remove('border-green-500', 'border-red-500');
                     });
             }
 
@@ -265,10 +300,10 @@
 
             const currentPageUrl = window.location.pathname;
             if (currentPageUrl.includes('/profile/edit')) {
-                lastCheckedUsername = usernameInput.value.trim();
+                if (usernameInput.value && !usernameInput.classList.contains('border-red-500') && !document.querySelector('.text-red-500.text-sm')) {
+                    lastCheckedUsername = usernameInput.value.trim();
+                }
             }
         }
-
-        document.addEventListener('DOMContentLoaded', initUsernameChecker);
     </script>
 @endsection
