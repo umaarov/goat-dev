@@ -26,12 +26,10 @@
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     {{-- Option 1 --}}
                     <div>
-                        <label for="option_one_image"
-                               class="block mb-2">
+                        <label for="option_one_image_trigger" class="block mb-2 cursor-pointer">
                             <div id="option_one_preview"
-                                 class="bg-gray-100 w-40 h-40 rounded-md flex items-center justify-center cursor-pointer border-2 border-dashed @error('option_one_image') border-red-500 @else border-gray-300 hover:border-blue-500 @enderror">
-                                <div id="option_one_placeholder"
-                                     class="text-center text-gray-500 p-2">
+                                 class="bg-gray-100 w-40 h-40 rounded-md flex items-center justify-center border-2 border-dashed @error('option_one_image') border-red-500 @else border-gray-300 hover:border-blue-500 @enderror">
+                                <div id="option_one_placeholder" class="text-center text-gray-500 p-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400"
                                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -39,14 +37,16 @@
                                     </svg>
                                     <p class="mt-1 text-xs">Click to upload image</p>
                                 </div>
-                                <img id="option_one_img"
-                                     class="h-full w-full object-cover object-center hidden rounded-md" src="#"
+                                <img id="option_one_img" {{-- For the small preview --}}
+                                class="h-full w-full object-cover object-center hidden rounded-md" src="#"
                                      alt="Option 1 Preview">
                             </div>
-                            <input type="file" id="option_one_image" name="option_one_image" class="hidden"
-                                   accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
-                                   onchange="previewImage(this, 'option_one_img', 'option_one_placeholder', 'option_one_preview')">
                         </label>
+                        <input type="file" id="option_one_image_trigger" class="hidden"
+                               accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
+                               onchange="openImageCropper(event, 'option_one_image_final', 'option_one_img', 'option_one_placeholder', 'option_one_preview')">
+                        <input type="file" name="option_one_image" id="option_one_image_final" class="hidden">
+
                         @error('option_one_image')
                         <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
                         @enderror
@@ -62,9 +62,9 @@
 
                     {{-- Option 2 --}}
                     <div>
-                        <label for="option_two_image" class="block mb-2">
+                        <label for="option_two_image_trigger" class="block mb-2 cursor-pointer">
                             <div id="option_two_preview"
-                                 class="bg-gray-100 w-40 h-40 rounded-md flex items-center justify-center cursor-pointer border-2 border-dashed @error('option_two_image') border-red-500 @else border-gray-300 hover:border-blue-500 @enderror">
+                                 class="bg-gray-100 w-40 h-40 rounded-md flex items-center justify-center border-2 border-dashed @error('option_two_image') border-red-500 @else border-gray-300 hover:border-blue-500 @enderror">
                                 <div id="option_two_placeholder" class="text-center text-gray-500 p-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400"
                                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -73,14 +73,16 @@
                                     </svg>
                                     <p class="mt-1 text-xs">Click to upload image</p>
                                 </div>
-                                <img id="option_two_img"
-                                     class="h-full w-full object-cover object-center hidden rounded-md" src="#"
+                                <img id="option_two_img" {{-- For the small preview --}}
+                                class="h-full w-full object-cover object-center hidden rounded-md" src="#"
                                      alt="Option 2 Preview">
                             </div>
-                            <input type="file" id="option_two_image" name="option_two_image" class="hidden"
-                                   accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
-                                   onchange="previewImage(this, 'option_two_img', 'option_two_placeholder', 'option_two_preview')">
                         </label>
+                        <input type="file" id="option_two_image_trigger" class="hidden"
+                               accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
+                               onchange="openImageCropper(event, 'option_two_image_final', 'option_two_img', 'option_two_placeholder', 'option_two_preview')">
+                        <input type="file" name="option_two_image" id="option_two_image_final" class="hidden">
+
                         @error('option_two_image')
                         <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
                         @enderror
@@ -106,41 +108,6 @@
     </div>
 
     <script>
-        function previewImage(input, imgId, placeholderId, previewDivId) {
-            const imgElement = document.getElementById(imgId);
-            const placeholderElement = document.getElementById(placeholderId);
-            const previewDivElement = document.getElementById(previewDivId);
-
-            if (previewDivElement) {
-                previewDivElement.classList.remove('border-red-500');
-                if (!input.files || !input.files[0]) {
-                    previewDivElement.classList.add('border-gray-300', 'hover:border-blue-500');
-                }
-            }
-
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    imgElement.src = e.target.result;
-                    imgElement.classList.remove('hidden');
-                    placeholderElement.classList.add('hidden');
-                    if (previewDivElement) {
-                        previewDivElement.classList.remove('border-dashed', 'border-gray-300', 'hover:border-blue-500');
-                        previewDivElement.classList.add('border-solid', 'border-gray-300');
-                    }
-                }
-                reader.readAsDataURL(input.files[0]);
-            } else {
-                imgElement.src = '#';
-                imgElement.classList.add('hidden');
-                placeholderElement.classList.remove('hidden');
-                if (previewDivElement) {
-                    previewDivElement.classList.remove('border-solid');
-                    previewDivElement.classList.add('border-dashed', 'border-gray-300', 'hover:border-blue-500');
-                }
-            }
-        }
-
         document.addEventListener('DOMContentLoaded', function () {
             const createPostForm = document.getElementById('createPostForm');
 
@@ -148,9 +115,9 @@
                 createPostForm.addEventListener('submit', function (event) {
                     const questionInput = document.getElementById('question');
                     const optionOneTitleInput = document.getElementById('option_one_title');
-                    const optionOneImageInput = document.getElementById('option_one_image');
+                    const optionOneImageInput = document.getElementById('option_one_image_final');
                     const optionTwoTitleInput = document.getElementById('option_two_title');
-                    const optionTwoImageInput = document.getElementById('option_two_image');
+                    const optionTwoImageInput = document.getElementById('option_two_image_final');
 
                     let allFieldsValid = true;
 
@@ -160,22 +127,29 @@
                     if (optionOneTitleInput.value.trim() === '') {
                         allFieldsValid = false;
                     }
-                    if (optionOneImageInput.files.length === 0) {
+                    if (!optionOneImageInput || optionOneImageInput.files.length === 0) {
                         allFieldsValid = false;
+                        document.getElementById('option_one_preview')?.classList.add('border-red-500');
+                    } else {
+                        document.getElementById('option_one_preview')?.classList.remove('border-red-500');
                     }
+
                     if (optionTwoTitleInput.value.trim() === '') {
                         allFieldsValid = false;
                     }
-                    if (optionTwoImageInput.files.length === 0) {
+                    if (!optionTwoImageInput || optionTwoImageInput.files.length === 0) {
                         allFieldsValid = false;
+                        document.getElementById('option_two_preview')?.classList.add('border-red-500');
+                    } else {
+                        document.getElementById('option_two_preview')?.classList.remove('border-red-500');
                     }
 
                     if (!allFieldsValid) {
                         event.preventDefault();
                         if (typeof window.showToast === 'function') {
-                            window.showToast('Please fill all required fields.', 'warning');
+                            window.showToast('Please fill all required fields, including images.', 'warning');
                         } else {
-                            alert('Please fill all required fields.');
+                            alert('Please fill all required fields, including images.');
                         }
                     }
                 });

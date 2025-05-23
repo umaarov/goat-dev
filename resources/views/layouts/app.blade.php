@@ -11,9 +11,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+    {{-- Cropper.js --}}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js" defer></script>
 </head>
 <body class="flex flex-col min-h-screen bg-gray-100">
-<!-- Fixed top toolbar -->
 <nav
     class="fixed top-0 left-0 right-0 bg-white rounded-b-xl shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] z-10 h-16 flex items-center px-4 max-w-[450px] mx-auto">
     <div class="w-full max-w-md mx-auto flex items-center justify-between">
@@ -43,7 +45,6 @@
     </div>
 </nav>
 
-<!-- Main content area with fixed width -->
 <main class="flex-grow pt-20 mx-auto w-full max-w-[450px] px-4 pb-16">
     @if (session('success'))
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md mb-4">
@@ -90,7 +91,6 @@
 </main>
 
 
-<!-- Fixed bottom navbar -->
 <nav
     class="fixed bottom-0 left-0 right-0 bg-white shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] rounded-t-xl z-10 h-20 max-w-[450px] mx-auto">
     <div class="w-full max-w-md mx-auto flex items-center justify-around h-full">
@@ -144,6 +144,168 @@
     </div>
 </nav>
 <x-toast/>
+
+{{-- Image Cropper Modal and Utility Script --}}
+<script>
+    let currentCropperInstance = null;
+    let currentFileInputTarget = null;
+    let currentPreviewImgElement = null;
+    let currentPlaceholderElement = null;
+    let currentPreviewDivElement = null;
+    let currentOriginalFile = null;
+    window.lastTriggeredImageInputId = null;
+
+    function initCropperModal() {
+        if (document.getElementById('imageCropModalGlobal')) {
+            return;
+        }
+
+        const modalHTML = `
+            <div id="imageCropModalGlobal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 hidden">
+                <div class="bg-white p-4 sm:p-6 rounded-lg shadow-xl w-11/12 max-w-lg">
+                    <h3 class="text-xl font-semibold mb-3 text-gray-800">Crop Image (1x1)</h3>
+                    <div class="mb-4" style="max-height: 60vh; overflow: hidden;">
+                        <img id="imageToCropGlobal" src="#" alt="Image to crop" style="max-width: 100%;">
+                    </div>
+                    <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
+                        <button type="button" id="cancelCropGlobal" class="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">Cancel</button>
+                        <button type="button" id="applyCropGlobal" class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">Apply Crop</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        const modal = document.getElementById('imageCropModalGlobal');
+        const applyCropBtn = document.getElementById('applyCropGlobal');
+        const cancelCropBtn = document.getElementById('cancelCropGlobal');
+
+        cancelCropBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+            if (currentCropperInstance) {
+                currentCropperInstance.destroy();
+                currentCropperInstance = null;
+            }
+            if (window.lastTriggeredImageInputId) {
+                const triggerInput = document.getElementById(window.lastTriggeredImageInputId);
+                if (triggerInput) triggerInput.value = '';
+            }
+        });
+
+        applyCropBtn.addEventListener('click', () => {
+            if (currentCropperInstance && currentOriginalFile) {
+                const canvas = currentCropperInstance.getCroppedCanvas({
+                    // minWidth: 256, minHeight: 256,
+                    // maxWidth: 1024, maxHeight: 1024,
+                    imageSmoothingQuality: 'medium',
+                });
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        const croppedFile = new File([blob], currentOriginalFile.name, {
+                            type: currentOriginalFile.type,
+                            lastModified: Date.now()
+                        });
+
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(croppedFile);
+
+                        if (currentFileInputTarget === 'profile_picture_final') {
+                            const removePfpCheckbox = document.getElementById('remove_profile_picture');
+                            if (removePfpCheckbox && removePfpCheckbox.checked) {
+                                removePfpCheckbox.checked = false;
+                            }
+                        }
+
+                        const targetInputElement = document.getElementById(currentFileInputTarget);
+                        if (targetInputElement) {
+                            targetInputElement.files = dataTransfer.files;
+                            if (currentPreviewImgElement) {
+                                currentPreviewImgElement.src = URL.createObjectURL(croppedFile);
+                                currentPreviewImgElement.classList.remove('hidden');
+                            }
+                            if (currentPlaceholderElement) {
+                                currentPlaceholderElement.classList.add('hidden');
+                            }
+                            if (currentPreviewDivElement) {
+                                currentPreviewDivElement.classList.remove('border-dashed', 'border-red-500', 'hover:border-blue-500');
+                                currentPreviewDivElement.classList.add('border-solid', 'border-gray-300');
+                                const parentDiv = currentPreviewDivElement.closest('div');
+                                if (parentDiv) {
+                                    const errorSpan = parentDiv.querySelector('.text-red-500.text-sm.mt-1');
+                                    if (errorSpan) errorSpan.style.display = 'none';
+                                }
+                            }
+                        }
+                    } else {
+                        console.error('Could not create blob from canvas.');
+                        if (typeof window.showToast === 'function') {
+                            window.showToast('Error processing image crop.', 'error');
+                        } else {
+                            alert('Error processing image crop.');
+                        }
+                    }
+                }, currentOriginalFile.type);
+
+                modal.classList.add('hidden');
+                if (currentCropperInstance) {
+                    currentCropperInstance.destroy();
+                    currentCropperInstance = null;
+                }
+            }
+        });
+    }
+
+    function openImageCropper(event, targetInputId, previewImgId, placeholderId, previewDivId) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        window.lastTriggeredImageInputId = event.target.id;
+        currentOriginalFile = file;
+        currentFileInputTarget = targetInputId;
+        currentPreviewImgElement = document.getElementById(previewImgId);
+        currentPlaceholderElement = document.getElementById(placeholderId);
+        currentPreviewDivElement = document.getElementById(previewDivId);
+
+        const modal = document.getElementById('imageCropModalGlobal');
+        const imageToCropElement = document.getElementById('imageToCropGlobal');
+
+        if (!modal || !imageToCropElement) {
+            console.error('Cropper modal elements not found. Was initCropperModal called?');
+            if (typeof window.showToast === 'function') {
+                window.showToast('Image cropping tool could not be initialized.', 'error');
+            } else {
+                alert('Image cropping tool could not be initialized.');
+            }
+            return;
+        }
+
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            imageToCropElement.src = e.target.result;
+            modal.classList.remove('hidden');
+            if (currentCropperInstance) {
+                currentCropperInstance.destroy();
+            }
+            currentCropperInstance = new Cropper(imageToCropElement, {
+                aspectRatio: 1 / 1,
+                viewMode: 1,
+                background: false,
+                autoCropArea: 0.85,
+                responsive: true,
+                checkCrossOrigin: false,
+                // guides: false,
+                // center: false,
+                // cropBoxResizable: false,
+                // dragMode: 'move',
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    document.addEventListener('DOMContentLoaded', initCropperModal);
+</script>
+
 @stack('scripts')
 <script src="{{ asset('js/toast.js') }}"></script>
 <div id="voteCountTooltip" class="fixed hidden bg-gray-700 text-white text-xs px-2 py-1 rounded-md shadow-lg z-[10001]"
@@ -172,187 +334,185 @@
         const tooltipElement = document.getElementById('voteCountTooltip');
 
         if (!modal || !modalImage || !closeModalButton) {
-            console.warn('Image viewer modal elements not found. Zoom functionality will not work.');
-            return;
+            // console.warn('Image viewer modal elements not found. Zoom functionality will not work.');
         }
 
         if (!tooltipElement) {
-            console.warn('voteCountTooltip element not found.');
-            return;
+            // console.warn('voteCountTooltip element not found.');
         }
 
         let currentHoveredButton = null;
         const postsContainer = document.querySelector('main')
 
-        if (!postsContainer) {
-            console.warn('Posts container for tooltip delegation not found.');
-            return;
-        }
-
-        function positionTooltip(mouseX, mouseY) {
-            const wasHidden = tooltipElement.classList.contains('hidden');
-            if (wasHidden) {
-                tooltipElement.classList.remove('hidden');
-                tooltipElement.style.opacity = '0';
-            }
-
-            const tooltipRect = tooltipElement.getBoundingClientRect();
-
-            if (wasHidden) {
-                tooltipElement.classList.add('hidden');
-                tooltipElement.style.opacity = '';
-            }
-
-
-            let x = mouseX + 15;
-            let y = mouseY + 15;
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
-            const buffer = 10;
-
-            if (x + tooltipRect.width + buffer > viewportWidth) {
-                x = mouseX - tooltipRect.width - 15;
-            }
-            if (x < buffer) {
-                x = buffer;
-            }
-
-            if (y + tooltipRect.height + buffer > viewportHeight) {
-                y = mouseY - tooltipRect.height - 15;
-            }
-            if (y < buffer) {
-                y = buffer;
-            }
-
-            tooltipElement.style.left = `${x}px`;
-            tooltipElement.style.top = `${y}px`;
-        }
-
-
-        postsContainer.addEventListener('mouseover', function (event) {
-            const button = event.target.closest('.vote-button');
-            if (!button) return;
-
-            currentHoveredButton = button;
-            const postArticle = button.closest('article[id^="post-"]');
-            if (!postArticle) return;
-
-            let tooltipMessages = [];
-            let tooltipBgColor = '#4A5568';
-            let showThisTooltip = false;
-            let isOwnerVoteContext = false;
-
-            // 1. Add raw vote counts first
-            if (button.dataset.tooltipShowCount === 'true') {
-                const optionForCount = button.dataset.option;
-                let count = 0;
-                if (optionForCount === 'option_one') {
-                    count = postArticle.dataset.optionOneVotes || 0;
-                } else if (optionForCount === 'option_two') {
-                    count = postArticle.dataset.optionTwoVotes || 0;
-                }
-                const votesText = parseInt(count) === 1 ? "vote" : "votes";
-                tooltipMessages.push(`${count} ${votesText}`);
-                showThisTooltip = true;
-            }
-
-            // 2. Owner voted for information
-            if (button.dataset.tooltipIsOwnerChoice === 'true' && postArticle.dataset.profileOwnerUsername) {
-                const ownerUsername = postArticle.dataset.profileOwnerUsername;
-                const optionTitle = button.dataset.option === 'option_one' ?
-                    postArticle.dataset.optionOneTitle :
-                    postArticle.dataset.optionTwoTitle;
-                tooltipMessages.push(`@${ownerUsername} voted for ${optionTitle}`);
-                tooltipBgColor = '#4A5568';
-                showThisTooltip = true;
-                isOwnerVoteContext = true;
-            }
-
-            if (showThisTooltip && !isOwnerVoteContext && tooltipMessages.length > 0) {
-                tooltipBgColor = '#4A5568';
-            }
-
-            if (showThisTooltip && tooltipMessages.length > 0) {
-                tooltipElement.innerHTML = tooltipMessages.join('<br>');
-                tooltipElement.style.backgroundColor = tooltipBgColor;
-                positionTooltip(event.clientX, event.clientY);
-                tooltipElement.classList.remove('hidden');
-                tooltipElement.style.opacity = '1';
-            } else {
-                tooltipElement.classList.add('hidden');
-                currentHoveredButton = null;
-            }
-        });
-
-        postsContainer.addEventListener('mouseout', function (event) {
-            if (currentHoveredButton) {
-                const toElement = event.relatedTarget;
-                if (!currentHoveredButton.contains(toElement)) {
-                    tooltipElement.classList.add('hidden');
+        if (postsContainer && tooltipElement && modal && modalImage && closeModalButton) {
+            function positionTooltip(mouseX, mouseY) {
+                const wasHidden = tooltipElement.classList.contains('hidden');
+                if (wasHidden) {
+                    tooltipElement.classList.remove('hidden');
                     tooltipElement.style.opacity = '0';
-                    currentHoveredButton = null;
                 }
-            }
-        });
 
-        postsContainer.addEventListener('mousemove', function (event) {
-            if (currentHoveredButton && !tooltipElement.classList.contains('hidden')) {
+                const tooltipRect = tooltipElement.getBoundingClientRect();
+
+                if (wasHidden) {
+                    tooltipElement.classList.add('hidden');
+                    tooltipElement.style.opacity = '';
+                }
+
+
+                let x = mouseX + 15;
+                let y = mouseY + 15;
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                const buffer = 10;
+
+                if (x + tooltipRect.width + buffer > viewportWidth) {
+                    x = mouseX - tooltipRect.width - 15;
+                }
+                if (x < buffer) {
+                    x = buffer;
+                }
+
+                if (y + tooltipRect.height + buffer > viewportHeight) {
+                    y = mouseY - tooltipRect.height - 15;
+                }
+                if (y < buffer) {
+                    y = buffer;
+                }
+
+                tooltipElement.style.left = `${x}px`;
+                tooltipElement.style.top = `${y}px`;
+            }
+
+
+            postsContainer.addEventListener('mouseover', function (event) {
                 const button = event.target.closest('.vote-button');
-                if (button === currentHoveredButton) {
+                if (!button) return;
+
+                currentHoveredButton = button;
+                const postArticle = button.closest('article[id^="post-"]');
+                if (!postArticle) return;
+
+                let tooltipMessages = [];
+                let tooltipBgColor = '#4A5568';
+                let showThisTooltip = false;
+                let isOwnerVoteContext = false;
+
+                // 1. Add raw vote counts first
+                if (button.dataset.tooltipShowCount === 'true') {
+                    const optionForCount = button.dataset.option;
+                    let count = 0;
+                    if (optionForCount === 'option_one') {
+                        count = postArticle.dataset.optionOneVotes || 0;
+                    } else if (optionForCount === 'option_two') {
+                        count = postArticle.dataset.optionTwoVotes || 0;
+                    }
+                    const votesText = parseInt(count) === 1 ? "vote" : "votes";
+                    tooltipMessages.push(`${count} ${votesText}`);
+                    showThisTooltip = true;
+                }
+
+                // 2. Owner voted for information
+                if (button.dataset.tooltipIsOwnerChoice === 'true' && postArticle.dataset.profileOwnerUsername) {
+                    const ownerUsername = postArticle.dataset.profileOwnerUsername;
+                    const optionTitle = button.dataset.option === 'option_one' ?
+                        postArticle.dataset.optionOneTitle :
+                        postArticle.dataset.optionTwoTitle;
+                    tooltipMessages.push(`@${ownerUsername} voted for ${optionTitle}`);
+                    showThisTooltip = true;
+                    isOwnerVoteContext = true;
+                }
+
+                if (showThisTooltip && !isOwnerVoteContext && tooltipMessages.length > 0) {
+                    tooltipBgColor = '#4A5568';
+                }
+
+
+                if (showThisTooltip && tooltipMessages.length > 0) {
+                    tooltipElement.innerHTML = tooltipMessages.join('<br>');
+                    tooltipElement.style.backgroundColor = tooltipBgColor;
                     positionTooltip(event.clientX, event.clientY);
+                    tooltipElement.classList.remove('hidden');
+                    tooltipElement.style.opacity = '1';
                 } else {
                     tooltipElement.classList.add('hidden');
-                    tooltipElement.style.opacity = '0';
                     currentHoveredButton = null;
                 }
-            }
-        });
-
-        function openModal(imageUrl) {
-            modalImage.setAttribute('src', imageUrl);
-            modal.classList.remove('hidden');
-            requestAnimationFrame(() => {
-                modal.classList.remove('opacity-0');
             });
-            document.body.style.overflow = 'hidden';
-        }
 
-        function closeModal() {
-            modal.classList.add('opacity-0');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modalImage.setAttribute('src', '');
-            }, 300);
-            document.body.style.overflow = '';
-        }
-
-        document.body.addEventListener('click', function (event) {
-            let target = event.target;
-            for (let i = 0; i < 3 && target && target !== document.body; i++, target = target.parentNode) {
-                if (target.matches && target.matches('img.zoomable-image')) {
-                    event.preventDefault();
-                    const fullSrc = target.dataset.fullSrc || target.src;
-                    if (fullSrc && fullSrc !== window.location.href + '#') {
-                        openModal(fullSrc);
+            postsContainer.addEventListener('mouseout', function (event) {
+                if (currentHoveredButton) {
+                    const toElement = event.relatedTarget;
+                    if (!currentHoveredButton.contains(toElement)) {
+                        tooltipElement.classList.add('hidden');
+                        tooltipElement.style.opacity = '0';
+                        currentHoveredButton = null;
                     }
-                    return;
                 }
-            }
-        });
+            });
 
-        closeModalButton.addEventListener('click', closeModal);
+            postsContainer.addEventListener('mousemove', function (event) {
+                if (currentHoveredButton && !tooltipElement.classList.contains('hidden')) {
+                    const button = event.target.closest('.vote-button');
+                    if (button === currentHoveredButton) {
+                        positionTooltip(event.clientX, event.clientY);
+                    } else {
+                        tooltipElement.classList.add('hidden');
+                        tooltipElement.style.opacity = '0';
+                        currentHoveredButton = null;
+                    }
+                }
+            });
+        }
 
-        modal.addEventListener('click', function (event) {
-            if (event.target === modal) {
-                closeModal();
-            }
-        });
 
-        document.addEventListener('keydown', function (event) {
-            if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
-                closeModal();
+        if (modal && modalImage && closeModalButton) {
+            function openModal(imageUrl) {
+                modalImage.setAttribute('src', imageUrl);
+                modal.classList.remove('hidden');
+                requestAnimationFrame(() => {
+                    modal.classList.remove('opacity-0');
+                });
+                document.body.style.overflow = 'hidden';
             }
-        });
+
+            function closeModal() {
+                modal.classList.add('opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modalImage.setAttribute('src', '');
+                }, 300);
+                document.body.style.overflow = '';
+            }
+
+            document.body.addEventListener('click', function (event) {
+                let target = event.target;
+                for (let i = 0; i < 3 && target && target !== document.body; i++, target = target.parentNode) {
+                    if (target.matches && target.matches('img.zoomable-image')) {
+                        event.preventDefault();
+                        const fullSrc = target.dataset.fullSrc || target.src;
+                        if (fullSrc && fullSrc !== '#' && !fullSrc.endsWith('/#')) {
+                            openModal(fullSrc);
+                        }
+                        return;
+                    }
+                }
+            });
+
+            closeModalButton.addEventListener('click', closeModal);
+
+            modal.addEventListener('click', function (event) {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    closeModal();
+                }
+            });
+        }
     });
 </script>
 </body>

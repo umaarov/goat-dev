@@ -10,35 +10,24 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Intervention\Image\ImageManager; // <-- Updated use statement
+use Intervention\Image\ImageManager;
 
 class PostController extends Controller
 {
-    private const POST_IMAGE_SIZE = 500;
-
-    // Helper method to process and save image
-    private function processAndStoreImage(\Illuminate\Http\UploadedFile $uploadedFile, string $directory, string $baseFilename): string
+    private function processAndStoreImage(UploadedFile $uploadedFile, string $directory, string $baseFilename): string
     {
-        // V3: Initialize ImageManager, optionally specifying a driver (e.g., GD)
-        $manager = ImageManager::gd(); // Or ImageManager::imagick();
-
-        // V3: Read the image from the uploaded file's path
+        $manager = ImageManager::gd();
         $image = $manager->read($uploadedFile->getRealPath());
 
-        // V3: coverDown is similar to v2's fit() with upsize prevention
-        // It scales and crops to fill the dimensions, but does not upscale.
-        $image->coverDown(self::POST_IMAGE_SIZE, self::POST_IMAGE_SIZE);
 
         $filename = $baseFilename . '.' . $uploadedFile->getClientOriginalExtension();
         $path = $directory . '/' . $filename;
 
-        // V3: Encode the image to a string based on its original extension
-        $encodedImage = '';
         $extension = strtolower($uploadedFile->getClientOriginalExtension());
-
         switch ($extension) {
             case 'jpeg':
             case 'jpg':
@@ -54,8 +43,7 @@ class PostController extends Controller
                 $encodedImage = $image->toWebp()->toString();
                 break;
             default:
-                // Fallback or throw error if needed
-                $filename = $baseFilename . '.png'; // Ensure correct extension for fallback
+                $filename = $baseFilename . '.png';
                 $path = $directory . '/' . $filename;
                 $encodedImage = $image->toPng()->toString();
         }
@@ -205,8 +193,6 @@ class PostController extends Controller
             ->with('success', 'Post updated successfully.');
     }
 
-    // ... (rest of your PostController methods: destroy, vote, showBySlug, etc.)
-    // Make sure attachUserVoteStatus is present as in your original code
     final public function destroy(Post $post): RedirectResponse
     {
         if (Auth::id() !== $post->user_id /* && !Auth::user()->isAdmin() */) {
@@ -325,6 +311,7 @@ class PostController extends Controller
 
         return view('search.results', compact('posts', 'queryTerm'));
     }
+
     private function attachUserVoteStatus(LengthAwarePaginator $posts): void
     {
         $userVoteMap = collect();

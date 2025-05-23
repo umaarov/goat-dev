@@ -54,17 +54,21 @@
 
                     <div class="flex items-center mb-3">
                         <span class="mr-2 text-sm text-gray-600">Current:</span>
-                        <div class="h-16 w-16 rounded-full overflow-hidden border border-gray-200">
+                        <div id="profile_picture_current_container"
+                             class="h-16 w-16 rounded-full overflow-hidden border border-gray-200">
                             <img src="{{ $profilePic }}" alt="Current Profile Picture"
-                                 class="h-full w-full object-cover" id="current_profile_picture_img">
-                        </div>
+                                 class="h-full w-full object-cover" id="current_profile_picture_img_display"></div>
                     </div>
 
-                    <div class="relative border border-gray-300 rounded-md p-2">
+                    <label for="profile_picture_trigger"
+                           class="relative block border border-gray-300 rounded-md p-2 cursor-pointer hover:border-blue-500">
                         <div class="flex items-center">
-                            <div id="profile_picture_preview"
+                            <div id="profile_picture_preview_cropper"
                                  class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3 overflow-hidden">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none"
+                                <img id="profile_picture_img_preview" src="#" alt="New PFP Preview"
+                                     class="w-10 h-10 rounded-full object-cover hidden">
+                                <svg id="profile_picture_placeholder_icon" xmlns="http://www.w3.org/2000/svg"
+                                     class="h-6 w-6 text-gray-600" fill="none"
                                      viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M12 4v16m8-8H4"/>
@@ -73,17 +77,16 @@
                             <div class="flex-1">
                                 <div class="flex items-center justify-between">
                                     <span class="text-sm text-gray-500">Upload a new profile picture</span>
-                                    <button type="button" onclick="document.getElementById('profile_picture').click()"
-                                            class="text-sm text-blue-800 hover:underline">
-                                        Choose file
-                                    </button>
+                                    <span class="text-sm text-blue-800 hover:underline">Choose file</span>
                                 </div>
                             </div>
                         </div>
-                        <input id="profile_picture" type="file" name="profile_picture"
-                               class="hidden" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
-                               onchange="previewProfilePicture(this)">
-                    </div>
+                    </label>
+                    <input id="profile_picture_trigger" type="file" class="hidden"
+                           accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
+                           onchange="openImageCropper(event, 'profile_picture_final', 'profile_picture_img_preview', 'profile_picture_placeholder_icon', 'profile_picture_preview_cropper')">
+                    <input id="profile_picture_final" type="file" name="profile_picture" class="hidden">
+
                     @error('profile_picture')
                     <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
                     @enderror
@@ -160,6 +163,22 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M12 4v16m8-8H4"/>
             </svg>`;
+        const removeProfilePictureCheckbox = document.getElementById('remove_profile_picture');
+        const profilePictureFinalInput = document.getElementById('profile_picture_final');
+        const profilePictureImgPreview = document.getElementById('profile_picture_img_preview');
+        const profilePicturePlaceholderIcon = document.getElementById('profile_picture_placeholder_icon');
+
+        if (removeProfilePictureCheckbox && profilePictureFinalInput) {
+            removeProfilePictureCheckbox.addEventListener('change', function () {
+                if (this.checked) {
+                    profilePictureFinalInput.value = '';
+                    profilePictureImgPreview.classList.add('hidden');
+                    profilePictureImgPreview.src = '#';
+                    profilePicturePlaceholderIcon.classList.remove('hidden');
+                    document.getElementById('profile_picture_trigger').value = '';
+                }
+            });
+        }
 
         function previewProfilePicture(input) {
             const preview = document.getElementById('profile_picture_preview');
@@ -221,11 +240,11 @@
 
             function checkUsername() {
                 const username = usernameInput.value.trim();
-                const currentStatusElement = document.getElementById('username-status'); // Re-fetch in case of DOM changes
+                const currentStatusElement = document.getElementById('username-status');
 
                 if (username === '' || username === lastCheckedUsername) {
                     if (username === '' && currentStatusElement) {
-                        currentStatusElement.textContent = ''; // Clear message if username is empty
+                        currentStatusElement.textContent = '';
                         usernameInput.classList.remove('border-red-500', 'border-green-500');
                     }
                     return;

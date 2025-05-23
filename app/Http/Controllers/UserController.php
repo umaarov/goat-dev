@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Vote; // Keep this if used by attachUserVoteStatus
+use App\Models\Vote;
 use App\Services\AvatarService;
 use Exception;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -11,13 +11,15 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use Intervention\Image\ImageManager; // <-- Updated use statement
+use Intervention\Image\ImageManager;
+
 
 class UserController extends Controller
 {
@@ -29,17 +31,14 @@ class UserController extends Controller
         $this->avatarService = $avatarService;
     }
 
-    // Helper method to process and save image (can be generalized or duplicated if sizes differ significantly)
-    private function processAndStoreProfileImage(\Illuminate\Http\UploadedFile $uploadedFile, string $directory, string $baseFilename): string
+    private function processAndStoreProfileImage(UploadedFile $uploadedFile, string $directory, string $baseFilename): string
     {
         $manager = ImageManager::gd(); // Or ImageManager::imagick();
         $image = $manager->read($uploadedFile->getRealPath());
-        $image->coverDown(self::PROFILE_IMAGE_SIZE, self::PROFILE_IMAGE_SIZE);
 
         $filename = $baseFilename . '.' . $uploadedFile->getClientOriginalExtension();
         $path = $directory . '/' . $filename;
 
-        $encodedImage = '';
         $extension = strtolower($uploadedFile->getClientOriginalExtension());
         switch ($extension) {
             case 'jpeg':
@@ -77,7 +76,6 @@ class UserController extends Controller
         return view('users.profile', compact('user', 'isOwnProfile', 'totalVotesOnUserPosts'));
     }
 
-    // ... (getUserPosts, getUserVotedPosts - these don't handle image uploads directly)
     final public function getUserPosts(Request $request, string $username): JsonResponse
     {
         try {
@@ -203,9 +201,9 @@ class UserController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'username' => [
-                'required','string','min:5','max:24','alpha_dash',
+                'required', 'string', 'min:5', 'max:24', 'alpha_dash',
                 Rule::unique('users')->ignore($user->id),
-                'regex:/^[a-zA-Z][a-zA-Z0-9_-]*$/','not_regex:/^\d+$/','not_regex:/(.)\1{2,}/',
+                'regex:/^[a-zA-Z][a-zA-Z0-9_-]*$/', 'not_regex:/^\d+$/', 'not_regex:/(.)\1{2,}/',
             ],
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'remove_profile_picture' => 'nullable|boolean',
