@@ -384,6 +384,7 @@
         scrollToPost({{ session('scrollToPost') }});
         @endif
     });
+    let currentlyOpenCommentsId = null;
 
     function scrollToPost(postId) {
         const postElement = document.getElementById(`post-${postId}`);
@@ -477,6 +478,7 @@
 
     function toggleComments(postId) {
         const clickedCommentsSection = document.getElementById(`comments-section-${postId}`);
+
 
         if (currentlyOpenCommentsId && currentlyOpenCommentsId !== postId) {
             const previousCommentsSection = document.getElementById(`comments-section-${currentlyOpenCommentsId}`);

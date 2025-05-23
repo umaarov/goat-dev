@@ -153,7 +153,6 @@
     let currentPlaceholderElement = null;
     let currentPreviewDivElement = null;
     let currentOriginalFile = null;
-    let currentlyOpenCommentsId = null;
     window.lastTriggeredImageInputId = null;
 
     function initCropperModal() {
