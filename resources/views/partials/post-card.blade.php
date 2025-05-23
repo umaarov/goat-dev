@@ -21,7 +21,8 @@
                 $isVerified = in_array($post->user->username, ['goat', 'umarov'])
             @endphp
             <img src="{{ $profilePic }}" alt="{{ $post->user->username }}'s profile picture"
-                 class="w-10 h-10 rounded-full border border-gray-300">
+                 class="w-10 h-10 rounded-full border border-gray-300 cursor-pointer zoomable-image"
+                 data-full-src="{{ $profilePic }}">
             <div class="ml-3">
                 <div class="flex items-center">
                     <a href="{{ route('profile.show', $post->user->username) }}"
@@ -68,10 +69,10 @@
     <div class="grid grid-cols-2 gap-4 p-4 h-52">
         <div class="rounded-md overflow-hidden">
             @if($post->option_one_image)
-                <div class="bg-gray-100 flex justify-center">
-                    <img src="{{ asset('storage/' . $post->option_one_image) }}" alt="Option 1 Image"
-                         class="h-52 object-cover object-center w-full">
-                </div>
+                @php $optionOneImageUrl = asset('storage/' . $post->option_one_image); @endphp
+                <img src="{{ $optionOneImageUrl }}" alt="Option 1 Image"
+                     class="h-full w-full object-cover object-center cursor-pointer zoomable-image"
+                     data-full-src="{{ $optionOneImageUrl }}">
             @else
                 <div class="bg-gray-100 h-full flex items-center justify-center">
                     <div class="bg-gray-200 rounded-full p-2">
@@ -86,10 +87,10 @@
 
         <div class="rounded-md overflow-hidden">
             @if($post->option_two_image)
-                <div class="bg-gray-100 flex justify-center">
-                    <img src="{{ asset('storage/' . $post->option_two_image) }}" alt="Option 2 Image"
-                         class="h-52 object-cover object-center w-full">
-                </div>
+                @php $optionTwoImageUrl = asset('storage/' . $post->option_two_image); @endphp
+                <img src="{{ asset('storage/' . $post->option_two_image) }}" alt="Option 2 Image"
+                     class="h-full w-full object-cover object-center cursor-pointer zoomable-image"
+                     data-full-src="{{ $optionTwoImageUrl }}">
             @else
                 <div class="bg-gray-100 h-full flex items-center justify-center">
                     <div class="bg-gray-200 rounded-full p-2">
@@ -315,6 +316,10 @@
         100% {
             transform: translateY(0);
         }
+    }
+
+    .zoomable-image {
+        cursor: pointer;
     }
 </style>
 
@@ -550,39 +555,40 @@
             : '/images/default-pfp.png';
 
         const isVerified = ['goat', 'umarov'].includes(comment.user.username);
-
         const verifiedIconHTML = isVerified ? `
-        <span class="ml-1" title="Verified Account">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd"
-                      d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clip-rule="evenodd"/>
-            </svg>
-        </span>
-    ` : '';
+                <span class="ml-1" title="Verified Account">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                </span>` : '';
 
         commentDiv.innerHTML = `
-    <div class="flex items-center mb-2">
-        <img src="${profilePic}" alt="${comment.user.username}'s profile picture" class="w-8 h-8 rounded-full mr-2">
-        <div>
+            <div class="flex items-start mb-2"> {{-- Changed to items-start for better alignment with multiline comments --}}
+        <img src="${profilePic}" alt="${comment.user.username}'s profile picture"
+                     class="w-8 h-8 rounded-full mr-2 mt-1 cursor-pointer zoomable-image"  {{-- MODIFIED: Added zoomable-image, cursor-pointer, mt-1 --}}
+        data-full-src="${profilePic}"> {{-- MODIFIED: Added data-full-src --}}
+        <div class="flex-1">
             <div class="flex items-center">
                 <a href="/@${comment.user.username}" class="text-sm font-medium text-gray-800 hover:underline">${comment.user.username}</a>
-                ${verifiedIconHTML}
-                <span class="mx-1 text-gray-400">·</span>
-                <small class="text-xs text-gray-500" title="${comment.created_at}">${formatTimestamp(comment.created_at)}</small>
+                        ${verifiedIconHTML}
+                        <span class="mx-1 text-gray-400 text-xs">·</span>
+                        <small class="text-xs text-gray-500" title="${comment.created_at}">${formatTimestamp(comment.created_at)}</small>
+                    </div>
+                    <p class="text-sm text-gray-700 break-words">${comment.content}</p> {{-- Added break-words for long comments --}}
+        </div>
+${canDeleteComment(comment) ? `
+                <div class="ml-auto pl-2">
+                    <form onsubmit="deleteComment('${comment.id}', event)" class="inline">
+                        <button type="submit" class="text-gray-400 hover:text-red-500 text-xs p-1" title="Delete comment">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+                ` : ''}
             </div>
-        </div>
-        ${canDeleteComment(comment) ? `
-        <div class="ml-auto">
-            <form onsubmit="deleteComment('${comment.id}', event)" class="inline">
-                <button type="submit" class="text-gray-400 hover:text-red-500 text-xs">Delete</button>
-            </form>
-        </div>
-        ` : ''}
-    </div>
-    <p class="text-sm text-gray-700 pl-10">${comment.content}</p>
-    `;
-
+            `;
         return commentDiv;
     }
 

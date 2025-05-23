@@ -146,5 +146,79 @@
 <x-toast/>
 @stack('scripts')
 <script src="{{ asset('js/toast.js') }}"></script>
+<div id="imageViewerModal"
+     class="fixed inset-0 bg-black bg-opacity-85 flex items-center justify-center z-[9999] hidden p-4 transition-opacity duration-300 ease-in-out opacity-0">
+    <div
+        class="relative bg-transparent p-0 rounded-lg shadow-xl max-w-full max-h-full flex items-center justify-center">
+        <img id="imageViewerModalImage" src="" alt="Full screen image"
+             class="max-w-[90vw] max-h-[90vh] object-contain rounded-md">
+        <button id="imageViewerModalClose" title="Close image viewer"
+                class="absolute top-[-15px] right-[-15px] md:top-2 md:right-2 bg-gray-700 bg-opacity-60 text-white rounded-full p-2 leading-none hover:bg-opacity-90 focus:outline-none z-10">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('imageViewerModal');
+        const modalImage = document.getElementById('imageViewerModalImage');
+        const closeModalButton = document.getElementById('imageViewerModalClose');
+
+        if (!modal || !modalImage || !closeModalButton) {
+            console.warn('Image viewer modal elements not found. Zoom functionality will not work.');
+            return;
+        }
+
+        function openModal(imageUrl) {
+            modalImage.setAttribute('src', imageUrl);
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => { // Ensure 'hidden' is removed before starting opacity transition
+                modal.classList.remove('opacity-0');
+            });
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        function closeModal() {
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modalImage.setAttribute('src', ''); // Clear image src to free memory
+            }, 300); // Match duration of opacity transition
+            document.body.style.overflow = ''; // Restore background scrolling
+        }
+
+        document.body.addEventListener('click', function (event) {
+            let target = event.target;
+            // Traverse up to 3 levels to find a zoomable image (if image is wrapped in divs)
+            for (let i = 0; i < 3 && target && target !== document.body; i++, target = target.parentNode) {
+                if (target.matches && target.matches('img.zoomable-image')) {
+                    event.preventDefault(); // Important if the image is wrapped in an <a> tag
+                    const fullSrc = target.dataset.fullSrc || target.src;
+                    if (fullSrc && fullSrc !== window.location.href + '#') { // Avoid empty or '#' links
+                        openModal(fullSrc);
+                    }
+                    return;
+                }
+            }
+        });
+
+        closeModalButton.addEventListener('click', closeModal);
+
+        modal.addEventListener('click', function (event) {
+            if (event.target === modal) { // Click on the overlay itself
+                closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                closeModal();
+            }
+        });
+    });
+</script>
 </body>
 </html>
