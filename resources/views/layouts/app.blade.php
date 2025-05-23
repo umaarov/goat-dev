@@ -146,6 +146,9 @@
 <x-toast/>
 @stack('scripts')
 <script src="{{ asset('js/toast.js') }}"></script>
+<div id="voteCountTooltip" class="fixed hidden bg-gray-700 text-white text-xs px-2 py-1 rounded-md shadow-lg z-[10001]"
+     style="pointer-events: none; white-space: nowrap;">
+</div>
 <div id="imageViewerModal"
      class="fixed inset-0 bg-black bg-opacity-85 flex items-center justify-center z-[9999] hidden p-4 transition-opacity duration-300 ease-in-out opacity-0">
     <div
@@ -166,11 +169,122 @@
         const modal = document.getElementById('imageViewerModal');
         const modalImage = document.getElementById('imageViewerModalImage');
         const closeModalButton = document.getElementById('imageViewerModalClose');
+        const tooltipElement = document.getElementById('voteCountTooltip');
 
         if (!modal || !modalImage || !closeModalButton) {
             console.warn('Image viewer modal elements not found. Zoom functionality will not work.');
             return;
         }
+
+        if (!tooltipElement) {
+            console.warn('voteCountTooltip element not found.');
+            return;
+        }
+
+        let currentHoveredButton = null;
+        const postsContainer = document.querySelector('main')
+
+        if (!postsContainer) {
+            console.warn('Posts container for tooltip delegation not found.');
+            return;
+        }
+
+        function positionTooltip(mouseX, mouseY) {
+            // Ensure tooltip is not hidden to get accurate dimensions for positioning
+            const wasHidden = tooltipElement.classList.contains('hidden');
+            if (wasHidden) {
+                tooltipElement.classList.remove('hidden');
+                tooltipElement.style.opacity = '0'; // Keep it invisible for measurement
+            }
+
+            const tooltipRect = tooltipElement.getBoundingClientRect();
+
+            if (wasHidden) { // Hide it back if it was originally hidden
+                tooltipElement.classList.add('hidden');
+                tooltipElement.style.opacity = ''; // Reset opacity
+            }
+
+
+            let x = mouseX + 15; // Offset from cursor
+            let y = mouseY + 15;
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            const buffer = 10; // Buffer from viewport edges
+
+            // Adjust X position
+            if (x + tooltipRect.width + buffer > viewportWidth) {
+                x = mouseX - tooltipRect.width - 15; // Place to the left
+            }
+            if (x < buffer) { // Prevent going off left edge
+                x = buffer;
+            }
+
+            // Adjust Y position
+            if (y + tooltipRect.height + buffer > viewportHeight) {
+                y = mouseY - tooltipRect.height - 15; // Place above
+            }
+            if (y < buffer) { // Prevent going off top edge
+                y = buffer;
+            }
+
+            tooltipElement.style.left = `${x}px`;
+            tooltipElement.style.top = `${y}px`;
+        }
+
+
+        postsContainer.addEventListener('mouseover', function (event) {
+            const button = event.target.closest('.vote-button[data-show-tooltip="true"]');
+            if (button) {
+                currentHoveredButton = button;
+                const postArticle = button.closest('article[id^="post-"]');
+                if (!postArticle) return;
+
+                const option = button.dataset.option;
+                let count = 0;
+                if (option === 'option_one') {
+                    count = postArticle.dataset.optionOneVotes || 0;
+                } else if (option === 'option_two') {
+                    count = postArticle.dataset.optionTwoVotes || 0;
+                }
+
+                const votesText = parseInt(count) === 1 ? "vote" : "votes";
+                tooltipElement.textContent = `${count} ${votesText}`;
+
+                // Position it first (invisibly if needed), then make visible to avoid flicker
+                positionTooltip(event.clientX, event.clientY);
+                tooltipElement.classList.remove('hidden');
+            }
+        });
+
+        postsContainer.addEventListener('mouseout', function (event) {
+            const button = event.target.closest('.vote-button');
+            // Hide if mousing out of the button itself or if relatedTarget is outside the button
+            if (button && currentHoveredButton === button) {
+                if (!button.contains(event.relatedTarget)) {
+                    tooltipElement.classList.add('hidden');
+                    currentHoveredButton = null;
+                }
+            } else if (currentHoveredButton && !postsContainer.contains(event.relatedTarget)) {
+                // If mouse leaves the container entirely while a tooltip was active
+                tooltipElement.classList.add('hidden');
+                currentHoveredButton = null;
+            }
+        });
+
+        postsContainer.addEventListener('mousemove', function (event) {
+            // Only update position if a button is being hovered and tooltip is visible
+            if (currentHoveredButton && !tooltipElement.classList.contains('hidden')) {
+                // Check if the mouse is still over the current hovered button or its children
+                const targetButton = event.target.closest('.vote-button');
+                if (targetButton === currentHoveredButton) {
+                    positionTooltip(event.clientX, event.clientY);
+                } else {
+                    // Mouse moved away from the button that triggered the tooltip
+                    tooltipElement.classList.add('hidden');
+                    currentHoveredButton = null;
+                }
+            }
+        });
 
         function openModal(imageUrl) {
             modalImage.setAttribute('src', imageUrl);

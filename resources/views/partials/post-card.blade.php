@@ -6,7 +6,9 @@
 <article class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4"
          id="post-{{ $post->id }}"
          data-option-one-title="{{ $post->option_one_title }}"
-         data-option-two-title="{{ $post->option_two_title }}">
+         data-option-two-title="{{ $post->option_two_title }}"
+         data-option-one-votes="{{ $post->option_one_votes }}"
+         data-option-two-votes="{{ $post->option_two_votes }}">
     <!-- Header: Profile pic, username and date -->
     <header class="p-4">
         <div class="flex">
@@ -118,18 +120,20 @@
 
             <!-- Option 1 Button -->
         <button
-            class="p-3 text-center rounded-md {{ $hasVoted && $post->user_vote == 'option_one' ? 'bg-blue-800 text-white' : 'bg-white border border-gray-300 hover:bg-gray-50' }} {{ !Auth::check() ? 'opacity-75 cursor-not-allowed' : '' }}"
-            {{--            {{ !Auth::check() ? 'disabled' : '' }}--}}
+            class="vote-button p-3 text-center rounded-md {{ $hasVoted && $post->user_vote == 'option_one' ? 'bg-blue-800 text-white' : 'bg-white border border-gray-300 hover:bg-gray-50' }} {{ $isNotLoggedIn ? 'opacity-75 cursor-not-allowed' : '' }}"
             onclick="voteForOption('{{ $post->id }}', 'option_one')"
+            data-option="option_one"
+            @if($hasVoted) data-show-tooltip="true" @endif
         >
             <p>{{ $post->option_one_title }} {{ $hasVoted ? "($percentOne%)" : "" }}</p>
         </button>
 
         <!-- Option 2 Button -->
         <button
-            class="p-3 text-center rounded-md {{ $hasVoted && $post->user_vote == 'option_two' ? 'bg-blue-800 text-white' : 'bg-white border border-gray-300 hover:bg-gray-50' }} {{ !Auth::check() ? 'opacity-75 cursor-not-allowed' : '' }}"
-            {{--            {{ !Auth::check() ? 'disabled' : '' }}--}}
+            class="vote-button p-3 text-center rounded-md {{ $hasVoted && $post->user_vote == 'option_two' ? 'bg-blue-800 text-white' : 'bg-white border border-gray-300 hover:bg-gray-50' }} {{ $isNotLoggedIn ? 'opacity-75 cursor-not-allowed' : '' }}"
             onclick="voteForOption('{{ $post->id }}', 'option_two')"
+            data-option="option_two"
+            @if($hasVoted) data-show-tooltip="true" @endif
         >
             <p>{{ $post->option_two_title }} {{ $hasVoted ? "($percentTwo%)" : "" }}</p>
         </button>
@@ -920,7 +924,7 @@ ${canDeleteComment(comment) ? `
 
     function voteForOption(postId, option) {
         if (!{{ Auth::check() ? 'true' : 'false' }}) {
-            window.showToast('You need to be logged in to vote.');
+            window.showToast('You need to be logged in to vote.', 'warning');
             return;
         }
 
@@ -939,7 +943,7 @@ ${canDeleteComment(comment) ? `
                 if (!response.ok) {
                     if (response.status === 409) {
                         return response.json().then(data => {
-                            updateVoteUI(postId, data.user_vote === option ? option : data.user_vote, data);
+                            // updateVoteUI(postId, data.user_vote, data);
                             throw new Error(data.error || 'You have already voted on this post.');
                         });
                     }
@@ -948,36 +952,15 @@ ${canDeleteComment(comment) ? `
                 return response.json();
             })
             .then(data => {
-                const postElement = document.getElementById(`post-${postId}`);
-                const optionOneBtn = postElement.querySelector('.grid.grid-cols-2.gap-4.px-4.pb-4 button:first-child');
-                const optionTwoBtn = postElement.querySelector('.grid.grid-cols-2.gap-4.px-4.pb-4 button:last-child');
-
-                const percentOne = data.total_votes > 0 ? Math.round((data.option_one_votes / data.total_votes) * 100) : 0;
-                const percentTwo = data.total_votes > 0 ? Math.round((data.option_two_votes / data.total_votes) * 100) : 0;
-
-                optionOneBtn.className = option === 'option_one' ?
-                    'p-3 text-center rounded-md bg-blue-800 text-white' :
-                    'p-3 text-center rounded-md bg-white border border-gray-300 hover:bg-gray-50';
-
-                optionTwoBtn.className = option === 'option_two' ?
-                    'p-3 text-center rounded-md bg-blue-800 text-white' :
-                    'p-3 text-center rounded-md bg-white border border-gray-300 hover:bg-gray-50';
-
-                const optionOneTitle = postElement.getAttribute('data-option-one-title');
-                const optionTwoTitle = postElement.getAttribute('data-option-two-title');
-
-                optionOneBtn.querySelector('p').textContent = `${optionOneTitle} (${percentOne}%)`;
-                optionTwoBtn.querySelector('p').textContent = `${optionTwoTitle} (${percentTwo}%)`;
-
-                const votesCountElement = postElement.querySelector('.flex.justify-between.items-center.px-8.py-3 .flex.flex-col.items-center.gap-1 span:first-child');
-                if (votesCountElement) {
-                    votesCountElement.textContent = data.total_votes;
-                }
+                // updateVoteUI(postId, data.user_vote, data);
             })
             .catch(error => {
-                console.error('Error:', error);
-                // showToast(error.message || 'Failed to register vote. Please try again.');
-                showToast('You have already voted on this post.');
+                console.error('Error voting:', error);
+                if (error.message && error.message.toLowerCase().includes('already voted')) {
+                    window.showToast(error.message, 'warning');
+                } else {
+                    window.showToast('Failed to register vote. Please try again.', 'error');
+                }
             });
     }
 
