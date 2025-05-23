@@ -8,17 +8,21 @@
     if ($profileOwnerToDisplay && isset($post->pivot, $post->pivot->vote_option) && $post->pivot->user_id == $profileOwnerToDisplay->id) {
         $voteByProfileOwner = $post->pivot->vote_option;
     }
-    $optionToHighlight = $voteByProfileOwner ?: $currentViewerVote;
-    $showPercentagesOnButtons = $optionToHighlight || $voteByProfileOwner;
-    $showVotedByOwnerIndicator = $profileOwnerToDisplay && !$showManagementOptions && $voteByProfileOwner;
-
+    $highlightOptionForViewer = $currentViewerVote;
+    $showPercentagesOnButtons = $currentViewerVote || $voteByProfileOwner;
+    $showVotedByOwnerIcon = $profileOwnerToDisplay && !$showManagementOptions && $voteByProfileOwner;
 @endphp
 <article class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4"
          id="post-{{ $post->id }}"
          data-option-one-title="{{ $post->option_one_title }}"
          data-option-two-title="{{ $post->option_two_title }}"
          data-option-one-votes="{{ $post->option_one_votes }}"
-         data-option-two-votes="{{ $post->option_two_votes }}">
+         data-option-two-votes="{{ $post->option_two_votes }}"
+         @if($showVotedByOwnerIcon)
+             data-profile-owner-username="{{ $profileOwnerToDisplay->username }}"
+         data-profile-owner-vote-option="{{ $voteByProfileOwner }}"
+    @endif
+>
     <!-- Header: Profile pic, username and date -->
     <header class="p-4">
         <div class="flex">
@@ -29,7 +33,6 @@
                 : asset('storage/' . $post->user->profile_picture))
                 : asset('images/default-pfp.png');
 
-                // Check if user is verified
                 $isVerified = in_array($post->user->username, ['goat', 'umarov'])
             @endphp
             <img src="{{ $profilePic }}" alt="{{ $post->user->username }}'s profile picture"
@@ -131,19 +134,25 @@
             <!-- Option 1 Button -->
         <button
             class="vote-button p-3 text-center rounded-md relative
-                   {{ $optionToHighlight === 'option_one' ? 'bg-blue-800 text-white' : 'bg-white border border-gray-300 hover:bg-gray-50' }}
+                   {{-- Highlight (blue) ONLY if current viewer voted for option_one --}}
+                   {{ $highlightOptionForViewer === 'option_one' ? 'bg-blue-800 text-white' : 'bg-white border border-gray-300 hover:bg-gray-50' }}
                    {{ $isNotLoggedIn ? 'opacity-75 cursor-not-allowed' : '' }}"
             onclick="voteForOption('{{ $post->id }}', 'option_one')"
             data-option="option_one"
-            @if($showPercentagesOnButtons) data-show-tooltip="true" @endif
+            @if($showPercentagesOnButtons) data-show-tooltip-type="count" @endif {{-- For raw count tooltip --}}
+            @if($showVotedByOwnerIcon && $voteByProfileOwner === 'option_one') data-show-tooltip-type="owner_vote" @endif {{-- For owner vote tooltip --}}
         >
             <p>{{ $post->option_one_title }} {{ $showPercentagesOnButtons ? "($percentOne%)" : "" }}</p>
 
-            @if($showVotedByOwnerIndicator && $voteByProfileOwner === 'option_one')
-                <span class="absolute top-0 right-0 -mt-2 -mr-2 px-1.5 py-0.5 bg-indigo-500 text-white text-[9px] leading-none rounded-full shadow-md flex items-center justify-center"
-                      title="{{ $profileOwnerToDisplay->username }} voted for this option">
+            @if($showVotedByOwnerIcon && $voteByProfileOwner === 'option_one')
+                <span
+                    class="absolute top-0 right-0 -mt-2 -mr-2 px-1.5 py-0.5 bg-indigo-500 text-white text-[9px] leading-none rounded-full shadow-md flex items-center justify-center pointer-events-none"
+                    {{-- Added pointer-events-none to icon --}}
+                    title="{{ $profileOwnerToDisplay->username }} voted for this option">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clip-rule="evenodd"/>
                     </svg>
                 </span>
             @endif
@@ -152,19 +161,24 @@
         <!-- Option 2 Button -->
         <button
             class="vote-button p-3 text-center rounded-md relative
-                   {{ $optionToHighlight === 'option_two' ? 'bg-blue-800 text-white' : 'bg-white border border-gray-300 hover:bg-gray-50' }}
+                   {{-- Highlight (blue) ONLY if current viewer voted for option_two --}}
+                   {{ $highlightOptionForViewer === 'option_two' ? 'bg-blue-800 text-white' : 'bg-white border border-gray-300 hover:bg-gray-50' }}
                    {{ $isNotLoggedIn ? 'opacity-75 cursor-not-allowed' : '' }}"
             onclick="voteForOption('{{ $post->id }}', 'option_two')"
             data-option="option_two"
-            @if($showPercentagesOnButtons) data-show-tooltip="true" @endif
+            @if($showPercentagesOnButtons) data-show-tooltip-type="count" @endif {{-- For raw count tooltip --}}
+            @if($showVotedByOwnerIcon && $voteByProfileOwner === 'option_two') data-show-tooltip-type="owner_vote" @endif {{-- For owner vote tooltip --}}
         >
             <p>{{ $post->option_two_title }} {{ $showPercentagesOnButtons ? "($percentTwo%)" : "" }}</p>
 
-            @if($showVotedByOwnerIndicator && $voteByProfileOwner === 'option_two')
-                <span class="absolute top-0 right-0 -mt-2 -mr-2 px-1.5 py-0.5 bg-indigo-500 text-white text-[9px] leading-none rounded-full shadow-md flex items-center justify-center"
-                      title="{{ $profileOwnerToDisplay->username }} voted for this option">
+            @if($showVotedByOwnerIcon && $voteByProfileOwner === 'option_two')
+                <span
+                    class="absolute top-0 right-0 -mt-2 -mr-2 px-1.5 py-0.5 bg-indigo-500 text-white text-[9px] leading-none rounded-full shadow-md flex items-center justify-center pointer-events-none"
+                    title="{{ $profileOwnerToDisplay->username }} voted for this option">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clip-rule="evenodd"/>
                     </svg>
                 </span>
             @endif

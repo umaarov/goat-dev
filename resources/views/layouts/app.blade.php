@@ -211,19 +211,17 @@
             const viewportHeight = window.innerHeight;
             const buffer = 10; // Buffer from viewport edges
 
-            // Adjust X position
             if (x + tooltipRect.width + buffer > viewportWidth) {
                 x = mouseX - tooltipRect.width - 15; // Place to the left
             }
-            if (x < buffer) { // Prevent going off left edge
+            if (x < buffer) {
                 x = buffer;
             }
 
-            // Adjust Y position
             if (y + tooltipRect.height + buffer > viewportHeight) {
-                y = mouseY - tooltipRect.height - 15; // Place above
+                y = mouseY - tooltipRect.height - 15;
             }
-            if (y < buffer) { // Prevent going off top edge
+            if (y < buffer) {
                 y = buffer;
             }
 
@@ -233,12 +231,31 @@
 
 
         postsContainer.addEventListener('mouseover', function (event) {
-            const button = event.target.closest('.vote-button[data-show-tooltip="true"]');
-            if (button) {
-                currentHoveredButton = button;
-                const postArticle = button.closest('article[id^="post-"]');
-                if (!postArticle) return;
+            const button = event.target.closest('.vote-button');
+            if (!button) return;
 
+            currentHoveredButton = button;
+            const postArticle = button.closest('article[id^="post-"]');
+            if (!postArticle) return;
+
+            let tooltipText = '';
+            let showThisTooltip = false;
+
+            // Priority 1: "Owner voted for" tooltip
+            if (button.dataset.showTooltipType === 'owner_vote' &&
+                postArticle.dataset.profileOwnerUsername &&
+                postArticle.dataset.profileOwnerVoteOption === button.dataset.option) {
+
+                const ownerUsername = postArticle.dataset.profileOwnerUsername;
+                const optionTitle = button.dataset.option === 'option_one' ?
+                    postArticle.dataset.optionOneTitle :
+                    postArticle.dataset.optionTwoTitle;
+                tooltipText = `@${ownerUsername} voted for ${optionTitle}`;
+                tooltipElement.style.backgroundColor = '#667eea'
+                showThisTooltip = true;
+            }
+            // Priority 2: Raw vote counts tooltip
+            else if (button.dataset.showTooltipType === 'count' || (button.dataset.showTooltipType === 'owner_vote' && !showThisTooltip)) {
                 const option = button.dataset.option;
                 let count = 0;
                 if (option === 'option_one') {
@@ -246,41 +263,39 @@
                 } else if (option === 'option_two') {
                     count = postArticle.dataset.optionTwoVotes || 0;
                 }
-
                 const votesText = parseInt(count) === 1 ? "vote" : "votes";
-                tooltipElement.textContent = `${count} ${votesText}`;
+                tooltipText = `${count} ${votesText}`;
+                tooltipElement.style.backgroundColor = '#4A5568';
+                showThisTooltip = true;
+            }
 
-                // Position it first (invisibly if needed), then make visible to avoid flicker
+
+            if (showThisTooltip) {
+                tooltipElement.textContent = tooltipText;
                 positionTooltip(event.clientX, event.clientY);
                 tooltipElement.classList.remove('hidden');
+                tooltipElement.style.opacity = '1';
+            } else {
+                tooltipElement.classList.add('hidden');
             }
         });
 
         postsContainer.addEventListener('mouseout', function (event) {
             const button = event.target.closest('.vote-button');
-            // Hide if mousing out of the button itself or if relatedTarget is outside the button
-            if (button && currentHoveredButton === button) {
-                if (!button.contains(event.relatedTarget)) {
-                    tooltipElement.classList.add('hidden');
-                    currentHoveredButton = null;
-                }
-            } else if (currentHoveredButton && !postsContainer.contains(event.relatedTarget)) {
-                // If mouse leaves the container entirely while a tooltip was active
+            if (currentHoveredButton && (!button || !currentHoveredButton.contains(event.relatedTarget))) {
                 tooltipElement.classList.add('hidden');
+                tooltipElement.style.opacity = '0';
                 currentHoveredButton = null;
             }
         });
 
         postsContainer.addEventListener('mousemove', function (event) {
-            // Only update position if a button is being hovered and tooltip is visible
             if (currentHoveredButton && !tooltipElement.classList.contains('hidden')) {
-                // Check if the mouse is still over the current hovered button or its children
-                const targetButton = event.target.closest('.vote-button');
-                if (targetButton === currentHoveredButton) {
+                const button = event.target.closest('.vote-button');
+                if (button === currentHoveredButton) {
                     positionTooltip(event.clientX, event.clientY);
-                } else {
-                    // Mouse moved away from the button that triggered the tooltip
                     tooltipElement.classList.add('hidden');
+                    tooltipElement.style.opacity = '0';
                     currentHoveredButton = null;
                 }
             }
