@@ -190,29 +190,28 @@
         }
 
         function positionTooltip(mouseX, mouseY) {
-            // Ensure tooltip is not hidden to get accurate dimensions for positioning
             const wasHidden = tooltipElement.classList.contains('hidden');
             if (wasHidden) {
                 tooltipElement.classList.remove('hidden');
-                tooltipElement.style.opacity = '0'; // Keep it invisible for measurement
+                tooltipElement.style.opacity = '0';
             }
 
             const tooltipRect = tooltipElement.getBoundingClientRect();
 
-            if (wasHidden) { // Hide it back if it was originally hidden
+            if (wasHidden) {
                 tooltipElement.classList.add('hidden');
-                tooltipElement.style.opacity = ''; // Reset opacity
+                tooltipElement.style.opacity = '';
             }
 
 
-            let x = mouseX + 15; // Offset from cursor
+            let x = mouseX + 15;
             let y = mouseY + 15;
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
-            const buffer = 10; // Buffer from viewport edges
+            const buffer = 10;
 
             if (x + tooltipRect.width + buffer > viewportWidth) {
-                x = mouseX - tooltipRect.width - 15; // Place to the left
+                x = mouseX - tooltipRect.width - 15;
             }
             if (x < buffer) {
                 x = buffer;
@@ -238,54 +237,61 @@
             const postArticle = button.closest('article[id^="post-"]');
             if (!postArticle) return;
 
-            let tooltipText = '';
+            let tooltipMessages = [];
+            let tooltipBgColor = '#4A5568';
             let showThisTooltip = false;
+            let isOwnerVoteContext = false;
 
-            // Priority 1: "Owner voted for" tooltip
-            if (button.dataset.showTooltipType === 'owner_vote' &&
-                postArticle.dataset.profileOwnerUsername &&
-                postArticle.dataset.profileOwnerVoteOption === button.dataset.option) {
+            // 1. Add raw vote counts first
+            if (button.dataset.tooltipShowCount === 'true') {
+                const optionForCount = button.dataset.option;
+                let count = 0;
+                if (optionForCount === 'option_one') {
+                    count = postArticle.dataset.optionOneVotes || 0;
+                } else if (optionForCount === 'option_two') {
+                    count = postArticle.dataset.optionTwoVotes || 0;
+                }
+                const votesText = parseInt(count) === 1 ? "vote" : "votes";
+                tooltipMessages.push(`${count} ${votesText}`);
+                showThisTooltip = true;
+            }
 
+            // 2. Owner voted for information
+            if (button.dataset.tooltipIsOwnerChoice === 'true' && postArticle.dataset.profileOwnerUsername) {
                 const ownerUsername = postArticle.dataset.profileOwnerUsername;
                 const optionTitle = button.dataset.option === 'option_one' ?
                     postArticle.dataset.optionOneTitle :
                     postArticle.dataset.optionTwoTitle;
-                tooltipText = `@${ownerUsername} voted for ${optionTitle}`;
-                tooltipElement.style.backgroundColor = '#667eea'
+                tooltipMessages.push(`@${ownerUsername} voted for ${optionTitle}`);
+                tooltipBgColor = '#4A5568';
                 showThisTooltip = true;
-            }
-            // Priority 2: Raw vote counts tooltip
-            else if (button.dataset.showTooltipType === 'count' || (button.dataset.showTooltipType === 'owner_vote' && !showThisTooltip)) {
-                const option = button.dataset.option;
-                let count = 0;
-                if (option === 'option_one') {
-                    count = postArticle.dataset.optionOneVotes || 0;
-                } else if (option === 'option_two') {
-                    count = postArticle.dataset.optionTwoVotes || 0;
-                }
-                const votesText = parseInt(count) === 1 ? "vote" : "votes";
-                tooltipText = `${count} ${votesText}`;
-                tooltipElement.style.backgroundColor = '#4A5568';
-                showThisTooltip = true;
+                isOwnerVoteContext = true;
             }
 
+            if (showThisTooltip && !isOwnerVoteContext && tooltipMessages.length > 0) {
+                tooltipBgColor = '#4A5568';
+            }
 
-            if (showThisTooltip) {
-                tooltipElement.textContent = tooltipText;
+            if (showThisTooltip && tooltipMessages.length > 0) {
+                tooltipElement.innerHTML = tooltipMessages.join('<br>');
+                tooltipElement.style.backgroundColor = tooltipBgColor;
                 positionTooltip(event.clientX, event.clientY);
                 tooltipElement.classList.remove('hidden');
                 tooltipElement.style.opacity = '1';
             } else {
                 tooltipElement.classList.add('hidden');
+                currentHoveredButton = null;
             }
         });
 
         postsContainer.addEventListener('mouseout', function (event) {
-            const button = event.target.closest('.vote-button');
-            if (currentHoveredButton && (!button || !currentHoveredButton.contains(event.relatedTarget))) {
-                tooltipElement.classList.add('hidden');
-                tooltipElement.style.opacity = '0';
-                currentHoveredButton = null;
+            if (currentHoveredButton) {
+                const toElement = event.relatedTarget;
+                if (!currentHoveredButton.contains(toElement)) {
+                    tooltipElement.classList.add('hidden');
+                    tooltipElement.style.opacity = '0';
+                    currentHoveredButton = null;
+                }
             }
         });
 
@@ -294,6 +300,7 @@
                 const button = event.target.closest('.vote-button');
                 if (button === currentHoveredButton) {
                     positionTooltip(event.clientX, event.clientY);
+                } else {
                     tooltipElement.classList.add('hidden');
                     tooltipElement.style.opacity = '0';
                     currentHoveredButton = null;
