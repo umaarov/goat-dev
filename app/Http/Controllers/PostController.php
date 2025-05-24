@@ -12,8 +12,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Intervention\Image\ImageManager;
 
 class PostController extends Controller
@@ -121,13 +123,23 @@ class PostController extends Controller
             );
         }
 
-        Post::create([
+        $user = Auth::user();
+
+        $post = Post::create([
             'user_id' => Auth::id(),
             'question' => $request->question,
             'option_one_title' => $request->option_one_title,
             'option_one_image' => $optionOneImagePath,
             'option_two_title' => $request->option_two_title,
             'option_two_image' => $optionTwoImagePath,
+        ]);
+
+        Log::channel('audit_trail')->info('Post created.', [
+            'user_id' => $user->id,
+            'username' => $user->username,
+            'post_id' => $post->id,
+            'question' => Str::limit($post->question, 100),
+            'ip_address' => $request->ip(),
         ]);
 
         return redirect()->route('home')->with('success', 'Post created successfully!');
@@ -147,6 +159,17 @@ class PostController extends Controller
 
     final public function update(Request $request, Post $post): RedirectResponse
     {
+        $user = Auth::user();
+        if ($user->id !== $post->user_id) {
+            Log::channel('audit_trail')->warning('Unauthorized post update attempt.', [
+                'attempting_user_id' => $user->id,
+                'attempting_username' => $user->username,
+                'post_id' => $post->id,
+                'post_owner_id' => $post->user_id,
+                'ip_address' => $request->ip(),
+            ]);
+            abort(403, 'Unauthorized action.');
+        }
         if (Auth::id() !== $post->user_id) {
             abort(403, 'Unauthorized action.');
         }
@@ -200,15 +223,36 @@ class PostController extends Controller
         }
 
         $post->update($data);
+        Log::channel('audit_trail')->info('Post updated.', [
+            'user_id' => $user->id,
+            'username' => $user->username,
+            'post_id' => $post->id,
+            'updated_fields' => array_keys($data),
+            'ip_address' => $request->ip(),
+        ]);
         return redirect()->route('profile.show', ['username' => $post->user->username])
             ->with('success', 'Post updated successfully.');
     }
 
     final public function destroy(Post $post): RedirectResponse
     {
+        $user = Auth::user();
+        if ($user->id !== $post->user_id) {
+            Log::channel('audit_trail')->warning('Unauthorized post deletion attempt.', [
+                'attempting_user_id' => $user->id,
+                'attempting_username' => $user->username,
+                'post_id' => $post->id,
+                'post_owner_id' => $post->user_id,
+                'ip_address' => request()->ip(),
+            ]);
+            abort(403, 'Unauthorized action.');
+        }
         if (Auth::id() !== $post->user_id /* && !Auth::user()->isAdmin() */) {
             abort(403, 'Unauthorized action.');
         }
+
+        $postId = $post->id;
+        $postQuestion = $post->question;
 
         if ($post->option_one_image) {
             Storage::disk('public')->delete($post->option_one_image);
@@ -218,6 +262,17 @@ class PostController extends Controller
         }
 
         $post->delete();
+
+        $post->delete();
+
+        Log::channel('audit_trail')->info('Post deleted.', [
+            'user_id' => $user->id,
+            'username' => $user->username,
+            'deleted_post_id' => $postId,
+            'original_post_owner_id' => $post->user_id,
+            'original_post_question' => Str::limit($postQuestion, 100),
+            'ip_address' => request()->ip(),
+        ]);
 
         if (url()->previous() == route('profile.show', ['username' => Auth::user()->username])) {
             return redirect()->route('profile.show', ['username' => Auth::user()->username])
@@ -237,6 +292,7 @@ class PostController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        $user = Auth::user();
         $loggedInUserId = Auth::id();
 
         $existingVote = Vote::where('user_id', $loggedInUserId)
@@ -251,6 +307,14 @@ class PostController extends Controller
             'user_id' => $loggedInUserId,
             'post_id' => $post->id,
             'vote_option' => $request->option,
+        ]);
+
+        Log::channel('audit_trail')->info('User voted on post.', [
+            'user_id' => $user->id,
+            'username' => $user->username,
+            'post_id' => $post->id,
+            'voted_option' => $request->option,
+            'ip_address' => $request->ip(),
         ]);
 
         if ($request->option === 'option_one') {
@@ -287,9 +351,16 @@ class PostController extends Controller
             ->with('scrollToPost', $id);
     }
 
-    public function incrementShareCount(Post $post)
+    public function incrementShareCount(Request $request, Post $post)
     {
         $post->increment('shares_count');
+        $user = Auth::user();
+        Log::channel('audit_trail')->info('Post share count incremented (likely client-side share action).', [
+            'user_id' => $user ? $user->id : null,
+            'username' => $user ? $user->username : 'Guest/Unconfirmed',
+            'post_id' => $post->id,
+            'ip_address' => $request->ip(),
+        ]);
         return response()->json(['shares_count' => $post->shares()->count()]);
     }
 

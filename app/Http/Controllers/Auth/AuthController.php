@@ -49,10 +49,22 @@ class AuthController extends Controller
             $this->setProfilePicture($user, $request);
             $this->emailVerificationService->sendVerificationEmail($user);
 
+            Log::channel('audit_trail')->info('User registration initiated.', [
+                'attempted_email' => $request->email,
+                'attempted_username' => $request->username,
+                'user_id_created' => $user->id,
+                'ip_address' => $request->ip(),
+            ]);
+
             return redirect()->route('login')
                 ->with('success', 'Registration successful! Please check your email to verify your account.');
         } catch (Exception $e) {
-            Log::error('Registration failed: ' . $e->getMessage(), [
+            Log::channel('audit_trail')->error('User registration failed.', [
+                'attempted_email' => $request->email,
+                'error' => $e->getMessage(),
+                'ip_address' => $request->ip(),
+            ]);
+            Log::error('Registration system error: ' . $e->getMessage(), [
                 'user_email' => $request->email,
                 'trace' => $e->getTraceAsString()
             ]);
@@ -73,10 +85,23 @@ class AuthController extends Controller
         $user = User::findOrFail($request->id);
 
         if ($this->emailVerificationService->verify($user, $request->token)) {
+            Log::channel('audit_trail')->info('User email verified.', [
+                'user_id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
+                'ip_address' => $request->ip(),
+            ]);
             return Auth::check()
                 ? redirect()->route('home')->with('success', 'Your email has been verified!')
                 : redirect()->route('login')->with('success', 'Your email has been verified! You can now log in.');
         }
+
+        Log::channel('audit_trail')->warning('Email verification failed (invalid token/link).', [
+            'attempted_user_id' => $request->id,
+            'token_used' => $request->token,
+            'ip_address' => $request->ip(),
+            'signature_valid' => $request->hasValidSignature()
+        ]);
 
         return redirect()->route('verification.notice')
             ->with('error', 'Invalid verification token.');
@@ -125,15 +150,28 @@ class AuthController extends Controller
 
             if (!$user->email_verified_at) {
                 Auth::logout();
+                Log::channel('audit_trail')->warning('Login attempt failed: Email not verified.', [
+                    'email' => $request->email,
+                    'user_id' => $user->id,
+                    'ip_address' => $request->ip(),
+                ]);
                 return redirect()->route('login')
                     ->withErrors(['email' => 'Email not verified. Please check your email for verification link.'])
                     ->withInput($request->only('email'));
             }
 
             $request->session()->regenerate();
+            Log::channel('audit_trail')->info('User authenticated successfully.', [
+                'user_id' => $user->id,
+                'username' => $user->username,
+                'ip_address' => $request->ip(),
+            ]);
             return redirect()->intended(route('home'))->with('success', 'Logged in successfully!');
         }
-
+        Log::channel('audit_trail')->warning('Failed login attempt: Invalid credentials.', [
+            'email' => $request->email,
+            'ip_address' => $request->ip(),
+        ]);
         Log::warning('Failed login attempt', ['email' => $request->email, 'ip' => $request->ip()]);
 
         return redirect()->back()
@@ -143,6 +181,19 @@ class AuthController extends Controller
 
     public function logout(Request $request): RedirectResponse
     {
+        $user = Auth::user();
+        if ($user) {
+            Log::channel('audit_trail')->info('User logged out.', [
+                'user_id' => $user->id,
+                'username' => $user->username,
+                'ip_address' => $request->ip(),
+            ]);
+        } else {
+            Log::channel('audit_trail')->info('Logout attempt by unauthenticated session.', [
+                'ip_address' => $request->ip(),
+            ]);
+        }
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
@@ -164,7 +215,14 @@ class AuthController extends Controller
     {
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
+            $userModel = User::where('google_id', $googleUser->getId())->first();
+            $action = "Logged in";
             $user = User::where('google_id', $googleUser->getId())->first();
+
+            if (!$userModel) {
+                $userModel = $this->handleGoogleUser($googleUser);
+                $action = 'Registered and logged in';
+            }
 
             if (!$user) {
                 $user = $this->handleGoogleUser($googleUser);
@@ -172,10 +230,23 @@ class AuthController extends Controller
 
             Auth::login($user, true);
             $request->session()->regenerate();
+
+            Log::channel('audit_trail')->info("User $action via Google.", [
+                'user_id' => $userModel->id,
+                'username' => $userModel->username,
+                'email' => $userModel->email,
+                'google_id' => $googleUser->getId(),
+                'ip_address' => $request->ip(),
+            ]);
+
             return redirect()->intended(route('home'))->with('success', 'Logged in with Google successfully!');
 
         } catch (Exception $e) {
-            Log::error('Google Auth Failed', [
+            Log::channel('audit_trail')->error('Google authentication/callback failed.', [
+                'error' => $e->getMessage(),
+                'ip_address' => $request->ip(),
+            ]);
+            Log::error('Google Auth System Error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'ip' => $request->ip()

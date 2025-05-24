@@ -88,6 +88,14 @@ class UserController extends Controller
 
     final public function getUserPosts(Request $request, string $username): JsonResponse
     {
+        Log::channel('audit_trail')->info('User posts data accessed.', [
+            'accessor_user_id' => Auth::id(),
+            'accessor_username' => Auth::user()->username,
+            'profile_username_viewed' => $username,
+            'ip_address' => $request->ip(),
+            'page' => $request->input('page', 1)
+        ]);
+
         try {
             Log::info('getUserPosts called', [
                 'username' => $username,
@@ -224,6 +232,15 @@ class UserController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
+        $oldValues = [
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'username' => $user->username,
+            'profile_picture_removed' => $request->boolean('remove_profile_picture'),
+            'profile_picture_updated' => $request->hasFile('profile_picture'),
+            'show_voted_posts_publicly' => $user->show_voted_posts_publicly,
+        ];
+
         $data = $request->only(['first_name', 'last_name', 'username']);
         $data['show_voted_posts_publicly'] = $request->boolean('show_voted_posts_publicly');
 
@@ -252,14 +269,34 @@ class UserController extends Controller
         }
 
         $user->update($data);
+        Log::channel('audit_trail')->info('User profile updated.', [
+            'user_id' => $user->id,
+            'username' => $user->username,
+            'old_username' => $oldValues['username'] !== $user->username ? $oldValues['username'] : null,
+            'updated_fields' => array_keys($data),
+            // 'changes' => [ 'field' => ['old' => ..., 'new' => ...], ... ]
+            'profile_picture_change_details' => [
+                'removed' => $oldValues['profile_picture_removed'],
+                'uploaded_new' => $oldValues['profile_picture_updated'],
+                'path_after_update' => $user->profile_picture,
+            ],
+            'privacy_setting_show_voted_changed_to' => $data['show_voted_posts_publicly'],
+            'ip_address' => $request->ip(),
+        ]);
         return redirect()->route('profile.edit')->with('success', 'Profile updated successfully.');
     }
 
     final public function showChangePasswordForm(): View
     {
+        $user = Auth::user();
         if (!Auth::user()->password && Auth::user()->google_id) {
             return redirect()->route('profile.edit')->with('info', 'Password change is not available for accounts created via Google login unless a password has been set manually.');
         }
+        Log::channel('audit_trail')->info('User password changed.', [
+            'user_id' => $user->id,
+            'username' => $user->username,
+            'ip_address' => $request->ip(),
+        ]);
         return view('users.change-password');
     }
 
