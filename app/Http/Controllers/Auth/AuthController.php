@@ -161,6 +161,7 @@ class AuthController extends Controller
             }
 
             $request->session()->regenerate();
+            Log::debug('DEBUG LOGIN: User ' . $user->username . ' successfully authenticated. About to log to audit_trail.');
             Log::channel('audit_trail')->info('User authenticated successfully.', [
                 'user_id' => $user->id,
                 'username' => $user->username,
