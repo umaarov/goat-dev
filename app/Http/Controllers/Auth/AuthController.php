@@ -57,7 +57,7 @@ class AuthController extends Controller
             ]);
 
             return redirect()->route('login')
-                ->with('success', 'Registration successful! Please check your email to verify your account.');
+                ->with('success', __('messages.registration_successful_verify_email'));
         } catch (Exception $e) {
             Log::channel('audit_trail')->error('User registration failed.', [
                 'attempted_email' => $request->email,
@@ -70,7 +70,7 @@ class AuthController extends Controller
             ]);
 
             return redirect()->back()
-                ->withErrors(['error' => 'Registration failed. Please try again.'])
+                ->withErrors(['error' => __('messages.error_registration_failed')])
                 ->withInput($request->except('password', 'password_confirmation'));
         }
     }
@@ -79,7 +79,7 @@ class AuthController extends Controller
     {
         if (!$request->hasValidSignature()) {
             return redirect()->route('verification.notice')
-                ->with('error', 'Invalid verification link or the link has expired.');
+                ->with('error', __('messages.error_invalid_verification_link'));
         }
 
         $user = User::findOrFail($request->id);
@@ -92,8 +92,8 @@ class AuthController extends Controller
                 'ip_address' => $request->ip(),
             ]);
             return Auth::check()
-                ? redirect()->route('home')->with('success', 'Your email has been verified!')
-                : redirect()->route('login')->with('success', 'Your email has been verified! You can now log in.');
+                ? redirect()->route('home')->with('success', __('messages.email_verified_success'))
+                : redirect()->route('login')->with('success', __('messages.email_verified_can_login'));
         }
 
         Log::channel('audit_trail')->warning('Email verification failed (invalid token/link).', [
@@ -104,7 +104,7 @@ class AuthController extends Controller
         ]);
 
         return redirect()->route('verification.notice')
-            ->with('error', 'Invalid verification token.');
+            ->with('error', __('messages.error_invalid_verification_token'));
     }
 
     public function showVerificationNotice(): View
@@ -121,7 +121,7 @@ class AuthController extends Controller
         }
 
         $this->emailVerificationService->sendVerificationEmail($user);
-        return back()->with('success', 'Verification link sent! Please check your email.');
+        return back()->with('success', __('messages.verification_link_sent'));
     }
 
     public function showLoginForm(): View
@@ -158,7 +158,7 @@ class AuthController extends Controller
                     'ip_address' => $request->ip(),
                 ]);
                 return redirect()->route('login')
-                    ->withErrors(['login_identifier' => 'Email not verified. Please check your email for verification link.'])
+                    ->withErrors(['login_identifier' => __('messages.error_email_not_verified_login')])
                     ->withInput($request->only('login_identifier'));
             }
 
@@ -169,7 +169,7 @@ class AuthController extends Controller
                 'username' => $user->username,
                 'ip_address' => $request->ip(),
             ]);
-            return redirect()->intended(route('home'))->with('success', 'Logged in successfully!');
+            return redirect()->intended(route('home'))->with('success', __('messages.logged_in_successfully'));
         }
 
         Log::channel('audit_trail')->warning('Failed login attempt: Invalid credentials.', [
@@ -179,7 +179,7 @@ class AuthController extends Controller
         Log::warning('Failed login attempt', ['login_identifier' => $loginInput, 'ip' => $request->ip()]);
 
         return redirect()->back()
-            ->withErrors(['login_identifier' => 'Invalid login credentials.'])
+            ->withErrors(['login_identifier' => __('messages.error_invalid_login_credentials')])
             ->withInput($request->only('login_identifier'));
     }
 
@@ -202,7 +202,7 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('home')->with('success', 'Logged out successfully!');
+        return redirect()->route('home')->with('success', __('messages.logged_out_successfully'));
     }
 
     public function googleRedirect()
@@ -211,7 +211,7 @@ class AuthController extends Controller
             return Socialite::driver('google')->redirect();
         } catch (Exception $e) {
             Log::error('Google redirect failed: ' . $e->getMessage());
-            return redirect()->route('login')->with('error', 'Google authentication failed. Please try again.');
+            return redirect()->route('login')->with('error', __('messages.error_google_auth_failed'));
         }
     }
 
@@ -221,7 +221,6 @@ class AuthController extends Controller
             $googleUser = Socialite::driver('google')->stateless()->user();
             $userModel = User::where('google_id', $googleUser->getId())->first();
             $action = "Logged in";
-            // $user = User::where('google_id', $googleUser->getId())->first();
 
             if (!$userModel) {
                 $userModel = $this->handleGoogleUser($googleUser);
@@ -241,7 +240,7 @@ class AuthController extends Controller
                 'ip_address' => $request->ip(),
             ]);
 
-            return redirect()->intended(route('home'))->with('success', 'Logged in with Google successfully!');
+            return redirect()->intended(route('home'))->with('success', __('messages.google_login_success'));
 
         } catch (Exception $e) {
             Log::channel('audit_trail')->error('Google authentication/callback failed.', [
@@ -255,7 +254,7 @@ class AuthController extends Controller
             ]);
 
             return redirect()->route('login')
-                ->with('error', 'Unable to login using Google. Please try again.');
+                ->with('error', __('messages.error_google_login_failed'));
         }
     }
 

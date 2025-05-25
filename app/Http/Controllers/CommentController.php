@@ -75,7 +75,7 @@ class CommentController extends Controller
         $apiKey = Config::get('gemini.api_key');
         if (!$apiKey) {
             Log::error('Gemini API key is not configured.');
-            return ['is_appropriate' => true, 'reason' => null, 'category' => 'UNCHECKED_CONFIG_ERROR', 'error' => 'Gemini API key not configured. Comment allowed without check.'];
+            return ['is_appropriate' => true, 'reason' => 'Gemini API key not configured. Comment allowed without check.', 'category' => 'UNCHECKED_CONFIG_ERROR', 'error' => 'Gemini API key not configured.'];
         }
 
         $model = Config::get('gemini.model', 'gemini-2.0-flash');
@@ -84,7 +84,7 @@ class CommentController extends Controller
 
         if (empty($promptTemplate)) {
             Log::error('Gemini moderation prompt template is not configured.');
-            return ['is_appropriate' => true, 'reason' => null, 'category' => 'UNCHECKED_CONFIG_ERROR', 'error' => 'Gemini prompt not configured. Comment allowed without check.'];
+            return ['is_appropriate' => true, 'reason' => 'Gemini prompt not configured. Comment allowed without check.', 'category' => 'UNCHECKED_CONFIG_ERROR', 'error' => 'Gemini prompt not configured.'];
         }
 
         $finalPrompt = str_replace("{COMMENT_TEXT}", addslashes($commentContent), $promptTemplate);
@@ -111,7 +111,7 @@ class CommentController extends Controller
                     'body' => $response->body(),
                     'comment_snippet' => Str::limit($commentContent, 100),
                 ]);
-                return ['is_appropriate' => false, 'reason' => 'Content moderation service unavailable.', 'category' => 'ERROR_API_REQUEST', 'error' => 'API request failed: ' . $response->status()];
+                return ['is_appropriate' => false, 'reason' => 'Content moderation service unavailable due to API request failure.', 'category' => 'ERROR_API_REQUEST', 'error' => 'API request failed: ' . $response->status()];
             }
 
             $responseData = $response->json();
@@ -122,7 +122,7 @@ class CommentController extends Controller
                     'response' => $responseData,
                     'comment_snippet' => Str::limit($commentContent, 100),
                 ]);
-                return ['is_appropriate' => false, 'reason' => 'Content moderation service error.', 'category' => 'ERROR_API_RESPONSE_FORMAT', 'error' => 'Malformed API response (JSON string missing)'];
+                return ['is_appropriate' => false, 'reason' => 'Content moderation service error due to malformed API response.', 'category' => 'ERROR_API_RESPONSE_FORMAT', 'error' => 'Malformed API response (JSON string missing)'];
             }
 
             $moderationResult = json_decode($jsonString, true);
@@ -133,7 +133,7 @@ class CommentController extends Controller
                     'json_error' => json_last_error_msg(),
                     'comment_snippet' => Str::limit($commentContent, 100),
                 ]);
-                return ['is_appropriate' => false, 'reason' => 'Content moderation service response error.', 'category' => 'ERROR_API_RESPONSE_PARSE', 'error' => 'Failed to parse or validate moderation result.'];
+                return ['is_appropriate' => false, 'reason' => 'Content moderation service response error due to parsing/validation failure.', 'category' => 'ERROR_API_RESPONSE_PARSE', 'error' => 'Failed to parse or validate moderation result.'];
             }
 
             return [
@@ -167,42 +167,50 @@ class CommentController extends Controller
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
-            return redirect()->back()->withErrors($validator)->withInput()->with('error', 'Failed to add comment. Please check the errors.');
+            return redirect()->back()->withErrors($validator)->withInput()->with('error', __('messages.error_failed_to_add_comment'));
         }
 
         $user = Auth::user();
         $content = $request->input('content');
 
         $moderationResult = $this->checkCommentWithGemini($content);
+        $errorMessage = '';
 
         if (!$moderationResult['is_appropriate']) {
-            $errorMessage = 'Your comment could not be posted as it violates community guidelines.';
             $logMessage = 'Comment rejected by moderation.';
             $logContextBase = [
                 'user_id' => $user->id,
                 'username' => $user->username,
                 'post_id' => $post->id,
-                'reason' => $moderationResult['reason'],
-                'category' => $moderationResult['category'],
+                'reason_internal' => $moderationResult['reason'],
+                'category_internal' => $moderationResult['category'],
                 'comment_snippet' => Str::limit($content, 100),
                 'ip_address' => $request->ip(),
             ];
 
             if ($moderationResult['category'] === 'LOCAL_POLICY_VIOLATION') {
                 $logMessage = 'Comment rejected by local blacklist.';
+                $errorMessage = __('messages.error_comment_moderation_violation');
             } elseif (str_starts_with($moderationResult['category'], 'ERROR_') || str_starts_with($moderationResult['category'], 'UNCHECKED_')) {
-                $errorMessage = 'Could not verify comment content due to a system issue. Please try again later.';
+                $errorMessage = __('messages.error_comment_moderation_system_issue');
                 Log::warning('Moderation Service Error/Unavailable. Comment rejected/pending by policy.', array_merge($logContextBase, ['service_error_details' => $moderationResult['error']]));
             } else {
                 $logMessage = 'Comment rejected by Gemini AI moderation.';
+                $categoryDisplay = Str::ucfirst(strtolower(str_replace('_', ' ', $moderationResult['category'])));
                 if ($moderationResult['reason']) {
-                    $errorMessage .= ' Reason: ' . Str::ucfirst(strtolower(str_replace('_', ' ', $moderationResult['category']))) . ' - ' . $moderationResult['reason'];
-                } elseif ($moderationResult['category'] !== 'NONE') {
-                    $errorMessage .= ' Category: ' . Str::ucfirst(strtolower(str_replace('_', ' ', $moderationResult['category'])));
+                    $errorMessage = __('messages.error_comment_content_inappropriate_reason', [
+                        'category' => $categoryDisplay,
+                        'reason' => $moderationResult['reason']
+                    ]);
+                } elseif ($moderationResult['category'] && $moderationResult['category'] !== 'NONE') {
+                    $errorMessage = __('messages.error_comment_content_inappropriate_category', [
+                        'category' => $categoryDisplay
+                    ]);
+                } else {
+                    $errorMessage = __('messages.error_comment_moderation_violation');
                 }
             }
             Log::channel('audit_trail')->info($logMessage, $logContextBase);
-
 
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json(['errors' => ['content' => [$errorMessage]]], 422);
@@ -229,58 +237,73 @@ class CommentController extends Controller
         $comment->load('user:id,username,profile_picture');
         $comment->load('post:id,user_id');
 
+        $successMessage = __('messages.comment_added_successfully');
         if ($request->expectsJson() || $request->ajax()) {
-            return response()->json(['message' => 'Comment added successfully!', 'comment' => $comment], 201);
+            return response()->json(['message' => $successMessage, 'comment' => $comment], 201);
         }
-        return redirect()->back()->with('success', 'Comment added successfully!');
+        return redirect()->back()->with('success', $successMessage);
     }
 
     final public function update(Request $request, Comment $comment): RedirectResponse|JsonResponse
     {
         $user = Auth::user();
         if (Auth::id() !== $comment->user_id) {
-            Log::channel('audit_trail')->warning('Unauthorized comment update attempt.', [ /* ... */]);
-            if ($request->expectsJson()) return response()->json(['error' => 'Unauthorized'], 403);
-            abort(403, 'Unauthorized action.');
+            Log::channel('audit_trail')->warning('Unauthorized comment update attempt.', [
+                'attempting_user_id' => Auth::id(),
+                'comment_id' => $comment->id,
+                'original_commenter_id' => $comment->user_id,
+                'ip_address' => $request->ip(),
+            ]);
+            $unauthorizedMessage = __('messages.error_unauthorized_action');
+            if ($request->expectsJson()) return response()->json(['error' => $unauthorizedMessage], 403);
+            abort(403, $unauthorizedMessage);
         }
 
         $validator = Validator::make($request->all(), ['content' => 'required|string|max:1000']);
         if ($validator->fails()) {
             if ($request->expectsJson()) return response()->json(['errors' => $validator->errors()], 422);
-            return redirect()->back()->withErrors($validator)->withInput()->with('error', 'Failed to update comment.');
+            return redirect()->back()->withErrors($validator)->withInput()->with('error', __('messages.error_failed_to_update_comment'));
         }
 
         $newContent = $request->input('content');
         $moderationResult = $this->checkCommentWithGemini($newContent);
+        $errorMessage = '';
 
         if (!$moderationResult['is_appropriate']) {
-            $errorMessage = 'Your updated comment could not be saved as it violates community guidelines.';
             $logMessage = 'Comment update rejected by moderation.';
             $logContextBase = [
                 'user_id' => $user->id,
                 'username' => $user->username,
                 'comment_id' => $comment->id,
-                'reason' => $moderationResult['reason'],
-                'category' => $moderationResult['category'],
+                'reason_internal' => $moderationResult['reason'],
+                'category_internal' => $moderationResult['category'],
                 'updated_content_snippet' => Str::limit($newContent, 100),
                 'ip_address' => $request->ip(),
             ];
 
             if ($moderationResult['category'] === 'LOCAL_POLICY_VIOLATION') {
                 $logMessage = 'Comment update rejected by local blacklist.';
+                $errorMessage = __('messages.error_comment_update_moderation_violation');
             } elseif (str_starts_with($moderationResult['category'], 'ERROR_') || str_starts_with($moderationResult['category'], 'UNCHECKED_')) {
-                $errorMessage = 'Could not verify updated comment content due to a system issue. Please try again later.';
+                $errorMessage = __('messages.error_comment_update_moderation_system_issue');
                 Log::warning('Moderation Service Error/Unavailable during comment update.', array_merge($logContextBase, ['service_error_details' => $moderationResult['error']]));
-            } else { // Gemini found it inappropriate
+            } else {
                 $logMessage = 'Comment update rejected by Gemini AI moderation.';
+                $categoryDisplay = Str::ucfirst(strtolower(str_replace('_', ' ', $moderationResult['category'])));
                 if ($moderationResult['reason']) {
-                    $errorMessage .= ' Reason: ' . Str::ucfirst(strtolower(str_replace('_', ' ', $moderationResult['category']))) . ' - ' . $moderationResult['reason'];
-                } elseif ($moderationResult['category'] !== 'NONE') {
-                    $errorMessage .= ' Category: ' . Str::ucfirst(strtolower(str_replace('_', ' ', $moderationResult['category'])));
+                    $errorMessage = __('messages.error_comment_update_content_inappropriate_reason', [
+                        'category' => $categoryDisplay,
+                        'reason' => $moderationResult['reason']
+                    ]);
+                } elseif ($moderationResult['category'] && $moderationResult['category'] !== 'NONE') {
+                    $errorMessage = __('messages.error_comment_update_content_inappropriate_category', [
+                        'category' => $categoryDisplay
+                    ]);
+                } else {
+                    $errorMessage = __('messages.error_comment_update_moderation_violation');
                 }
             }
             Log::channel('audit_trail')->info($logMessage, $logContextBase);
-
 
             if ($request->expectsJson()) {
                 return response()->json(['errors' => ['content' => [$errorMessage]]], 422);
@@ -297,11 +320,12 @@ class CommentController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
+        $successMessage = __('messages.comment_updated_successfully');
         if ($request->expectsJson()) {
             $comment->load('user:id,username,profile_picture');
-            return response()->json(['message' => 'Comment updated successfully!', 'comment' => $comment]);
+            return response()->json(['message' => $successMessage, 'comment' => $comment]);
         }
-        return redirect()->back()->with('success', 'Comment updated successfully!');
+        return redirect()->back()->with('success', $successMessage);
     }
 
     final public function destroy(Request $request, Comment $comment): RedirectResponse|JsonResponse
@@ -309,16 +333,25 @@ class CommentController extends Controller
         $user = Auth::user();
         $postOwnerId = $comment->post->user_id;
         if (Auth::id() !== $comment->user_id && Auth::id() !== $postOwnerId) {
-            Log::channel('audit_trail')->warning('Unauthorized comment deletion attempt.', [ /* ... */]);
-            if ($request->expectsJson()) return response()->json(['error' => 'Unauthorized'], 403);
-            abort(403, 'Unauthorized action.');
+            Log::channel('audit_trail')->warning('Unauthorized comment deletion attempt.', [
+                'attempting_user_id' => Auth::id(),
+                'comment_id' => $comment->id,
+                'original_commenter_id' => $comment->user_id,
+                'post_owner_id' => $postOwnerId,
+                'ip_address' => $request->ip(),
+            ]);
+            $unauthorizedMessage = __('messages.error_unauthorized_action');
+            if ($request->expectsJson()) return response()->json(['error' => $unauthorizedMessage], 403);
+            abort(403, $unauthorizedMessage);
         }
 
         $commentId = $comment->id;
         $originalCommenterId = $comment->user_id;
         $commentSnippet = Str::limit($comment->content, 100);
         $postId = $comment->post_id;
+
         $comment->delete();
+
         Log::channel('audit_trail')->info('Comment deleted.', [
             'deleter_user_id' => $user->id,
             'deleter_username' => $user->username,
@@ -329,10 +362,11 @@ class CommentController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
+        $successMessage = __('messages.comment_deleted_successfully');
         if ($request->expectsJson()) {
-            return response()->json(['message' => 'Comment deleted successfully!']);
+            return response()->json(['message' => $successMessage]);
         }
 
-        return redirect()->back()->with('success', 'Comment deleted successfully.');
+        return redirect()->back()->with('success', $successMessage);
     }
 }

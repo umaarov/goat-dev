@@ -100,4 +100,25 @@ return [
     'sponsorship' => 'Спонсорство',
     'ads' => 'Реклама',
     'copyright_text' => 'GOAT © 2025',
+
+    'error_comment_moderation_violation' => 'Ваш комментарий не может быть опубликован, так как он нарушает правила сообщества.',
+    'error_comment_content_inappropriate_reason' => 'Ваш комментарий был признан неприемлемым (:category). Причина: :reason',
+    'error_comment_content_inappropriate_category' => 'Ваш комментарий был признан неприемлемым из-за: :category.',
+    'error_comment_moderation_system_issue' => 'Не удалось проверить ваш комментарий из-за системной ошибки. Пожалуйста, попробуйте еще раз.',
+
+    'error_comment_update_moderation_violation' => 'Ваш обновленный комментарий не может быть сохранен, так как он нарушает правила сообщества.',
+    'error_comment_update_content_inappropriate_reason' => 'Ваш обновленный комментарий был признан неприемлемым (:category). Причина: :reason',
+    'error_comment_update_content_inappropriate_category' => 'Ваш обновленный комментарий был признан неприемлемым из-за: :category.',
+    'error_comment_update_moderation_system_issue' => 'Не удалось проверить ваш обновленный комментарий из-за системной ошибки. Пожалуйста, попробуйте еще раз.',
+
+    'vote_registered_successfully' => 'Голос успешно зарегистрирован!',
+
+    'validation_option_one_image_max' => 'Изображение для Объекта 1 должно быть не более :maxMB МБ. Пожалуйста, загрузите файл меньшего размера.',
+    'validation_option_two_image_max' => 'Изображение для Объекта 2 должно быть не более :maxMB МБ. Пожалуйста, загрузите файл меньшего размера.',
+    'validation_option_one_image_uploaded' => 'Не удалось загрузить изображение для Объекта 1. Возможно, оно слишком большое (макс. :maxMB МБ) или неподдерживаемого типа.',
+    'validation_option_two_image_uploaded' => 'Не удалось загрузить изображение для Объекта 2. Возможно, оно слишком большое (макс. :maxMB МБ) или неподдерживаемого типа.',
+
+    'error_reason_prohibited_language_generic' => 'Содержимое нарушает локальные правила (например, содержит запрещенные слова).',
+
+
 ];

@@ -100,4 +100,23 @@ return [
     'sponsorship' => 'Sponsorship',
     'ads' => 'Ads',
     'copyright_text' => 'GOAT © 2025',
+
+    'error_comment_moderation_violation' => 'Your comment could not be posted as it violates community guidelines.',
+    'error_comment_content_inappropriate_reason' => 'Your comment was deemed inappropriate (:category). Reason: :reason',
+    'error_comment_content_inappropriate_category' => 'Your comment was deemed inappropriate due to: :category.',
+    'error_comment_moderation_system_issue' => 'Could not verify your comment due to a system issue. Please try again later.',
+
+    'error_comment_update_moderation_violation' => 'Your updated comment could not be saved as it violates community guidelines.',
+    'error_comment_update_content_inappropriate_reason' => 'Your updated comment was deemed inappropriate (:category). Reason: :reason',
+    'error_comment_update_content_inappropriate_category' => 'Your updated comment was deemed inappropriate due to: :category.',
+    'error_comment_update_moderation_system_issue' => 'Could not verify your updated comment due to a system issue. Please try again later.',
+
+    'vote_registered_successfully' => 'Vote registered successfully!',
+
+    'validation_option_one_image_max' => 'The image for Subject 1 must be :maxMB MB or smaller. Please upload a smaller file.',
+    'validation_option_two_image_max' => 'The image for Subject 2 must be :maxMB MB or smaller. Please upload a smaller file.',
+    'validation_option_one_image_uploaded' => 'The image for Subject 1 failed to upload. It might be too large (max :maxMB MB) or an unsupported type.',
+    'validation_option_two_image_uploaded' => 'The image for Subject 2 failed to upload. It might be too large (max :maxMB MB) or an unsupported type.',
+
+    'error_reason_prohibited_language_generic' => 'Content violates local policy (e.g., contains banned words).',
 ];
