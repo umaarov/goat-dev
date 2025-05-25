@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,7 +10,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -24,6 +25,7 @@ class User extends Authenticatable
         'email_verified_at',
         'email_verification_token',
         'show_voted_posts_publicly',
+        'locale',
     ];
 
     protected $hidden = [
@@ -61,7 +63,7 @@ class User extends Authenticatable
     final function votedPosts(): BelongsToMany
     {
         return $this->belongsToMany(Post::class, 'votes', 'user_id', 'post_id')
-            ->withPivot('vote_option', 'created_at',)
+            ->withPivot('vote_option', 'created_at')
             ->withTimestamps();
     }
 
