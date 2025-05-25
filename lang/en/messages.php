@@ -122,4 +122,6 @@ return [
     'validation_option_two_image_uploaded' => 'The image for Subject 2 failed to upload. It might be too large (max :maxMB MB) or an unsupported type.',
 
     'error_reason_prohibited_language_generic' => 'Content violates local policy (e.g., contains banned words).',
+    'invalid_share_platform_specified' => 'Invalid share platform specified.',
+    'share_recorded' => 'Share recorded.',
 ];

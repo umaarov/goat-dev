@@ -122,4 +122,6 @@ return [
     'validation_option_two_image_uploaded' => 'Не удалось загрузить изображение для Объекта 2. Возможно, оно слишком большое (макс. :maxMB МБ) или неподдерживаемого типа.',
 
     'error_reason_prohibited_language_generic' => 'Содержимое нарушает локальные правила (например, содержит запрещенные слова).',
+    'invalid_share_platform_specified' => 'Указана неверная платформа для репоста.',
+    'share_recorded' => 'Репост учтен.',
 ];

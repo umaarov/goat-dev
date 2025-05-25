@@ -20,7 +20,7 @@ class ShareController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()->with('error', 'Invalid share platform specified.');
+            return redirect()->back()->with('error', __('error_invalid_share_platform_specified'));
         }
 
         $userId = Auth::check() ? Auth::id() : null;
@@ -39,6 +39,6 @@ class ShareController extends Controller
             'platform' => $request->platform,
             'ip_address' => $request->ip(),
         ]);
-        return redirect()->back()->with('info', 'Share recorded.');
+        return redirect()->back()->with('info', __('share_recorded'));
     }
 }
