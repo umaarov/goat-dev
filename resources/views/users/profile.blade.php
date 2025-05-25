@@ -899,3 +899,22 @@ ${canDeleteComment(comment) ? `
         });
     </script>
 @endpush
+
+@section('structured_data')
+    <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "Person",
+          "name": "{{ $user->username }}",
+  "url": "{{ route('profile.show', ['username' => $user->username]) }}",
+        @if($user->profile_picture_url && !str_contains($user->profile_picture_url, 'initial_'))
+            "image": "{{ $user->profile_picture_url }}",
+        @endif
+        "description": "View {{ $user->username }}'s profile and polls on GOAT.",
+  "mainEntityOfPage": {
+     "@type": "ProfilePage",
+     "@id": "{{ route('profile.show', ['username' => $user->username]) }}"
+  }
+}
+    </script>
+@endsection

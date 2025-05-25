@@ -1,6 +1,7 @@
 <?php
 
 use App\Console\Commands\CleanupUnverifiedUsers;
+use App\Console\Commands\GenerateSitemap;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -21,10 +22,13 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })->withCommands(
         (array)CleanupUnverifiedUsers::class,
+        GenerateSitemap::class
     )->withSchedule(
         function ($schedule) {
             $schedule->command('users:cleanup-unverified')
                 ->everyTenMinutes();
+            $schedule->command('sitemap:generate')
+                ->dailyAt('02:00');
         }
     )
     ->create();
