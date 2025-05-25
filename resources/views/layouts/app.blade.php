@@ -16,6 +16,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js" defer></script>
     <meta name="description" content="@yield('meta_description', 'Engage in fun polls, ask "this or that" questions, and see what the community thinks on GOAT!')">
     <link rel="canonical" href="@yield('canonical_url', url()->current())" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
+            crossorigin="anonymous"></script>
 </head>
 <body class="flex flex-col min-h-screen bg-gray-100">
 <nav
