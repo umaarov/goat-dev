@@ -13,12 +13,15 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Intervention\Image\ImageManager;
+
 
 class UserController extends Controller
 {
@@ -35,8 +38,6 @@ class UserController extends Controller
     {
         $manager = ImageManager::gd();
         $image = $manager->read($uploadedFile->getRealPath());
-
-        // $image = Image::make($uploadedFile->getRealPath());
 
         $image->cover(self::PROFILE_IMAGE_SIZE, self::PROFILE_IMAGE_SIZE);
 
@@ -59,12 +60,12 @@ class UserController extends Controller
                 $encodedImage = $image->toJpeg(self::PROFILE_IMAGE_QUALITY)->toString();
                 break;
             case 'png':
-                $encodedImage = $image->toPng()->toString(); // ->toPng(['compression' => 6])
+                $encodedImage = $image->toPng()->toString();
                 break;
             case 'webp':
                 $encodedImage = $image->toWebp(self::PROFILE_IMAGE_QUALITY)->toString();
                 break;
-            default:
+            default: // Should not happen due to previous logic, but as a fallback
                 $filename = $baseFilename . '.jpg';
                 $path = $directory . '/' . $filename;
                 $encodedImage = $image->toJpeg(self::PROFILE_IMAGE_QUALITY)->toString();
@@ -90,7 +91,7 @@ class UserController extends Controller
     {
         Log::channel('audit_trail')->info('User posts data accessed.', [
             'accessor_user_id' => Auth::id(),
-            'accessor_username' => Auth::user()->username,
+            'accessor_username' => Auth::user()?->username,
             'profile_username_viewed' => $username,
             'ip_address' => $request->ip(),
             'page' => $request->input('page', 1)
@@ -118,16 +119,9 @@ class UserController extends Controller
 
             $showManagementOptions = Auth::check() && Auth::id() === $user->id;
 
-            try {
-                $postsHtml = view('users.partials.posts-list', compact('posts', 'showManagementOptions'))->render();
-                Log::info('View rendered successfully');
-            } catch (Exception $e) {
-                Log::error('View rendering failed: ' . $e->getMessage());
-                return response()->json([
-                    'html' => '<p>Error rendering view: ' . $e->getMessage() . '</p>',
-                    'hasMorePages' => false
-                ], 500);
-            }
+            $postsHtml = view('users.partials.posts-list', compact('posts', 'showManagementOptions'))->render();
+            Log::info('View rendered successfully');
+
 
             return response()->json([
                 'html' => $postsHtml,
@@ -209,12 +203,25 @@ class UserController extends Controller
     final public function edit(): View
     {
         $user = Auth::user();
+        // $availableLocales = Config::get('app.available_locales', ['en' => 'English']);
         return view('users.edit', compact('user'));
     }
 
     final public function update(Request $request): RedirectResponse
     {
         $user = Auth::user();
+        $availableLocaleKeys = array_keys(Config::get('app.available_locales', ['en' => 'English']));
+
+        Log::info('--------------------------------------------------');
+        Log::info('UserController@update: Process started.');
+        Log::info('UserController@update: Authenticated User ID: ' . $user->id . ', Username: ' . $user->username);
+        Log::info('UserController@update: Current user locale (before update): ' . $user->locale);
+        Log::info('UserController@update: All request data: ', $request->all());
+        Log::info('UserController@update: Request has "locale" field: ' . ($request->has('locale') ? 'Yes' : 'No'));
+        Log::info('UserController@update: Request "locale" value: ' . $request->input('locale'));
+        Log::info('UserController@update: Request "locale" is filled: ' . ($request->filled('locale') ? 'Yes' : 'No'));
+
+
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name' => 'nullable|string|max:255',
@@ -226,16 +233,20 @@ class UserController extends Controller
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'remove_profile_picture' => 'nullable|boolean',
             'show_voted_posts_publicly' => 'required|boolean',
+            'locale' => ['nullable', Rule::in($availableLocaleKeys)],
         ]);
 
         if ($validator->fails()) {
+            Log::warning('UserController@update: Validation failed.', $validator->errors()->toArray());
             return redirect()->back()->withErrors($validator)->withInput();
         }
+        Log::info('UserController@update: Validation passed.');
 
         $oldValues = [
             'first_name' => $user->first_name,
             'last_name' => $user->last_name,
             'username' => $user->username,
+            'locale' => $user->locale,
             'profile_picture_removed' => $request->boolean('remove_profile_picture'),
             'profile_picture_updated' => $request->hasFile('profile_picture'),
             'show_voted_posts_publicly' => $user->show_voted_posts_publicly,
@@ -243,6 +254,23 @@ class UserController extends Controller
 
         $data = $request->only(['first_name', 'last_name', 'username']);
         $data['show_voted_posts_publicly'] = $request->boolean('show_voted_posts_publicly');
+
+        if ($request->has('locale')) {
+            $requestedLocale = $request->input('locale');
+            Log::info('UserController@update: "locale" key IS PRESENT in request. Value: "' . $requestedLocale . '"');
+            if (in_array($requestedLocale, $availableLocaleKeys)) {
+                $data['locale'] = $requestedLocale;
+                Log::info('UserController@update: Valid locale "' . $requestedLocale . '" will be set in \$data.');
+            } elseif ($requestedLocale === null || $requestedLocale === '') {
+                $data['locale'] = null;
+                Log::info('UserController@update: Empty/null locale received, will set user locale to NULL in \$data.');
+            } else {
+                Log::warning('UserController@update: Invalid locale "' . $requestedLocale . '" received but not caught by validator (or not intended to be set). Not adding to \$data.');
+            }
+        } else {
+            Log::info('UserController@update: "locale" key IS NOT PRESENT in request. User locale will not be changed by \$data array.');
+        }
+
 
         $nameChanged = ($request->first_name !== $user->first_name || $request->last_name !== $user->last_name);
 
@@ -261,10 +289,8 @@ class UserController extends Controller
             $shouldGenerateInitials = false;
 
             if ($request->boolean('remove_profile_picture')) {
-                // Case 1: User explicitly wants to remove their custom picture and use initials
                 $shouldGenerateInitials = true;
             } elseif ($nameChanged) {
-                // Case 2: Name has changed
                 if (!$user->profile_picture || ($user->profile_picture && str_contains($user->profile_picture, 'initial_'))) {
                     $shouldGenerateInitials = true;
                 }
@@ -284,30 +310,49 @@ class UserController extends Controller
             }
         }
 
-        $user->update($data);
-        Log::channel('audit_trail')->info('User profile updated.', [
-            'user_id' => $user->id,
-            'username' => $user->username,
-            'old_username' => $oldValues['username'] !== $user->username ? $oldValues['username'] : null,
-            'updated_fields' => array_keys($data),
-            'profile_picture_change_details' => [
-                'removed' => $oldValues['profile_picture_removed'],
-                'uploaded_new' => $oldValues['profile_picture_updated'],
-                'path_after_update' => $user->profile_picture,
-            ],
-            'privacy_setting_show_voted_changed_to' => $data['show_voted_posts_publicly'],
-            'ip_address' => $request->ip(),
-        ]);
-        return redirect()->route('profile.edit')->with('success', 'Profile updated successfully.');
+        Log::info('UserController@update: Data array just before user->update(): ', $data);
+
+        try {
+            $updateResult = $user->update($data);
+            Log::info('UserController@update: User update operation result: ' . ($updateResult ? 'Success' : 'Failure'));
+            if ($updateResult) {
+                Log::info('UserController@update: User changes detected by Eloquent: ', $user->getChanges());
+            }
+        } catch (Exception $e) {
+            Log::error('UserController@update: Exception during user->update(): ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return redirect()->back()->with('error', 'An error occurred while updating the profile.')->withInput();
+        }
+
+
+        $freshUser = $user->fresh();
+        if ($freshUser) {
+            Log::info('UserController@update: User locale from DB after update (fresh instance): "' . $freshUser->locale . '"');
+        } else {
+            Log::error('UserController@update: Could not get fresh user instance from DB.');
+        }
+
+
+        if (array_key_exists('locale', $data)) {
+            if ($oldValues['locale'] !== $data['locale']) {
+                Session::put('locale', $data['locale']);
+                Log::info('UserController@update: Session locale explicitly updated to: "' . $data['locale'] . '"');
+            }
+        }
+
+
+        Log::info('UserController@update: Process finished. Redirecting...');
+        Log::info('--------------------------------------------------');
+
+        return redirect()->route('profile.edit')->with('success', __('messages.profile_updated_success'));
     }
 
     final public function showChangePasswordForm(): View
     {
         $user = Auth::user();
-        if (!Auth::user()->password && Auth::user()->google_id) {
-            return redirect()->route('profile.edit')->with('info', 'Password change is not available for accounts created via Google login unless a password has been set manually.');
+        if (!$user->password && $user->google_id) {
+            return redirect()->route('profile.edit')->with('info', __('messages.info_password_change_not_available_google'));
         }
-        Log::channel('audit_trail')->info('User password changed.', [
+        Log::channel('audit_trail')->info('User accessed change password form.', [
             'user_id' => $user->id,
             'username' => $user->username,
             'ip_address' => request()->ip(),
@@ -326,7 +371,7 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'current_password' => ['required', 'string', function ($attribute, $value, $fail) use ($user) {
                 if (!Hash::check($value, $user->password)) {
-                    $fail('The :attribute is incorrect.');
+                    $fail(__('validation.current_password'));
                 }
             }],
             'new_password' => 'required|string|min:8|confirmed',
@@ -341,7 +386,13 @@ class UserController extends Controller
             'password' => Hash::make($request->new_password),
         ]);
 
-        return redirect()->route('password.change.form')->with('success', 'Password changed successfully.');
+        Log::channel('audit_trail')->info('User password changed successfully.', [
+            'user_id' => $user->id,
+            'username' => $user->username,
+            'ip_address' => request()->ip(),
+        ]);
+
+        return redirect()->route('password.change.form')->with('success', __('messages.password_changed_successfully'));
     }
 
     private function attachUserVoteStatus(LengthAwarePaginator $posts): void
@@ -369,7 +420,7 @@ class UserController extends Controller
         $username = $request->input('username');
 
         if (empty($username)) {
-            return response()->json(['available' => false]);
+            return response()->json(['available' => false, 'message' => '']);
         }
 
         $query = User::where('username', $username);
@@ -379,9 +430,11 @@ class UserController extends Controller
         }
 
         $exists = $query->exists();
+        $messageKey = $exists ? 'messages.username_taken' : 'messages.username_available';
 
         return response()->json([
-            'available' => !$exists
+            'available' => !$exists,
+            'message' => __($messageKey)
         ]);
     }
 }
