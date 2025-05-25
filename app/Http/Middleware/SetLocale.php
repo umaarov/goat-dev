@@ -15,6 +15,8 @@ class SetLocale
 {
     public function handle(Request $request, Closure $next): Response
     {
+        Log::info('SetLocale Middleware: Configured session.secure = ' . var_export(config('session.secure'), true));
+        Log::info('SetLocale Middleware: Configured session.same_site = ' . var_export(config('session.same_site'), true));
         Log::info('==================================================');
         Log::info('SetLocale Middleware: Execution started for URL: ' . $request->fullUrl());
         Log::info('SetLocale Middleware: Session Driver: ' . Config::get('session.driver'));
