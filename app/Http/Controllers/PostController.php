@@ -512,7 +512,15 @@ class PostController extends Controller
             ->first();
 
         if ($existingVote) {
-            return response()->json(['error' => 'You have already voted on this post.'], 409);
+            $post->refresh();
+            return response()->json([
+                'error' => 'You have already voted on this post.',
+                'message' => 'You have already voted on this post.',
+                'user_vote' => $existingVote->vote_option,
+                'option_one_votes' => $post->option_one_votes,
+                'option_two_votes' => $post->option_two_votes,
+                'total_votes' => $post->total_votes,
+            ], 409);
         }
 
         Vote::create([
