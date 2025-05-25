@@ -334,8 +334,15 @@ class UserController extends Controller
 
         if (array_key_exists('locale', $data)) {
             if ($oldValues['locale'] !== $data['locale']) {
-                Session::put('locale', $data['locale']);
-                Log::info('UserController@update: Session locale explicitly updated to: "' . $data['locale'] . '"');
+                if ($data['locale'] !== null) {
+                    Session::put('locale', $data['locale']);
+                    Log::info('UserController@update: Session locale set to: "' . $data['locale'] . '"');
+                } else {
+                    Session::forget('locale');
+                    Log::info('UserController@update: Session locale forgotten (new locale is null).');
+                }
+                Session::save();
+                Log::info('UserController@update: Session::save() called.');
             }
         }
 
