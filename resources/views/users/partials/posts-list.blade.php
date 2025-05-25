@@ -7,5 +7,5 @@
         ])
     @endforeach
 @else
-    <p class="text-gray-500 text-center py-8">No posts found.</p>
+    <p class="text-gray-500 text-center py-8">{{ __('messages.app.no_posts_found') }}</p>
 @endif

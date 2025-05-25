@@ -200,15 +200,14 @@ return [
     'create_post.submit_button' => 'Submit',
     'create_post.js.fill_all_fields_warning' => 'Please fill all required fields, including images.',
 
-    // New keys for edit.blade.php
     'edit_post.title' => 'Edit Post',
     'edit_post.heading' => 'Edit Post',
     'edit_post.cannot_edit_voted_post_message' => 'This post cannot be edited because it has already received votes.',
     'edit_post.your_question_label' => 'Your Question',
     'edit_post.option_1_legend' => 'Option 1',
-    'edit_post.title_label' => 'Title', // Re-used, but good to have context
+    'edit_post.title_label' => 'Title',
     'edit_post.image_label' => 'Image',
-    'edit_post.current_image_label' => 'Current:', // Re-used from profile edit
+    'edit_post.current_image_label' => 'Current:',
     'edit_post.current_option_1_image_alt' => 'Current Option 1 Image',
     'edit_post.remove_current_image_label' => 'Remove current image',
     'edit_post.replace_image_button' => 'Replace image',
@@ -219,13 +218,51 @@ return [
     'edit_post.current_option_2_image_alt' => 'Current Option 2 Image',
     'edit_post.new_option_2_preview_alt' => 'New Option 2 Preview',
     'edit_post.update_post_button' => 'Update Post',
-    // 'edit_post.cancel_button' => 'Cancel', // Already exists as 'cancel_button'
     'edit_post.js.fill_required_fields_warning' => 'Please fill all required fields (Question and Titles).',
 
-    // New keys for results.blade.php (search results)
     'search_results.title_with_query' => 'Search Results for ":queryTerm"',
-    'search_results.title_default' => 'Search', // Re-used 'search'
+    'search_results.title_default' => 'Search',
     'search_results.placeholder' => 'Search...',
     'search_results.no_posts_found' => 'No posts found matching your search query.',
     'search_results.enter_term_prompt' => 'Enter a term above to search for posts.',
+
+    'app.no_posts_found' => 'No posts found.',
+
+    'change_password.page_title' => 'Change Password',
+    'change_password.heading' => 'Change Password',
+    'change_password.current_password_label' => 'Current Password',
+    'change_password.new_password_label' => 'New Password',
+    'change_password.confirm_new_password_label' => 'Confirm New Password',
+    'change_password.submit_button' => 'Change Password',
+
+    'about.who_we_are_heading' => 'Who We Are',
+    'about.who_we_are_text' => 'We’re building a platform for people to ask unique, interesting questions and let the world weigh in with their votes.',
+    'about.our_mission_heading' => 'Our Mission',
+    'about.our_mission_text' => 'Our goal is to spark conversation and curiosity by making it easy for anyone to create interactive posts. Whether you\'re crowdsourcing opinions or just having fun — we’ve got you covered.',
+
+    'ads.advertisement_heading' => 'Advertisement',
+    'ads.advertisement_text' => 'We offer ad placements that get noticed. We’ll work with you to place your ads in the most effective spots based on your goals. All ads are reviewed before publishing.',
+    'ads.reach_out_heading' => 'Reach Out',
+    'ads.reach_out_prompt' => 'Contact us at',
+    'ads.reach_out_get_started' => 'to get started.',
+
+    'home.page_title_posts' => 'Home - Posts',
+    'home.meta_description' => 'Discover the latest and trending community polls on GOAT. Vote, comment, and share your opinions on a variety of "this or that" questions.',
+
+    'sponsorship.opportunities_heading' => 'Sponsorship Opportunities',
+    'sponsorship.opportunities_text' => 'We partner with brands & individuals that want to connect with our community in meaningful ways.',
+    'sponsorship.reach_out_for_proposals' => 'for proposals and inquiries.',
+
+    'terms.intro_text' => 'By using this website, you agree to the following terms and conditions.',
+    'terms.section1_heading' => '1. Acceptance of Terms',
+    'terms.section1_text' => 'By accessing or using our platform, you agree to be bound by these Terms of Use. If you do not agree to these terms, please do not use the service.',
+    'terms.section2_heading' => '2. User Responsibilities',
+    'terms.section2_text' => 'You agree to use the platform in a lawful manner. You must not post harmful, misleading, offensive, or copyrighted content without permission.',
+    'terms.section3_heading' => '3. Content Ownership',
+    'terms.section3_text' => 'You retain ownership of the content you post, but by posting it here, you grant us a license to display and distribute it as part of the service.',
+    'terms.section4_heading' => '4. Modifications',
+    'terms.section4_text' => 'We reserve the right to update or change these terms at any time. Continued use of the platform after changes means you accept the revised terms.',
+    'terms.section5_heading' => '5. Disclaimer',
+    'terms.section5_text' => 'We provide this platform "as is" with no guarantees. We are not responsible for any loss, damages, or issues that may arise from using our service.',
+
 ];
