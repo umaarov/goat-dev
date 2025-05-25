@@ -1,13 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Create New Post')
+@section('title', __('messages.create_post.title'))
 
 @section('content')
     <div class="max-w-md mx-auto bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4">
         <div class="p-6">
-            <h5 class="text-lg font-semibold mb-1">Ask a unique question!</h5>
-            <p class="text-gray-600 text-sm mb-4">Choose titles, images and categories to fit your subjects for the
-                world to vote on.</p>
+            <h5 class="text-lg font-semibold mb-1">{{ __('messages.create_post.ask_unique_question') }}</h5>
+            <p class="text-gray-600 text-sm mb-4">{{ __('messages.create_post.choose_titles_images_categories') }}</p>
 
             <form method="POST" action="{{ route('posts.store') }}" enctype="multipart/form-data"
                   id="createPostForm">
@@ -16,7 +15,8 @@
                 <div class="mb-4">
                     <input type="text"
                            class="w-full px-3 py-2 border @error('question') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           id="question" name="question" placeholder="Question..."
+                           id="question" name="question"
+                           placeholder="{{ __('messages.create_post.question_placeholder') }}"
                            value="{{ old('question', isset($post) ? $post->question : '') }}"
                            maxlength="255">
                     @error('question')
@@ -36,11 +36,11 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                               d="M12 4v16m8-8H4"/>
                                     </svg>
-                                    <p class="mt-1 text-xs">Click to upload image</p>
+                                    <p class="mt-1 text-xs">{{ __('messages.create_post.click_to_upload_image') }}</p>
                                 </div>
                                 <img id="option_one_img" {{-- For the small preview --}}
                                 class="h-full w-full object-cover object-center hidden rounded-md" src="#"
-                                     alt="Option 1 Preview">
+                                     alt="{{ __('messages.create_post.option_1_preview_alt') }}">
                             </div>
                         </label>
                         <input type="file" id="option_one_image_trigger" class="hidden"
@@ -54,7 +54,8 @@
 
                         <input type="text"
                                class="mt-2 w-full px-3 py-2 border @error('option_one_title') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                               id="option_one_title" name="option_one_title" placeholder="Subject 1"
+                               id="option_one_title" name="option_one_title"
+                               placeholder="{{ __('messages.create_post.subject_1_placeholder') }}"
                                value="{{ old('option_one_title', isset($post) ? $post->option_one_title : '') }}"
                                maxlength="40">
                         @error('option_one_title')
@@ -73,11 +74,11 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                               d="M12 4v16m8-8H4"/>
                                     </svg>
-                                    <p class="mt-1 text-xs">Click to upload image</p>
+                                    <p class="mt-1 text-xs">{{ __('messages.create_post.click_to_upload_image') }}</p>
                                 </div>
                                 <img id="option_two_img" {{-- For the small preview --}}
                                 class="h-full w-full object-cover object-center hidden rounded-md" src="#"
-                                     alt="Option 2 Preview">
+                                     alt="{{ __('messages.create_post.option_2_preview_alt') }}">
                             </div>
                         </label>
                         <input type="file" id="option_two_image_trigger" class="hidden"
@@ -91,7 +92,8 @@
 
                         <input type="text"
                                class="mt-2 w-full px-3 py-2 border @error('option_two_title') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                               id="option_two_title" name="option_two_title" placeholder="Subject 2"
+                               id="option_two_title" name="option_two_title"
+                               placeholder="{{ __('messages.create_post.subject_2_placeholder') }}"
                                value="{{ old('option_two_title', isset($post) ? $post->option_two_title : '') }}"
                                maxlength="40">
                         @error('option_two_title')
@@ -103,7 +105,7 @@
                 <div class="mt-6">
                     <button type="submit"
                             class="w-full bg-blue-800 text-white py-3 rounded-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-150">
-                        Submit
+                        {{ __('messages.create_post.submit_button') }}
                     </button>
                 </div>
             </form>
@@ -150,9 +152,9 @@
                     if (!allFieldsValid) {
                         event.preventDefault();
                         if (typeof window.showToast === 'function') {
-                            window.showToast('Please fill all required fields, including images.', 'warning');
+                            window.showToast("{{ __('messages.create_post.js.fill_all_fields_warning') }}", 'warning');
                         } else {
-                            alert('Please fill all required fields, including images.');
+                            alert("{{ __('messages.create_post.js.fill_all_fields_warning') }}");
                         }
                     }
                 });

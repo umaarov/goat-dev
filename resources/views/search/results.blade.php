@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $queryTerm ? 'Search Results for "' . e($queryTerm) . '"' : 'Search')
+@section('title', $queryTerm ? __('messages.search_results.title_with_query', ['queryTerm' => e($queryTerm)]) : __('messages.search_results.title_default'))
 
 @section('content')
     <div class="flex flex-col items-center justify-center">
@@ -10,7 +10,7 @@
                     type="search"
                     name="q"
                     value="{{ old('q', $queryTerm) }}"
-                    placeholder="Search..."
+                    placeholder="{{ __('messages.search_results.placeholder') }}"
                     class="w-full pl-10 pr-4 py-2 border-1 border-gray-300 rounded-2xl transition duration-150 ease-in-out"
                     autocomplete="off"
                 />
@@ -35,16 +35,15 @@
                 @forelse ($posts as $post)
                     @include('partials.post-card', ['post' => $post])
                 @empty
-                    <p>No posts found matching your search query.</p>
+                    <p>{{ __('messages.search_results.no_posts_found') }}</p>
                 @endforelse
 
                 <div class="pagination">
                     {{ $posts->appends(['q' => $queryTerm])->links() }}
                 </div>
-                @else
-                    <p class="mt-2 mb-8">Enter a term above to search for posts.</p>
-                @endif
             </div>
-
+        @else
+            <p class="mt-2 mb-8">{{ __('messages.search_results.enter_term_prompt') }}</p>
+        @endif
     </div>
 @endsection

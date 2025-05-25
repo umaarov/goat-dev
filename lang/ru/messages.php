@@ -44,7 +44,7 @@ return [
 
     'home' => 'Главная',
     'search' => 'Поиск',
-    'post' => 'Пост',
+    'post' => 'Пост', // General term for "Post" button/link
     'account' => 'Аккаунт',
     'login' => 'Войти',
     'register' => 'Регистрация',
@@ -150,7 +150,6 @@ return [
     'auth.verify_email_if_not_receive' => 'Если вы не получили письмо',
     'auth.verify_email_click_here_to_request_another' => 'нажмите здесь, чтобы запросить другую',
 
-    // New translations
     'mail.registration_expired.subject' => 'Срок регистрации истек',
     'mail.registration_expired.title' => 'Срок регистрации истек',
     'mail.greeting' => 'Привет, :name!',
@@ -187,4 +186,46 @@ return [
     'app.js.tooltip_owner_voted_for_template' => '@:username проголосовал(а) за :optionTitle',
     'app.js.image_viewer_alt' => 'Изображение в полноэкранном режиме',
     'app.js.image_viewer_close_title' => 'Закрыть просмотрщик изображений',
+
+    // New keys for create.blade.php
+    'create_post.title' => 'Создать новый пост',
+    'create_post.ask_unique_question' => 'Задайте уникальный вопрос!',
+    'create_post.choose_titles_images_categories' => 'Выберите заголовки, изображения и категории, соответствующие вашим темам, чтобы мир мог проголосовать.',
+    'create_post.question_placeholder' => 'Вопрос...',
+    'create_post.click_to_upload_image' => 'Нажмите, чтобы загрузить изображение',
+    'create_post.option_1_preview_alt' => 'Предпросмотр варианта 1',
+    'create_post.subject_1_placeholder' => 'Тема 1',
+    'create_post.option_2_preview_alt' => 'Предпросмотр варианта 2',
+    'create_post.subject_2_placeholder' => 'Тема 2',
+    'create_post.submit_button' => 'Отправить',
+    'create_post.js.fill_all_fields_warning' => 'Пожалуйста, заполните все обязательные поля, включая изображения.',
+
+    // New keys for edit.blade.php
+    'edit_post.title' => 'Редактировать пост',
+    'edit_post.heading' => 'Редактировать пост',
+    'edit_post.cannot_edit_voted_post_message' => 'Этот пост нельзя редактировать, так как за него уже проголосовали.',
+    'edit_post.your_question_label' => 'Ваш вопрос',
+    'edit_post.option_1_legend' => 'Вариант 1',
+    'edit_post.title_label' => 'Заголовок',
+    'edit_post.image_label' => 'Изображение',
+    'edit_post.current_image_label' => 'Текущее:',
+    'edit_post.current_option_1_image_alt' => 'Текущее изображение варианта 1',
+    'edit_post.remove_current_image_label' => 'Удалить текущее изображение',
+    'edit_post.replace_image_button' => 'Заменить изображение',
+    'edit_post.upload_image_button' => 'Загрузить изображение',
+    'edit_post.new_image_placeholder' => 'Новое изображение',
+    'edit_post.new_option_1_preview_alt' => 'Предпросмотр нового варианта 1',
+    'edit_post.option_2_legend' => 'Вариант 2',
+    'edit_post.current_option_2_image_alt' => 'Текущее изображение варианта 2',
+    'edit_post.new_option_2_preview_alt' => 'Предпросмотр нового варианта 2',
+    'edit_post.update_post_button' => 'Обновить пост',
+    // 'edit_post.cancel_button' => 'Отмена', // Already exists as 'cancel_button'
+    'edit_post.js.fill_required_fields_warning' => 'Пожалуйста, заполните все обязательные поля (Вопрос и Заголовки).',
+
+    // New keys for results.blade.php (search results)
+    'search_results.title_with_query' => 'Результаты поиска по запросу ":queryTerm"',
+    'search_results.title_default' => 'Поиск', // Re-used 'search'
+    'search_results.placeholder' => 'Поиск...',
+    'search_results.no_posts_found' => 'По вашему запросу ничего не найдено.',
+    'search_results.enter_term_prompt' => 'Введите поисковый запрос выше для поиска постов.',
 ];

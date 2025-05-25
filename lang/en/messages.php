@@ -44,7 +44,7 @@ return [
 
     'home' => 'Home',
     'search' => 'Search',
-    'post' => 'Post',
+    'post' => 'Post', // General term for "Post" button/link
     'account' => 'Account',
     'login' => 'Login',
     'register' => 'Register',
@@ -173,7 +173,7 @@ return [
     'error.404.page_not_found_message' => 'Even the GOAT gets lost sometimes. The page you\'re looking for might not exist.',
     'error.404.lost_goat_alt' => 'Lost Goat',
 
-    'app.default_title' => ':default_app_name',
+    'app.default_title' => ':default_app_name', // Assuming :default_app_name is defined elsewhere, e.g. config('app.name')
     'app.meta_description_default' => 'Engage in fun polls, ask "this or that" questions, and see what the community thinks on GOAT!',
     'app.logo_alt' => 'GOAT Application Logo',
 
@@ -186,4 +186,46 @@ return [
     'app.js.tooltip_owner_voted_for_template' => '@:username voted for :optionTitle',
     'app.js.image_viewer_alt' => 'Full screen image',
     'app.js.image_viewer_close_title' => 'Close image viewer',
+
+    // New keys for create.blade.php
+    'create_post.title' => 'Create New Post',
+    'create_post.ask_unique_question' => 'Ask a unique question!',
+    'create_post.choose_titles_images_categories' => 'Choose titles, images and categories to fit your subjects for the world to vote on.',
+    'create_post.question_placeholder' => 'Question...',
+    'create_post.click_to_upload_image' => 'Click to upload image',
+    'create_post.option_1_preview_alt' => 'Option 1 Preview',
+    'create_post.subject_1_placeholder' => 'Subject 1',
+    'create_post.option_2_preview_alt' => 'Option 2 Preview',
+    'create_post.subject_2_placeholder' => 'Subject 2',
+    'create_post.submit_button' => 'Submit',
+    'create_post.js.fill_all_fields_warning' => 'Please fill all required fields, including images.',
+
+    // New keys for edit.blade.php
+    'edit_post.title' => 'Edit Post',
+    'edit_post.heading' => 'Edit Post',
+    'edit_post.cannot_edit_voted_post_message' => 'This post cannot be edited because it has already received votes.',
+    'edit_post.your_question_label' => 'Your Question',
+    'edit_post.option_1_legend' => 'Option 1',
+    'edit_post.title_label' => 'Title', // Re-used, but good to have context
+    'edit_post.image_label' => 'Image',
+    'edit_post.current_image_label' => 'Current:', // Re-used from profile edit
+    'edit_post.current_option_1_image_alt' => 'Current Option 1 Image',
+    'edit_post.remove_current_image_label' => 'Remove current image',
+    'edit_post.replace_image_button' => 'Replace image',
+    'edit_post.upload_image_button' => 'Upload image',
+    'edit_post.new_image_placeholder' => 'New Image',
+    'edit_post.new_option_1_preview_alt' => 'New Option 1 Preview',
+    'edit_post.option_2_legend' => 'Option 2',
+    'edit_post.current_option_2_image_alt' => 'Current Option 2 Image',
+    'edit_post.new_option_2_preview_alt' => 'New Option 2 Preview',
+    'edit_post.update_post_button' => 'Update Post',
+    // 'edit_post.cancel_button' => 'Cancel', // Already exists as 'cancel_button'
+    'edit_post.js.fill_required_fields_warning' => 'Please fill all required fields (Question and Titles).',
+
+    // New keys for results.blade.php (search results)
+    'search_results.title_with_query' => 'Search Results for ":queryTerm"',
+    'search_results.title_default' => 'Search', // Re-used 'search'
+    'search_results.placeholder' => 'Search...',
+    'search_results.no_posts_found' => 'No posts found matching your search query.',
+    'search_results.enter_term_prompt' => 'Enter a term above to search for posts.',
 ];
