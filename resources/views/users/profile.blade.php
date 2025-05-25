@@ -433,46 +433,194 @@
                 });
         }
 
-        function voteForOption(postId, option) {
+        async function voteForOption(postId, option) {
             if (!{{ Auth::check() ? 'true' : 'false' }}) {
-                window.showToast('You need to be logged in to vote.', 'warning');
+                if (window.showToast) window.showToast('You need to be logged in to vote.', 'warning');
                 return;
             }
 
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const postElement = document.getElementById(`post-${postId}`);
+            if (!postElement) {
+                console.error(`Post element with ID post-${postId} not found.`);
+                return;
+            }
 
-            fetch(`/posts/${postId}/vote`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({option: option})
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        if (response.status === 409) {
-                            return response.json().then(data => {
-                                // updateVoteUI(postId, data.user_vote, data);
-                                throw new Error(data.error || 'You have already voted on this post.');
-                            });
-                        }
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    // updateVoteUI(postId, data.user_vote, data);
-                })
-                .catch(error => {
-                    console.error('Error voting:', error);
-                    if (error.message && error.message.toLowerCase().includes('already voted')) {
-                        window.showToast(error.message, 'warning');
-                    } else {
-                        window.showToast('Failed to register vote. Please try again.', 'error');
-                    }
+            const clickedButton = postElement.querySelector(`button.vote-button[data-option="${option}"]`);
+            const otherButtonOption = option === 'option_one' ? 'option_two' : 'option_one';
+            const otherButton = postElement.querySelector(`button.vote-button[data-option="${otherButtonOption}"]`);
+
+            if (!clickedButton || !otherButton) {
+                console.error('Vote buttons not found for post-' + postId);
+                return;
+            }
+
+            if (clickedButton.disabled) {
+                return;
+            }
+
+            const knownUserVote = postElement.dataset.userVote;
+            if (knownUserVote && (knownUserVote === 'option_one' || knownUserVote === 'option_two')) {
+                const currentVoteData = {
+                    user_vote: knownUserVote,
+                    option_one_votes: parseInt(postElement.dataset.optionOneVotes, 10),
+                    option_two_votes: parseInt(postElement.dataset.optionTwoVotes, 10),
+                    total_votes: parseInt(postElement.dataset.optionOneVotes, 10) + parseInt(postElement.dataset.optionTwoVotes, 10),
+                    message: "You have already voted on this post."
+                };
+                updateVoteUI(postId, currentVoteData.user_vote, currentVoteData);
+                if (window.showToast) window.showToast(currentVoteData.message, 'info');
+                return;
+            }
+
+            const originalOptionOneVotes = parseInt(postElement.dataset.optionOneVotes, 10);
+            const originalOptionTwoVotes = parseInt(postElement.dataset.optionTwoVotes, 10);
+            const originalUserVoteState = postElement.dataset.userVote || '';
+
+            const originalClickedButtonClasses = Array.from(clickedButton.classList);
+            const originalOtherButtonClasses = Array.from(otherButton.classList);
+
+            const totalVotesDisplayElement = postElement.querySelector('.flex.justify-between.items-center .flex.flex-col.items-center.gap-1 span.text-lg.font-semibold');
+            const originalTotalVotesText = totalVotesDisplayElement ? totalVotesDisplayElement.textContent : (originalOptionOneVotes + originalOptionTwoVotes).toString();
+
+
+            const highlightClasses = ['bg-blue-800', 'text-white'];
+            const defaultBgClasses = ['bg-white', 'border', 'border-gray-300', 'hover:bg-gray-50'];
+
+            clickedButton.classList.remove(...defaultBgClasses, ...highlightClasses);
+            clickedButton.classList.add(...highlightClasses);
+
+            otherButton.classList.remove(...highlightClasses, ...defaultBgClasses);
+            otherButton.classList.add(...defaultBgClasses);
+
+            clickedButton.classList.add('voting-in-progress');
+
+            clickedButton.disabled = true;
+            otherButton.disabled = true;
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            let responseOk = false;
+
+            try {
+                const response = await fetch(`/posts/${postId}/vote`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({option: option})
                 });
+
+                const responseData = await response.json();
+                responseOk = response.ok;
+
+                if (responseOk) { // HTTP 200-299
+                    updateVoteUI(postId, responseData.user_vote, responseData);
+                } else { // HTTP errors 409, 422, 500
+                    const errorMessage = responseData.message || responseData.error || (responseData.errors ? Object.values(responseData.errors).join(', ') : `Vote failed (HTTP ${response.status})`);
+                    if (window.showToast) {
+                        window.showToast(errorMessage, response.status === 409 ? 'info' : 'error');
+                    }
+
+                    if (response.status === 409 && responseData.user_vote && typeof responseData.option_one_votes !== 'undefined') {
+                        updateVoteUI(postId, responseData.user_vote, responseData);
+                    } else {
+                        clickedButton.setAttribute('class', originalClickedButtonClasses.join(' '));
+                        otherButton.setAttribute('class', originalOtherButtonClasses.join(' '));
+                        postElement.dataset.userVote = originalUserVoteState;
+                        postElement.dataset.optionOneVotes = originalOptionOneVotes.toString();
+                        postElement.dataset.optionTwoVotes = originalOptionTwoVotes.toString();
+                        if (totalVotesDisplayElement) totalVotesDisplayElement.textContent = originalTotalVotesText;
+                    }
+                }
+            } catch (error) {
+                console.error('Error voting (catch):', error);
+                if (window.showToast) {
+                    window.showToast('Failed to register vote. Please check your connection.', 'error');
+                }
+                clickedButton.setAttribute('class', originalClickedButtonClasses.join(' '));
+                otherButton.setAttribute('class', originalOtherButtonClasses.join(' '));
+                postElement.dataset.userVote = originalUserVoteState;
+                postElement.dataset.optionOneVotes = originalOptionOneVotes.toString();
+                postElement.dataset.optionTwoVotes = originalOptionTwoVotes.toString();
+                if (totalVotesDisplayElement) totalVotesDisplayElement.textContent = originalTotalVotesText;
+
+            } finally {
+                clickedButton.classList.remove('voting-in-progress');
+                clickedButton.disabled = false;
+                otherButton.disabled = false;
+            }
+        }
+
+        function updateVoteUI(postId, userVotedOption, voteData) {
+            const postElement = document.getElementById(`post-${postId}`);
+            if (!postElement) {
+                console.error(`Post element with ID post-${postId} not found.`);
+                return;
+            }
+
+            postElement.dataset.userVote = userVotedOption;
+
+            postElement.dataset.optionOneVotes = voteData.option_one_votes;
+            postElement.dataset.optionTwoVotes = voteData.option_two_votes;
+
+            const totalVotesDisplayElement = postElement.querySelector('.flex.justify-between.items-center .flex.flex-col.items-center.gap-1 span.text-lg.font-semibold');
+            if (totalVotesDisplayElement) {
+                totalVotesDisplayElement.textContent = voteData.total_votes;
+            }
+
+            const optionOneButton = postElement.querySelector('button.vote-button[data-option="option_one"]');
+            const optionTwoButton = postElement.querySelector('button.vote-button[data-option="option_two"]');
+
+            if (optionOneButton && optionTwoButton) {
+                const optionOneTitle = postElement.dataset.optionOneTitle || 'Option 1';
+                const optionTwoTitle = postElement.dataset.optionTwoTitle || 'Option 2';
+
+                const totalVotes = parseInt(voteData.total_votes, 10);
+                const optionOneVotes = parseInt(voteData.option_one_votes, 10);
+                const optionTwoVotes = parseInt(voteData.option_two_votes, 10);
+
+                const percentOne = totalVotes > 0 ? Math.round((optionOneVotes / totalVotes) * 100) : 0;
+                const percentTwo = totalVotes > 0 ? Math.round((optionTwoVotes / totalVotes) * 100) : 0;
+
+                const optionOneTextElement = optionOneButton.querySelector('.button-text-truncate');
+                if (optionOneTextElement) {
+                    optionOneTextElement.textContent = `${optionOneTitle} (${percentOne}%)`;
+                }
+                const optionTwoTextElement = optionTwoButton.querySelector('.button-text-truncate');
+                if (optionTwoTextElement) {
+                    optionTwoTextElement.textContent = `${optionTwoTitle} (${percentTwo}%)`;
+                }
+
+                const highlightClasses = ['bg-blue-800', 'text-white'];
+                const defaultClasses = ['bg-white', 'border', 'border-gray-300', 'hover:bg-gray-50'];
+                const noHoverDefaultClasses = ['bg-white', 'border', 'border-gray-300'];
+
+                [optionOneButton, optionTwoButton].forEach(button => {
+                    button.classList.remove(...highlightClasses, ...defaultClasses, ...noHoverDefaultClasses);
+                    button.classList.remove('bg-blue-800', 'text-white', 'bg-white', 'border', 'border-gray-300', 'hover:bg-gray-50');
+                });
+
+                if (userVotedOption === 'option_one') {
+                    optionOneButton.classList.add(...highlightClasses);
+                    optionTwoButton.classList.add(...noHoverDefaultClasses);
+                } else if (userVotedOption === 'option_two') {
+                    optionTwoButton.classList.add(...highlightClasses);
+                    optionOneButton.classList.add(...noHoverDefaultClasses);
+                } else {
+                    optionOneButton.classList.add(...defaultClasses);
+                    optionTwoButton.classList.add(...defaultClasses);
+                }
+
+                optionOneButton.dataset.tooltipShowCount = "true";
+                optionTwoButton.dataset.tooltipShowCount = "true";
+            }
+
+            if (window.showToast && voteData.message && !voteData.message.toLowerCase().includes('already voted')) {
+                window.showToast(voteData.message, 'success');
+            } else if (window.showToast && voteData.message && voteData.message.toLowerCase().includes('already voted')) {
+                window.showToast(voteData.message, 'info');
+            }
         }
 
         function deleteComment(commentId, event) {
@@ -903,17 +1051,17 @@ ${canDeleteComment(comment) ? `
 @section('structured_data')
     <script type="application/ld+json">
         {
-          "@context": "https://schema.org",
-          "@type": "Person",
-          "name": "{{ $user->username }}",
-  "url": "{{ route('profile.show', ['username' => $user->username]) }}",
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "{{ $user->username }}",
+        "url": "{{ route('profile.show', ['username' => $user->username]) }}",
         @if($user->profile_picture_url && !str_contains($user->profile_picture_url, 'initial_'))
             "image": "{{ $user->profile_picture_url }}",
         @endif
         "description": "View {{ $user->username }}'s profile and polls on GOAT.",
-  "mainEntityOfPage": {
-     "@type": "ProfilePage",
-     "@id": "{{ route('profile.show', ['username' => $user->username]) }}"
+        "mainEntityOfPage": {
+        "@type": "ProfilePage",
+        "@id": "{{ route('profile.show', ['username' => $user->username]) }}"
   }
 }
     </script>

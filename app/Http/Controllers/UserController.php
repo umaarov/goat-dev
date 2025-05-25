@@ -244,6 +244,8 @@ class UserController extends Controller
         $data = $request->only(['first_name', 'last_name', 'username']);
         $data['show_voted_posts_publicly'] = $request->boolean('show_voted_posts_publicly');
 
+        $nameChanged = ($request->first_name !== $user->first_name || $request->last_name !== $user->last_name);
+
         if ($request->hasFile('profile_picture')) {
             if ($user->profile_picture && !filter_var($user->profile_picture, FILTER_VALIDATE_URL)) {
                 if (Storage::disk('public')->exists($user->profile_picture)) {
@@ -255,17 +257,31 @@ class UserController extends Controller
                 'profile_pictures',
                 uniqid('profile_') . '_' . $user->id
             );
-        } else if ($request->boolean('remove_profile_picture') ||
-            (($request->first_name !== $user->first_name || $request->last_name !== $user->last_name) &&
-                $user->profile_picture && str_contains($user->profile_picture, 'initial_'))) {
-            if ($user->profile_picture && !filter_var($user->profile_picture, FILTER_VALIDATE_URL)) {
-                if (Storage::disk('public')->exists($user->profile_picture)) {
-                    Storage::disk('public')->delete($user->profile_picture);
+        } else {
+            $shouldGenerateInitials = false;
+
+            if ($request->boolean('remove_profile_picture')) {
+                // Case 1: User explicitly wants to remove their custom picture and use initials
+                $shouldGenerateInitials = true;
+            } elseif ($nameChanged) {
+                // Case 2: Name has changed
+                if (!$user->profile_picture || ($user->profile_picture && str_contains($user->profile_picture, 'initial_'))) {
+                    $shouldGenerateInitials = true;
                 }
             }
-            $data['profile_picture'] = $this->avatarService->generateInitialsAvatar(
-                $request->first_name, $request->last_name ?? '', $user->id
-            );
+
+            if ($shouldGenerateInitials) {
+                if ($user->profile_picture && !filter_var($user->profile_picture, FILTER_VALIDATE_URL)) {
+                    if (Storage::disk('public')->exists($user->profile_picture)) {
+                        Storage::disk('public')->delete($user->profile_picture);
+                    }
+                }
+                $data['profile_picture'] = $this->avatarService->generateInitialsAvatar(
+                    $request->first_name,
+                    $request->last_name ?? '',
+                    $user->id
+                );
+            }
         }
 
         $user->update($data);
@@ -274,7 +290,6 @@ class UserController extends Controller
             'username' => $user->username,
             'old_username' => $oldValues['username'] !== $user->username ? $oldValues['username'] : null,
             'updated_fields' => array_keys($data),
-            // 'changes' => [ 'field' => ['old' => ..., 'new' => ...], ... ]
             'profile_picture_change_details' => [
                 'removed' => $oldValues['profile_picture_removed'],
                 'uploaded_new' => $oldValues['profile_picture_updated'],
@@ -295,7 +310,7 @@ class UserController extends Controller
         Log::channel('audit_trail')->info('User password changed.', [
             'user_id' => $user->id,
             'username' => $user->username,
-            'ip_address' => $request->ip(),
+            'ip_address' => request()->ip(),
         ]);
         return view('users.change-password');
     }
