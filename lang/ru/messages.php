@@ -149,4 +149,42 @@ return [
     'auth.verify_email_check_before_proceeding' => 'Прежде чем продолжить, пожалуйста, проверьте свою электронную почту на наличие ссылки для подтверждения.',
     'auth.verify_email_if_not_receive' => 'Если вы не получили письмо',
     'auth.verify_email_click_here_to_request_another' => 'нажмите здесь, чтобы запросить другую',
+
+    // New translations
+    'mail.registration_expired.subject' => 'Срок регистрации истек',
+    'mail.registration_expired.title' => 'Срок регистрации истек',
+    'mail.greeting' => 'Привет, :name!',
+    'mail.registration_expired.line1' => 'Срок регистрации вашей учетной записи для :app_name истек, поскольку ваш адрес электронной почты не был подтвержден в течение необходимого 1 часа.',
+    'mail.registration_expired.line2' => 'Если вы все еще хотите зарегистрироваться, пожалуйста, начните процесс регистрации заново.',
+    'mail.registration_expired.button' => 'Зарегистрироваться снова',
+    'mail.thank_you' => 'Спасибо,',
+    'mail.thanks' => 'Спасибо,',
+
+    'mail.verify_email.subject' => 'Подтвердите ваш адрес электронной почты',
+    'mail.verify_email.line1' => 'Спасибо за создание учетной записи. Пожалуйста, подтвердите свой адрес электронной почты, нажав кнопку ниже.',
+    'mail.verify_email.button_text' => 'Подтвердить адрес электронной почты',
+    'mail.verify_email.important_note' => '<strong>Важно:</strong> Срок действия этой ссылки для подтверждения истечет через 1 час. Если вы не подтвердите свой адрес электронной почты в течение этого времени, ваша регистрация будет отменена, и вам нужно будет зарегистрироваться снова.',
+    'mail.verify_email.no_action_required' => 'Если вы не создавали учетную запись, никаких дальнейших действий не требуется.',
+    'mail.verify_email.if_copy_paste' => 'Если у вас возникли проблемы с нажатием кнопки, скопируйте и вставьте URL-адрес ниже в свой веб-браузер:',
+
+    'error.404.page_title' => '404 - Страница не найдена',
+    'error.404.user_not_found_title' => '404 - Пользователь не найден',
+    'error.404.heading' => '404',
+    'error.404.user_not_found_message' => 'Даже GOAT иногда теряется. Пользователь, которого вы ищете, может не существовать.',
+    'error.404.page_not_found_message' => 'Даже GOAT иногда теряется. Страница, которую вы ищете, может не существовать.',
+    'error.404.lost_goat_alt' => 'Потерянный козел',
+
+    'app.default_title' => ':default_app_name',
+    'app.meta_description_default' => 'Участвуйте в веселых опросах, задавайте вопросы "это или то" и узнайте, что думает сообщество на GOAT!',
+    'app.logo_alt' => 'Логотип приложения GOAT',
+
+    'app.js.cropper_modal_title' => 'Обрезать изображение (1x1)',
+    'app.js.apply_crop_button' => 'Применить обрезку',
+    'app.js.cropper_error_processing' => 'Ошибка обработки обрезки изображения.',
+    'app.js.cropper_error_init' => 'Инструмент обрезки изображений не может быть инициализирован.',
+    'app.js.tooltip_vote_singular' => 'голос',
+    'app.js.tooltip_vote_plural' => 'голосов', // also 'голоса' for 2,3,4
+    'app.js.tooltip_owner_voted_for_template' => '@:username проголосовал(а) за :optionTitle',
+    'app.js.image_viewer_alt' => 'Изображение в полноэкранном режиме',
+    'app.js.image_viewer_close_title' => 'Закрыть просмотрщик изображений',
 ];

@@ -1,16 +1,16 @@
 @component('mail::message')
-    # Registration Expired
+    # {{ __('messages.mail.registration_expired.title') }}
 
-    Hi {{ $user->first_name }},
+    {{ __('messages.mail.greeting', ['name' => $user->first_name]) }}
 
-    Your account registration for {{ config('app.name') }} has expired because your email was not verified within the required 1-hour timeframe.
+    {{ __('messages.mail.registration_expired.line1', ['app_name' => config('app.name')]) }}
 
-    If you still wish to register, please start the registration process again.
+    {{ __('messages.mail.registration_expired.line2') }}
 
     @component('mail::button', ['url' => route('register')])
-        Register Again
+        {{ __('messages.mail.registration_expired.button') }}
     @endcomponent
 
-    Thank you,<br>
+    {{ __('messages.mail.thank_you') }}<br>
     {{ config('app.name') }}
 @endcomponent

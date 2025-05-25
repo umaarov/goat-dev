@@ -1,21 +1,21 @@
 @component('mail::message')
-    # Verify Your Email Address
+    # {{ __('messages.auth.verify_email_heading') }}
 
-    Hi {{ $user->first_name }},
+    {{ __('messages.mail.greeting', ['name' => $user->first_name]) }}
 
-    Thank you for creating an account. Please verify your email address by clicking the button below.
+    {{ __('messages.mail.verify_email.line1') }}
 
     @component('mail::button', ['url' => $verificationUrl])
-        Verify Email Address
+        {{ __('messages.mail.verify_email.button_text') }}
     @endcomponent
 
-    **Important:** This verification link will expire in 1 hour. If you don't verify your email within this timeframe, your registration will be cancelled and you'll need to register again.
+    {!! __('messages.mail.verify_email.important_note') !!}
 
-    If you did not create an account, no further action is required.
+    {{ __('messages.mail.verify_email.no_action_required') }}
 
-    Thanks,<br>
+    {{ __('messages.mail.thanks') }}<br>
     {{ config('app.name') }}
 
-    <small>If you're having trouble clicking the button, copy and paste the URL below into your web browser:</small><br>
+    <small>{!! __('messages.mail.verify_email.if_copy_paste') !!}</small><br>
     <small>{{ $verificationUrl }}</small>
 @endcomponent
