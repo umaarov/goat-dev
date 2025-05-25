@@ -131,19 +131,21 @@ class AuthController extends Controller
 
     public function login(Request $request): RedirectResponse
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|string|email',
+        $request->validate([
+            'login_identifier' => 'required|string',
             'password' => 'required|string',
         ]);
 
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput($request->only('email'));
-        }
-
-        $credentials = $request->only('email', 'password');
+        $loginInput = $request->input('login_identifier');
+        $password = $request->input('password');
         $remember = $request->filled('remember');
+
+        $fieldType = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+
+        $credentials = [
+            $fieldType => $loginInput,
+            'password' => $password,
+        ];
 
         if (Auth::attempt($credentials, $remember)) {
             $user = Auth::user();
@@ -151,13 +153,13 @@ class AuthController extends Controller
             if (!$user->email_verified_at) {
                 Auth::logout();
                 Log::channel('audit_trail')->warning('Login attempt failed: Email not verified.', [
-                    'email' => $request->email,
+                    'login_identifier' => $loginInput,
                     'user_id' => $user->id,
                     'ip_address' => $request->ip(),
                 ]);
                 return redirect()->route('login')
-                    ->withErrors(['email' => 'Email not verified. Please check your email for verification link.'])
-                    ->withInput($request->only('email'));
+                    ->withErrors(['login_identifier' => 'Email not verified. Please check your email for verification link.'])
+                    ->withInput($request->only('login_identifier'));
             }
 
             $request->session()->regenerate();
@@ -169,15 +171,16 @@ class AuthController extends Controller
             ]);
             return redirect()->intended(route('home'))->with('success', 'Logged in successfully!');
         }
+
         Log::channel('audit_trail')->warning('Failed login attempt: Invalid credentials.', [
-            'email' => $request->email,
+            'login_identifier' => $loginInput,
             'ip_address' => $request->ip(),
         ]);
-        Log::warning('Failed login attempt', ['email' => $request->email, 'ip' => $request->ip()]);
+        Log::warning('Failed login attempt', ['login_identifier' => $loginInput, 'ip' => $request->ip()]);
 
         return redirect()->back()
-            ->withErrors(['email' => 'Invalid login credentials.'])
-            ->withInput($request->only('email'));
+            ->withErrors(['login_identifier' => 'Invalid login credentials.'])
+            ->withInput($request->only('login_identifier'));
     }
 
     public function logout(Request $request): RedirectResponse
@@ -218,24 +221,22 @@ class AuthController extends Controller
             $googleUser = Socialite::driver('google')->stateless()->user();
             $userModel = User::where('google_id', $googleUser->getId())->first();
             $action = "Logged in";
-            $user = User::where('google_id', $googleUser->getId())->first();
+            // $user = User::where('google_id', $googleUser->getId())->first();
 
             if (!$userModel) {
                 $userModel = $this->handleGoogleUser($googleUser);
                 $action = 'Registered and logged in';
             }
+            $user = $userModel;
 
-            if (!$user) {
-                $user = $this->handleGoogleUser($googleUser);
-            }
 
             Auth::login($user, true);
             $request->session()->regenerate();
 
             Log::channel('audit_trail')->info("User $action via Google.", [
-                'user_id' => $userModel->id,
-                'username' => $userModel->username,
-                'email' => $userModel->email,
+                'user_id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
                 'google_id' => $googleUser->getId(),
                 'ip_address' => $request->ip(),
             ]);
@@ -338,9 +339,9 @@ class AuthController extends Controller
         $username = $this->generateUniqueUsername($googleUser->getName());
 
         $name = $googleUser->getName();
-        $nameParts = explode(' ', $name);
+        $nameParts = explode(' ', $name, 2);
         $firstName = $nameParts[0] ?? '';
-        $lastName = count($nameParts) > 1 ? implode(' ', array_slice($nameParts, 1)) : null;
+        $lastName = $nameParts[1] ?? null;
 
         if (isset($googleUser->user['given_name'])) {
             $firstName = $googleUser->user['given_name'];
@@ -378,38 +379,58 @@ class AuthController extends Controller
 
     private function generateUniqueUsername(string $name): string
     {
-        $cacheKey = 'username_check_' . md5($name);
-
-        // Check cache first to avoid DB queries
-        if (Cache::has($cacheKey)) {
-            return Cache::get($cacheKey);
-        }
-
-        $baseUsername = Str::slug(strtolower($name));
+        $baseUsername = Str::slug($name, '');
         if (empty($baseUsername)) {
             $baseUsername = 'user';
         }
+        if (!preg_match('/^[a-zA-Z]/', $baseUsername)) {
+            $baseUsername = 'u' . $baseUsername;
+        }
+        $baseUsername = substr($baseUsername, 0, 20);
+
+
+        $cacheKey = 'username_check_' . md5($baseUsername);
+
+        if (Cache::has($cacheKey)) {
+            $cachedUsername = Cache::get($cacheKey);
+            if (!User::where('username', $cachedUsername)->exists()) {
+                return $cachedUsername;
+            } else {
+                Cache::forget($cacheKey);
+            }
+        }
+
 
         $username = $baseUsername;
         $counter = 1;
         $maxLength = 24;
 
-        while (User::where('username', $username)->exists()) {
-            $potentialLength = strlen($baseUsername) + strlen((string)$counter) + 1;
-            if ($potentialLength > $maxLength) {
-                $baseUsername = substr($baseUsername, 0, $maxLength - (strlen((string)$counter) + 1));
-            }
+        if (strlen($username) > $maxLength) {
+            $username = substr($username, 0, $maxLength);
+        }
 
-            $username = $baseUsername . $counter;
+
+        while (User::where('username', $username)->exists()) {
+            $suffix = (string)$counter;
+            $availableLength = $maxLength - strlen($suffix);
+
+            if (strlen($baseUsername) > $availableLength) {
+                $username = substr($baseUsername, 0, $availableLength) . $suffix;
+            } else {
+                $username = $baseUsername . $suffix;
+            }
             $counter++;
 
-            if ($counter > 100) {
-                $username = 'user' . Str::random(6);
+            if ($counter > 1000) {
+                $username = 'user' . Str::random(10);
+                while (User::where('username', $username)->exists()) {
+                    $username = 'user' . Str::random(10);
+                }
                 break;
             }
         }
 
-        Cache::put($cacheKey, $username, 300);
+        Cache::put($cacheKey, $username, now()->addMinutes(10));
 
         return $username;
     }
