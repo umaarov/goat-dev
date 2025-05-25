@@ -1,6 +1,7 @@
 <?php
 
 return [
+    // Existing translations from user
     'edit_profile_title' => 'Редактировать профиль',
     'first_name_label' => 'Имя',
     'last_name_label' => 'Фамилия (необязательно)',
@@ -71,7 +72,7 @@ return [
     'error_post_moderation_system_issue' => "Не удалось проверить содержимое для поля ':field' из-за системной ошибки. Пожалуйста, попробуйте еще раз.",
     'error_post_image_inappropriate' => "Изображение для поля ':field' было признано неприемлемым. Причина: :reason",
     'error_post_image_moderation_system_issue' => "Не удалось проверить изображение для поля ':field' из-за системной ошибки. Пожалуйста, попробуйте еще раз.",
-    'error_post_content_prohibited_language_in_field' => "Содержимое в поле ':field' содержит запрещенные выражения. Пожалуйста, исправьте.", // New key
+    'error_post_content_prohibited_language_in_field' => "Содержимое в поле ':field' содержит запрещенные выражения. Пожалуйста, исправьте.",
 
     'error_cannot_edit_voted_post' => 'Нельзя редактировать пост, за который уже проголосовали.',
     'error_cannot_update_voted_post' => 'Нельзя обновить пост, за который уже проголосовали.',
@@ -124,4 +125,28 @@ return [
     'error_reason_prohibited_language_generic' => 'Содержимое нарушает локальные правила (например, содержит запрещенные слова).',
     'invalid_share_platform_specified' => 'Указана неверная платформа для репоста.',
     'share_recorded' => 'Репост учтен.',
+
+    'auth.email_or_username' => 'Email или Имя пользователя',
+    'auth.password' => 'Пароль',
+    'auth.remember_me' => 'Запомнить меня',
+    'auth.agree_to_terms_prefix' => 'Войдя в систему, вы соглашаетесь с нашими',
+    'auth.or' => 'ИЛИ',
+    'auth.login_with_google' => 'Войти через Google',
+    'auth.dont_have_account' => 'У вас нет аккаунта?',
+    'auth.register_here' => 'Зарегистрируйтесь здесь',
+    'auth.email' => 'Email',
+    'auth.confirm_password' => 'Подтвердите пароль',
+    'auth.profile_picture_optional' => 'Фото профиля (необязательно)',
+    'auth.upload_profile_picture_cta' => 'Загрузить фото профиля',
+    'auth.i_agree_to' => 'Я согласен с',
+    'auth.signup_with_google' => 'Зарегистрироваться через Google',
+    'auth.already_have_account' => 'Уже есть аккаунт?',
+    'auth.login_here' => 'Войдите здесь',
+
+    'auth.verify_email_title' => 'Подтвердите ваш адрес электронной почты',
+    'auth.verify_email_heading' => 'Подтвердите ваш адрес электронной почты',
+    'auth.verify_email_sent_message' => 'Новая ссылка для подтверждения была отправлена на ваш адрес электронной почты.',
+    'auth.verify_email_check_before_proceeding' => 'Прежде чем продолжить, пожалуйста, проверьте свою электронную почту на наличие ссылки для подтверждения.',
+    'auth.verify_email_if_not_receive' => 'Если вы не получили письмо',
+    'auth.verify_email_click_here_to_request_another' => 'нажмите здесь, чтобы запросить другую',
 ];

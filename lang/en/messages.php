@@ -1,6 +1,7 @@
 <?php
 
 return [
+    // Existing translations from user
     'edit_profile_title' => 'Edit Profile',
     'first_name_label' => 'First Name',
     'last_name_label' => 'Last Name (Optional)',
@@ -63,15 +64,15 @@ return [
     'error_failed_to_add_comment' => 'Failed to add comment. Please check the errors.',
     'error_failed_to_update_comment' => 'Failed to update comment.',
     'error_unauthorized_action' => 'Unauthorized action.',
-    'error_post_image_size' => 'The image must be :maxMB MB or smaller. Please upload a smaller file.', // Generic, consider if specific needed
-    'error_post_image_upload' => 'The image failed to upload. It might be too large (max :maxMB MB) or an unsupported type.', // Generic
+    'error_post_image_size' => 'The image must be :maxMB MB or smaller. Please upload a smaller file.',
+    'error_post_image_upload' => 'The image failed to upload. It might be too large (max :maxMB MB) or an unsupported type.',
 
     'error_post_moderation_violation' => 'Your post could not be created as part of its content violates community guidelines.',
     'error_post_content_inappropriate' => "Content in ':field' was deemed inappropriate. Reason: :reason",
     'error_post_moderation_system_issue' => "Could not verify content for ':field' due to a system issue. Please try again.",
     'error_post_image_inappropriate' => "The image for ':field' was deemed inappropriate. Reason: :reason",
     'error_post_image_moderation_system_issue' => "Could not verify image for ':field' due to a system issue. Please try again.",
-    'error_post_content_prohibited_language_in_field' => "Content in ':field' contains prohibited language. Please revise.", // New key
+    'error_post_content_prohibited_language_in_field' => "Content in ':field' contains prohibited language. Please revise.",
 
     'error_cannot_edit_voted_post' => 'Cannot edit a post that has already received votes.',
     'error_cannot_update_voted_post' => 'Cannot update a post that has already received votes.',
@@ -124,4 +125,28 @@ return [
     'error_reason_prohibited_language_generic' => 'Content violates local policy (e.g., contains banned words).',
     'invalid_share_platform_specified' => 'Invalid share platform specified.',
     'share_recorded' => 'Share recorded.',
+
+    'auth.email_or_username' => 'Email or Username',
+    'auth.password' => 'Password',
+    'auth.remember_me' => 'Remember Me',
+    'auth.agree_to_terms_prefix' => 'By logging in, you agree to our',
+    'auth.or' => 'OR',
+    'auth.login_with_google' => 'Login with Google',
+    'auth.dont_have_account' => "Don't have an account?",
+    'auth.register_here' => 'Register here',
+    'auth.email' => 'Email',
+    'auth.confirm_password' => 'Confirm Password',
+    'auth.profile_picture_optional' => 'Profile Picture (Optional)',
+    'auth.upload_profile_picture_cta' => 'Upload a profile picture',
+    'auth.i_agree_to' => 'I agree to the',
+    'auth.signup_with_google' => 'Sign up with Google',
+    'auth.already_have_account' => 'Already have an account?',
+    'auth.login_here' => 'Login here',
+
+    'auth.verify_email_title' => 'Verify Your Email Address',
+    'auth.verify_email_heading' => 'Verify Your Email Address',
+    'auth.verify_email_sent_message' => 'A fresh verification link has been sent to your email address.',
+    'auth.verify_email_check_before_proceeding' => 'Before proceeding, please check your email for a verification link.',
+    'auth.verify_email_if_not_receive' => 'If you did not receive the email',
+    'auth.verify_email_click_here_to_request_another' => 'click here to request another',
 ];

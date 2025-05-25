@@ -1,17 +1,18 @@
 @extends('layouts.app')
 
-@section('title', 'Register')
+@section('title', __('messages.register'))
 
 @section('content')
     <div class="max-w-md mx-auto bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4">
         <div class="p-6">
-            <h2 class="text-2xl font-semibold mb-4 text-blue-800">Register</h2>
+            <h2 class="text-2xl font-semibold mb-4 text-blue-800">{{ __('messages.register') }}</h2>
 
             <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data">
                 @csrf
 
                 <div class="mb-4">
-                    <label for="first_name" class="block text-gray-700 mb-2">First Name</label>
+                    <label for="first_name"
+                           class="block text-gray-700 mb-2">{{ __('messages.first_name_label') }}</label>
                     <input id="first_name" type="text" name="first_name" value="{{ old('first_name') }}"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                            required autofocus>
@@ -21,7 +22,7 @@
                 </div>
 
                 <div class="mb-4">
-                    <label for="last_name" class="block text-gray-700 mb-2">Last Name (Optional)</label>
+                    <label for="last_name" class="block text-gray-700 mb-2">{{ __('messages.last_name_label') }}</label>
                     <input id="last_name" type="text" name="last_name" value="{{ old('last_name') }}"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     @error('last_name')
@@ -30,7 +31,7 @@
                 </div>
 
                 <div class="mb-4">
-                    <label for="username" class="block text-gray-700 mb-2">Username</label>
+                    <label for="username" class="block text-gray-700 mb-2">{{ __('messages.username_label') }}</label>
                     <input id="username" type="text" name="username" value="{{ old('username') }}"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                            required>
@@ -40,7 +41,7 @@
                 </div>
 
                 <div class="mb-4">
-                    <label for="email" class="block text-gray-700 mb-2">Email</label>
+                    <label for="email" class="block text-gray-700 mb-2">{{ __('messages.auth.email') }}</label>
                     <input id="email" type="email" name="email" value="{{ old('email') }}"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                            required>
@@ -50,7 +51,7 @@
                 </div>
 
                 <div class="mb-4">
-                    <label for="password" class="block text-gray-700 mb-2">Password</label>
+                    <label for="password" class="block text-gray-700 mb-2">{{ __('messages.auth.password') }}</label>
                     <input id="password" type="password" name="password"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                            required>
@@ -60,14 +61,16 @@
                 </div>
 
                 <div class="mb-4">
-                    <label for="password-confirm" class="block text-gray-700 mb-2">Confirm Password</label>
+                    <label for="password-confirm"
+                           class="block text-gray-700 mb-2">{{ __('messages.auth.confirm_password') }}</label>
                     <input id="password-confirm" type="password" name="password_confirmation"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                            required>
                 </div>
 
                 <div class="mb-6">
-                    <label for="profile_picture" class="block text-gray-700 mb-2">Profile Picture (Optional)</label>
+                    <label for="profile_picture"
+                           class="block text-gray-700 mb-2">{{ __('messages.auth.profile_picture_optional') }}</label>
                     <div class="relative border border-gray-300 rounded-md p-2">
                         <div class="flex items-center">
                             <div id="profile_picture_preview"
@@ -80,10 +83,11 @@
                             </div>
                             <div class="flex-1">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-500">Upload a profile picture</span>
+                                    <span
+                                        class="text-sm text-gray-500">{{ __('messages.auth.upload_profile_picture_cta') }}</span>
                                     <button type="button" onclick="document.getElementById('profile_picture').click()"
                                             class="text-sm text-blue-800 hover:underline">
-                                        Choose file
+                                        {{ __('messages.choose_file_button') }}
                                     </button>
                                 </div>
                             </div>
@@ -100,15 +104,16 @@
                 <div class="mb-4">
                     <button type="submit"
                             class="w-full bg-blue-800 text-white py-3 rounded-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        Register
+                        {{ __('messages.register') }}
                     </button>
                 </div>
                 <div class="mb-4">
                     <label for="terms" class="flex items-center">
                         <input type="checkbox" name="terms" id="terms"
                                class="rounded border-gray-300 text-blue-800 focus:ring-blue-500" required>
-                        <span class="ml-2 text-gray-700">I agree to the <a href="{{ route('terms') }}"
-                                                                           class="text-blue-800 hover:underline">Terms of Use</a></span>
+                        <span class="ml-2 text-gray-700">{{ __('messages.auth.i_agree_to') }} <a
+                                href="{{ route('terms') }}"
+                                class="text-blue-800 hover:underline">{{ __('messages.terms_of_use') }}</a></span>
                     </label>
                     @error('terms')
                     <span class="text-red-500 text-sm">{{ $message }}</span>
@@ -118,7 +123,7 @@
 
             <div class="flex items-center justify-center mt-4 mb-6">
                 <span class="border-t border-gray-300 flex-grow mr-3"></span>
-                <span class="text-gray-500 text-sm">OR</span>
+                <span class="text-gray-500 text-sm">{{ __('messages.auth.or') }}</span>
                 <span class="border-t border-gray-300 flex-grow ml-3"></span>
             </div>
 
@@ -139,13 +144,14 @@
                             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                             fill="#EA4335"/>
                     </svg>
-                    Sign up with Google
+                    {{ __('messages.auth.signup_with_google') }}
                 </a>
             </div>
 
             <p class="text-center text-gray-600 mt-4">
-                Already have an account?
-                <a href="{{ route('login') }}" class="text-blue-800 hover:underline">Login here</a>
+                {{ __('messages.auth.already_have_account') }}
+                <a href="{{ route('login') }}"
+                   class="text-blue-800 hover:underline">{{ __('messages.auth.login_here') }}</a>
             </p>
         </div>
     </div>
@@ -153,10 +159,8 @@
     <script>
         function previewProfilePicture(input) {
             const preview = document.getElementById('profile_picture_preview');
-
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
-
                 reader.onload = function (e) {
                     preview.innerHTML = '';
                     const img = document.createElement('img');
@@ -164,10 +168,22 @@
                     img.classList.add('w-10', 'h-10', 'rounded-full', 'object-cover');
                     preview.appendChild(img);
                 }
-
                 reader.readAsDataURL(input.files[0]);
             }
         }
+
+        const usernameValidationMessages = {
+            min_length: "{{ __('messages.username_min_length') }}",
+            max_length: "{{ __('messages.username_max_length') }}",
+            starts_with_letter: "{{ __('messages.username_startsWithLetter') }}",
+            only_valid_chars: "{{ __('messages.username_onlyValidChars') }}",
+            not_only_numbers: "{{ __('messages.username_notOnlyNumbers') }}",
+            no_consecutive_chars: "{{ __('messages.username_noConsecutiveChars') }}",
+            checking: "{{ __('messages.username_availability_checking') }}",
+            available: "{{ __('messages.username_available') }}",
+            taken: "{{ __('messages.username_taken') }}",
+            could_not_verify: "{{ __('messages.username_could_not_verify') }}"
+        };
 
         function initUsernameChecker() {
             const usernameInput = document.getElementById('username');
@@ -178,17 +194,19 @@
             const statusElement = document.createElement('div');
             statusElement.id = 'username-status';
             statusElement.className = 'mt-1 text-sm';
-
             usernameInput.parentNode.insertBefore(statusElement, usernameInput.nextSibling);
 
             function checkUsername() {
                 const username = usernameInput.value.trim();
 
                 if (username === '' || username === lastCheckedUsername) {
+                    if (username === '') {
+                        statusElement.textContent = '';
+                        usernameInput.classList.remove('border-red-500', 'border-green-500');
+                    }
                     return;
                 }
 
-                // Client-side validation
                 const minLength = 5;
                 const maxLength = 24;
                 const startsWithLetter = /^[a-zA-Z]/.test(username);
@@ -196,59 +214,41 @@
                 const notOnlyNumbers = !/^\d+$/.test(username);
                 const noConsecutiveChars = !/(.)\1{2,}/.test(username);
 
+                let clientSideError = false;
+
                 if (username.length < minLength) {
-                    statusElement.className = 'mt-1 text-sm text-red-600';
-                    statusElement.textContent = 'Username must be at least 5 characters';
-                    usernameInput.classList.remove('border-green-500');
-                    usernameInput.classList.add('border-red-500');
-                    return;
+                    statusElement.textContent = usernameValidationMessages.min_length;
+                    clientSideError = true;
+                } else if (username.length > maxLength) {
+                    statusElement.textContent = usernameValidationMessages.max_length;
+                    clientSideError = true;
+                } else if (!startsWithLetter) {
+                    statusElement.textContent = usernameValidationMessages.starts_with_letter;
+                    clientSideError = true;
+                } else if (!onlyValidChars) {
+                    statusElement.textContent = usernameValidationMessages.only_valid_chars;
+                    clientSideError = true;
+                } else if (!notOnlyNumbers) {
+                    statusElement.textContent = usernameValidationMessages.not_only_numbers;
+                    clientSideError = true;
+                } else if (!noConsecutiveChars) {
+                    statusElement.textContent = usernameValidationMessages.no_consecutive_chars;
+                    clientSideError = true;
                 }
-                if (username.length > maxLength) {
+
+                if (clientSideError) {
                     statusElement.className = 'mt-1 text-sm text-red-600';
-                    statusElement.textContent = 'Username must be at most 24 characters';
                     usernameInput.classList.remove('border-green-500');
                     usernameInput.classList.add('border-red-500');
                     return;
                 }
 
-                if (!startsWithLetter) {
-                    statusElement.className = 'mt-1 text-sm text-red-600';
-                    statusElement.textContent = 'Username must start with a letter';
-                    usernameInput.classList.remove('border-green-500');
-                    usernameInput.classList.add('border-red-500');
-                    return;
-                }
-
-                if (!onlyValidChars) {
-                    statusElement.className = 'mt-1 text-sm text-red-600';
-                    statusElement.textContent = 'Username can only contain letters, numbers, underscores, and hyphens';
-                    usernameInput.classList.remove('border-green-500');
-                    usernameInput.classList.add('border-red-500');
-                    return;
-                }
-
-                if (!notOnlyNumbers) {
-                    statusElement.className = 'mt-1 text-sm text-red-600';
-                    statusElement.textContent = 'Username cannot consist of only numbers';
-                    usernameInput.classList.remove('border-green-500');
-                    usernameInput.classList.add('border-red-500');
-                    return;
-                }
-
-                if (!noConsecutiveChars) {
-                    statusElement.className = 'mt-1 text-sm text-red-600';
-                    statusElement.textContent = 'Username cannot contain consecutive identical characters';
-                    usernameInput.classList.remove('border-green-500');
-                    usernameInput.classList.add('border-red-500');
-                    return;
-                }
+                usernameInput.classList.remove('border-red-500');
+                statusElement.className = 'mt-1 text-sm text-gray-500';
+                statusElement.textContent = usernameValidationMessages.checking;
 
                 lastCheckedUsername = username;
 
-                statusElement.className = 'mt-1 text-sm text-gray-500';
-                statusElement.textContent = 'Checking availability...';
-
-                // Proceed with the AJAX request only if client-side validation passes
                 fetch('/check-username?username=' + encodeURIComponent(username), {
                     method: 'GET',
                     headers: {
@@ -256,24 +256,31 @@
                         'Accept': 'application/json',
                     },
                 })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.available) {
                             statusElement.className = 'mt-1 text-sm text-green-600';
-                            statusElement.textContent = 'Username is available';
+                            statusElement.textContent = usernameValidationMessages.available;
                             usernameInput.classList.remove('border-red-500');
                             usernameInput.classList.add('border-green-500');
                         } else {
                             statusElement.className = 'mt-1 text-sm text-red-600';
-                            statusElement.textContent = 'Username is already taken';
+                            statusElement.textContent = data.message || usernameValidationMessages.taken; // Use server message if available
                             usernameInput.classList.remove('border-green-500');
                             usernameInput.classList.add('border-red-500');
                         }
                     })
                     .catch(error => {
                         console.error('Error checking username:', error);
-                        statusElement.className = 'mt-1 text-sm text-gray-500';
-                        statusElement.textContent = 'Could not verify username';
+                        statusElement.className = 'mt-1 text-sm text-red-600'; // Changed to red for error
+                        statusElement.textContent = usernameValidationMessages.could_not_verify;
+                        usernameInput.classList.remove('border-green-500');
+                        usernameInput.classList.add('border-red-500');
                     });
             }
 
@@ -284,10 +291,10 @@
 
             usernameInput.addEventListener('blur', checkUsername);
 
-            const currentPageUrl = window.location.pathname;
-            if (currentPageUrl.includes('/profile/edit')) {
-                lastCheckedUsername = usernameInput.value.trim();
-            }
+            // const currentPageUrl = window.location.pathname;
+            // if (currentPageUrl.includes('/profile/edit')) {
+            //     lastCheckedUsername = usernameInput.value.trim();
+            // }
         }
 
         document.addEventListener('DOMContentLoaded', initUsernameChecker);
