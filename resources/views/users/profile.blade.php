@@ -2,6 +2,7 @@
 @extends('layouts.app')
 
 @section('title', e($user->username) . "'s Profile")
+@section('meta_description', 'View the profile, created polls, and activity of ' . $user->username . ' on GOAT. Join the discussion!')
 
 @section('content')
     <div class="max-w-3xl mx-auto">

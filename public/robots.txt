@@ -1,2 +1,19 @@
 User-agent: *
-Disallow:
+Allow: /
+Allow: /p/
+Allow: /@
+Allow: /images/
+Allow: /storage/
+
+Disallow: /login
+Disallow: /register
+Disallow: /logout
+Disallow: /email/verify
+Disallow: /email/resend
+Disallow: /auth/google
+Disallow: /profile/edit
+Disallow: /profile/change-password
+Disallow: /posts/create
+Disallow: /posts/*/edit
+
+Sitemap: {{ url('sitemap.xml') }}

@@ -14,6 +14,7 @@
     {{-- Cropper.js --}}
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js" defer></script>
+    <meta name="description" content="@yield('meta_description', 'Engage in fun polls, ask "this or that" questions, and see what the community thinks on GOAT!')">
 </head>
 <body class="flex flex-col min-h-screen bg-gray-100">
 <nav
@@ -21,7 +22,7 @@
     <div class="w-full max-w-md mx-auto flex items-center justify-between">
         <div class="w-6"></div>
         <a href="{{route('home')}}">
-            <img src="{{ asset('images/main_logo.png') }}" alt="Logo" class="h-23 w-23 cursor-pointer">
+            <img src="{{ asset('images/main_logo.png') }}" alt="GOAT Application Logo" class="h-23 w-23 cursor-pointer">
         </a>
         <div>
             @auth

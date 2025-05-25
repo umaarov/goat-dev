@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Home - Posts')
+@section('meta_description', 'Discover the latest and trending community polls on GOAT. Vote, comment, and share your opinions on a variety of "this or that" questions.')
 
 @section('content')
     <div class="">
