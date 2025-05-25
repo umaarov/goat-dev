@@ -21,12 +21,14 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Intervention\Image\ImageManager;
 
-
 class PostController extends Controller
 {
     private const MAX_POST_IMAGE_WIDTH = 1024;
     private const MAX_POST_IMAGE_HEIGHT = 1024;
     private const POST_IMAGE_QUALITY = 75;
+
+    private const MAX_POST_IMAGE_SIZE_KB = 2048;
+    private const MAX_POST_IMAGE_SIZE_MB = self::MAX_POST_IMAGE_SIZE_KB / 1024;
 
     private function checkForBannedWords(string $textContent, string $contextLabel): ?array
     {
@@ -70,7 +72,7 @@ class PostController extends Controller
 
         $model = Config::get('gemini.model', 'gemini-2.0-flash');
         $apiUrl = rtrim(Config::get('gemini.api_url'), '/') . '/' . $model . ':generateContent?key=' . $apiKey;
-        $finalPrompt = str_replace("{COMMENT_TEXT}", addslashes($textContent), $promptTemplate); // Reusing {COMMENT_TEXT} placeholder
+        $finalPrompt = str_replace("{COMMENT_TEXT}", addslashes($textContent), $promptTemplate);
 
         $payload = ['contents' => [['parts' => [['text' => $finalPrompt]]]], 'generationConfig' => ['responseMimeType' => 'application/json']];
 
@@ -108,7 +110,7 @@ class PostController extends Controller
             return ['is_appropriate' => true, 'reason' => null, 'category' => 'UNCHECKED_CONFIG_ERROR', 'error' => 'Gemini image config missing. Image allowed.'];
         }
 
-        $model = Config::get('gemini.model', 'gemini-2.0-flash'); // gemini-2.0-flash is multimodal
+        $model = Config::get('gemini.model', 'gemini-2.0-flash');
         $apiUrl = rtrim(Config::get('gemini.api_url'), '/') . '/' . $model . ':generateContent?key=' . $apiKey;
 
         try {
@@ -162,8 +164,6 @@ class PostController extends Controller
             return ['is_appropriate' => false, 'reason' => 'Unexpected error during image moderation.', 'category' => 'ERROR_UNKNOWN', 'error' => $e->getMessage()];
         }
     }
-
-    // --- END: Content Moderation Helper Methods ---
 
     private function processAndStoreImage(UploadedFile $uploadedFile, string $directory, string $baseFilename): string
     {
@@ -225,18 +225,31 @@ class PostController extends Controller
 
     final public function create(): View
     {
-        return view('posts.create');
+        return view('posts.create', [
+            'maxFileSizeKB' => self::MAX_POST_IMAGE_SIZE_KB,
+            'maxFileSizeMB' => self::MAX_POST_IMAGE_SIZE_MB
+        ]);
     }
+
 
     final public function store(Request $request): RedirectResponse
     {
-        $validator = Validator::make($request->all(), [
+        $rules = [
             'question' => 'required|string|max:255',
             'option_one_title' => 'required|string|max:40',
-            'option_one_image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048', // Max 2MB
+            'option_one_image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:' . self::MAX_POST_IMAGE_SIZE_KB,
             'option_two_title' => 'required|string|max:40',
-            'option_two_image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048', // Max 2MB
-        ]);
+            'option_two_image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:' . self::MAX_POST_IMAGE_SIZE_KB,
+        ];
+
+        $messages = [
+            'option_one_image.max' => 'The image for Subject 1 must be ' . self::MAX_POST_IMAGE_SIZE_MB . 'MB or smaller. Please upload a smaller file.',
+            'option_two_image.max' => 'The image for Subject 2 must be ' . self::MAX_POST_IMAGE_SIZE_MB . 'MB or smaller. Please upload a smaller file.',
+            'option_one_image.uploaded' => 'The image for Subject 1 failed to upload. It might be too large (max ' . self::MAX_POST_IMAGE_SIZE_MB . 'MB) or an unsupported type.',
+            'option_two_image.uploaded' => 'The image for Subject 2 failed to upload. It might be too large (max ' . self::MAX_POST_IMAGE_SIZE_MB . 'MB) or an unsupported type.',
+        ];
+
+        $validator = Validator::make($request->all(), $rules, $messages);
 
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
@@ -340,7 +353,11 @@ class PostController extends Controller
             return redirect()->route('profile.show', ['username' => Auth::user()->username])
                 ->with('error', 'Cannot edit a post that has already received votes.');
         }
-        return view('posts.edit', compact('post'));
+        return view('posts.edit', [
+            'post' => $post,
+            'maxFileSizeKB' => self::MAX_POST_IMAGE_SIZE_KB,
+            'maxFileSizeMB' => self::MAX_POST_IMAGE_SIZE_MB
+        ]);
     }
 
     final public function update(Request $request, Post $post): RedirectResponse
@@ -355,15 +372,24 @@ class PostController extends Controller
                 ->with('error', 'Cannot update a post that has already received votes.');
         }
 
-        $validator = Validator::make($request->all(), [
+        $rules = [
             'question' => 'required|string|max:255',
             'option_one_title' => 'required|string|max:40',
-            'option_one_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'option_one_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:' . self::MAX_POST_IMAGE_SIZE_KB,
             'option_two_title' => 'required|string|max:40',
-            'option_two_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'option_two_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:' . self::MAX_POST_IMAGE_SIZE_KB,
             'remove_option_one_image' => 'nullable|boolean',
             'remove_option_two_image' => 'nullable|boolean',
-        ]);
+        ];
+
+        $messages = [
+            'option_one_image.max' => 'The new image for Subject 1 must be ' . self::MAX_POST_IMAGE_SIZE_MB . 'MB or smaller. Please upload a smaller file.',
+            'option_two_image.max' => 'The new image for Subject 2 must be ' . self::MAX_POST_IMAGE_SIZE_MB . 'MB or smaller. Please upload a smaller file.',
+            'option_one_image.uploaded' => 'The image for Subject 1 failed to upload. It might be too large (max ' . self::MAX_POST_IMAGE_SIZE_MB . 'MB) or an unsupported type.',
+            'option_two_image.uploaded' => 'The image for Subject 2 failed to upload. It might be too large (max ' . self::MAX_POST_IMAGE_SIZE_MB . 'MB) or an unsupported type.',
+        ];
+
+        $validator = Validator::make($request->all(), $rules, $messages);
 
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
@@ -376,11 +402,8 @@ class PostController extends Controller
             'post_id' => $post->id,
             'ip_address' => $request->ip(),
         ];
-        $moderationErrorField = null;
-        $moderationErrorMessage = 'Your post could not be updated as part of its content violates community guidelines.';
 
-        // --- Moderation Stage for Update ---
-        // Check Question if changed
+        // --- Moderation Stage for Update (Text content) ---
         if ($request->question !== $post->question) {
             $bannedWordCheck = $this->checkForBannedWords($request->question, 'question');
             if ($bannedWordCheck && !$bannedWordCheck['is_appropriate']) { /* ... reject ... */
@@ -394,7 +417,6 @@ class PostController extends Controller
                 return redirect()->back()->withErrors(['question' => $reason])->withInput();
             }
         }
-        // Check Option One Title if changed
         if ($request->option_one_title !== $post->option_one_title) {
             $bannedWordCheck = $this->checkForBannedWords($request->option_one_title, 'option_one_title');
             if ($bannedWordCheck && !$bannedWordCheck['is_appropriate']) {
@@ -408,7 +430,6 @@ class PostController extends Controller
                 return redirect()->back()->withErrors(['option_one_title' => $reason])->withInput();
             }
         }
-        // Check Option Two Title if changed
         if ($request->option_two_title !== $post->option_two_title) {
             $bannedWordCheck = $this->checkForBannedWords($request->option_two_title, 'option_two_title');
             if ($bannedWordCheck && !$bannedWordCheck['is_appropriate']) {
@@ -422,8 +443,7 @@ class PostController extends Controller
                 return redirect()->back()->withErrors(['option_two_title' => $reason])->withInput();
             }
         }
-
-        // Image Moderation for new/replaced images
+        // --- Image Moderation for new/replaced images ---
         if ($request->hasFile('option_one_image')) {
             $geminiImageCheck = $this->moderateImageWithGemini($request->file('option_one_image'), 'option_one_image');
             if (!$geminiImageCheck['is_appropriate']) { /* ... reject ... */
@@ -440,6 +460,7 @@ class PostController extends Controller
                 return redirect()->back()->withErrors(['option_two_image' => $reason])->withInput();
             }
         }
+
 
         if ($request->boolean('remove_option_one_image') && $post->option_one_image) {
             Storage::disk('public')->delete($post->option_one_image);
@@ -462,12 +483,17 @@ class PostController extends Controller
         return redirect()->route('profile.show', ['username' => $post->user->username])->with('success', 'Post updated successfully.');
     }
 
-
     final public function destroy(Post $post): RedirectResponse
     {
         $user = Auth::user();
         if ($user->id !== $post->user_id) {
-            Log::channel('audit_trail')->warning('Unauthorized post deletion attempt.', [ /* ... */]);
+            Log::channel('audit_trail')->warning('Unauthorized post deletion attempt.', [
+                'user_id' => $user->id,
+                'username' => $user->username,
+                'post_id' => $post->id,
+                'post_owner_id' => $post->user_id,
+                'ip_address' => request()->ip(),
+            ]);
             abort(403, 'Unauthorized action.');
         }
 
@@ -477,6 +503,8 @@ class PostController extends Controller
         if ($post->option_one_image) Storage::disk('public')->delete($post->option_one_image);
         if ($post->option_two_image) Storage::disk('public')->delete($post->option_two_image);
 
+        Vote::where('post_id', $post->id)->delete();
+
         $post->delete();
 
         Log::channel('audit_trail')->info('Post deleted.', [
@@ -485,8 +513,13 @@ class PostController extends Controller
             'deleted_post_id' => $postId,
             'original_post_question' => Str::limit($postQuestion, 100),
             'ip_address' => request()->ip(),
+            'deleted_by_admin' => $user->isAdmin() && $user->id !== $post->user_id,
         ]);
 
+        if (str_contains(url()->previous(), route('profile.show', ['username' => $post->user->username]))) {
+            return redirect()->route('profile.show', ['username' => $post->user->username])
+                ->with('success', 'Post deleted successfully.');
+        }
         if (url()->previous() == route('profile.show', ['username' => Auth::user()->username])) {
             return redirect()->route('profile.show', ['username' => Auth::user()->username])
                 ->with('success', 'Post deleted successfully.');
@@ -542,9 +575,10 @@ class PostController extends Controller
         } else {
             $post->increment('option_two_votes');
         }
-        $post->increment('total_votes');
+        // $post->increment('total_votes');
 
         $post->refresh();
+
         return response()->json([
             'message' => 'Vote registered successfully!',
             'option_one_votes' => $post->option_one_votes,
@@ -556,14 +590,25 @@ class PostController extends Controller
 
     public function showBySlug($id, $slug = null)
     {
-        $post = Post::findOrFail($id);
+        $post = Post::withCount('votes')->findOrFail($id);
+
+        $newerOrSamePostsCount = Post::query()
+            ->where('created_at', '>', $post->created_at)
+            ->orWhere(function ($query) use ($post) {
+                $query->where('created_at', $post->created_at)
+                    ->where('id', '>=', $post->id);
+            })
+            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->count();
 
         $perPage = 15;
-        $postRank = Post::where('created_at', '>=', $post->created_at)
-            ->orderBy('created_at', 'desc')
-            ->count();
-        $page = ceil($postRank / $perPage);
+        $page = ceil($newerOrSamePostsCount / $perPage);
 
+        $expectedSlug = Str::slug($post->question);
+        if ($slug !== null && $slug !== $expectedSlug) {
+            return redirect()->route('posts.showSlug', ['id' => $post->id, 'slug' => $expectedSlug, 'page' => $page], 301)->with('scrollToPost', $id);
+        }
 
         return redirect()->route('home', ['page' => $page])
             ->with('scrollToPost', $id);
@@ -590,7 +635,8 @@ class PostController extends Controller
             if ($request->expectsJson()) {
                 return response()->json(['data' => []]);
             }
-            return view('search.results', ['posts' => collect(), 'queryTerm' => null]);
+            $posts = Post::query()->whereRaw('0 = 1')->paginate(15);
+            return view('search.results', ['posts' => $posts, 'queryTerm' => null]);
         }
 
         $query = Post::query()->withPostData();
