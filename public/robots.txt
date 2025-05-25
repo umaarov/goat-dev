@@ -16,4 +16,4 @@ Disallow: /profile/change-password
 Disallow: /posts/create
 Disallow: /posts/*/edit
 
-Sitemap: {{ url('sitemap.xml') }}
+Sitemap: https://goat.uz/sitemap.xml
