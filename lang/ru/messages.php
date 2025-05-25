@@ -40,7 +40,7 @@ return [
     'username_onlyValidChars' => 'Имя пользователя может содержать только буквы, цифры, знаки подчеркивания и дефисы',
     'username_notOnlyNumbers' => 'Имя пользователя не может состоять только из цифр',
     'username_noConsecutiveChars' => 'Имя пользователя не может содержать более 2 одинаковых символов подряд',
-    // Add all other translations from your previous thought process here (Russian)
+
     'home' => 'Главная',
     'search' => 'Поиск',
     'post' => 'Пост',
@@ -65,11 +65,14 @@ return [
     'error_unauthorized_action' => 'Несанкционированное действие.',
     'error_post_image_size' => 'Изображение должно быть не более :maxMB МБ. Пожалуйста, загрузите файл меньшего размера.',
     'error_post_image_upload' => 'Не удалось загрузить изображение. Возможно, оно слишком большое (макс. :maxMB МБ) или неподдерживаемого типа.',
+
     'error_post_moderation_violation' => 'Ваш пост не может быть создан, так как часть его содержимого нарушает правила сообщества.',
     'error_post_content_inappropriate' => "Содержимое в поле ':field' было признано неприемлемым. Причина: :reason",
     'error_post_moderation_system_issue' => "Не удалось проверить содержимое для поля ':field' из-за системной ошибки. Пожалуйста, попробуйте еще раз.",
     'error_post_image_inappropriate' => "Изображение для поля ':field' было признано неприемлемым. Причина: :reason",
     'error_post_image_moderation_system_issue' => "Не удалось проверить изображение для поля ':field' из-за системной ошибки. Пожалуйста, попробуйте еще раз.",
+    'error_post_content_prohibited_language_in_field' => "Содержимое в поле ':field' содержит запрещенные выражения. Пожалуйста, исправьте.", // New key
+
     'error_cannot_edit_voted_post' => 'Нельзя редактировать пост, за который уже проголосовали.',
     'error_cannot_update_voted_post' => 'Нельзя обновить пост, за который уже проголосовали.',
     'error_already_voted' => 'Вы уже голосовали за этот пост.',
@@ -119,6 +122,4 @@ return [
     'validation_option_two_image_uploaded' => 'Не удалось загрузить изображение для Объекта 2. Возможно, оно слишком большое (макс. :maxMB МБ) или неподдерживаемого типа.',
 
     'error_reason_prohibited_language_generic' => 'Содержимое нарушает локальные правила (например, содержит запрещенные слова).',
-
-
 ];

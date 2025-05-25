@@ -40,7 +40,7 @@ return [
     'username_onlyValidChars' => 'Username can only contain letters, numbers, underscores, and hyphens',
     'username_notOnlyNumbers' => 'Username cannot consist of only numbers',
     'username_noConsecutiveChars' => 'Username cannot contain more than 2 consecutive identical characters',
-    // Add all other translations from your previous thought process here
+
     'home' => 'Home',
     'search' => 'Search',
     'post' => 'Post',
@@ -63,13 +63,16 @@ return [
     'error_failed_to_add_comment' => 'Failed to add comment. Please check the errors.',
     'error_failed_to_update_comment' => 'Failed to update comment.',
     'error_unauthorized_action' => 'Unauthorized action.',
-    'error_post_image_size' => 'The image must be :maxMB MB or smaller. Please upload a smaller file.',
-    'error_post_image_upload' => 'The image failed to upload. It might be too large (max :maxMB MB) or an unsupported type.',
+    'error_post_image_size' => 'The image must be :maxMB MB or smaller. Please upload a smaller file.', // Generic, consider if specific needed
+    'error_post_image_upload' => 'The image failed to upload. It might be too large (max :maxMB MB) or an unsupported type.', // Generic
+
     'error_post_moderation_violation' => 'Your post could not be created as part of its content violates community guidelines.',
     'error_post_content_inappropriate' => "Content in ':field' was deemed inappropriate. Reason: :reason",
     'error_post_moderation_system_issue' => "Could not verify content for ':field' due to a system issue. Please try again.",
     'error_post_image_inappropriate' => "The image for ':field' was deemed inappropriate. Reason: :reason",
     'error_post_image_moderation_system_issue' => "Could not verify image for ':field' due to a system issue. Please try again.",
+    'error_post_content_prohibited_language_in_field' => "Content in ':field' contains prohibited language. Please revise.", // New key
+
     'error_cannot_edit_voted_post' => 'Cannot edit a post that has already received votes.',
     'error_cannot_update_voted_post' => 'Cannot update a post that has already received votes.',
     'error_already_voted' => 'You have already voted on this post.',

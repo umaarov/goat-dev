@@ -51,7 +51,8 @@ class PostController extends Controller
                 ]);
                 return [
                     'is_appropriate' => false,
-                    'reason' => "Content in '{$contextLabel}' contains prohibited language.",
+                    'translation_key' => 'messages.error_post_content_prohibited_language_in_field',
+                    'translation_params' => ['field' => $contextLabel],
                     'category' => 'LOCAL_POLICY_VIOLATION',
                     'error' => null
                 ];
@@ -186,8 +187,8 @@ class PostController extends Controller
                 $encodedImage = $image->toPng()->toString();
                 break;
             case 'gif':
+                // $encodedImage = file_get_contents($uploadedFile->getRealPath());
                 $encodedImage = $image->toGif()->toString();
-                // Storage::disk('public')->put($path, file_get_contents($uploadedFile->getRealPath())); return $path;
                 break;
             case 'webp':
                 $encodedImage = $image->toWebp(self::POST_IMAGE_QUALITY)->toString();
@@ -231,7 +232,6 @@ class PostController extends Controller
         ]);
     }
 
-
     final public function store(Request $request): RedirectResponse
     {
         $rules = [
@@ -243,10 +243,10 @@ class PostController extends Controller
         ];
 
         $messages = [
-            'option_one_image.max' => 'The image for Subject 1 must be ' . self::MAX_POST_IMAGE_SIZE_MB . 'MB or smaller. Please upload a smaller file.',
-            'option_two_image.max' => 'The image for Subject 2 must be ' . self::MAX_POST_IMAGE_SIZE_MB . 'MB or smaller. Please upload a smaller file.',
-            'option_one_image.uploaded' => 'The image for Subject 1 failed to upload. It might be too large (max ' . self::MAX_POST_IMAGE_SIZE_MB . 'MB) or an unsupported type.',
-            'option_two_image.uploaded' => 'The image for Subject 2 failed to upload. It might be too large (max ' . self::MAX_POST_IMAGE_SIZE_MB . 'MB) or an unsupported type.',
+            'option_one_image.max' => __('messages.validation_option_one_image_max', ['maxMB' => self::MAX_POST_IMAGE_SIZE_MB]),
+            'option_two_image.max' => __('messages.validation_option_two_image_max', ['maxMB' => self::MAX_POST_IMAGE_SIZE_MB]),
+            'option_one_image.uploaded' => __('messages.validation_option_one_image_uploaded', ['maxMB' => self::MAX_POST_IMAGE_SIZE_MB]),
+            'option_two_image.uploaded' => __('messages.validation_option_two_image_uploaded', ['maxMB' => self::MAX_POST_IMAGE_SIZE_MB]),
         ];
 
         $validator = Validator::make($request->all(), $rules, $messages);
@@ -257,7 +257,7 @@ class PostController extends Controller
 
         $user = Auth::user();
         $moderationErrorField = null;
-        $moderationErrorMessage = 'Your post could not be created as part of its content violates community guidelines.';
+        $defaultModerationErrorMessage = __('messages.error_post_moderation_violation');
         $logContextBase = [
             'user_id' => $user->id,
             'username' => $user->username,
@@ -276,8 +276,8 @@ class PostController extends Controller
             $bannedWordCheck = $this->checkForBannedWords($content, $field);
             if ($bannedWordCheck && !$bannedWordCheck['is_appropriate']) {
                 $moderationErrorField = $field;
-                $moderationErrorMessage = $bannedWordCheck['reason'] ?? $moderationErrorMessage;
-                Log::channel('audit_trail')->info('Post creation rejected by local blacklist.', array_merge($logContextBase, ['field' => $field, 'reason' => $bannedWordCheck['reason'], 'category' => $bannedWordCheck['category'], 'content_snippet' => Str::limit($content, 50)]));
+                $moderationErrorMessage = __($bannedWordCheck['translation_key'], $bannedWordCheck['translation_params']);
+                Log::channel('audit_trail')->info('Post creation rejected by local blacklist.', array_merge($logContextBase, ['field' => $field, 'reason_key' => $bannedWordCheck['translation_key'], 'category' => $bannedWordCheck['category'], 'content_snippet' => Str::limit($content, 50)]));
                 return redirect()->back()->withErrors([$moderationErrorField => $moderationErrorMessage])->withInput();
             }
 
@@ -285,12 +285,13 @@ class PostController extends Controller
             $geminiTextCheck = $this->moderateTextWithGemini($content, $field);
             if (!$geminiTextCheck['is_appropriate']) {
                 $moderationErrorField = $field;
-                $moderationErrorMessage = "Content in '{$field}' was deemed inappropriate. Reason: " . ($geminiTextCheck['reason'] ?? $geminiTextCheck['category']);
+                $reasonText = $geminiTextCheck['reason'] ?? $geminiTextCheck['category'];
                 if (str_starts_with($geminiTextCheck['category'], 'ERROR_') || str_starts_with($geminiTextCheck['category'], 'UNCHECKED_')) {
-                    $moderationErrorMessage = "Could not verify content for '{$field}' due to a system issue. Please try again.";
+                    $moderationErrorMessage = __('messages.error_post_moderation_system_issue', ['field' => $field]);
                     Log::warning('Gemini Text Moderation Service Error during post creation.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiTextCheck]));
                 } else {
-                    Log::channel('audit_trail')->info('Post creation rejected by Gemini text moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $geminiTextCheck['reason'], 'category' => $geminiTextCheck['category'], 'content_snippet' => Str::limit($content, 50)]));
+                    $moderationErrorMessage = __('messages.error_post_content_inappropriate', ['field' => $field, 'reason' => $reasonText]);
+                    Log::channel('audit_trail')->info('Post creation rejected by Gemini text moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $geminiTextCheck['category'], 'content_snippet' => Str::limit($content, 50)]));
                 }
                 return redirect()->back()->withErrors([$moderationErrorField => $moderationErrorMessage])->withInput();
             }
@@ -305,12 +306,13 @@ class PostController extends Controller
             $geminiImageCheck = $this->moderateImageWithGemini($imageFile, $field);
             if (!$geminiImageCheck['is_appropriate']) {
                 $moderationErrorField = $field;
-                $moderationErrorMessage = "The image for '{$field}' was deemed inappropriate. Reason: " . ($geminiImageCheck['reason'] ?? $geminiImageCheck['category']);
+                $reasonText = $geminiImageCheck['reason'] ?? $geminiImageCheck['category'];
                 if (str_starts_with($geminiImageCheck['category'], 'ERROR_') || str_starts_with($geminiImageCheck['category'], 'UNCHECKED_')) {
-                    $moderationErrorMessage = "Could not verify image for '{$field}' due to a system issue. Please try again.";
+                    $moderationErrorMessage = __('messages.error_post_image_moderation_system_issue', ['field' => $field]);
                     Log::warning('Gemini Image Moderation Service Error during post creation.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiImageCheck]));
                 } else {
-                    Log::channel('audit_trail')->info('Post creation rejected by Gemini image moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $geminiImageCheck['reason'], 'category' => $geminiImageCheck['category']]));
+                    $moderationErrorMessage = __('messages.error_post_image_inappropriate', ['field' => $field, 'reason' => $reasonText]);
+                    Log::channel('audit_trail')->info('Post creation rejected by Gemini image moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $geminiImageCheck['category']]));
                 }
                 return redirect()->back()->withErrors([$moderationErrorField => $moderationErrorMessage])->withInput();
             }
@@ -341,17 +343,17 @@ class PostController extends Controller
             'question' => Str::limit($post->question, 100),
         ]));
 
-        return redirect()->route('home')->with('success', 'Post created successfully!');
+        return redirect()->route('home')->with('success', __('messages.post_created_successfully'));
     }
 
     final public function edit(Post $post): View|RedirectResponse
     {
         if (Auth::id() !== $post->user_id) {
-            abort(403, 'Unauthorized action.');
+            abort(403, __('messages.error_unauthorized_action'));
         }
-        if ($post->total_votes > 0 && !Auth::user()->isAdmin()) {
+        if ($post->total_votes > 0) {
             return redirect()->route('profile.show', ['username' => Auth::user()->username])
-                ->with('error', 'Cannot edit a post that has already received votes.');
+                ->with('error', __('messages.error_cannot_edit_voted_post'));
         }
         return view('posts.edit', [
             'post' => $post,
@@ -364,12 +366,18 @@ class PostController extends Controller
     {
         $user = Auth::user();
         if ($user->id !== $post->user_id) {
-            Log::channel('audit_trail')->warning('Unauthorized post update attempt.', [ /* ... */]);
-            abort(403, 'Unauthorized action.');
+            Log::channel('audit_trail')->warning('Unauthorized post update attempt.', [
+                'user_id' => $user->id,
+                'username' => $user->username,
+                'post_id' => $post->id,
+                'post_owner_id' => $post->user_id,
+                'ip_address' => $request->ip(),
+            ]);
+            abort(403, __('messages.error_unauthorized_action'));
         }
-        if ($post->total_votes > 0 && !Auth::user()->isAdmin()) {
-            return redirect()->route('profile.show', ['username' => Auth::user()->username])
-                ->with('error', 'Cannot update a post that has already received votes.');
+        if ($post->total_votes > 0) {
+            return redirect()->route('profile.show', ['username' => $user->username])
+                ->with('error', __('messages.error_cannot_update_voted_post'));
         }
 
         $rules = [
@@ -383,10 +391,10 @@ class PostController extends Controller
         ];
 
         $messages = [
-            'option_one_image.max' => 'The new image for Subject 1 must be ' . self::MAX_POST_IMAGE_SIZE_MB . 'MB or smaller. Please upload a smaller file.',
-            'option_two_image.max' => 'The new image for Subject 2 must be ' . self::MAX_POST_IMAGE_SIZE_MB . 'MB or smaller. Please upload a smaller file.',
-            'option_one_image.uploaded' => 'The image for Subject 1 failed to upload. It might be too large (max ' . self::MAX_POST_IMAGE_SIZE_MB . 'MB) or an unsupported type.',
-            'option_two_image.uploaded' => 'The image for Subject 2 failed to upload. It might be too large (max ' . self::MAX_POST_IMAGE_SIZE_MB . 'MB) or an unsupported type.',
+            'option_one_image.max' => __('messages.validation_option_one_image_max', ['maxMB' => self::MAX_POST_IMAGE_SIZE_MB]),
+            'option_two_image.max' => __('messages.validation_option_two_image_max', ['maxMB' => self::MAX_POST_IMAGE_SIZE_MB]),
+            'option_one_image.uploaded' => __('messages.validation_option_one_image_uploaded', ['maxMB' => self::MAX_POST_IMAGE_SIZE_MB]),
+            'option_two_image.uploaded' => __('messages.validation_option_two_image_uploaded', ['maxMB' => self::MAX_POST_IMAGE_SIZE_MB]),
         ];
 
         $validator = Validator::make($request->all(), $rules, $messages);
@@ -402,65 +410,66 @@ class PostController extends Controller
             'post_id' => $post->id,
             'ip_address' => $request->ip(),
         ];
+        $moderationErrorField = null;
 
         // --- Moderation Stage for Update (Text content) ---
-        if ($request->question !== $post->question) {
-            $bannedWordCheck = $this->checkForBannedWords($request->question, 'question');
-            if ($bannedWordCheck && !$bannedWordCheck['is_appropriate']) { /* ... reject ... */
-                Log::channel('audit_trail')->info('Post update rejected by local blacklist.', array_merge($logContextBase, ['field' => 'question', 'reason' => $bannedWordCheck['reason']]));
-                return redirect()->back()->withErrors(['question' => $bannedWordCheck['reason']])->withInput();
-            }
-            $geminiTextCheck = $this->moderateTextWithGemini($request->question, 'question');
-            if (!$geminiTextCheck['is_appropriate']) { /* ... reject ... */
-                $reason = "Content in 'question' was deemed inappropriate. Reason: " . ($geminiTextCheck['reason'] ?? $geminiTextCheck['category']);
-                Log::channel('audit_trail')->info('Post update rejected by Gemini text moderation.', array_merge($logContextBase, ['field' => 'question', 'reason' => $reason]));
-                return redirect()->back()->withErrors(['question' => $reason])->withInput();
-            }
-        }
-        if ($request->option_one_title !== $post->option_one_title) {
-            $bannedWordCheck = $this->checkForBannedWords($request->option_one_title, 'option_one_title');
-            if ($bannedWordCheck && !$bannedWordCheck['is_appropriate']) {
-                Log::channel('audit_trail')->info('Post update rejected by local blacklist for option_one_title.', array_merge($logContextBase, ['reason' => $bannedWordCheck['reason']]));
-                return redirect()->back()->withErrors(['option_one_title' => $bannedWordCheck['reason']])->withInput();
-            }
-            $geminiTextCheck = $this->moderateTextWithGemini($request->option_one_title, 'option_one_title');
-            if (!$geminiTextCheck['is_appropriate']) {
-                $reason = "Content in 'option_one_title' was deemed inappropriate. Reason: " . ($geminiTextCheck['reason'] ?? $geminiTextCheck['category']);
-                Log::channel('audit_trail')->info('Post update rejected by Gemini text for option_one_title.', array_merge($logContextBase, ['reason' => $reason]));
-                return redirect()->back()->withErrors(['option_one_title' => $reason])->withInput();
-            }
-        }
-        if ($request->option_two_title !== $post->option_two_title) {
-            $bannedWordCheck = $this->checkForBannedWords($request->option_two_title, 'option_two_title');
-            if ($bannedWordCheck && !$bannedWordCheck['is_appropriate']) {
-                Log::channel('audit_trail')->info('Post update rejected by local blacklist for option_two_title.', array_merge($logContextBase, ['reason' => $bannedWordCheck['reason']]));
-                return redirect()->back()->withErrors(['option_two_title' => $bannedWordCheck['reason']])->withInput();
-            }
-            $geminiTextCheck = $this->moderateTextWithGemini($request->option_two_title, 'option_two_title');
-            if (!$geminiTextCheck['is_appropriate']) {
-                $reason = "Content in 'option_two_title' was deemed inappropriate. Reason: " . ($geminiTextCheck['reason'] ?? $geminiTextCheck['category']);
-                Log::channel('audit_trail')->info('Post update rejected by Gemini text for option_two_title.', array_merge($logContextBase, ['reason' => $reason]));
-                return redirect()->back()->withErrors(['option_two_title' => $reason])->withInput();
-            }
-        }
-        // --- Image Moderation for new/replaced images ---
-        if ($request->hasFile('option_one_image')) {
-            $geminiImageCheck = $this->moderateImageWithGemini($request->file('option_one_image'), 'option_one_image');
-            if (!$geminiImageCheck['is_appropriate']) { /* ... reject ... */
-                $reason = "The new image for 'option_one_image' was deemed inappropriate. Reason: " . ($geminiImageCheck['reason'] ?? $geminiImageCheck['category']);
-                Log::channel('audit_trail')->info('Post update rejected by Gemini image for option_one_image.', array_merge($logContextBase, ['reason' => $reason]));
-                return redirect()->back()->withErrors(['option_one_image' => $reason])->withInput();
-            }
-        }
-        if ($request->hasFile('option_two_image')) {
-            $geminiImageCheck = $this->moderateImageWithGemini($request->file('option_two_image'), 'option_two_image');
-            if (!$geminiImageCheck['is_appropriate']) { /* ... reject ... */
-                $reason = "The new image for 'option_two_image' was deemed inappropriate. Reason: " . ($geminiImageCheck['reason'] ?? $geminiImageCheck['category']);
-                Log::channel('audit_trail')->info('Post update rejected by Gemini image for option_two_image.', array_merge($logContextBase, ['reason' => $reason]));
-                return redirect()->back()->withErrors(['option_two_image' => $reason])->withInput();
+        $textFieldsToModerate = [
+            'question' => $request->question,
+            'option_one_title' => $request->option_one_title,
+            'option_two_title' => $request->option_two_title,
+        ];
+        $originalPostData = [
+            'question' => $post->question,
+            'option_one_title' => $post->option_one_title,
+            'option_two_title' => $post->option_two_title,
+        ];
+
+        foreach ($textFieldsToModerate as $field => $newContent) {
+            if ($newContent !== $originalPostData[$field]) {
+                // 1. Banned Words Check
+                $bannedWordCheck = $this->checkForBannedWords($newContent, $field);
+                if ($bannedWordCheck && !$bannedWordCheck['is_appropriate']) {
+                    $moderationErrorMessage = __($bannedWordCheck['translation_key'], $bannedWordCheck['translation_params']);
+                    Log::channel('audit_trail')->info('Post update rejected by local blacklist.', array_merge($logContextBase, ['field' => $field, 'reason_key' => $bannedWordCheck['translation_key'], 'category' => $bannedWordCheck['category']]));
+                    return redirect()->back()->withErrors([$field => $moderationErrorMessage])->withInput();
+                }
+
+                // 2. Gemini Text Check
+                $geminiTextCheck = $this->moderateTextWithGemini($newContent, $field);
+                if (!$geminiTextCheck['is_appropriate']) {
+                    $reasonText = $geminiTextCheck['reason'] ?? $geminiTextCheck['category'];
+                    if (str_starts_with($geminiTextCheck['category'], 'ERROR_') || str_starts_with($geminiTextCheck['category'], 'UNCHECKED_')) {
+                        $moderationErrorMessage = __('messages.error_post_moderation_system_issue', ['field' => $field]);
+                        Log::warning('Gemini Text Moderation Service Error during post update.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiTextCheck]));
+                    } else {
+                        $moderationErrorMessage = __('messages.error_post_content_inappropriate', ['field' => $field, 'reason' => $reasonText]);
+                        Log::channel('audit_trail')->info('Post update rejected by Gemini text moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $geminiTextCheck['category']]));
+                    }
+                    return redirect()->back()->withErrors([$field => $moderationErrorMessage])->withInput();
+                }
             }
         }
 
+        // --- Image Moderation for new/replaced images ---
+        $imagesToModerateOnUpdate = [];
+        if ($request->hasFile('option_one_image')) $imagesToModerateOnUpdate['option_one_image'] = $request->file('option_one_image');
+        if ($request->hasFile('option_two_image')) $imagesToModerateOnUpdate['option_two_image'] = $request->file('option_two_image');
+
+        foreach ($imagesToModerateOnUpdate as $field => $imageFile) {
+            $geminiImageCheck = $this->moderateImageWithGemini($imageFile, $field);
+            if (!$geminiImageCheck['is_appropriate']) {
+                $reasonText = $geminiImageCheck['reason'] ?? $geminiImageCheck['category'];
+                if (str_starts_with($geminiImageCheck['category'], 'ERROR_') || str_starts_with($geminiImageCheck['category'], 'UNCHECKED_')) {
+                    $moderationErrorMessage = __('messages.error_post_image_moderation_system_issue', ['field' => $field]);
+                    Log::warning('Gemini Image Moderation Service Error during post update.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiImageCheck]));
+                } else {
+                    $moderationErrorMessage = __('messages.error_post_image_inappropriate', ['field' => $field, 'reason' => $reasonText]);
+                    Log::channel('audit_trail')->info('Post update rejected by Gemini image moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $geminiImageCheck['category']]));
+                }
+                return redirect()->back()->withErrors([$field => $moderationErrorMessage])->withInput();
+            }
+        }
+        // --- End Moderation Stage for Update ---
 
         if ($request->boolean('remove_option_one_image') && $post->option_one_image) {
             Storage::disk('public')->delete($post->option_one_image);
@@ -480,7 +489,7 @@ class PostController extends Controller
 
         $post->update($data);
         Log::channel('audit_trail')->info('Post updated and passed all moderation.', array_merge($logContextBase, ['updated_fields' => array_keys($data)]));
-        return redirect()->route('profile.show', ['username' => $post->user->username])->with('success', 'Post updated successfully.');
+        return redirect()->route('profile.show', ['username' => $post->user->username])->with('success', __('messages.post_updated_successfully'));
     }
 
     final public function destroy(Post $post): RedirectResponse
@@ -494,11 +503,12 @@ class PostController extends Controller
                 'post_owner_id' => $post->user_id,
                 'ip_address' => request()->ip(),
             ]);
-            abort(403, 'Unauthorized action.');
+            abort(403, __('messages.error_unauthorized_action'));
         }
 
         $postId = $post->id;
         $postQuestion = $post->question;
+        $postOwnerUsername = $post->user->username;
 
         if ($post->option_one_image) Storage::disk('public')->delete($post->option_one_image);
         if ($post->option_two_image) Storage::disk('public')->delete($post->option_two_image);
@@ -508,23 +518,33 @@ class PostController extends Controller
         $post->delete();
 
         Log::channel('audit_trail')->info('Post deleted.', [
-            'user_id' => $user->id,
-            'username' => $user->username,
+            'deleter_user_id' => $user->id,
+            'deleter_username' => $user->username,
             'deleted_post_id' => $postId,
             'original_post_question' => Str::limit($postQuestion, 100),
+            'original_post_owner_id' => $post->user_id,
+            'original_post_owner_username' => $postOwnerUsername,
             'ip_address' => request()->ip(),
             'deleted_by_admin' => $user->isAdmin() && $user->id !== $post->user_id,
         ]);
 
-        if (str_contains(url()->previous(), route('profile.show', ['username' => $post->user->username]))) {
-            return redirect()->route('profile.show', ['username' => $post->user->username])
-                ->with('success', 'Post deleted successfully.');
+        $previousUrl = url()->previous();
+        $profileUrlOfPostOwner = route('profile.show', ['username' => $postOwnerUsername]);
+        $profileUrlOfCurrentUser = route('profile.show', ['username' => $user->username]);
+
+        if (str_contains($previousUrl, $profileUrlOfPostOwner) && $user->id === $post->user_id) {
+            return redirect()->route('profile.show', ['username' => $user->username])
+                ->with('success', __('messages.post_deleted_successfully'));
         }
-        if (url()->previous() == route('profile.show', ['username' => Auth::user()->username])) {
-            return redirect()->route('profile.show', ['username' => Auth::user()->username])
-                ->with('success', 'Post deleted successfully.');
+        if (str_contains($previousUrl, $profileUrlOfPostOwner) && $user->isAdmin() && $user->id !== $post->user_id) {
+            return redirect($previousUrl)->with('success', __('messages.post_deleted_successfully'));
         }
-        return redirect()->route('home')->with('success', 'Post deleted successfully.');
+        if (str_contains($previousUrl, $profileUrlOfCurrentUser)) {
+            return redirect()->route('profile.show', ['username' => $user->username])
+                ->with('success', __('messages.post_deleted_successfully'));
+        }
+
+        return redirect()->route('home')->with('success', __('messages.post_deleted_successfully'));
     }
 
     final public function vote(Request $request, Post $post): JsonResponse
@@ -547,8 +567,8 @@ class PostController extends Controller
         if ($existingVote) {
             $post->refresh();
             return response()->json([
-                'error' => 'You have already voted on this post.',
-                'message' => 'You have already voted on this post.',
+                'error' => __('messages.error_already_voted'),
+                'message' => __('messages.error_already_voted'),
                 'user_vote' => $existingVote->vote_option,
                 'option_one_votes' => $post->option_one_votes,
                 'option_two_votes' => $post->option_two_votes,
@@ -575,12 +595,12 @@ class PostController extends Controller
         } else {
             $post->increment('option_two_votes');
         }
-        // $post->increment('total_votes');
+        $post->increment('total_votes');
 
         $post->refresh();
 
         return response()->json([
-            'message' => 'Vote registered successfully!',
+            'message' => __('messages.vote_registered_successfully'),
             'option_one_votes' => $post->option_one_votes,
             'option_two_votes' => $post->option_two_votes,
             'total_votes' => $post->total_votes,
@@ -598,12 +618,14 @@ class PostController extends Controller
                 $query->where('created_at', $post->created_at)
                     ->where('id', '>=', $post->id);
             })
-            ->orderBy('created_at', 'desc')
-            ->orderBy('id', 'desc')
+            // ->orderBy('created_at', 'desc')
+            // ->orderBy('id', 'desc')
             ->count();
 
         $perPage = 15;
         $page = ceil($newerOrSamePostsCount / $perPage);
+        if ($page < 1) $page = 1;
+
 
         $expectedSlug = Str::slug($post->question);
         if ($slug !== null && $slug !== $expectedSlug) {
@@ -617,7 +639,7 @@ class PostController extends Controller
     public function incrementShareCount(Request $request, Post $post)
     {
         $post->increment('shares_count');
-        $user = Auth::user();
+        $user = Auth::user(); // Can be null if guest sharing is allowed
         Log::channel('audit_trail')->info('Post share count incremented.', [
             'user_id' => $user ? $user->id : null,
             'username' => $user ? $user->username : 'Guest/Unconfirmed',
