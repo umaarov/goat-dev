@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
@@ -71,10 +72,17 @@ class PostController extends Controller
             return ['is_appropriate' => true, 'reason' => null, 'category' => 'UNCHECKED_CONFIG_ERROR', 'error' => 'Gemini config missing. Content allowed.'];
         }
 
-        $model = Config::get('gemini.model', 'gemini-2.0-flash');
-        $apiUrl = rtrim(Config::get('gemini.api_url'), '/') . '/' . $model . ':generateContent?key=' . $apiKey;
-        $finalPrompt = str_replace("{COMMENT_TEXT}", addslashes($textContent), $promptTemplate);
+        $currentLocale = App::getLocale();
+        $languageNames = [
+            'en' => 'English', 'ru' => 'Russian', 'uz' => 'Uzbek',
+        ];
+        $languageName = $languageNames[$currentLocale] ?? 'English';
 
+        $intermediatePrompt = str_replace("{LANGUAGE_NAME}", $languageName, $promptTemplate);
+        $finalPrompt = str_replace("{COMMENT_TEXT}", addslashes($textContent), $intermediatePrompt);
+
+        $model = Config::get('gemini.model', 'gemini-1.5-flash');
+        $apiUrl = rtrim(Config::get('gemini.api_url'), '/') . '/' . $model . ':generateContent?key=' . $apiKey;
         $payload = ['contents' => [['parts' => [['text' => $finalPrompt]]]], 'generationConfig' => ['responseMimeType' => 'application/json']];
 
         try {
@@ -111,7 +119,15 @@ class PostController extends Controller
             return ['is_appropriate' => true, 'reason' => null, 'category' => 'UNCHECKED_CONFIG_ERROR', 'error' => 'Gemini image config missing. Image allowed.'];
         }
 
-        $model = Config::get('gemini.model', 'gemini-2.0-flash');
+        $currentLocale = App::getLocale();
+        $languageNames = [
+            'en' => 'English', 'ru' => 'Russian', 'uz' => 'Uzbek',
+        ];
+        $languageName = $languageNames[$currentLocale] ?? 'English';
+
+        $finalPromptForImage = str_replace("{LANGUAGE_NAME}", $languageName, $promptTemplate);
+
+        $model = Config::get('gemini.model', 'gemini-1.5-flash');
         $apiUrl = rtrim(Config::get('gemini.api_url'), '/') . '/' . $model . ':generateContent?key=' . $apiKey;
 
         try {
@@ -127,7 +143,7 @@ class PostController extends Controller
             'contents' => [
                 [
                     'parts' => [
-                        ['text' => $promptTemplate],
+                        ['text' => $finalPromptForImage],
                         [
                             'inlineData' => [
                                 'mimeType' => $mimeType,
@@ -282,16 +298,23 @@ class PostController extends Controller
             }
 
             // 2. Gemini Text Check
-            $geminiTextCheck = $this->moderateTextWithGemini($content, $field);
+            $geminiTextCheck = $this->moderateTextWithGemini($content, $field); // $field is 'question', 'option_one_title', etc.
             if (!$geminiTextCheck['is_appropriate']) {
                 $moderationErrorField = $field;
-                $reasonText = $geminiTextCheck['reason'] ?? $geminiTextCheck['category'];
+                $categoryKey = 'messages.gemini_category_' . $geminiTextCheck['category'];
+                $translatedCategoryDisplay = trans()->has($categoryKey) ? __($categoryKey) : Str::ucfirst(strtolower(str_replace('_', ' ', $geminiTextCheck['category'])));
+                $reasonText = $geminiTextCheck['reason'] ?? $translatedCategoryDisplay;
+
                 if (str_starts_with($geminiTextCheck['category'], 'ERROR_') || str_starts_with($geminiTextCheck['category'], 'UNCHECKED_')) {
-                    $moderationErrorMessage = __('messages.error_post_moderation_system_issue', ['field' => $field]);
+                    $moderationErrorMessage = __('messages.error_post_moderation_system_issue', ['field' => __("messages.field_name_$field", [], App::getLocale())]);
                     Log::warning('Gemini Text Moderation Service Error during post creation.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiTextCheck]));
                 } else {
-                    $moderationErrorMessage = __('messages.error_post_content_inappropriate', ['field' => $field, 'reason' => $reasonText]);
-                    Log::channel('audit_trail')->info('Post creation rejected by Gemini text moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $geminiTextCheck['category'], 'content_snippet' => Str::limit($content, 50)]));
+                    $actualReasonForMessage = $geminiTextCheck['reason'] ? $geminiTextCheck['reason'] : $translatedCategoryDisplay;
+                    $moderationErrorMessage = __('messages.error_post_content_inappropriate', [
+                        'field' => __("messages.field_name_$field", [], App::getLocale()), // e.g. "Question", "Option 1 Title"
+                        'reason' => $actualReasonForMessage
+                    ]);
+                    Log::channel('audit_trail')->info('Post creation rejected by Gemini text moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $geminiTextCheck['reason'], 'category' => $geminiTextCheck['category'], 'content_snippet' => Str::limit($content, 50)]));
                 }
                 return redirect()->back()->withErrors([$moderationErrorField => $moderationErrorMessage])->withInput();
             }

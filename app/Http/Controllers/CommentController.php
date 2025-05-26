@@ -9,6 +9,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
@@ -87,7 +88,15 @@ class CommentController extends Controller
             return ['is_appropriate' => true, 'reason' => 'Gemini prompt not configured. Comment allowed without check.', 'category' => 'UNCHECKED_CONFIG_ERROR', 'error' => 'Gemini prompt not configured.'];
         }
 
-        $finalPrompt = str_replace("{COMMENT_TEXT}", addslashes($commentContent), $promptTemplate);
+        $currentLocale = App::getLocale();
+        $languageNames = [
+            'en' => 'English',
+            'ru' => 'Russian',
+        ];
+        $languageName = $languageNames[$currentLocale] ?? 'English';
+
+        $intermediatePrompt = str_replace("{LANGUAGE_NAME}", $languageName, $promptTemplate);
+        $finalPrompt = str_replace("{COMMENT_TEXT}", addslashes($commentContent), $intermediatePrompt);
 
         $payload = [
             'contents' => [
