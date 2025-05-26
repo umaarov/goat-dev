@@ -259,7 +259,7 @@
             if (!postElement) return;
 
             const questionElement = postElement.querySelector('.pt-4.px-4.font-semibold.text-center p');
-            const question = questionElement ? questionElement.textContent : 'Check out this post'; // Fallback question
+            const question = questionElement ? questionElement.textContent : 'Check out this post';
             const slug = question.toLowerCase()
                 .replace(/[^\w\s-]/g, '')
                 .replace(/\s+/g, '-')

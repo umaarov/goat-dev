@@ -404,40 +404,6 @@
 </style>
 
 <script>
-    window.translations = {
-        profile_alt_picture: "{{ __('messages.profile.alt_profile_picture_js', ['username' => ':username']) }}",
-        verified_account: "{{ __('messages.profile.verified_account') }}",
-        delete_comment_title: "{{ __('messages.profile.js.delete_comment_title') }}",
-        time_just_now: "{{ __('messages.profile.js.time.just_now') }}",
-        time_minute: "{{ __('messages.profile.js.time.minute') }}",
-        time_minutes: "{{ __('messages.profile.js.time.minutes') }}",
-        time_minutes_alt: "{{ __('messages.profile.js.time.minutes_alt') }}",
-        time_hour: "{{ __('messages.profile.js.time.hour') }}",
-        time_hours: "{{ __('messages.profile.js.time.hours') }}",
-        time_hours_alt: "{{ __('messages.profile.js.time.hours_alt') }}",
-        time_day: "{{ __('messages.profile.js.time.day') }}",
-        time_days: "{{ __('messages.profile.js.time.days') }}",
-        time_days_alt: "{{ __('messages.profile.js.time.days_alt') }}",
-        time_ago: "{{ __('messages.profile.js.time.ago') }}",
-        js_link_copied: "{{ __('messages.profile.js.link_copied') }}",
-        js_login_to_comment: `{!! __('messages.post_card.js.login_to_comment', ['login_link' => route('login')]) !!}`,
-        js_no_comments_be_first: "{{ __('messages.post_card.js.no_comments_be_first') }}",
-        js_failed_load_comments: "{{ __('messages.profile.js.failed_load_comments') }}",
-        js_comment_empty: "{{ __('messages.profile.js.comment_empty') }}",
-        js_submit_comment_button: "{{ __('messages.submit_comment_button') }}",
-        js_comment_button_submitting: "{{ __('messages.profile.js.comment_button_submitting') }}",
-        js_error_prefix: "{{ __('messages.profile.js.error_prefix') }}",
-        js_failed_add_comment: "{{ __('messages.post_card.js.failed_add_comment') }}",
-        js_confirm_delete_comment_text: "{{ __('messages.confirm_delete_comment_text') }}",
-        js_failed_delete_comment: "{{ __('messages.post_card.js.failed_delete_comment') }}",
-        js_login_to_vote: "{{ __('messages.profile.js.login_to_vote') }}",
-        js_vote_failed_connection: "{{ __('messages.profile.js.vote_failed_connection') }}",
-        js_option_1_default_title: "{{ __('messages.post_card.js.option_1_default_title') }}",
-        js_option_2_default_title: "{{ __('messages.post_card.js.option_2_default_title') }}",
-        js_error_already_voted: "{{ __('messages.error_already_voted') }}",
-        js_vote_registered_successfully: "{{ __('messages.vote_registered_successfully') }}",
-    };
-
     if (typeof window.currentlyOpenCommentsId === 'undefined') {
         window.currentlyOpenCommentsId = null;
     }
@@ -1053,7 +1019,12 @@
 
     function updateVoteUI(postId, userVotedOption, voteData) {
         const postElement = document.getElementById(`post-${postId}`);
-        if (!postElement) return;
+        if (!postElement) {
+            console.error(`updateVoteUI: Post element with ID 'post-${postId}' not found.`);
+            return;
+        }
+
+        console.log(`updateVoteUI called for post: ${postId}, userVote: ${userVotedOption}`, voteData);
 
         postElement.dataset.userVote = userVotedOption;
         postElement.dataset.optionOneVotes = voteData.option_one_votes;
@@ -1062,23 +1033,31 @@
         const totalVotesDisplayElement = postElement.querySelector('.flex.justify-between.items-center .flex.flex-col.items-center.gap-1 span.text-lg.font-semibold');
         if (totalVotesDisplayElement) {
             totalVotesDisplayElement.textContent = voteData.total_votes;
+        } else {
+            console.warn(`updateVoteUI: Total votes display element not found for post ${postId}.`);
         }
 
         const optionOneButton = postElement.querySelector('button.vote-button[data-option="option_one"]');
         const optionTwoButton = postElement.querySelector('button.vote-button[data-option="option_two"]');
 
         if (optionOneButton && optionTwoButton) {
-            const optionOneTitle = postElement.dataset.optionOneTitle || window.translations.js_option_1_default_title;
-            const optionTwoTitle = postElement.dataset.optionTwoTitle || window.translations.js_option_2_default_title;
+            const optionOneTitleText = postElement.dataset.optionOneTitle || window.translations.js_option_1_default_title || 'Option 1';
+            const optionTwoTitleText = postElement.dataset.optionTwoTitle || window.translations.js_option_2_default_title || 'Option 2';
 
             const totalVotes = parseInt(voteData.total_votes, 10);
             const optionOneVotes = parseInt(voteData.option_one_votes, 10);
             const optionTwoVotes = parseInt(voteData.option_two_votes, 10);
-            const percentOne = totalVotes > 0 ? Math.round((optionOneVotes / totalVotes) * 100) : 0;
-            const percentTwo = totalVotes > 0 ? Math.round((optionTwoVotes / totalVotes) * 100) : 0;
 
-            optionOneButton.querySelector('.button-text-truncate').textContent = `${optionOneTitle} (${percentOne}%)`;
-            optionTwoButton.querySelector('.button-text-truncate').textContent = `${optionTwoTitle} (${percentTwo}%)`;
+            const numOptionOneVotes = isNaN(optionOneVotes) ? 0 : optionOneVotes;
+            const numOptionTwoVotes = isNaN(optionTwoVotes) ? 0 : optionTwoVotes;
+            const numTotalVotes = isNaN(totalVotes) ? (numOptionOneVotes + numOptionTwoVotes) : totalVotes;
+
+
+            const percentOne = numTotalVotes > 0 ? Math.round((numOptionOneVotes / numTotalVotes) * 100) : 0;
+            const percentTwo = numTotalVotes > 0 ? Math.round((numOptionTwoVotes / numTotalVotes) * 100) : 0;
+
+            optionOneButton.querySelector('.button-text-truncate').textContent = `${optionOneTitleText} (${percentOne}%)`;
+            optionTwoButton.querySelector('.button-text-truncate').textContent = `${optionTwoTitleText} (${percentTwo}%)`;
 
             const highlightClasses = ['bg-blue-800', 'text-white'];
             const defaultClasses = ['bg-white', 'border', 'border-gray-300', 'hover:bg-gray-50'];
@@ -1098,8 +1077,55 @@
                 optionOneButton.classList.add(...defaultClasses);
                 optionTwoButton.classList.add(...defaultClasses);
             }
+
+            const showPercentagesBasedOnCurrentState = userVotedOption || postElement.dataset.profileOwnerVoteOption;
+            let votesLabelToUse = window.translations && window.translations.js_votes_label; // Check if window.translations itself exists
+            let problemDetected = false;
+            console.log("Value of window.translations.js_votes_label:", votesLabelToUse, "Type:", typeof votesLabelToUse);
+
+            if (typeof votesLabelToUse !== 'string') {
+                problemDetected = true;
+                if (votesLabelToUse === undefined) {
+                    console.warn("Tooltip 'votes' label (js_votes_label) is undefined in window.translations. Defaulting to 'votes'. Ensure 'messages.post_card.votes_label' is correctly defined in your Blade file and localization settings.");
+                } else if (votesLabelToUse === null) {
+                    console.warn("Tooltip 'votes' label (js_votes_label) is null in window.translations. Defaulting to 'votes'. Ensure 'messages.post_card.votes_label' is correctly defined.");
+                } else {
+                    console.warn(`Tooltip 'votes' label (js_votes_label) is not a string (type: ${typeof votesLabelToUse}, value: ${String(votesLabelToUse)}). Defaulting to 'votes'. Ensure 'messages.post_card.votes_label' provides a string.`);
+                }
+            } else if (votesLabelToUse.trim() === '' || votesLabelToUse.trim().toLowerCase() === 'undefined') {
+                problemDetected = true;
+                if (votesLabelToUse.trim().toLowerCase() === 'undefined') {
+                    console.warn("The translation for 'js_votes_label' was the string 'undefined'. Defaulting to 'votes'. Please check your localization files (e.g., messages.post_card.votes_label).");
+                } else {
+                    console.warn("Tooltip 'votes' label (js_votes_label) is an empty string in window.translations. Defaulting to 'votes'. Ensure 'messages.post_card.votes_label' is correctly defined and not empty.");
+                }
+            }
+
+            if (problemDetected) {
+                votesLabelToUse = 'votes';
+            }
+            console.log("Final votesLabelToUse before setting title:", votesLabelToUse, "Type:", typeof votesLabelToUse);
+            console.log("numOptionOneVotes:", numOptionOneVotes, "numOptionTwoVotes:", numOptionTwoVotes);
+
+            if (showPercentagesBasedOnCurrentState) {
+                optionOneButton.dataset.tooltipShowCount = "true";
+                optionTwoButton.dataset.tooltipShowCount = "true";
+
+                optionOneButton.title = `${numOptionOneVotes} ${votesLabelToUse}`;
+                optionTwoButton.title = `${numOptionTwoVotes} ${votesLabelToUse}`;
+                console.log("Set title for option one:", optionOneButton.title);
+                console.log("Set title for option two:", optionTwoButton.title);
+            } else {
+                optionOneButton.removeAttribute('data-tooltip-show-count');
+                optionTwoButton.removeAttribute('data-tooltip-show-count');
+                optionOneButton.removeAttribute('title');
+                optionTwoButton.removeAttribute('title');
+            }
+
             optionOneButton.dataset.tooltipShowCount = "true";
             optionTwoButton.dataset.tooltipShowCount = "true";
+        } else {
+            console.warn(`updateVoteUI: Vote buttons not found for post ${postId}.`);
         }
     }
 
