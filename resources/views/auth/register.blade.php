@@ -4,8 +4,43 @@
 
 @section('content')
     <div class="max-w-md mx-auto bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4">
-        <div class="p-6">
+        <div class="p-6 relative">
+            @if(isset($available_locales) && is_array($available_locales) && count($available_locales) > 1)
+                <div class="absolute top-6 right-6 z-10">
+                    <div class="relative">
+                        <select onchange="window.location.href=this.value;"
+                                aria-label="{{ __('messages.select_language_label') ?? 'Select Language' }}"
+                                class="block appearance-none w-auto bg-white border border-gray-300 hover:border-gray-400 px-3 py-1.5 pr-7 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-xs text-gray-700"> {{-- Compact styling --}}
+                            @foreach($available_locales as $localeKey => $localeName)
+                                <option
+                                    value="{{ route('language.set', $localeKey) }}" {{ ($current_locale ?? app()->getLocale()) == $localeKey ? 'selected' : '' }}>
+                                    {{ $localeName }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <div
+                            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-gray-700">
+                            <svg class="fill-current h-3 w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                            </svg> {{-- Smaller icon --}}
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <h2 class="text-2xl font-semibold mb-4 text-blue-800">{{ __('messages.register') }}</h2>
+
+            @if(session('success') && session('success_type') !== 'language_change')
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4"
+                     role="alert">
+                    <span class="block sm:inline">{{ session('success') }}</span>
+                </div>
+            @endif
+            @if(session('error'))
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <span class="block sm:inline">{{ session('error') }}</span>
+                </div>
+            @endif
 
             <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data">
                 @csrf
@@ -187,25 +222,37 @@
 
         function initUsernameChecker() {
             const usernameInput = document.getElementById('username');
+            if (!usernameInput) return;
             const debounceTimeout = 500;
             let typingTimer;
-            let lastCheckedUsername = '';
+            let lastCheckedUsername = usernameInput.value.trim();
+
+            const existingStatusElement = document.getElementById('username-status');
+            if (existingStatusElement) {
+                existingStatusElement.remove();
+            }
 
             const statusElement = document.createElement('div');
             statusElement.id = 'username-status';
             statusElement.className = 'mt-1 text-sm';
-            usernameInput.parentNode.insertBefore(statusElement, usernameInput.nextSibling);
+            if (usernameInput.nextElementSibling && usernameInput.nextElementSibling.tagName === 'SPAN' && usernameInput.nextElementSibling.classList.contains('text-red-500')) {
+                usernameInput.nextElementSibling.insertAdjacentElement('afterend', statusElement);
+            } else {
+                usernameInput.parentNode.insertBefore(statusElement, usernameInput.nextSibling);
+            }
+
 
             function checkUsername() {
                 const username = usernameInput.value.trim();
 
-                if (username === '' || username === lastCheckedUsername) {
+                if (username === '' || username === lastCheckedUsername && !statusElement.textContent.includes(usernameValidationMessages.taken) && !statusElement.textContent.includes(usernameValidationMessages.could_not_verify)) {
                     if (username === '') {
                         statusElement.textContent = '';
                         usernameInput.classList.remove('border-red-500', 'border-green-500');
                     }
-                    return;
+                    if (username === lastCheckedUsername && usernameInput.classList.contains('border-green-500')) return;
                 }
+
 
                 const minLength = 5;
                 const maxLength = 24;
@@ -215,28 +262,31 @@
                 const noConsecutiveChars = !/(.)\1{2,}/.test(username);
 
                 let clientSideError = false;
+                let errorMessageKey = null;
 
                 if (username.length < minLength) {
-                    statusElement.textContent = usernameValidationMessages.min_length;
+                    errorMessageKey = 'min_length';
                     clientSideError = true;
                 } else if (username.length > maxLength) {
-                    statusElement.textContent = usernameValidationMessages.max_length;
+                    errorMessageKey = 'max_length';
                     clientSideError = true;
                 } else if (!startsWithLetter) {
-                    statusElement.textContent = usernameValidationMessages.starts_with_letter;
+                    errorMessageKey = 'starts_with_letter';
                     clientSideError = true;
                 } else if (!onlyValidChars) {
-                    statusElement.textContent = usernameValidationMessages.only_valid_chars;
+                    errorMessageKey = 'only_valid_chars';
                     clientSideError = true;
                 } else if (!notOnlyNumbers) {
-                    statusElement.textContent = usernameValidationMessages.not_only_numbers;
+                    errorMessageKey = 'not_only_numbers';
                     clientSideError = true;
                 } else if (!noConsecutiveChars) {
-                    statusElement.textContent = usernameValidationMessages.no_consecutive_chars;
+                    errorMessageKey = 'no_consecutive_chars';
                     clientSideError = true;
                 }
 
+
                 if (clientSideError) {
+                    statusElement.textContent = usernameValidationMessages[errorMessageKey] || 'Validation error.';
                     statusElement.className = 'mt-1 text-sm text-red-600';
                     usernameInput.classList.remove('border-green-500');
                     usernameInput.classList.add('border-red-500');
@@ -247,8 +297,6 @@
                 statusElement.className = 'mt-1 text-sm text-gray-500';
                 statusElement.textContent = usernameValidationMessages.checking;
 
-                lastCheckedUsername = username;
-
                 fetch('/check-username?username=' + encodeURIComponent(username), {
                     method: 'GET',
                     headers: {
@@ -258,43 +306,56 @@
                 })
                     .then(response => {
                         if (!response.ok) {
-                            throw new Error('Network response was not ok');
+                            return response.json().then(errData => {
+                                throw {status: response.status, data: errData};
+                            }).catch(() => {
+                                throw {status: response.status, data: {message: 'Network response was not ok.'}};
+                            });
                         }
                         return response.json();
                     })
                     .then(data => {
                         if (data.available) {
                             statusElement.className = 'mt-1 text-sm text-green-600';
-                            statusElement.textContent = usernameValidationMessages.available;
+                            statusElement.textContent = data.message || usernameValidationMessages.available;
                             usernameInput.classList.remove('border-red-500');
                             usernameInput.classList.add('border-green-500');
+                            lastCheckedUsername = username;
                         } else {
                             statusElement.className = 'mt-1 text-sm text-red-600';
-                            statusElement.textContent = data.message || usernameValidationMessages.taken; // Use server message if available
+                            statusElement.textContent = data.message || usernameValidationMessages.taken;
                             usernameInput.classList.remove('border-green-500');
                             usernameInput.classList.add('border-red-500');
+                            lastCheckedUsername = '';
                         }
                     })
                     .catch(error => {
                         console.error('Error checking username:', error);
-                        statusElement.className = 'mt-1 text-sm text-red-600'; // Changed to red for error
+                        statusElement.className = 'mt-1 text-sm text-red-600';
                         statusElement.textContent = usernameValidationMessages.could_not_verify;
                         usernameInput.classList.remove('border-green-500');
                         usernameInput.classList.add('border-red-500');
+                        lastCheckedUsername = '';
                     });
             }
 
             usernameInput.addEventListener('input', function () {
                 clearTimeout(typingTimer);
+                if (!usernameInput.classList.contains('border-green-500')) {
+                    usernameInput.classList.remove('border-red-500');
+                    statusElement.textContent = '';
+                }
                 typingTimer = setTimeout(checkUsername, debounceTimeout);
             });
 
-            usernameInput.addEventListener('blur', checkUsername);
-
-            // const currentPageUrl = window.location.pathname;
-            // if (currentPageUrl.includes('/profile/edit')) {
-            //     lastCheckedUsername = usernameInput.value.trim();
-            // }
+            usernameInput.addEventListener('blur', function () {
+                if (usernameInput.value.trim() !== '' && (!usernameInput.classList.contains('border-green-500') || usernameInput.classList.contains('border-red-500'))) {
+                    checkUsername();
+                }
+            });
+            if (usernameInput.value.trim() !== '') {
+                checkUsername();
+            }
         }
 
         document.addEventListener('DOMContentLoaded', initUsernameChecker);

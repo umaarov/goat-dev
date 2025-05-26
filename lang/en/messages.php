@@ -323,4 +323,7 @@ return [
     'terms.section5_heading' => '5. Disclaimer',
     'terms.section5_text' => 'We provide this platform "as is" with no guarantees. We are not responsible for any loss, damages, or issues that may arise from using our service.',
 
+    'language_changed_successfully' => 'Language changed to :language.',
+    'error_invalid_locale_selected' => 'The selected language ":locale" is not valid.',
+
 ];

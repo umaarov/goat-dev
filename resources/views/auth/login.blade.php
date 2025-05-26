@@ -4,14 +4,49 @@
 
 @section('content')
     <div class="max-w-md mx-auto bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4">
-        <div class="p-6">
+        <div class="p-6 relative">
+            @if(isset($available_locales) && is_array($available_locales) && count($available_locales) > 1)
+                <div class="absolute top-6 right-6 z-10">
+                    <div class="relative">
+                        <select onchange="window.location.href=this.value;"
+                                aria-label="{{ __('messages.select_language_label') ?? 'Select Language' }}"
+                                class="block appearance-none w-auto bg-white border border-gray-300 hover:border-gray-400 px-3 py-1.5 pr-7 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-xs text-gray-700"> {{-- Compact styling --}}
+                            @foreach($available_locales as $localeKey => $localeName)
+                                <option
+                                    value="{{ route('language.set', $localeKey) }}" {{ ($current_locale ?? app()->getLocale()) == $localeKey ? 'selected' : '' }}>
+                                    {{ $localeName }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <div
+                            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-gray-700">
+                            <svg class="fill-current h-3 w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                            </svg> {{-- Smaller icon --}}
+                        </div>
+                    </div>
+                </div>
+            @endif
             <h2 class="text-2xl font-semibold mb-4 text-blue-800">{{ __('messages.login') }}</h2>
 
             <form method="POST" action="{{ route('login') }}">
                 @csrf
+                @if(session('success') && session('success_type') !== 'language_change')
+                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4"
+                         role="alert">
+                        <span class="block sm:inline">{{ session('success') }}</span>
+                    </div>
+                @endif
+                @if(session('error'))
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+                         role="alert">
+                        <span class="block sm:inline">{{ session('error') }}</span>
+                    </div>
+                @endif
 
                 <div class="mb-4">
-                    <label for="login_identifier" class="block text-gray-700 mb-2">{{ __('messages.auth.email_or_username') }}</label>
+                    <label for="login_identifier"
+                           class="block text-gray-700 mb-2">{{ __('messages.auth.email_or_username') }}</label>
                     <input id="login_identifier" type="text" name="login_identifier"
                            value="{{ old('login_identifier') }}"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -80,7 +115,8 @@
 
             <p class="text-center text-gray-600 mt-4">
                 {{ __('messages.auth.dont_have_account') }}
-                <a href="{{ route('register') }}" class="text-blue-800 hover:underline">{{ __('messages.auth.register_here') }}</a>
+                <a href="{{ route('register') }}"
+                   class="text-blue-800 hover:underline">{{ __('messages.auth.register_here') }}</a>
             </p>
         </div>
     </div>
