@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Intervention\Image\ImageManager;
-
+use Illuminate\Support\Str; // Import Str
 
 class UserController extends Controller
 {
@@ -203,7 +203,7 @@ class UserController extends Controller
     final public function edit(): View
     {
         $user = Auth::user();
-        // $availableLocales = Config::get('app.available_locales', ['en' => 'English']);
+        // $availableLocales = Config::get('app.available_locales', ['en' => 'English']); // This should be passed from AppServiceProvider or a View Composer if needed globally
         return view('users.edit', compact('user'));
     }
 
@@ -222,7 +222,7 @@ class UserController extends Controller
         Log::info('UserController@update: Request "locale" is filled: ' . ($request->filled('locale') ? 'Yes' : 'No'));
 
 
-        $validator = Validator::make($request->all(), [
+        $rules = [
             'first_name' => 'required|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'username' => [
@@ -234,7 +234,22 @@ class UserController extends Controller
             'remove_profile_picture' => 'nullable|boolean',
             'show_voted_posts_publicly' => 'required|boolean',
             'locale' => ['nullable', Rule::in($availableLocaleKeys)],
-        ]);
+            'external_links' => 'nullable|array|max:3', // Validate that external_links is an array and has max 3 items
+            'external_links.*' => ['nullable', 'url', 'max:255', function ($attribute, $value, $fail) {
+                if (!empty($value) && !Str::startsWith($value, ['http://', 'https://'])) {
+                    $fail(__('messages.external_link_invalid_url_error')); // Or a more specific message like 'scheme_required'
+                }
+            }], // Validate each item in the array is a valid URL
+        ];
+
+        $customMessages = [
+            'external_links.max' => __('messages.external_links_max_error'),
+            'external_links.*.url' => __('messages.external_link_invalid_url_error'),
+            'external_links.*.max' => __('messages.external_link_too_long_error'),
+        ];
+
+
+        $validator = Validator::make($request->all(), $rules, $customMessages);
 
         if ($validator->fails()) {
             Log::warning('UserController@update: Validation failed.', $validator->errors()->toArray());
@@ -250,6 +265,7 @@ class UserController extends Controller
             'profile_picture_removed' => $request->boolean('remove_profile_picture'),
             'profile_picture_updated' => $request->hasFile('profile_picture'),
             'show_voted_posts_publicly' => $user->show_voted_posts_publicly,
+            'external_links' => $user->external_links,
         ];
 
         $data = $request->only(['first_name', 'last_name', 'username']);
@@ -309,6 +325,23 @@ class UserController extends Controller
                 );
             }
         }
+
+        // Handle external links
+        $externalLinksInput = $request->input('external_links', []);
+        $processedExternalLinks = [];
+        foreach ($externalLinksInput as $link) {
+            if (!empty($link)) {
+                // Ensure URL starts with http:// or https:// after validation.
+                // The validator should have already caught most issues.
+                $sanitizedLink = filter_var($link, FILTER_SANITIZE_URL);
+                if (Str::startsWith($sanitizedLink, ['http://', 'https://'])) {
+                    $processedExternalLinks[] = $sanitizedLink;
+                }
+            }
+        }
+        // Store only non-empty, valid links, up to a maximum of 3
+        $data['external_links'] = array_slice(array_filter($processedExternalLinks), 0, 3);
+
 
         Log::info('UserController@update: Data array just before user->update(): ', $data);
 

@@ -326,4 +326,16 @@ return [
     'language_changed_successfully' => 'Language changed to :language.',
     'error_invalid_locale_selected' => 'The selected language ":locale" is not valid.',
 
+    'profile.link_telegram' => 'Telegram',
+    'profile.link_twitter' => 'Twitter / X',
+    'profile.link_instagram' => 'Instagram',
+    'profile.link_facebook' => 'Facebook',
+    'profile.link_linkedin' => 'LinkedIn',
+    'profile.link_github' => 'GitHub',
+
+    'external_links' => 'External Links',
+    'external_links_description'  => 'Add links to your social media, website, or other relevant profiles. Up to 3 links can be displayed.',
+    'external_links_label' => 'External Links',
+    'external_link_placeholder' => 'Enter URL (e.g., https://example.com)',
+
 ];

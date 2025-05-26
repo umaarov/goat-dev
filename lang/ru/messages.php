@@ -324,4 +324,17 @@ return [
 
     'language_changed_successfully' => 'Язык успешно изменен на :language.',
     'error_invalid_locale_selected' => 'Выбранный язык ":locale" недействителен.',
+
+
+    'profile.link_telegram' => 'Telegram',
+    'profile.link_twitter' => 'Twitter / X',
+    'profile.link_instagram' => 'Instagram',
+    'profile.link_facebook' => 'Facebook',
+    'profile.link_linkedin' => 'LinkedIn',
+    'profile.link_github' => 'GitHub',
+
+    'external_links' => 'Внешние ссылки',
+    'external_links_description' => 'Добавьте ссылки на ваши социальные сети, веб-сайт или другие актуальные профили. Можно отобразить до 3 ссылок.',
+    'external_links_label' => 'Внешняя ссылка :number',
+    'external_link_placeholder' => 'Введите URL (например, https://example.com)',
 ];

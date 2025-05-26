@@ -25,6 +25,7 @@ class User extends Authenticatable
         'email_verification_token',
         'show_voted_posts_publicly',
         'locale',
+        'external_links',
     ];
 
     protected $hidden = [
@@ -37,6 +38,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'show_voted_posts_publicly' => 'boolean',
+        'external_links' => 'array',
     ];
 
     final function posts(): HasMany

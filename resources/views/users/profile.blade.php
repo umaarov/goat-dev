@@ -62,7 +62,50 @@
                                     class="text-gray-500">{{ trans_choice('messages.profile.votes_collected_stat_label', $totalVotesOnUserPosts) }}</span>
                             </div>
                         </div>
+                        @if(!empty($user->external_links) && count(array_filter($user->external_links)) > 0)
+                            <div class="mt-4 pt-3">
+                                <div class="flex flex-wrap gap-x-3 gap-y-2 items-center">
+                                    @foreach($user->external_links as $link_url)
+                                        @if(!empty($link_url))
+                                            @php
+                                                $iconSvgHtml = '';
+                                                $displayText = '';
+                                                $host = parse_url($link_url, PHP_URL_HOST);
 
+                                                if (stripos($host, 't.me') !== false || stripos($host, 'telegram.me') !== false) {
+                                                    $iconSvgHtml = '<svg class="h-5 w-5 mr-1.5 text-sky-500" fill="currentColor" viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0011.944 0zm5.001 7.695c-.23.528-.455 1.044-.683 1.564s-.462 1.03-.696 1.53c-.037.09-.083.182-.138.276s-.117.188-.186.28c-.094.128-.213.236-.353.328a.88.88 0 01-.475.132c-.168 0-.328-.04-.476-.12s-.278-.182-.393-.307c-.114-.124-.208-.268-.278-.43A5.19 5.19 0 0114 10.16l.012-.303c.011-.201.008-.38-.007-.536a.734.734 0 00-.22-.407.823.823 0 00-.477-.176c-.217 0-.406.06-.564.182s-.288.29-.393.502l-1.24 1.496a12.77 12.77 0 01-.82 1.012 2.13 2.13 0 01-.622.568.98.98 0 01-.56.19c-.247 0-.488-.078-.725-.236s-.42-.353-.55-.585L7.303 10.56c-.16-.294-.234-.585-.223-.872.012-.288.115-.54.28-.746a.978.978 0 01.616-.353c.205-.047.393-.043.56.015.17.058.32.155.446.29l.205.224 4.954-3.007c.26-.162.524-.247.792-.252.27-.006.503.066.698.217.196.147.33.35.398.603z"/></svg>';
+                                                    $displayText = __('messages.profile.link_telegram');
+                                                } elseif (stripos($host, 'twitter.com') !== false || stripos($host, 'x.com') !== false) {
+                                                    $iconSvgHtml = '<svg class="h-5 w-5 mr-1.5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>';
+                                                    $displayText = __('messages.profile.link_twitter');
+                                                } elseif (stripos($host, 'instagram.com') !== false) {
+                                                    $iconSvgHtml = '<svg class="h-5 w-5 mr-1.5 text-pink-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.316.011 7.053.069 2.59.284.287 2.59.07 7.053.011 8.316 0 8.741 0 12c0 3.259.011 3.684.069 4.947.217 4.46 2.522 6.769 7.053 6.984 1.267.058 1.692.069 4.947.069 3.259 0 3.684-.011 4.947-.069 4.46-.217 6.769-2.522 6.984-7.053.058-1.267.069-1.692.069-4.947 0-3.259-.011-3.684-.069-4.947-.217-4.46-2.522-6.769-7.053-6.984C15.684.011 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>';
+                                                    $displayText = __('messages.profile.link_instagram');
+                                                } elseif (stripos($host, 'facebook.com') !== false) {
+                                                    $iconSvgHtml = '<svg class="h-5 w-5 mr-1.5 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12c6.627 0 12-5.373 12-12S18.627 0 12 0zm3.055 8.181h-1.717c-.594 0-.708.282-.708.695v.978h2.399l-.311 2.445h-2.088V20.5h-2.523v-8.199H8.222V9.854h1.887V8.69c0-1.871 1.142-2.89 2.813-2.89a15.868 15.868 0 011.67.087v2.204h-.986c-.908 0-1.084.432-1.084 1.065v.025z"/></svg>';
+                                                    $displayText = __('messages.profile.link_facebook');
+                                                } elseif (stripos($host, 'linkedin.com') !== false) {
+                                                    $iconSvgHtml = '<svg class="h-5 w-5 mr-1.5 text-blue-700" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg>';
+                                                    $displayText = __('messages.profile.link_linkedin');
+                                                } elseif (stripos($host, 'github.com') !== false) {
+                                                    $iconSvgHtml = '<svg class="h-5 w-5 mr-1.5 text-gray-800 dark:text-gray-200" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.026 2.747-1.026.546 1.379.201 2.398.098 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.922.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.001 10.001 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/></svg>';
+                                                    $displayText = __('messages.profile.link_github');
+                                                } else {
+                                                    $iconSvgHtml = '<svg class="h-5 w-5 mr-1.5 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path d="M12.232 4.232a2.5 2.5 0 013.536 3.536l-1.225 1.224a.75.75 0 001.061 1.06l1.224-1.224a4 4 0 00-5.656-5.656l-3 3a4 4 0 00.225 5.865.75.75 0 00.977-1.138 2.5 2.5 0 01-.142-3.665l2.829-2.829zm-4.464 4.464a2.5 2.5 0 010-3.536l1.225-1.224a.75.75 0 00-1.061-1.06l-1.224 1.224a4 4 0 005.656 5.656l3-3a4 4 0 00-.225-5.865.75.75 0 00-.977 1.138 2.5 2.5 0 01.142 3.665l-2.829 2.829a2.5 2.5 0 01-3.536 0z"></path></svg>';
+                                                    $displayText = Str::limit(preg_replace('/^www\./', '', $host), 20);
+                                                }
+                                            @endphp
+                                            <a href="{{ $link_url }}" target="_blank" rel="noopener noreferrer nofollow"
+                                               title="{{ $link_url }}"
+                                               class="inline-flex items-center bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm px-3 py-1.5 rounded-full transition-colors duration-150 shadow-sm border border-gray-200 dark:border-gray-600">
+                                                {!! $iconSvgHtml !!}
+                                                <span class="truncate">{{ $displayText }}</span>
+                                            </a>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
                         @if ($isOwnProfile)
                             <div class="mt-4">
                                 <a href="{{ route('profile.edit') }}"
