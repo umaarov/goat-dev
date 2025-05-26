@@ -1,5 +1,6 @@
 @php
-    use Illuminate\Support\Facades\Auth;use Illuminate\Support\Str;
+    use Illuminate\Support\Facades\Auth;
+    use Illuminate\Support\Str;
     $showManagementOptions = $showManagementOptions ?? false;
     $profileOwnerToDisplay = $profileOwnerToDisplay ?? null;
     $currentViewerVote = $post->user_vote ?? null;
@@ -24,7 +25,6 @@
          data-profile-owner-vote-option="{{ $voteByProfileOwner }}"
     @endif
 >
-    <!-- Header: Profile pic, username and date -->
     <header class="p-4">
         <div class="flex">
             @php
@@ -36,7 +36,8 @@
 
                 $isVerified = in_array($post->user->username, ['goat', 'umarov'])
             @endphp
-            <img src="{{ $profilePic }}" alt="{{ $post->user->username }}'s profile picture"
+            <img src="{{ $profilePic }}"
+                 alt="{{ __('messages.profile.alt_profile_picture', ['username' => $post->user->username]) }}"
                  class="w-10 h-10 rounded-full border border-gray-300 cursor-pointer zoomable-image"
                  data-full-src="{{ $profilePic }}">
             <div class="ml-3">
@@ -45,7 +46,7 @@
                        class="font-medium text-gray-800 hover:underline">{{ '@' . $post->user->username }}</a>
 
                     @if($isVerified)
-                        <span class="ml-1" title="Verified Account">
+                        <span class="ml-1" title="{{ __('messages.profile.verified_account') }}">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" viewBox="0 0 20 20"
                                  fill="currentColor">
                                 <path fill-rule="evenodd"
@@ -60,12 +61,12 @@
             @if ($showManagementOptions && Auth::check() && Auth::id() === $post->user_id)
                 <div class="flex justify-end border-gray-200 pl-4 ml-auto">
                     <form action="{{ route('posts.destroy', $post) }}" method="POST"
-                          onsubmit="return confirm('Are you sure you want to delete this post? This cannot be undone.');">
+                          onsubmit="return confirm('{{ __('messages.confirm_delete_post_text') }}');">
                         @csrf
                         @method('DELETE')
                         <button type="submit"
                                 class="bg-red-100 hover:bg-red-200 text-red-700 text-sm py-1 px-3 rounded-md">
-                            Delete
+                            {{ __('messages.delete_button') }}
                         </button>
                     </form>
                 </div>
@@ -73,20 +74,17 @@
         </div>
     </header>
 
-    <!-- Horizontal line -->
     <div class="border-b w-full border-gray-200"></div>
 
-    <!-- Question -->
     <div class="pt-4 px-4 font-semibold text-center">
         <p class="text-lg text-gray-800">{{ $post->question }}</p>
     </div>
 
-    <!-- Two images side by side -->
     <div class="grid grid-cols-2 gap-4 p-4 h-52">
         <div class="rounded-md overflow-hidden">
             @if($post->option_one_image)
                 @php $optionOneImageUrl = asset('storage/' . $post->option_one_image); @endphp
-                <img src="{{ $optionOneImageUrl }}" alt="Option 1 Image"
+                <img src="{{ $optionOneImageUrl }}" alt="{{ __('messages.post_card.option_1_image_alt') }}"
                      class="h-full w-full object-cover object-center cursor-pointer zoomable-image"
                      data-full-src="{{ $optionOneImageUrl }}">
             @else
@@ -104,7 +102,8 @@
         <div class="rounded-md overflow-hidden">
             @if($post->option_two_image)
                 @php $optionTwoImageUrl = asset('storage/' . $post->option_two_image); @endphp
-                <img src="{{ asset('storage/' . $post->option_two_image) }}" alt="Option 2 Image"
+                <img src="{{ asset('storage/' . $post->option_two_image) }}"
+                     alt="{{ __('messages.post_card.option_2_image_alt') }}"
                      class="h-full w-full object-cover object-center cursor-pointer zoomable-image"
                      data-full-src="{{ $optionTwoImageUrl }}">
             @else
@@ -120,7 +119,6 @@
         </div>
     </div>
 
-    <!-- Voting buttons with percentages -->
     <div class="grid grid-cols-2 gap-4 px-4 pb-4">
         @php
             $totalVotes = $post->total_votes;
@@ -132,7 +130,6 @@
             $isNotLoggedIn = !Auth::check();
         @endphp
 
-            <!-- Option 1 Button -->
         <button
             class="vote-button p-2 text-[16px] text-center rounded-md relative
                    {{ $highlightOptionForViewer === 'option_one' ? 'bg-blue-800 text-white' : 'bg-white border border-gray-300 hover:bg-gray-50' }}
@@ -146,7 +143,7 @@
             @if($showVotedByOwnerIcon && $voteByProfileOwner === 'option_one')
                 <span
                     class="absolute top-0 right-0 -mt-2 -mr-2 px-1.5 py-0.5 bg-indigo-500 text-white text-[9px] leading-none rounded-full shadow-md flex items-center justify-center pointer-events-none"
-                    title="{{ $profileOwnerToDisplay->username }} voted for this option">
+                    title="{{ __('messages.post_card.owner_voted_for_this_option', ['username' => $profileOwnerToDisplay->username]) }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd"
                               d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -156,7 +153,6 @@
             @endif
         </button>
 
-        <!-- Option 2 Button -->
         <button
             class="vote-button p-2 text-[16px] text-center rounded-md relative
                    {{ $highlightOptionForViewer === 'option_two' ? 'bg-blue-800 text-white' : 'bg-white border border-gray-300 hover:bg-gray-50' }}
@@ -165,13 +161,14 @@
             data-option="option_two"
             @if($showPercentagesOnButtons) data-tooltip-show-count="true" @endif
             @if($showVotedByOwnerIcon && $voteByProfileOwner === 'option_two') data-tooltip-is-owner-choice="true"
+            title="{{ __('messages.post_card.owner_voted_for_this_option', ['username' => $profileOwnerToDisplay->username]) }}"
             @endif
         >
             <p class="button-text-truncate">{{ $post->option_two_title }} {{ $showPercentagesOnButtons ? "($percentTwo%)" : "" }}</p>
             @if($showVotedByOwnerIcon && $voteByProfileOwner === 'option_two')
                 <span
                     class="absolute top-0 right-0 -mt-2 -mr-2 px-1.5 py-0.5 bg-indigo-500 text-white text-[9px] leading-none rounded-full shadow-md flex items-center justify-center pointer-events-none"
-                    title="{{ $profileOwnerToDisplay->username }} voted for this option">
+                    title="{{ __('messages.post_card.owner_voted_for_this_option', ['username' => $profileOwnerToDisplay->username]) }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd"
                               d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -182,12 +179,9 @@
         </button>
     </div>
 
-    <!-- Horizontal line -->
     <div class="border-b w-full border-gray-200"></div>
 
-    <!-- Interaction buttons: Comment, Total Votes, Share -->
     <div class="flex justify-between items-center px-8 py-3 text-sm text-gray-600">
-        <!-- Comment button with count -->
         <button class="flex flex-col items-center gap-1 cursor-pointer" onclick="toggleComments('{{ $post->id }}')">
             <div class="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -199,13 +193,11 @@
             <span>{{ $post->comments_count }}</span>
         </button>
 
-        <!-- Total votes counter -->
         <div class="flex flex-col items-center gap-1">
             <span class="text-lg font-semibold">{{ $post->total_votes }}</span>
-            <span>Votes</span>
+            <span>{{ __('messages.post_card.votes_label') }}</span>
         </div>
 
-        <!-- Share button with count -->
         <button class="flex flex-col items-center gap-1 cursor-pointer" onclick="sharePost('{{ $post->id }}')">
             <div class="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -218,38 +210,36 @@
         </button>
     </div>
 
-    <!-- Comments section (hidden by default) -->
-    <div id="comments-section-<?php echo e($post->id); ?>" class="hidden">
-        <!-- Horizontal line -->
+    <div id="comments-section-{{ $post->id }}" class="hidden">
         <div class="border-b border-gray-200"></div>
 
-        <!-- Comment form for authenticated users -->
-        <?php if (auth()->guard()->check()): ?>
-        <div class="p-4 border-b border-gray-200 comment-form-container">
-            <form id="comment-form-<?php echo e($post->id); ?>"
-                  onsubmit="submitComment('<?php echo e($post->id); ?>', event)"
-                  class="flex flex-col space-y-2">
-                    <?php echo csrf_field(); ?>
-                <textarea name="content" rows="2" placeholder="Write a comment..." required
-                          class="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                <div class="flex justify-between">
-                    <button type="button" onclick="toggleComments('<?php echo e($post->id); ?>')"
-                            class="bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm py-1 px-4 rounded-md">Close
-                    </button>
-                    <button type="submit"
-                            class="bg-blue-800 hover:bg-blue-900 text-white text-sm py-1 px-4 rounded-md">Comment
-                    </button>
-                </div>
-            </form>
-        </div>
-        <?php endif; ?>
+        @if (Auth::check())
+            <div class="p-4 border-b border-gray-200 comment-form-container">
+                <form id="comment-form-{{ $post->id }}"
+                      onsubmit="submitComment('{{ $post->id }}', event)"
+                      class="flex flex-col space-y-2">
+                    @csrf
+                    <textarea name="content" rows="2" placeholder="{{ __('messages.add_comment_placeholder') }}"
+                              required
+                              class="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    <div class="flex justify-between">
+                        <button type="button" onclick="toggleComments('{{ $post->id }}')"
+                                class="bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm py-1 px-4 rounded-md">{{ __('messages.cancel_button') }} {{-- Or a more specific 'Close' --}}
+                        </button>
+                        <button type="submit"
+                                class="bg-blue-800 hover:bg-blue-900 text-white text-sm py-1 px-4 rounded-md">{{ __('messages.submit_comment_button') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        @endif
 
         <div class="p-4">
-            <h4 class="text-sm font-semibold text-gray-700 mb-3">Comments</h4>
+            <h4 class="text-sm font-semibold text-gray-700 mb-3">{{ __('messages.comments_title') }}</h4>
 
             <div class="comments-list"></div>
 
-            <div id="pagination-container-<?php echo e($post->id); ?>" class="mt-4"></div>
+            <div id="pagination-container-{{ $post->id }}" class="mt-4"></div>
         </div>
     </div>
 </article>
@@ -414,11 +404,44 @@
 </style>
 
 <script>
+    window.translations = {
+        profile_alt_picture: "{{ __('messages.profile.alt_profile_picture_js', ['username' => ':username']) }}",
+        verified_account: "{{ __('messages.profile.verified_account') }}",
+        delete_comment_title: "{{ __('messages.profile.js.delete_comment_title') }}",
+        time_just_now: "{{ __('messages.profile.js.time.just_now') }}",
+        time_minute: "{{ __('messages.profile.js.time.minute') }}",
+        time_minutes: "{{ __('messages.profile.js.time.minutes') }}",
+        time_minutes_alt: "{{ __('messages.profile.js.time.minutes_alt') }}",
+        time_hour: "{{ __('messages.profile.js.time.hour') }}",
+        time_hours: "{{ __('messages.profile.js.time.hours') }}",
+        time_hours_alt: "{{ __('messages.profile.js.time.hours_alt') }}",
+        time_day: "{{ __('messages.profile.js.time.day') }}",
+        time_days: "{{ __('messages.profile.js.time.days') }}",
+        time_days_alt: "{{ __('messages.profile.js.time.days_alt') }}",
+        time_ago: "{{ __('messages.profile.js.time.ago') }}",
+        js_link_copied: "{{ __('messages.profile.js.link_copied') }}",
+        js_login_to_comment: `{!! __('messages.post_card.js.login_to_comment', ['login_link' => route('login')]) !!}`,
+        js_no_comments_be_first: "{{ __('messages.post_card.js.no_comments_be_first') }}",
+        js_failed_load_comments: "{{ __('messages.profile.js.failed_load_comments') }}",
+        js_comment_empty: "{{ __('messages.profile.js.comment_empty') }}",
+        js_submit_comment_button: "{{ __('messages.submit_comment_button') }}",
+        js_comment_button_submitting: "{{ __('messages.profile.js.comment_button_submitting') }}",
+        js_error_prefix: "{{ __('messages.profile.js.error_prefix') }}",
+        js_failed_add_comment: "{{ __('messages.post_card.js.failed_add_comment') }}",
+        js_confirm_delete_comment_text: "{{ __('messages.confirm_delete_comment_text') }}",
+        js_failed_delete_comment: "{{ __('messages.post_card.js.failed_delete_comment') }}",
+        js_login_to_vote: "{{ __('messages.profile.js.login_to_vote') }}",
+        js_vote_failed_connection: "{{ __('messages.profile.js.vote_failed_connection') }}",
+        js_option_1_default_title: "{{ __('messages.post_card.js.option_1_default_title') }}",
+        js_option_2_default_title: "{{ __('messages.post_card.js.option_2_default_title') }}",
+        js_error_already_voted: "{{ __('messages.error_already_voted') }}",
+        js_vote_registered_successfully: "{{ __('messages.vote_registered_successfully') }}",
+    };
+
     if (typeof window.currentlyOpenCommentsId === 'undefined') {
         window.currentlyOpenCommentsId = null;
     }
     document.addEventListener('DOMContentLoaded', function () {
-        // Check if we need to scroll to a specific post
         @if(session('scrollToPost'))
         scrollToPost({{ session('scrollToPost') }});
         @endif
@@ -448,21 +471,15 @@
     }
 
     function sharePost(postId) {
-        // Get the post element
         const postElement = document.getElementById(`post-${postId}`);
         if (!postElement) return;
-
-        // Get question text which we'll use in the URL slug
         const question = postElement.querySelector('.pt-4.px-4.font-semibold.text-center p').textContent;
         const slug = question.toLowerCase()
-            .replace(/[^\w\s-]/g, '') // Remove special chars
-            .replace(/\s+/g, '-') // Replace spaces with dashes
-            .substring(0, 60); // Limit length
-
-        // Create a cleaner, more professional URL
+            .replace(/[^\w\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .substring(0, 60);
         const shareUrl = `${window.location.origin}/p/${postId}/${slug}`;
 
-        // Check if we can use the Web Share API (mobile devices)
         if (navigator.share) {
             navigator.share({
                 title: question,
@@ -474,36 +491,26 @@
         } else {
             fallbackShare(shareUrl);
         }
-
-        // Track share count
         updateShareCount(postId);
     }
 
     function fallbackShare(url) {
-        // Create a temporary input element
         const input = document.createElement('input');
         input.value = url;
         document.body.appendChild(input);
-
-        // Select and copy the URL
         input.select();
         document.execCommand('copy');
         document.body.removeChild(input);
-
-        showToast("Link copied to clipboard!")
+        showToast(window.translations.js_link_copied);
     }
 
     function updateShareCount(postId) {
         const shareCountElement = document.querySelector(`#post-${postId} .flex.justify-between.items-center.px-8.py-3 button:last-child span`);
         if (shareCountElement) {
-            // Get current share count, increment it
             const currentCount = parseInt(shareCountElement.textContent);
             const newCount = isNaN(currentCount) ? 1 : currentCount + 1;
             shareCountElement.textContent = newCount;
-
-            // Also update the count in the database
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
             fetch(`/posts/${postId}/share`, {
                 method: 'POST',
                 headers: {
@@ -562,22 +569,18 @@
     function loadComments(postId, page) {
         const commentsSection = document.getElementById(`comments-section-${postId}`);
         const commentsContainer = commentsSection.querySelector('.comments-list');
-
         if (!commentsContainer) {
             console.error('Comments container not found');
             return;
         }
-
-        // Check if user is logged in
         const isLoggedIn = {{ Auth::check() ? 'true' : 'false' }};
 
         if (!isLoggedIn) {
-            commentsContainer.innerHTML = '<div class="text-center py-4"><p class="text-sm text-gray-500">Please <a class="text-blue-800 hover:underline" href="{{ route("login") }}">log in</a> to view and post comments.</p></div>';
+            commentsContainer.innerHTML = `<div class="text-center py-4"><p class="text-sm text-gray-500">${window.translations.js_login_to_comment}</p></div>`;
             const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
             if (paginationContainer) {
                 paginationContainer.innerHTML = '';
             }
-
             commentsSection.dataset.loaded = "true";
             return;
         }
@@ -592,7 +595,6 @@
             commentsContainer.appendChild(loadingIndicator);
         } else {
             commentsContainer.appendChild(loadingIndicator);
-
             const existingComments = commentsContainer.querySelectorAll('.comment');
             existingComments.forEach(comment => {
                 comment.style.opacity = '0.5';
@@ -607,11 +609,10 @@
                 if (loadingElement) {
                     loadingElement.remove();
                 }
-
                 commentsContainer.innerHTML = '';
 
                 if (data.comments.data.length === 0) {
-                    commentsContainer.innerHTML = '<p class="text-sm text-gray-500 text-center">No comments yet. Be the first to comment!</p>';
+                    commentsContainer.innerHTML = `<p class="text-sm text-gray-500 text-center">${window.translations.js_no_comments_be_first}</p>`;
                     return;
                 }
 
@@ -621,18 +622,16 @@
                 });
 
                 animateComments(commentsContainer);
-
                 const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
                 if (paginationContainer) {
                     renderPagination(data.comments, postId, paginationContainer);
                 }
-
                 commentsSection.dataset.loaded = "true";
                 commentsSection.dataset.currentPage = page;
             })
             .catch(error => {
                 console.error('Error:', error);
-                commentsContainer.innerHTML = '<p class="text-red-500 text-center">Failed to load comments. Please try again.</p>';
+                commentsContainer.innerHTML = `<p class="text-red-500 text-center">${window.translations.js_failed_load_comments}</p>`;
             });
     }
 
@@ -645,16 +644,18 @@
             ? (comment.user.profile_picture.startsWith('http') ? comment.user.profile_picture : '/storage/' + comment.user.profile_picture)
             : '/images/default-pfp.png';
 
-        const isVerified = ['goat', 'umarov'].includes(comment.user.username);
+        const altProfilePic = window.translations.profile_alt_picture.replace(':username', comment.user.username);
+
+        const isVerified = ['goat', 'umarov'].includes(comment.user.username); // This logic might need to come from server if usernames change
         const verifiedIconHTML = isVerified ? `
-                <span class="ml-1" title="Verified Account">
+                <span class="ml-1" title="${window.translations.verified_account}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
                 </span>` : '';
         commentDiv.innerHTML = `
             <div class="flex items-start mb-2">
-                <img src="${profilePic}" alt="${comment.user.username}'s profile picture" class="w-8 h-8 rounded-full mr-2 mt-1 cursor-pointer zoomable-image" data-full-src="${profilePic}">
+                <img src="${profilePic}" alt="${altProfilePic}" class="w-8 h-8 rounded-full mr-2 mt-1 cursor-pointer zoomable-image" data-full-src="${profilePic}">
                 <div class="flex-1">
                     <div class="flex items-center">
                         <a href="/@${comment.user.username}" class="text-sm font-medium text-gray-800 hover:underline">${comment.user.username}</a>
@@ -667,7 +668,7 @@
                 ${canDeleteComment(comment) ? `
                 <div class="ml-auto pl-2">
                     <form onsubmit="deleteComment('${comment.id}', event)" class="inline">
-                        <button type="submit" class="text-gray-400 hover:text-red-500 text-xs p-1" title="Delete comment">
+                        <button type="submit" class="text-gray-400 hover:text-red-500 text-xs p-1" title="${window.translations.delete_comment_title}">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
                     </form>
@@ -678,19 +679,9 @@
 
     function canDeleteComment(comment) {
         const currentUserId = {{ Auth::id() ?? 'null' }};
-
-        if (currentUserId === null) {
-            return false;
-        }
-
-        if (comment.user_id === currentUserId) {
-            return true;
-        }
-
-        if (comment.post && typeof comment.post.user_id !== 'undefined' && comment.post.user_id === currentUserId) {
-            return true;
-        }
-
+        if (currentUserId === null) return false;
+        if (comment.user_id === currentUserId) return true;
+        if (comment.post && typeof comment.post.user_id !== 'undefined' && comment.post.user_id === currentUserId) return true;
         return false;
     }
 
@@ -698,36 +689,50 @@
         const date = new Date(timestamp);
         const now = new Date();
         const diffInSeconds = Math.floor((now - date) / 1000);
+        const lang = document.documentElement.lang;
 
         if (diffInSeconds < 60) {
-            return 'Just now';
+            return window.translations.time_just_now;
         } else if (diffInSeconds < 3600) {
-            const minutes = Math.floor(diffInSeconds / 60);
-            return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+            const count = Math.floor(diffInSeconds / 60);
+            if (lang === 'ru') {
+                if (count === 1) return `${count} ${window.translations.time_minute} ${window.translations.time_ago}`;
+                if (count >= 2 && count <= 4) return `${count} ${window.translations.time_minutes} ${window.translations.time_ago}`;
+                return `${count} ${window.translations.time_minutes_alt} ${window.translations.time_ago}`;
+            }
+            return `${count} ${count === 1 ? window.translations.time_minute : window.translations.time_minutes} ${window.translations.time_ago}`;
         } else if (diffInSeconds < 86400) {
-            const hours = Math.floor(diffInSeconds / 3600);
-            return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+            const count = Math.floor(diffInSeconds / 3600);
+            if (lang === 'ru') {
+                if (count === 1) return `${count} ${window.translations.time_hour} ${window.translations.time_ago}`;
+                if (count >= 2 && count <= 4) return `${count} ${window.translations.time_hours} ${window.translations.time_ago}`;
+                return `${count} ${window.translations.time_hours_alt} ${window.translations.time_ago}`;
+            }
+            return `${count} ${count === 1 ? window.translations.time_hour : window.translations.time_hours} ${window.translations.time_ago}`;
         } else if (diffInSeconds < 604800) {
-            const days = Math.floor(diffInSeconds / 86400);
-            return `${days} day${days > 1 ? 's' : ''} ago`;
+            const count = Math.floor(diffInSeconds / 86400);
+            if (lang === 'ru') {
+                if (count === 1) return `${count} ${window.translations.time_day} ${window.translations.time_ago}`;
+                if (count >= 2 && count <= 4) return `${count} ${window.translations.time_days} ${window.translations.time_ago}`;
+                return `${count} ${window.translations.time_days_alt} ${window.translations.time_ago}`;
+            }
+            return `${count} ${count === 1 ? window.translations.time_day : window.translations.time_days} ${window.translations.time_ago}`;
         } else {
-            return date.toLocaleDateString();
+            return date.toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'en-US');
         }
     }
 
+
     function renderPagination(comments, postId, container) {
         container.innerHTML = '';
-
-        if (comments.last_page <= 1) {
-            return;
-        }
+        if (comments.last_page <= 1) return;
 
         const pagination = document.createElement('div');
         pagination.className = 'pagination';
 
+        // Previous page link
         if (comments.current_page > 1) {
-            const prevLink = createPageLink('&laquo;', comments.current_page - 1, postId);
-            pagination.appendChild(prevLink);
+            pagination.appendChild(createPageLink('&laquo;', comments.current_page - 1, postId));
         } else {
             const disabledPrev = document.createElement('div');
             disabledPrev.className = 'page-item disabled';
@@ -735,6 +740,7 @@
             pagination.appendChild(disabledPrev);
         }
 
+        // Page number links
         const startPage = Math.max(1, comments.current_page - 2);
         const endPage = Math.min(comments.last_page, comments.current_page + 2);
 
@@ -749,8 +755,7 @@
         }
 
         for (let i = startPage; i <= endPage; i++) {
-            const pageLink = createPageLink(i.toString(), i, postId, i === comments.current_page);
-            pagination.appendChild(pageLink);
+            pagination.appendChild(createPageLink(i.toString(), i, postId, i === comments.current_page));
         }
 
         if (endPage < comments.last_page) {
@@ -763,36 +768,30 @@
             pagination.appendChild(createPageLink(comments.last_page.toString(), comments.last_page, postId));
         }
 
+        // Next page link
         if (comments.current_page < comments.last_page) {
-            const nextLink = createPageLink('&raquo;', comments.current_page + 1, postId);
-            pagination.appendChild(nextLink);
+            pagination.appendChild(createPageLink('&raquo;', comments.current_page + 1, postId));
         } else {
             const disabledNext = document.createElement('div');
             disabledNext.className = 'page-item disabled';
             disabledNext.innerHTML = '<span class="page-link">&raquo;</span>';
             pagination.appendChild(disabledNext);
         }
-
         container.appendChild(pagination);
     }
 
     function createPageLink(text, page, postId, isActive = false) {
         const pageItem = document.createElement('div');
         pageItem.className = `page-item ${isActive ? 'active' : ''}`;
-
         const link = document.createElement('a');
         link.className = 'page-link';
         link.href = 'javascript:void(0)';
         link.innerHTML = text;
         link.onclick = (e) => {
             e.preventDefault();
-            if (pageItem.classList.contains('active')) {
-                return;
-            }
-
+            if (pageItem.classList.contains('active')) return;
             const commentsSection = document.getElementById(`comments-section-${postId}`);
             const scrollPosition = commentsSection.scrollTop;
-
             const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
             if (paginationContainer) {
                 const overlay = document.createElement('div');
@@ -804,17 +803,13 @@
                 overlay.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
                 overlay.style.zIndex = '10';
                 overlay.style.transition = 'opacity 0.2s ease';
-
                 const commentsListContainer = commentsSection.querySelector('.comments-list');
                 if (commentsListContainer && getComputedStyle(commentsListContainer).position === 'static') {
                     commentsListContainer.style.position = 'relative';
                 }
-
                 commentsListContainer.appendChild(overlay);
-
                 setTimeout(() => {
                     loadComments(postId, page);
-
                     setTimeout(() => {
                         overlay.style.opacity = '0';
                         setTimeout(() => {
@@ -827,7 +822,6 @@
                 loadComments(postId, page);
             }
         };
-
         pageItem.appendChild(link);
         return pageItem;
     }
@@ -839,12 +833,12 @@
         const content = form.elements.content.value;
 
         if (!content.trim()) {
-            showToast('Comment cannot be empty');
+            showToast(window.translations.js_comment_empty);
             return;
         }
 
         submitButton.disabled = true;
-        submitButton.innerHTML = '<div class="inline-block animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>';
+        submitButton.innerHTML = `<div class="inline-block animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div> ${window.translations.js_comment_button_submitting}`;
 
         const url = `/posts/${postId}/comments`;
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -861,39 +855,25 @@
             .then(response => response.json())
             .then(data => {
                 form.elements.content.value = '';
-
                 submitButton.disabled = false;
-                submitButton.innerHTML = 'Comment';
+                submitButton.innerHTML = window.translations.js_submit_comment_button;
 
                 if (data.errors) {
-                    showToast('Error: ' + Object.values(data.errors).join('\n'));
+                    showToast(window.translations.js_error_prefix + ' ' + Object.values(data.errors).join('\n'));
                     return;
                 }
-
-                const currentUserId = {{ Auth::id() ?? 'null' }};
-                const currentUsername = '{{ Auth::check() ? Auth::user()->username : "" }}';
-                const currentUserProfilePic = '{{ Auth::check() ? (Auth::user()->profile_picture ? (Str::startsWith(Auth::user()->profile_picture, ["http", "https"]) ? Auth::user()->profile_picture : asset("storage/" . Auth::user()->profile_picture)) : asset("images/default-pfp.png")) : "" }}';
-
-                const newComment = {
-                    id: data.comment.id,
-                    content: data.comment.content,
-                    created_at: data.comment.created_at,
-                    user: {
-                        id: currentUserId,
-                        username: currentUsername,
-                        profile_picture: currentUserProfilePic
-                    },
-                    post: {
-                        user_id: data.comment.post.user_id
-                    },
-                    user_id: currentUserId
+                const newComment = data.comment;
+                newComment.user = data.comment.user || {
+                    id: {{ Auth::id() ?? 'null' }},
+                    username: '{{ Auth::check() ? Auth::user()->username : "" }}',
+                    profile_picture: '{{ Auth::check() ? (Auth::user()->profile_picture ? (Str::startsWith(Auth::user()->profile_picture, ["http", "https"]) ? Auth::user()->profile_picture : asset("storage/" . Auth::user()->profile_picture)) : asset("images/default-pfp.png")) : "" }}'
                 };
+
 
                 const commentsSection = document.getElementById(`comments-section-${postId}`);
                 const commentsContainer = commentsSection.querySelector('.comments-list');
-
                 const noCommentsMessage = commentsContainer.querySelector('p.text-center');
-                if (noCommentsMessage) {
+                if (noCommentsMessage && noCommentsMessage.textContent === window.translations.js_no_comments_be_first) {
                     commentsContainer.innerHTML = '';
                 }
 
@@ -903,51 +883,32 @@
                 } else {
                     commentsContainer.appendChild(commentElement);
                 }
-
                 setTimeout(() => {
                     commentElement.classList.add('visible');
                 }, 10);
 
                 const commentCountElement = document.querySelector(`#post-${postId} .flex.justify-between.items-center.px-8.py-3 button:first-child span`);
                 if (commentCountElement) {
-                    const currentCount = parseInt(commentCountElement.textContent);
-                    commentCountElement.textContent = currentCount + 1;
-                }
-
-                const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
-                if (paginationContainer && commentsSection.dataset.currentPage !== '1') {
-                    fetch(`/posts/${postId}/comments?page=1`)
-                        .then(response => response.json())
-                        .then(pageData => {
-                            renderPagination(pageData.comments, postId, paginationContainer);
-                        });
+                    commentCountElement.textContent = parseInt(commentCountElement.textContent) + 1;
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
                 submitButton.disabled = false;
-                submitButton.innerHTML = 'Comment';
-                showToast('Failed to add comment. Please try again.');
+                submitButton.innerHTML = window.translations.js_submit_comment_button;
+                showToast(window.translations.js_failed_add_comment);
             });
     }
 
     function deleteComment(commentId, event) {
         event.preventDefault();
-        if (!confirm('Delete this comment?')) return;
+        if (!confirm(window.translations.js_confirm_delete_comment_text)) return;
 
         const commentElement = document.getElementById('comment-' + commentId);
-        if (!commentElement) {
-            console.error('Comment element not found');
-            return;
-        }
-
+        if (!commentElement) return;
         const postIdElement = commentElement.closest('[id^="comments-section-"]');
-        if (!postIdElement) {
-            console.error('Could not find parent post ID for comment');
-            return;
-        }
+        if (!postIdElement) return;
         const postId = postIdElement.id.split('-')[2];
-
 
         commentElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
         commentElement.style.opacity = '0';
@@ -961,11 +922,9 @@
             headers: {'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json'}
         })
             .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => {
-                        throw err;
-                    });
-                }
+                if (!response.ok) return response.json().then(err => {
+                    throw err;
+                });
                 return response.json();
             })
             .then(data => {
@@ -975,7 +934,6 @@
                     commentElement.style.transform = 'translateY(0)';
                     return;
                 }
-
                 const commentCountElement = document.querySelector(`#post-${postId} .flex.justify-between.items-center.px-8.py-3 button:first-child span`);
                 if (commentCountElement) {
                     const currentCount = parseInt(commentCountElement.textContent);
@@ -983,61 +941,45 @@
                         commentCountElement.textContent = currentCount - 1;
                     }
                 }
-
                 setTimeout(() => {
                     commentElement.remove();
-
                     const commentsSection = document.getElementById(`comments-section-${postId}`);
                     const commentsContainer = commentsSection.querySelector('.comments-list');
-                    const remainingCommentElements = commentsContainer.querySelectorAll('.comment');
-
-                    if (remainingCommentElements.length === 0) {
+                    if (commentsContainer.querySelectorAll('.comment').length === 0) {
                         const currentPage = parseInt(commentsSection.dataset.currentPage) || 1;
                         if (currentPage > 1) {
                             loadComments(postId, currentPage - 1);
                         } else {
-                            commentsContainer.innerHTML = '<p class="text-sm text-gray-500 text-center">No comments yet. Be the first to comment!</p>';
+                            commentsContainer.innerHTML = `<p class="text-sm text-gray-500 text-center">${window.translations.js_no_comments_be_first}</p>`;
                             const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
                             if (paginationContainer) paginationContainer.innerHTML = '';
                             commentsSection.dataset.loaded = "true";
                         }
                     }
                 }, 300);
-
             })
             .catch(error => {
                 console.error('Error deleting comment:', error);
                 commentElement.style.opacity = '1';
                 commentElement.style.transform = 'translateY(0)';
-                const errorMessage = error?.message || error?.error || 'Failed to delete comment. Please try again.';
+                const errorMessage = error?.message || error?.error || window.translations.js_failed_delete_comment;
                 showToast(String(errorMessage));
             });
     }
 
     async function voteForOption(postId, option) {
         if (!{{ Auth::check() ? 'true' : 'false' }}) {
-            if (window.showToast) window.showToast('You need to be logged in to vote.', 'warning');
+            if (window.showToast) window.showToast(window.translations.js_login_to_vote, 'warning');
             return;
         }
 
         const postElement = document.getElementById(`post-${postId}`);
-        if (!postElement) {
-            console.error(`Post element with ID post-${postId} not found.`);
-            return;
-        }
+        if (!postElement) return;
 
         const clickedButton = postElement.querySelector(`button.vote-button[data-option="${option}"]`);
         const otherButtonOption = option === 'option_one' ? 'option_two' : 'option_one';
         const otherButton = postElement.querySelector(`button.vote-button[data-option="${otherButtonOption}"]`);
-
-        if (!clickedButton || !otherButton) {
-            console.error('Vote buttons not found for post-' + postId);
-            return;
-        }
-
-        if (clickedButton.disabled) {
-            return;
-        }
+        if (!clickedButton || !otherButton || clickedButton.disabled) return;
 
         const knownUserVote = postElement.dataset.userVote;
         if (knownUserVote && (knownUserVote === 'option_one' || knownUserVote === 'option_two')) {
@@ -1046,40 +988,23 @@
                 option_one_votes: parseInt(postElement.dataset.optionOneVotes, 10),
                 option_two_votes: parseInt(postElement.dataset.optionTwoVotes, 10),
                 total_votes: parseInt(postElement.dataset.optionOneVotes, 10) + parseInt(postElement.dataset.optionTwoVotes, 10),
-                message: "You have already voted on this post."
             };
             updateVoteUI(postId, currentVoteData.user_vote, currentVoteData);
-            if (window.showToast) window.showToast(currentVoteData.message, 'info');
+            if (window.showToast) window.showToast(window.translations.js_error_already_voted, 'info');
             return;
         }
 
-        const originalOptionOneVotes = parseInt(postElement.dataset.optionOneVotes, 10);
-        const originalOptionTwoVotes = parseInt(postElement.dataset.optionTwoVotes, 10);
-        const originalUserVoteState = postElement.dataset.userVote || '';
-
         const originalClickedButtonClasses = Array.from(clickedButton.classList);
         const originalOtherButtonClasses = Array.from(otherButton.classList);
-
         const totalVotesDisplayElement = postElement.querySelector('.flex.justify-between.items-center .flex.flex-col.items-center.gap-1 span.text-lg.font-semibold');
-        const originalTotalVotesText = totalVotesDisplayElement ? totalVotesDisplayElement.textContent : (originalOptionOneVotes + originalOptionTwoVotes).toString();
+        const originalTotalVotesText = totalVotesDisplayElement ? totalVotesDisplayElement.textContent : (parseInt(postElement.dataset.optionOneVotes, 10) + parseInt(postElement.dataset.optionTwoVotes, 10)).toString();
 
-
-        const highlightClasses = ['bg-blue-800', 'text-white'];
-        const defaultBgClasses = ['bg-white', 'border', 'border-gray-300', 'hover:bg-gray-50'];
-
-        clickedButton.classList.remove(...defaultBgClasses, ...highlightClasses);
-        clickedButton.classList.add(...highlightClasses);
-
-        otherButton.classList.remove(...highlightClasses, ...defaultBgClasses);
-        otherButton.classList.add(...defaultBgClasses);
 
         clickedButton.classList.add('voting-in-progress');
-
         clickedButton.disabled = true;
         otherButton.disabled = true;
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        let responseOk = false;
 
         try {
             const response = await fetch(`/posts/${postId}/vote`, {
@@ -1091,41 +1016,34 @@
                 },
                 body: JSON.stringify({option: option})
             });
-
             const responseData = await response.json();
-            responseOk = response.ok;
 
-            if (responseOk) { // HTTP 200-299
+            if (response.ok) {
                 updateVoteUI(postId, responseData.user_vote, responseData);
-            } else { // HTTP errors 409, 422, 500
+                if (window.showToast && responseData.message && responseData.message.toLowerCase().includes('successfully')) {
+                    window.showToast(responseData.message, 'success');
+                }
+            } else {
                 const errorMessage = responseData.message || responseData.error || (responseData.errors ? Object.values(responseData.errors).join(', ') : `Vote failed (HTTP ${response.status})`);
                 if (window.showToast) {
                     window.showToast(errorMessage, response.status === 409 ? 'info' : 'error');
                 }
-
                 if (response.status === 409 && responseData.user_vote && typeof responseData.option_one_votes !== 'undefined') {
                     updateVoteUI(postId, responseData.user_vote, responseData);
                 } else {
-                    clickedButton.setAttribute('class', originalClickedButtonClasses.join(' '));
-                    otherButton.setAttribute('class', originalOtherButtonClasses.join(' '));
-                    postElement.dataset.userVote = originalUserVoteState;
-                    postElement.dataset.optionOneVotes = originalOptionOneVotes.toString();
-                    postElement.dataset.optionTwoVotes = originalOptionTwoVotes.toString();
+                    clickedButton.className = originalClickedButtonClasses.join(' ');
+                    otherButton.className = originalOtherButtonClasses.join(' ');
                     if (totalVotesDisplayElement) totalVotesDisplayElement.textContent = originalTotalVotesText;
                 }
             }
         } catch (error) {
             console.error('Error voting (catch):', error);
             if (window.showToast) {
-                window.showToast('Failed to register vote. Please check your connection.', 'error');
+                window.showToast(window.translations.js_vote_failed_connection, 'error');
             }
-            clickedButton.setAttribute('class', originalClickedButtonClasses.join(' '));
-            otherButton.setAttribute('class', originalOtherButtonClasses.join(' '));
-            postElement.dataset.userVote = originalUserVoteState;
-            postElement.dataset.optionOneVotes = originalOptionOneVotes.toString();
-            postElement.dataset.optionTwoVotes = originalOptionTwoVotes.toString();
+            clickedButton.className = originalClickedButtonClasses.join(' ');
+            otherButton.className = originalOtherButtonClasses.join(' ');
             if (totalVotesDisplayElement) totalVotesDisplayElement.textContent = originalTotalVotesText;
-
         } finally {
             clickedButton.classList.remove('voting-in-progress');
             clickedButton.disabled = false;
@@ -1135,13 +1053,9 @@
 
     function updateVoteUI(postId, userVotedOption, voteData) {
         const postElement = document.getElementById(`post-${postId}`);
-        if (!postElement) {
-            console.error(`Post element with ID post-${postId} not found.`);
-            return;
-        }
+        if (!postElement) return;
 
         postElement.dataset.userVote = userVotedOption;
-
         postElement.dataset.optionOneVotes = voteData.option_one_votes;
         postElement.dataset.optionTwoVotes = voteData.option_two_votes;
 
@@ -1154,24 +1068,17 @@
         const optionTwoButton = postElement.querySelector('button.vote-button[data-option="option_two"]');
 
         if (optionOneButton && optionTwoButton) {
-            const optionOneTitle = postElement.dataset.optionOneTitle || 'Option 1';
-            const optionTwoTitle = postElement.dataset.optionTwoTitle || 'Option 2';
+            const optionOneTitle = postElement.dataset.optionOneTitle || window.translations.js_option_1_default_title;
+            const optionTwoTitle = postElement.dataset.optionTwoTitle || window.translations.js_option_2_default_title;
 
             const totalVotes = parseInt(voteData.total_votes, 10);
             const optionOneVotes = parseInt(voteData.option_one_votes, 10);
             const optionTwoVotes = parseInt(voteData.option_two_votes, 10);
-
             const percentOne = totalVotes > 0 ? Math.round((optionOneVotes / totalVotes) * 100) : 0;
             const percentTwo = totalVotes > 0 ? Math.round((optionTwoVotes / totalVotes) * 100) : 0;
 
-            const optionOneTextElement = optionOneButton.querySelector('.button-text-truncate');
-            if (optionOneTextElement) {
-                optionOneTextElement.textContent = `${optionOneTitle} (${percentOne}%)`;
-            }
-            const optionTwoTextElement = optionTwoButton.querySelector('.button-text-truncate');
-            if (optionTwoTextElement) {
-                optionTwoTextElement.textContent = `${optionTwoTitle} (${percentTwo}%)`;
-            }
+            optionOneButton.querySelector('.button-text-truncate').textContent = `${optionOneTitle} (${percentOne}%)`;
+            optionTwoButton.querySelector('.button-text-truncate').textContent = `${optionTwoTitle} (${percentTwo}%)`;
 
             const highlightClasses = ['bg-blue-800', 'text-white'];
             const defaultClasses = ['bg-white', 'border', 'border-gray-300', 'hover:bg-gray-50'];
@@ -1179,7 +1086,6 @@
 
             [optionOneButton, optionTwoButton].forEach(button => {
                 button.classList.remove(...highlightClasses, ...defaultClasses, ...noHoverDefaultClasses);
-                button.classList.remove('bg-blue-800', 'text-white', 'bg-white', 'border', 'border-gray-300', 'hover:bg-gray-50');
             });
 
             if (userVotedOption === 'option_one') {
@@ -1192,15 +1098,8 @@
                 optionOneButton.classList.add(...defaultClasses);
                 optionTwoButton.classList.add(...defaultClasses);
             }
-
             optionOneButton.dataset.tooltipShowCount = "true";
             optionTwoButton.dataset.tooltipShowCount = "true";
-        }
-
-        if (window.showToast && voteData.message && !voteData.message.toLowerCase().includes('already voted')) {
-            window.showToast(voteData.message, 'success');
-        } else if (window.showToast && voteData.message && voteData.message.toLowerCase().includes('already voted')) {
-            window.showToast(voteData.message, 'info');
         }
     }
 
@@ -1208,10 +1107,11 @@
         const commentsSections = document.querySelectorAll('[id^="comments-section-"]');
         commentsSections.forEach(section => {
             section.classList.add('comments-section');
-            section.classList.add('hidden');
-
+            if (!section.classList.contains('hidden')) {
+                section.classList.add('hidden');
+            }
             const formContainer = section.querySelector('form')?.closest('div');
-            if (formContainer) {
+            if (formContainer && !formContainer.classList.contains('comment-form-container')) {
                 formContainer.classList.add('comment-form-container');
             }
         });

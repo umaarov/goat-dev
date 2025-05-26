@@ -19,22 +19,19 @@
 
                         $isVerified = in_array($user->username, ['goat', 'umarov']);
 
-                        // Determine the main display name
                         $displayName = ($user->first_name || $user->last_name) ? trim($user->first_name . ' ' . $user->last_name) : "@".$user->username;
-                        // Determine if @username should be shown as a sub-line
                         $showSubUsername = ($user->first_name || $user->last_name);
                     @endphp
                     <img src="{{ $profilePic }}"
                          alt="{{ __('messages.profile.alt_profile_picture', ['username' => $user->username]) }}"
                          class="h-24 w-24 rounded-full object-cover border border-gray-200 cursor-pointer zoomable-image flex-shrink-0"
-                         {{-- Added flex-shrink-0 --}}
                          data-full-src="{{ $profilePic }}">
                     <div class="ml-6 flex-1">
                         {{-- Name / Username --}}
                         <div class="flex items-center">
                             <h2 class="text-2xl font-semibold text-gray-800">{{ $displayName }}</h2>
                             @if($isVerified)
-                                <span class="ml-1.5" title="{{ __('messages.profile.verified_account') }}"> {{-- Adjusted margin slightly --}}
+                                <span class="ml-1.5" title="{{ __('messages.profile.verified_account') }}">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500"
                                          viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd"
@@ -108,7 +105,6 @@
 @endsection
 
 <style>
-    /* Styles remain the same */
     .comments-section {
         max-height: 0;
         overflow: hidden;
@@ -117,7 +113,7 @@
     }
 
     .comments-section.active {
-        max-height: 2000px; /* Adjust as needed */
+        max-height: 2000px;
         opacity: 1;
     }
 
@@ -136,9 +132,9 @@
         opacity: 0;
         transform: translateY(10px);
         transition: opacity 0.3s ease, transform 0.3s ease;
-        border-bottom: 1px solid #e5e7eb; /* Tailwind gray-200 */
-        padding-bottom: 12px; /* 0.75rem */
-        margin-bottom: 12px; /* 0.75rem */
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 12px;
+        margin-bottom: 12px;
     }
 
     .comment.visible {
@@ -149,8 +145,8 @@
     .pagination {
         display: flex;
         justify-content: center;
-        gap: 4px; /* Tailwind space-x-1 approx */
-        margin-top: 16px; /* Tailwind mt-4 */
+        gap: 4px;
+        margin-top: 16px;
         transition: opacity 0.3s ease;
     }
 
@@ -160,23 +156,23 @@
 
     .pagination .page-link {
         display: inline-block;
-        padding: 5px 10px; /* Adjust as needed */
-        border: 1px solid #e2e8f0; /* Tailwind border-gray-300 */
-        border-radius: 4px; /* Tailwind rounded-sm approx */
-        color: #4a5568; /* Tailwind text-gray-700 */
+        padding: 5px 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        color: #4a5568;
         text-decoration: none;
         transition: background-color 0.2s ease;
         cursor: pointer;
     }
 
     .pagination .page-link:hover {
-        background-color: #edf2f7; /* Tailwind bg-gray-100 */
+        background-color: #edf2f7;
     }
 
     .pagination .page-item.active .page-link {
-        background-color: #2563eb; /* Tailwind bg-blue-600 */
+        background-color: #2563eb;
         color: white;
-        border-color: #2563eb; /* Tailwind border-blue-600 */
+        border-color: #2563eb;
     }
 
     .zoomable-image {
@@ -188,7 +184,6 @@
     <script>
         window.isLoggedIn = {{ Auth::check() ? 'true' : 'false' }};
 
-        // Setup for JavaScript translations
         window.i18n = {
             profile: {
                 js: {!! json_encode([
@@ -233,8 +228,6 @@
     ]) !!}
         };
 
-        // For the route, it's often easier to assign it directly if it's simple
-        // or ensure the placeholder doesn't conflict with JSON processing.
         window.i18n.profile.js.user_profile_link_template = "{{ route('profile.show', ['username' => ':USERNAME_PLACEHOLDER']) }}".replace(':USERNAME_PLACEHOLDER', ':username');
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -249,16 +242,15 @@
 
             setTimeout(() => {
                 window.scrollTo({
-                    top: postElement.offsetTop - 100, // Adjusted offset
+                    top: postElement.offsetTop - 100,
                     behavior: 'smooth'
                 });
 
-                // Optional: Highlight the post
-                postElement.classList.add('highlight-post'); // Define .highlight-post in your CSS
+                postElement.classList.add('highlight-post');
                 setTimeout(() => {
                     postElement.classList.remove('highlight-post');
                 }, 1500);
-            }, 300); // Delay to ensure other content is loaded
+            }, 300);
         }
 
 
@@ -615,7 +607,7 @@
         }
 
         async function voteForOption(postId, option) {
-            if (!window.isLoggedIn) { // Use the global variable
+            if (!window.isLoggedIn) {
                 if (window.showToast) window.showToast(window.i18n.profile.js.login_to_vote, 'warning');
                 return;
             }
@@ -635,22 +627,14 @@
                 return;
             }
 
-            // Prevent multiple clicks while processing
             if (clickedButton.disabled || clickedButton.classList.contains('voting-in-progress')) {
                 return;
             }
 
-            // Check if user has already voted based on UI state (if available and reliable)
             const knownUserVote = postElement.dataset.userVote;
             if (knownUserVote && (knownUserVote === 'option_one' || knownUserVote === 'option_two')) {
-                // If the UI already reflects a vote, and the server confirms this,
-                // re-sync UI if needed but don't send a new vote for the same option.
-                // If they click the *other* option, the server should handle it (e.g., change vote or error).
-                // For this example, if they click the *same* already voted option, we can just show the message.
                 if (knownUserVote === option) {
                     if (window.showToast) window.showToast(window.i18n.profile.js.already_voted, 'info');
-                    // Ensure UI is correctly reflecting the vote state (e.g., percentages)
-                    // This might involve calling updateVoteUI with the current known data if it's not purely visual
                     const currentVoteData = {
                         user_vote: knownUserVote,
                         option_one_votes: parseInt(postElement.dataset.optionOneVotes, 10),
@@ -664,7 +648,6 @@
             }
 
 
-            // Store original state for potential revert on error
             const originalOptionOneVotes = parseInt(postElement.dataset.optionOneVotes, 10) || 0;
             const originalOptionTwoVotes = parseInt(postElement.dataset.optionTwoVotes, 10) || 0;
             const originalUserVoteState = postElement.dataset.userVote || '';
@@ -672,12 +655,11 @@
             const originalClickedButtonClasses = Array.from(clickedButton.classList);
             const originalOtherButtonClasses = Array.from(otherButton.classList);
 
-            const totalVotesDisplayElement = postElement.querySelector('.total-votes-display'); // Add a specific class for easier selection
+            const totalVotesDisplayElement = postElement.querySelector('.total-votes-display');
             const originalTotalVotesText = totalVotesDisplayElement ? totalVotesDisplayElement.textContent : (originalOptionOneVotes + originalOptionTwoVotes).toString();
 
 
-            // Optimistic UI update (basic visual cue)
-            clickedButton.classList.add('voting-in-progress'); // e.g., for a spinner
+            clickedButton.classList.add('voting-in-progress');
             clickedButton.disabled = true;
             otherButton.disabled = true;
 
@@ -699,7 +681,7 @@
                 responseOk = response.ok;
 
                 if (responseOk) { // HTTP 200-299
-                    updateVoteUI(postId, responseData.user_vote, responseData); // Main UI update with server data
+                    updateVoteUI(postId, responseData.user_vote, responseData);
                     if (window.showToast && responseData.message && !responseData.message.toLowerCase().includes('already voted')) {
                         window.showToast(responseData.message, 'success');
                     } else if (window.showToast && responseData.message && responseData.message.toLowerCase().includes('already voted')) {
@@ -711,12 +693,10 @@
                         window.showToast(errorMessage, response.status === 409 ? 'info' : 'error');
                     }
 
-                    // If it's a 'already voted' conflict (409) and server provides current vote state, update UI
                     if (response.status === 409 && responseData.user_vote && typeof responseData.option_one_votes !== 'undefined') {
                         updateVoteUI(postId, responseData.user_vote, responseData);
                     } else {
-                        // Revert optimistic UI changes if it wasn't a 409 with new data
-                        clickedButton.className = originalClickedButtonClasses.join(' '); // Restore classes
+                        clickedButton.className = originalClickedButtonClasses.join(' ');
                         otherButton.className = originalOtherButtonClasses.join(' ');
                         postElement.dataset.userVote = originalUserVoteState;
                         postElement.dataset.optionOneVotes = originalOptionOneVotes.toString();
@@ -729,7 +709,6 @@
                 if (window.showToast) {
                     window.showToast(window.i18n.profile.js.vote_failed_connection, 'error');
                 }
-                // Revert optimistic UI changes on network or other unhandled errors
                 clickedButton.className = originalClickedButtonClasses.join(' ');
                 otherButton.className = originalOtherButtonClasses.join(' ');
                 postElement.dataset.userVote = originalUserVoteState;
@@ -739,10 +718,6 @@
 
             } finally {
                 clickedButton.classList.remove('voting-in-progress');
-                // Re-enable buttons only if the action should allow another attempt
-                // If a vote was successful or a "already voted" state is confirmed, they might remain visually styled as voted
-                // but should technically be re-enabled for accessibility or if the vote can be changed.
-                // For this example, always re-enable them after the attempt. The UI state will show the result.
                 clickedButton.disabled = false;
                 otherButton.disabled = false;
             }
@@ -755,13 +730,11 @@
                 return;
             }
 
-            // Update dataset attributes which are crucial for state
-            postElement.dataset.userVote = userVotedOption || ''; // Store which option user voted for, or empty if none/revoked
+            postElement.dataset.userVote = userVotedOption || '';
             postElement.dataset.optionOneVotes = voteData.option_one_votes;
             postElement.dataset.optionTwoVotes = voteData.option_two_votes;
 
-            // Update total votes display
-            const totalVotesDisplayElement = postElement.querySelector('.total-votes-display'); // Use a specific class
+            const totalVotesDisplayElement = postElement.querySelector('.total-votes-display');
             if (totalVotesDisplayElement) {
                 totalVotesDisplayElement.textContent = voteData.total_votes;
             }
@@ -770,8 +743,8 @@
             const optionTwoButton = postElement.querySelector('button.vote-button[data-option="option_two"]');
 
             if (optionOneButton && optionTwoButton) {
-                const optionOneTitle = postElement.dataset.optionOneTitle || 'Option 1'; // Fallback title
-                const optionTwoTitle = postElement.dataset.optionTwoTitle || 'Option 2'; // Fallback title
+                const optionOneTitle = postElement.dataset.optionOneTitle || 'Option 1';
+                const optionTwoTitle = postElement.dataset.optionTwoTitle || 'Option 2';
 
                 const totalVotes = parseInt(voteData.total_votes, 10);
                 const optionOneVotes = parseInt(voteData.option_one_votes, 10);
@@ -780,11 +753,10 @@
                 const percentOne = totalVotes > 0 ? Math.round((optionOneVotes / totalVotes) * 100) : 0;
                 const percentTwo = totalVotes > 0 ? Math.round((optionTwoVotes / totalVotes) * 100) : 0;
 
-                // Update button text to include percentages
-                const optionOneTextElement = optionOneButton.querySelector('.button-text-truncate'); // Assuming text is in a span
+                const optionOneTextElement = optionOneButton.querySelector('.button-text-truncate');
                 if (optionOneTextElement) {
                     optionOneTextElement.textContent = `${optionOneTitle} (${percentOne}%)`;
-                } else { // Fallback if no inner span
+                } else {
                     optionOneButton.textContent = `${optionOneTitle} (${percentOne}%)`;
                 }
 
@@ -796,32 +768,28 @@
                 }
 
 
-                // Define classes for voted and non-voted states
-                const highlightClasses = ['bg-blue-800', 'text-white', 'border-blue-800']; // Voted state
-                const defaultClasses = ['bg-white', 'text-gray-700', 'border', 'border-gray-300', 'hover:bg-gray-50']; // Default, clickable
-                const nonVotedPeerClasses = ['bg-gray-100', 'text-gray-600', 'border', 'border-gray-300']; // Other option when one is voted
+                const highlightClasses = ['bg-blue-800', 'text-white', 'border-blue-800'];
+                const defaultClasses = ['bg-white', 'text-gray-700', 'border', 'border-gray-300', 'hover:bg-gray-50'];
+                const nonVotedPeerClasses = ['bg-gray-100', 'text-gray-600', 'border', 'border-gray-300'];
 
-                // Reset classes first
                 [optionOneButton, optionTwoButton].forEach(button => {
                     button.classList.remove(...highlightClasses, ...defaultClasses, ...nonVotedPeerClasses);
-                    // Remove any specific hover states if they are conditional
                     button.classList.remove('hover:bg-gray-50', 'hover:bg-blue-700');
                 });
 
 
-                if (userVotedOption) { // If there is a user vote
+                if (userVotedOption) {
                     if (userVotedOption === 'option_one') {
                         optionOneButton.classList.add(...highlightClasses);
-                        optionTwoButton.classList.add(...nonVotedPeerClasses); // Style for the non-selected option
+                        optionTwoButton.classList.add(...nonVotedPeerClasses);
                     } else if (userVotedOption === 'option_two') {
                         optionTwoButton.classList.add(...highlightClasses);
                         optionOneButton.classList.add(...nonVotedPeerClasses);
                     }
-                    // After voting, tooltip might show "You voted for X" or just raw counts
-                    optionOneButton.dataset.tooltipShowCount = "true"; // A flag to indicate results are shown
+                    optionOneButton.dataset.tooltipShowCount = "true";
                     optionTwoButton.dataset.tooltipShowCount = "true";
 
-                } else { // If no user vote (e.g., vote revoked or never voted)
+                } else {
                     optionOneButton.classList.add(...defaultClasses);
                     optionTwoButton.classList.add(...defaultClasses);
                     optionOneButton.dataset.tooltipShowCount = "false";
@@ -833,7 +801,7 @@
         function deleteComment(commentId, event) {
             event.preventDefault();
 
-            if (!confirm(window.i18n.profile.js.confirm_delete_comment_text)) { // Use translated confirm message
+            if (!confirm(window.i18n.profile.js.confirm_delete_comment_text)) {
                 return;
             }
 
@@ -849,7 +817,6 @@
                 return;
             }
 
-            // Optimistic UI update: fade out and prepare for removal
             commentElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
             commentElement.style.opacity = '0';
             commentElement.style.transform = 'translateY(10px)';
@@ -867,55 +834,43 @@
             })
                 .then(response => {
                     if (!response.ok) {
-                        // If server returns an error, try to parse JSON for a message
                         return response.json().then(errData => {
                             throw new Error(errData.error || errData.message || `Server error: ${response.status}`);
                         }).catch(() => {
-                            // If parsing error JSON fails, throw a generic error
                             throw new Error(`Failed to delete comment. Server responded with ${response.status}`);
                         });
                     }
-                    return response.json(); // Assuming success returns JSON like { message: "Success" }
+                    return response.json();
                 })
                 .then(data => {
-                    // On successful deletion from server
-                    // Wait for animation to complete, then remove
                     commentElement.addEventListener('transitionend', () => {
                         commentElement.remove();
 
-                        // Update comment count on the post
-                        const commentCountElement = document.querySelector(`#post-${postId} .comment-count-display`); // Use a specific class
+                        const commentCountElement = document.querySelector(`#post-${postId} .comment-count-display`);
                         if (commentCountElement) {
                             const currentCount = parseInt(commentCountElement.textContent) || 0;
                             commentCountElement.textContent = Math.max(0, currentCount - 1);
                         }
 
-                        // Check if comments list is empty and update UI
                         const commentsSection = document.getElementById(`comments-section-${postId}`);
                         const commentsContainer = commentsSection?.querySelector('.comments-list');
                         if (commentsContainer && commentsContainer.children.length === 0) {
-                            // If this was the last comment on the current page, and it's not page 1,
-                            // you might want to reload the previous page or just show "no comments".
-                            // For simplicity here, just show "no comments".
                             const currentPage = parseInt(commentsSection.dataset.currentPage) || 1;
                             if (currentPage > 1) {
-                                // Option: loadComments(postId, currentPage - 1); // or current page, server will return empty if last one deleted from this page
-                                commentsContainer.innerHTML = `<p class="text-sm text-gray-500 text-center">${window.i18n.profile.js.no_comments_alt}</p>`; // Or a specific message
+                                commentsContainer.innerHTML = `<p class="text-sm text-gray-500 text-center">${window.i18n.profile.js.no_comments_alt}</p>`;
                             } else {
                                 commentsContainer.innerHTML = `<p class="text-sm text-gray-500 text-center">${window.i18n.profile.js.no_comments_alt} ${window.i18n.profile.js.be_first_to_comment}</p>`;
                             }
                             const paginationContainer = commentsSection?.querySelector(`#pagination-container-${postId}`);
-                            if (paginationContainer) paginationContainer.innerHTML = ''; // Clear pagination
+                            if (paginationContainer) paginationContainer.innerHTML = '';
                         }
                     });
 
-                    // Fallback if transitionend doesn't fire (e.g. element removed by other means, or no transition)
                     setTimeout(() => {
                         if (commentElement.parentNode) {
                             commentElement.remove();
-                            // Repeat count update if not already done by transitionend
                         }
-                    }, 350); // Slightly longer than transition
+                    }, 350);
 
                     if (window.showToast && data.message) {
                         window.showToast(data.message, 'success');
@@ -966,7 +921,6 @@
                 .then(response => {
                     if (!response.ok) {
                         return response.json().then(errData => {
-                            // Join validation errors if they exist
                             const message = errData.errors ? Object.values(errData.errors).flat().join(' ') : (errData.message || 'Failed to submit comment.');
                             throw new Error(message);
                         }).catch(() => {
@@ -976,8 +930,8 @@
                     return response.json();
                 })
                 .then(data => {
-                    if (data.comment) { // Assuming server returns the created comment object
-                        contentInput.value = ''; // Clear input field
+                    if (data.comment) {
+                        contentInput.value = '';
 
                         const commentsSection = document.getElementById(`comments-section-${postId}`);
                         const commentsContainer = commentsSection?.querySelector('.comments-list');
@@ -985,34 +939,32 @@
                         if (commentsContainer) {
                             const noCommentsMessage = commentsContainer.querySelector('p.text-center');
                             if (noCommentsMessage && (noCommentsMessage.textContent.includes(window.i18n.profile.js.no_comments_alt) || noCommentsMessage.textContent.includes("No comments yet"))) {
-                                commentsContainer.innerHTML = ''; // Clear "No comments yet" message
+                                commentsContainer.innerHTML = '';
                             }
 
-                            const commentElement = createCommentElement(data.comment, postId); // data.comment should have all necessary fields
-                            commentsContainer.insertBefore(commentElement, commentsContainer.firstChild); // Prepend new comment
+                            const commentElement = createCommentElement(data.comment, postId);
+                            commentsContainer.insertBefore(commentElement, commentsContainer.firstChild);
 
-                            setTimeout(() => commentElement.classList.add('visible'), 10); // Animate in
+                            setTimeout(() => commentElement.classList.add('visible'), 10);
 
-                            // Update comment count on the post
                             const commentCountElement = document.querySelector(`#post-${postId} .comment-count-display`);
                             if (commentCountElement) {
                                 const currentCount = parseInt(commentCountElement.textContent) || 0;
                                 commentCountElement.textContent = currentCount + 1;
                             }
-                            // initializeZoomableImages(commentElement); // Make new comment image zoomable
+                            // initializeZoomableImages(commentElement);
                         }
 
                         if (window.showToast && data.message) {
                             window.showToast(data.message, 'success');
                         } else if (window.showToast) {
-                            window.showToast('Comment posted!', 'success'); // Fallback success message
+                            window.showToast('Comment posted!', 'success');
                         }
 
-                    } else if (data.errors) { // Handle validation errors if structured this way
+                    } else if (data.errors) {
                         const errorMessages = Object.values(data.errors).flat().join(' ');
                         if (window.showToast) window.showToast(`${window.i18n.profile.js.error_prefix} ${errorMessages}`, 'error');
                     } else {
-                        // Generic error if comment object is not in response as expected
                         if (window.showToast) window.showToast(data.message || 'Failed to add comment. Unexpected response.', 'error');
                     }
                 })
@@ -1022,22 +974,21 @@
                 })
                 .finally(() => {
                     submitButton.disabled = false;
-                    submitButton.innerHTML = originalButtonText; // Restore original button text/content
+                    submitButton.innerHTML = originalButtonText;
                 });
         }
 
         function createCommentElement(comment, postId) {
             const commentDiv = document.createElement('div');
-            commentDiv.className = 'comment mb-3 border-b border-gray-200 pb-3'; // Ensure 'comment' class for animation
+            commentDiv.className = 'comment mb-3 border-b border-gray-200 pb-3';
             commentDiv.id = 'comment-' + comment.id;
 
-            // Determine profile picture URL
-            let profilePic = '/images/default-pfp.png'; // Default
+            let profilePic = '/images/default-pfp.png';
             if (comment.user.profile_picture) {
                 profilePic = comment.user.profile_picture.startsWith('http') ? comment.user.profile_picture : `/storage/${comment.user.profile_picture}`;
             }
 
-            const isVerified = ['goat', 'umarov'].includes(comment.user.username); // Example verified users
+            const isVerified = ['goat', 'umarov'].includes(comment.user.username);
             const verifiedIconHTML = isVerified ? `
                 <span class="ml-1" title="${window.i18n.profile.js.verified_account}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
@@ -1045,15 +996,10 @@
                     </svg>
                 </span>` : '';
 
-            // User profile link
             const userProfileUrl = window.i18n.profile.js.user_profile_link_template.replace(':username', comment.user.username);
-            // Sanitize comment content before injecting as HTML (Laravel's e() or similar on backend is preferred)
-            // For JS, ensure the source 'comment.content' is already sanitized or use textContent for safety.
-            // Here, assuming comment.content is safe or will be inserted into a text node context.
-            // A simple precaution for display:
             const safeContent = document.createElement('p');
             safeContent.className = 'text-sm text-gray-700 break-words';
-            safeContent.textContent = comment.content; // Safely sets text content
+            safeContent.textContent = comment.content;
 
             const currentUserId = {{ Auth::id() ?? 'null' }};
             const canDelete = comment.user_id === currentUserId || (comment.post && comment.post.user_id === currentUserId);
@@ -1088,38 +1034,34 @@
         }
 
         function animateComments(container) {
-            // Ensure only non-visible comments are animated
             const commentsToAnimate = container.querySelectorAll('.comment:not(.visible)');
             commentsToAnimate.forEach((comment, index) => {
                 setTimeout(() => {
                     comment.classList.add('visible');
-                }, 100 * (index + 1)); // Stagger animation
+                }, 100 * (index + 1));
             });
         }
 
         function renderPagination(paginationData, postId, containerElement) {
-            containerElement.innerHTML = ''; // Clear previous pagination
+            containerElement.innerHTML = '';
 
             if (!paginationData || paginationData.last_page <= 1) {
-                return; // No pagination needed for one page or no data
+                return;
             }
 
             const paginationNav = document.createElement('nav');
-            paginationNav.setAttribute('aria-label', 'Comments pagination'); // Accessibility
+            paginationNav.setAttribute('aria-label', 'Comments pagination');
             const paginationList = document.createElement('ul');
-            paginationList.className = 'pagination'; // Your existing class for styling
+            paginationList.className = 'pagination';
 
-            // Previous page link
             if (paginationData.current_page > 1) {
                 paginationList.appendChild(createPageLink('&laquo;', paginationData.current_page - 1, postId, false, window.i18n.pagination.previous));
             }
 
-            // Page number links (implement more sophisticated logic for many pages if needed, e.g., ellipses)
             for (let i = 1; i <= paginationData.last_page; i++) {
                 paginationList.appendChild(createPageLink(i.toString(), i, postId, i === paginationData.current_page, `Go to page ${i}`));
             }
 
-            // Next page link
             if (paginationData.current_page < paginationData.last_page) {
                 paginationList.appendChild(createPageLink('&raquo;', paginationData.current_page + 1, postId, false, window.i18n.pagination.next));
             }
@@ -1129,27 +1071,25 @@
         }
 
         function createPageLink(text, page, postId, isActive = false, ariaLabel = '') {
-            const pageItem = document.createElement('li'); // Use <li> for semantic list
+            const pageItem = document.createElement('li');
             pageItem.className = `page-item ${isActive ? 'active' : ''}`;
 
             const link = document.createElement('a');
             link.className = 'page-link';
-            link.href = '#'; // Prevent page jump, handle with JS
-            link.innerHTML = text; // HTML entities like &laquo; will render as symbols
+            link.href = '#';
+            link.innerHTML = text;
             if (ariaLabel) link.setAttribute('aria-label', ariaLabel);
             if (isActive) link.setAttribute('aria-current', 'page');
 
 
             link.onclick = (e) => {
                 e.preventDefault();
-                // Scroll to the top of the comments section or post when paginating
                 const commentsSection = document.getElementById(`comments-section-${postId}`);
                 if (commentsSection) {
-                    // commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' }); // Option 1: scroll to section top
-                    // Or scroll to the post itself, if preferred
+                    // commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     const postElement = document.getElementById(`post-${postId}`);
                     if (postElement) {
-                        window.scrollTo({top: postElement.offsetTop - 80, behavior: 'smooth'}); // Adjust offset
+                        window.scrollTo({top: postElement.offsetTop - 80, behavior: 'smooth'});
                     }
 
                 }
@@ -1165,15 +1105,15 @@
             const postsContainer = document.getElementById('posts-container');
             const myPostsButton = document.getElementById('load-my-posts');
             const myPostsIndicator = document.getElementById('my-posts-indicator');
-            const votedPostsButton = document.getElementById('load-voted-posts'); // Can be null
+            const votedPostsButton = document.getElementById('load-voted-posts');
             const votedPostsIndicator = votedPostsButton ? document.getElementById('voted-posts-indicator') : null;
 
             const buttons = [myPostsButton, votedPostsButton].filter(btn => btn != null);
             const indicators = [myPostsIndicator, votedPostsIndicator].filter(ind => ind != null);
 
-            let currentPage = {}; // type: pageNumber
-            let isLoading = {};   // type: boolean
-            let hasMorePages = {};// type: boolean
+            let currentPage = {};
+            let isLoading = {};
+            let hasMorePages = {};
 
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
@@ -1182,7 +1122,7 @@
             function setActiveTab(activeButton) {
                 buttons.forEach(btn => {
                     btn.classList.remove('text-blue-800', 'font-semibold');
-                    btn.classList.add('text-gray-700'); // Default non-active state
+                    btn.classList.add('text-gray-700');
                 });
 
                 indicators.forEach(ind => {
@@ -1205,13 +1145,12 @@
             }
 
             async function loadPosts(url, type, loadMore = false) {
-                if (isLoading[type] && loadMore) return; // Prevent multiple 'load more' requests for the same type
+                if (isLoading[type] && loadMore) return;
 
                 if (!loadMore) {
                     currentPage[type] = 1;
-                    hasMorePages[type] = true; // Assume there are pages until checked
+                    hasMorePages[type] = true;
                     postsContainer.innerHTML = `<p class="text-center py-4">${window.i18n.profile.js.loading}</p>`;
-                    // If switching tabs, ensure other type's loading state is reset if needed
                     Object.keys(isLoading).forEach(key => {
                         if (key !== type) isLoading[key] = false;
                     });
@@ -1219,7 +1158,7 @@
                     if (!hasMorePages[type]) {
                         console.log('No more pages to load for', type);
                         const existingLoadMoreButton = postsContainer.querySelector(`.load-more-button[data-type="${type}"]`);
-                        if (existingLoadMoreButton) existingLoadMoreButton.remove(); // Remove button if no more pages
+                        if (existingLoadMoreButton) existingLoadMoreButton.remove();
                         return;
                     }
                     currentPage[type]++;
@@ -1228,7 +1167,6 @@
                 isLoading[type] = true;
                 const fetchUrl = `${url}?page=${currentPage[type]}`;
 
-                // Remove any existing "Load More" button before fetching new content (if loading more)
                 if (loadMore) {
                     const existingLoadMoreButton = postsContainer.querySelector(`.load-more-button[data-type="${type}"]`);
                     if (existingLoadMoreButton) existingLoadMoreButton.remove();
@@ -1239,34 +1177,31 @@
                     const response = await fetch(fetchUrl, {
                         method: 'GET',
                         headers: {
-                            'X-Requested-With': 'XMLHttpRequest', // Important for Laravel to know it's AJAX
-                            'Accept': 'application/json', // Expect JSON response with HTML and pagination data
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
                             'Content-Type': 'application/json',
-                            // 'X-CSRF-TOKEN': csrfToken // Not typically needed for GET requests unless your middleware requires it
+                            // 'X-CSRF-TOKEN': csrfToken
                         },
-                        // credentials: 'same-origin' // Usually default
+                        // credentials: 'same-origin'
                     });
 
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
 
-                    const data = await response.json(); // Expecting { html: "...", hasMorePages: true/false }
+                    const data = await response.json();
 
                     if (!loadMore) {
                         postsContainer.innerHTML = data.html || `<p class="text-gray-500 text-center py-8">${window.i18n.profile.js.no_posts_found}</p>`;
                     } else {
-                        // If there was a "Loading..." message for "load more", remove it.
-                        // This usually isn't the case, the button itself is the indicator.
                         postsContainer.insertAdjacentHTML('beforeend', data.html || '');
                     }
 
-                    initializePostInteractions(); // Re-initialize for new content (event delegation is better)
+                    initializePostInteractions();
 
                     hasMorePages[type] = data.hasMorePages;
 
                     if (hasMorePages[type]) {
-                        // Remove old button first to avoid duplicates if any logic error
                         const oldButton = postsContainer.querySelector(`.load-more-button[data-type="${type}"]`);
                         if (oldButton) oldButton.remove();
 
@@ -1279,23 +1214,20 @@
                         postsContainer.appendChild(loadMoreButton);
                     } else {
                         const oldButton = postsContainer.querySelector(`.load-more-button[data-type="${type}"]`);
-                        if (oldButton) oldButton.remove(); // Ensure button removed if no more pages
-                        // If it was a "load more" action and no more pages, maybe a small "no more posts" message at the end
-                        if (loadMore && postsContainer.querySelectorAll('.post-card-class').length > 0) { // Assuming posts have a common class like 'post-card-class'
-                            // Optionally add a "No more posts to load" message
+                        if (oldButton) oldButton.remove();
+                        if (loadMore && postsContainer.querySelectorAll('.post-card-class').length > 0) {
                         }
                     }
 
-                    // If after loading (first page or more), there are no actual post elements, show "No posts found"
-                    if (postsContainer.querySelectorAll('.post-card-class').length === 0 && !isLoading[type]) { // Check after isLoading is set to false
+                    if (postsContainer.querySelectorAll('.post-card-class').length === 0 && !isLoading[type]) {
                         postsContainer.innerHTML = `<p class="text-gray-500 text-center py-8">${window.i18n.profile.js.no_posts_found}</p>`;
                     }
 
 
                 } catch (error) {
                     console.error('Error loading posts:', error);
-                    const usernameForMessage = "{{ $user->username }}"; // Get username from PHP
-                    if (!window.isLoggedIn) { // Check global var
+                    const usernameForMessage = "{{ $user->username }}";
+                    if (!window.isLoggedIn) {
                         postsContainer.innerHTML = `
                             <div class="text-center py-4">
                                 <p class="text-sm text-gray-500">
@@ -1310,14 +1242,12 @@
                 }
             }
 
-            // Initial load for the default tab (My Posts)
             if (myPostsButton) {
                 myPostsButton.addEventListener('click', () => {
-                    if (isLoading['my-posts'] && currentPage['my-posts'] > 1) return; // Prevent re-click spam if already loading more for this tab
+                    if (isLoading['my-posts'] && currentPage['my-posts'] > 1) return;
                     setActiveTab(myPostsButton);
                     loadPosts(myPostsButton.dataset.url, 'my-posts');
                 });
-                // Set 'My Posts' as active and load its content by default
                 setActiveTab(myPostsButton);
                 loadPosts(myPostsButton.dataset.url, 'my-posts');
             }

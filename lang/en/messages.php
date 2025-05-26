@@ -1,9 +1,7 @@
 <?php
 
 return [
-    // ... (your existing translations)
 
-    // Profile Page Specific
     'profile.title' => ":username's Profile",
     'profile.meta_description' => "View the profile, created polls, and activity of :username on GOAT. Join the discussion!",
     'profile.alt_profile_picture' => ":username's profile picture",
@@ -18,43 +16,50 @@ return [
     'profile.loading_posts' => 'Loading posts...',
     'profile.schema_description' => "View :username's profile and polls on GOAT.",
 
-    // JavaScript specific translations for profile page (can be nested under 'profile.js' if preferred)
     'profile.js.link_copied' => 'Link copied to clipboard!',
     'profile.js.time.just_now' => 'Just now',
     'profile.js.time.minute' => 'minute',
     'profile.js.time.minutes' => 'minutes',
+    'profile.js.time.minutes_alt' => 'minutes',
     'profile.js.time.hour' => 'hour',
     'profile.js.time.hours' => 'hours',
+    'profile.js.time.hours_alt' => 'hours',
     'profile.js.time.day' => 'day',
     'profile.js.time.days' => 'days',
+    'profile.js.time.days_alt' => 'days',
     'profile.js.time.ago' => 'ago',
-    'profile.js.no_comments' => 'No comments yet.', // Consider reusing 'no_comments_yet'
+    'profile.js.no_comments' => 'No comments yet.',
     'profile.js.be_first_to_comment' => 'Be the first to comment!',
     'profile.js.failed_load_comments' => 'Failed to load comments. Please try again.',
     'profile.js.login_to_vote' => 'You need to be logged in to vote.',
-    // 'profile.js.already_voted' => 'You have already voted on this post.', // Replaced by general 'error_already_voted'
     'profile.js.vote_failed_http' => 'Vote failed',
     'profile.js.vote_failed_connection' => 'Failed to register vote. Please check your connection.',
-    'profile.js.confirm_delete_comment_title' => 'Confirm Deletion', // Reusing general key
-    'profile.js.confirm_delete_comment_text' => 'Are you sure you want to delete this comment?', // Reusing general key
+    'profile.js.confirm_delete_comment_title' => 'Confirm Deletion',
+    'profile.js.confirm_delete_comment_text' => 'Are you sure you want to delete this comment?',
     'profile.js.comment_empty' => 'Comment cannot be empty.',
-    // 'profile.js.comment_button' => 'Comment', // Replaced by general 'submit_comment_button'
     'profile.js.comment_button_submitting' => 'Commenting...',
     'profile.js.error_prefix' => 'Error:',
     'profile.js.delete_comment_title' => 'Delete comment',
     'profile.js.loading' => 'Loading...',
-    // 'profile.js.no_posts_found' => 'No posts found.', // Replaced by general 'app.no_posts_found'
     'profile.js.load_more' => 'Load More',
     'profile.js.login_to_see_posts' => 'Please <a class="text-blue-800 hover:underline" href="/login">log in</a> to see :username\'s posts.',
     'profile.js.error_loading_posts' => 'Error loading posts. Please try again.',
-    'profile.alt_profile_picture_js' => ":username's profile picture", // For JS created elements
+    'profile.alt_profile_picture_js' => ":username's profile picture",
 
-    // Pagination (General, could be in a 'pagination.php' file too)
+    'post_card.option_1_image_alt' => 'Image for option 1',
+    'post_card.option_2_image_alt' => 'Image for option 2',
+    'post_card.owner_voted_for_this_option' => ':username voted for this option',
+    'post_card.votes_label' => 'Votes',
+    'post_card.js.login_to_comment' => 'Please <a class="text-blue-800 hover:underline" href=":login_link">log in</a> to view and post comments.',
+    'post_card.js.no_comments_be_first' => 'No comments yet. Be the first to comment!',
+    'post_card.js.failed_add_comment' => 'Failed to add comment. Please try again.',
+    'post_card.js.failed_delete_comment' => 'Failed to delete comment. Please try again.',
+    'post_card.js.option_1_default_title' => 'Option 1',
+    'post_card.js.option_2_default_title' => 'Option 2',
+
     'pagination.previous' => '&laquo; Previous',
     'pagination.next' => 'Next &raquo;',
 
-
-    // Existing translations from user (ensure they are here)
     'edit_profile_title' => 'Edit Profile',
     'first_name_label' => 'First Name',
     'last_name_label' => 'Last Name (Optional)',
@@ -71,6 +76,7 @@ return [
     'select_language_label' => 'Select Display Language',
     'update_profile_button' => 'Update Profile',
     'cancel_button' => 'Cancel',
+    'close_button' => 'Close',
     'change_password_link' => 'Change Your Password',
     'logout_button' => 'Logout',
     'password_not_available_google' => 'Password change is not available for accounts created via Google login unless a password has been set.',
@@ -97,7 +103,7 @@ return [
 
     'home' => 'Home',
     'search' => 'Search',
-    'post' => 'Post', // General term for "Post" button/link
+    'post' => 'Post',
     'account' => 'Account',
     'login' => 'Login',
     'register' => 'Register',
@@ -144,7 +150,7 @@ return [
     'edit_button' => 'Edit',
     'delete_button' => 'Delete',
     'add_comment_placeholder' => 'Add a comment...',
-    'submit_comment_button' => 'Comment', // Changed from "Submit" to "Comment" for consistency with JS
+    'submit_comment_button' => 'Comment',
     'comments_title' => 'Comments',
     'load_more_comments_button' => 'Load More Comments',
     'no_comments_yet' => 'No comments yet.',
@@ -226,7 +232,7 @@ return [
     'error.404.page_not_found_message' => 'Even the GOAT gets lost sometimes. The page you\'re looking for might not exist.',
     'error.404.lost_goat_alt' => 'Lost Goat',
 
-    'app.default_title' => config('app.name', 'GOAT'), // Use config for default app name
+    'app.default_title' => config('app.name', 'GOAT'),
     'app.meta_description_default' => 'Engage in fun polls, ask "this or that" questions, and see what the community thinks on GOAT!',
     'app.logo_alt' => 'GOAT Application Logo',
 
@@ -240,7 +246,6 @@ return [
     'app.js.image_viewer_alt' => 'Full screen image',
     'app.js.image_viewer_close_title' => 'Close image viewer',
 
-    // New keys for create.blade.php
     'create_post.title' => 'Create New Post',
     'create_post.ask_unique_question' => 'Ask a unique question!',
     'create_post.choose_titles_images_categories' => 'Choose titles, images and categories to fit your subjects for the world to vote on.',

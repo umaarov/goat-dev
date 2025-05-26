@@ -1,15 +1,12 @@
 <?php
 
 return [
-    // ... (your existing translations)
-
-    // Profile Page Specific
     'profile.title' => "Профиль :username",
     'profile.meta_description' => "Просмотр профиля, созданных опросов и активности :username на GOAT. Присоединяйтесь к обсуждению!",
     'profile.alt_profile_picture' => "Фото профиля :username",
     'profile.verified_account' => 'Подтвержденный аккаунт',
     'profile.joined_label' => 'Присоединился:',
-    'profile.posts_stat_label' => 'Пост|Поста|Постов', // Example for Russian pluralization (1 post, 2-4 posta, 5+ postov)
+    'profile.posts_stat_label' => 'Пост|Поста|Постов',
     'profile.votes_collected_stat_label' => 'Собранный голос|Собранных голоса|Собранных голосов',
     'profile.edit_profile_button' => 'Редактировать профиль',
     'profile.my_posts_tab' => 'Мои посты',
@@ -18,46 +15,50 @@ return [
     'profile.loading_posts' => 'Загрузка постов...',
     'profile.schema_description' => "Просмотреть профиль и опросы :username на GOAT.",
 
-    // JavaScript specific translations for profile page
     'profile.js.link_copied' => 'Ссылка скопирована в буфер обмена!',
     'profile.js.time.just_now' => 'Только что',
-    'profile.js.time.minute' => 'минуту', // e.g., 1 минуту
-    'profile.js.time.minutes' => 'минуты', // e.g., 2 минуты
-    'profile.js.time.minutes_alt' => 'минут', // e.g., 5 минут - Russian has multiple plural forms. JS logic would need to handle this.
-    'profile.js.time.hour' => 'час',    // 1 час
-    'profile.js.time.hours' => 'часа',   // 2 часа
-    'profile.js.time.hours_alt' => 'часов',  // 5 часов
-    'profile.js.time.day' => 'день',   // 1 день
-    'profile.js.time.days' => 'дня',    // 2 дня
-    'profile.js.time.days_alt' => 'дней',   // 5 дней
+    'profile.js.time.minute' => 'минуту',
+    'profile.js.time.minutes' => 'минуты', // for 2-4
+    'profile.js.time.minutes_alt' => 'минут', // for 5+ and 11-19 etc.
+    'profile.js.time.hour' => 'час',
+    'profile.js.time.hours' => 'часа',   // for 2-4
+    'profile.js.time.hours_alt' => 'часов',  // for 5+
+    'profile.js.time.day' => 'день',
+    'profile.js.time.days' => 'дня',    // for 2-4
+    'profile.js.time.days_alt' => 'дней',   // for 5+
     'profile.js.time.ago' => 'назад',
-    'profile.js.no_comments' => 'Комментариев пока нет.', // Consider reusing 'no_comments_yet'
+    'profile.js.no_comments' => 'Комментариев пока нет.',
     'profile.js.be_first_to_comment' => 'Будьте первым, кто оставит комментарий!',
     'profile.js.failed_load_comments' => 'Не удалось загрузить комментарии. Пожалуйста, попробуйте еще раз.',
     'profile.js.login_to_vote' => 'Вам нужно войти, чтобы голосовать.',
-    // 'profile.js.already_voted' => 'Вы уже голосовали в этом опросе.', // Replaced by general 'error_already_voted'
     'profile.js.vote_failed_http' => 'Ошибка голосования',
     'profile.js.vote_failed_connection' => 'Не удалось зарегистрировать голос. Пожалуйста, проверьте ваше соединение.',
-    'profile.js.confirm_delete_comment_title' => 'Подтвердить удаление', // Reusing general key
-    'profile.js.confirm_delete_comment_text' => 'Вы уверены, что хотите удалить этот комментарий?', // Reusing general key
+    'profile.js.confirm_delete_comment_title' => 'Подтвердить удаление',
+    'profile.js.confirm_delete_comment_text' => 'Вы уверены, что хотите удалить этот комментарий?',
     'profile.js.comment_empty' => 'Комментарий не может быть пустым.',
-    // 'profile.js.comment_button' => 'Комментировать', // Replaced by general 'submit_comment_button'
     'profile.js.comment_button_submitting' => 'Отправка...',
     'profile.js.error_prefix' => 'Ошибка:',
     'profile.js.delete_comment_title' => 'Удалить комментарий',
     'profile.js.loading' => 'Загрузка...',
-    // 'profile.js.no_posts_found' => 'Посты не найдены.', // Replaced by general 'app.no_posts_found'
     'profile.js.load_more' => 'Загрузить еще',
     'profile.js.login_to_see_posts' => 'Пожалуйста, <a class="text-blue-800 hover:underline" href="/login">войдите</a>, чтобы увидеть посты :username.',
     'profile.js.error_loading_posts' => 'Ошибка загрузки постов. Пожалуйста, попробуйте еще раз.',
     'profile.alt_profile_picture_js' => "фото профиля :username",
 
-    // Pagination
+    'post_card.option_1_image_alt' => 'Изображение для варианта 1',
+    'post_card.option_2_image_alt' => 'Изображение для варианта 2',
+    'post_card.owner_voted_for_this_option' => ':username проголосовал(а) за этот вариант',
+    'post_card.votes_label' => 'Голосов',
+    'post_card.js.login_to_comment' => 'Пожалуйста, <a class="text-blue-800 hover:underline" href=":login_link">войдите</a>, чтобы просматривать и оставлять комментарии.',
+    'post_card.js.no_comments_be_first' => 'Комментариев пока нет. Будьте первым!',
+    'post_card.js.failed_add_comment' => 'Не удалось добавить комментарий. Пожалуйста, попробуйте еще раз.',
+    'post_card.js.failed_delete_comment' => 'Не удалось удалить комментарий. Пожалуйста, попробуйте еще раз.',
+    'post_card.js.option_1_default_title' => 'Вариант 1',
+    'post_card.js.option_2_default_title' => 'Вариант 2',
+
     'pagination.previous' => '&laquo; Назад',
     'pagination.next' => 'Вперед &raquo;',
 
-
-    // Existing translations from user (ensure they are here and translated)
     'edit_profile_title' => 'Редактировать профиль',
     'first_name_label' => 'Имя',
     'last_name_label' => 'Фамилия (необязательно)',
@@ -74,6 +75,7 @@ return [
     'select_language_label' => 'Выберите язык отображения',
     'update_profile_button' => 'Обновить профиль',
     'cancel_button' => 'Отмена',
+    'close_button' => 'Закрыть',
     'change_password_link' => 'Изменить пароль',
     'logout_button' => 'Выйти',
     'password_not_available_google' => 'Изменение пароля недоступно для учетных записей, созданных через Google, если пароль не был установлен.',
@@ -100,7 +102,7 @@ return [
 
     'home' => 'Главная',
     'search' => 'Поиск',
-    'post' => 'Пост', // General term for "Post" button/link
+    'post' => 'Пост',
     'account' => 'Аккаунт',
     'login' => 'Войти',
     'register' => 'Регистрация',
@@ -147,7 +149,7 @@ return [
     'edit_button' => 'Редактировать',
     'delete_button' => 'Удалить',
     'add_comment_placeholder' => 'Добавить комментарий...',
-    'submit_comment_button' => 'Комментировать', // Changed from "Отправить"
+    'submit_comment_button' => 'Комментировать',
     'comments_title' => 'Комментарии',
     'load_more_comments_button' => 'Загрузить еще комментарии',
     'no_comments_yet' => 'Комментариев пока нет.',
@@ -227,9 +229,9 @@ return [
     'error.404.heading' => '404',
     'error.404.user_not_found_message' => 'Даже GOAT иногда теряется. Пользователь, которого вы ищете, может не существовать.',
     'error.404.page_not_found_message' => 'Даже GOAT иногда теряется. Страница, которую вы ищете, может не существовать.',
-    'error.404.lost_goat_alt' => 'Потерянный козел', // More natural: "Заблудившийся козёл" or "Потерявшийся козёл"
+    'error.404.lost_goat_alt' => 'Заблудившийся козёл',
 
-    'app.default_title' => config('app.name', 'GOAT'), // Используйте config для имени приложения по умолчанию
+    'app.default_title' => config('app.name', 'GOAT'),
     'app.meta_description_default' => 'Участвуйте в веселых опросах, задавайте вопросы "это или то" и узнайте, что думает сообщество на GOAT!',
     'app.logo_alt' => 'Логотип приложения GOAT',
 
@@ -238,12 +240,11 @@ return [
     'app.js.cropper_error_processing' => 'Ошибка обработки обрезки изображения.',
     'app.js.cropper_error_init' => 'Инструмент обрезки изображений не может быть инициализирован.',
     'app.js.tooltip_vote_singular' => 'голос',
-    'app.js.tooltip_vote_plural' => 'голосов', // also 'голоса' for 2,3,4 - JS needs logic for this
+    'app.js.tooltip_vote_plural' => 'голосов',
     'app.js.tooltip_owner_voted_for_template' => '@:username проголосовал(а) за :optionTitle',
     'app.js.image_viewer_alt' => 'Изображение в полноэкранном режиме',
     'app.js.image_viewer_close_title' => 'Закрыть просмотрщик изображений',
 
-    // New keys for create.blade.php
     'create_post.title' => 'Создать новый пост',
     'create_post.ask_unique_question' => 'Задайте уникальный вопрос!',
     'create_post.choose_titles_images_categories' => 'Выберите заголовки, изображения и категории, соответствующие вашим темам, чтобы мир мог проголосовать.',
@@ -320,5 +321,4 @@ return [
     'terms.section4_text' => 'Мы оставляем за собой право обновлять или изменять эти условия в любое время. Продолжение использования платформы после изменений означает ваше согласие с пересмотренными условиями.',
     'terms.section5_heading' => '5. Отказ от ответственности',
     'terms.section5_text' => 'Мы предоставляем эту платформу "как есть" без каких-либо гарантий. Мы не несем ответственности за любые убытки, ущерб или проблемы, которые могут возникнуть в результате использования нашего сервиса.',
-
 ];
