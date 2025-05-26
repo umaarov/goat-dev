@@ -1,7 +1,60 @@
 <?php
 
 return [
-    // Existing translations from user
+    // ... (your existing translations)
+
+    // Profile Page Specific
+    'profile.title' => ":username's Profile",
+    'profile.meta_description' => "View the profile, created polls, and activity of :username on GOAT. Join the discussion!",
+    'profile.alt_profile_picture' => ":username's profile picture",
+    'profile.verified_account' => 'Verified Account',
+    'profile.joined_label' => 'Joined:',
+    'profile.posts_stat_label' => 'Post|Posts',
+    'profile.votes_collected_stat_label' => 'Vote Collected|Votes Collected',
+    'profile.edit_profile_button' => 'Edit Profile',
+    'profile.my_posts_tab' => 'My Posts',
+    'profile.users_posts_tab' => ":username's Posts",
+    'profile.voted_posts_tab' => 'Voted Posts',
+    'profile.loading_posts' => 'Loading posts...',
+    'profile.schema_description' => "View :username's profile and polls on GOAT.",
+
+    // JavaScript specific translations for profile page (can be nested under 'profile.js' if preferred)
+    'profile.js.link_copied' => 'Link copied to clipboard!',
+    'profile.js.time.just_now' => 'Just now',
+    'profile.js.time.minute' => 'minute',
+    'profile.js.time.minutes' => 'minutes',
+    'profile.js.time.hour' => 'hour',
+    'profile.js.time.hours' => 'hours',
+    'profile.js.time.day' => 'day',
+    'profile.js.time.days' => 'days',
+    'profile.js.time.ago' => 'ago',
+    'profile.js.no_comments' => 'No comments yet.', // Consider reusing 'no_comments_yet'
+    'profile.js.be_first_to_comment' => 'Be the first to comment!',
+    'profile.js.failed_load_comments' => 'Failed to load comments. Please try again.',
+    'profile.js.login_to_vote' => 'You need to be logged in to vote.',
+    // 'profile.js.already_voted' => 'You have already voted on this post.', // Replaced by general 'error_already_voted'
+    'profile.js.vote_failed_http' => 'Vote failed',
+    'profile.js.vote_failed_connection' => 'Failed to register vote. Please check your connection.',
+    'profile.js.confirm_delete_comment_title' => 'Confirm Deletion', // Reusing general key
+    'profile.js.confirm_delete_comment_text' => 'Are you sure you want to delete this comment?', // Reusing general key
+    'profile.js.comment_empty' => 'Comment cannot be empty.',
+    // 'profile.js.comment_button' => 'Comment', // Replaced by general 'submit_comment_button'
+    'profile.js.comment_button_submitting' => 'Commenting...',
+    'profile.js.error_prefix' => 'Error:',
+    'profile.js.delete_comment_title' => 'Delete comment',
+    'profile.js.loading' => 'Loading...',
+    // 'profile.js.no_posts_found' => 'No posts found.', // Replaced by general 'app.no_posts_found'
+    'profile.js.load_more' => 'Load More',
+    'profile.js.login_to_see_posts' => 'Please <a class="text-blue-800 hover:underline" href="/login">log in</a> to see :username\'s posts.',
+    'profile.js.error_loading_posts' => 'Error loading posts. Please try again.',
+    'profile.alt_profile_picture_js' => ":username's profile picture", // For JS created elements
+
+    // Pagination (General, could be in a 'pagination.php' file too)
+    'pagination.previous' => '&laquo; Previous',
+    'pagination.next' => 'Next &raquo;',
+
+
+    // Existing translations from user (ensure they are here)
     'edit_profile_title' => 'Edit Profile',
     'first_name_label' => 'First Name',
     'last_name_label' => 'Last Name (Optional)',
@@ -91,7 +144,7 @@ return [
     'edit_button' => 'Edit',
     'delete_button' => 'Delete',
     'add_comment_placeholder' => 'Add a comment...',
-    'submit_comment_button' => 'Submit',
+    'submit_comment_button' => 'Comment', // Changed from "Submit" to "Comment" for consistency with JS
     'comments_title' => 'Comments',
     'load_more_comments_button' => 'Load More Comments',
     'no_comments_yet' => 'No comments yet.',
@@ -173,7 +226,7 @@ return [
     'error.404.page_not_found_message' => 'Even the GOAT gets lost sometimes. The page you\'re looking for might not exist.',
     'error.404.lost_goat_alt' => 'Lost Goat',
 
-    'app.default_title' => ':default_app_name', // Assuming :default_app_name is defined elsewhere, e.g. config('app.name')
+    'app.default_title' => config('app.name', 'GOAT'), // Use config for default app name
     'app.meta_description_default' => 'Engage in fun polls, ask "this or that" questions, and see what the community thinks on GOAT!',
     'app.logo_alt' => 'GOAT Application Logo',
 
