@@ -334,7 +334,7 @@ return [
     'profile.link_github' => 'GitHub',
 
     'external_links' => 'External Links',
-    'external_links_description'  => 'Add links to your social media, website, or other relevant profiles. Up to 3 links can be displayed.',
+    'external_links_description' => 'Add links to your social media, website, or other relevant profiles. Up to 3 links can be displayed.',
     'external_links_label' => 'External Links',
     'external_link_placeholder' => 'Enter URL (e.g., https://example.com)',
 
@@ -352,6 +352,10 @@ return [
     'external_links_max_error' => 'You can add a maximum of 3 external links.',
     'external_link_invalid_url_error' => 'Please enter a valid URL (e.g., http://example.com).',
     'external_link_too_long_error' => 'The external link is too long.',
+
+    'external_link_inappropriate' => 'The external link provided was deemed inappropriate. Reason: ":reason". Please choose a different link.',
+    'external_link_moderation_failed' => 'Could not verify the safety of the external link at this time. Please try a different link or remove it.',
+    'external_link_flagged_unsafe' => 'This external link was flagged as potentially unsafe (type: :category). Please use a different link.',
 
 
 ];

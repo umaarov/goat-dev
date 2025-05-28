@@ -16,6 +16,7 @@ class ModerationService
     private string $model;
     private string $textPromptTemplate;
     private string $imagePromptTemplate;
+    private string $urlPromptTemplate;
     private bool $isConfigured;
     private bool $useJsonMode;
 
@@ -26,13 +27,15 @@ class ModerationService
         $this->model = Config::get('gemini.model');
         $this->textPromptTemplate = Config::get('gemini.prompt_template');
         $this->imagePromptTemplate = Config::get('gemini.image_prompt_template');
+        $this->urlPromptTemplate = Config::get('gemini.url_prompt_template');
         $this->useJsonMode = Config::get('gemini.use_json_mode', true);
 
         $this->isConfigured = !empty($this->apiKey) &&
             !empty($this->apiUrl) &&
             !empty($this->model) &&
             !empty($this->textPromptTemplate) &&
-            !empty($this->imagePromptTemplate);
+            !empty($this->imagePromptTemplate) &&
+            !empty($this->urlPromptTemplate);
 
         if (!$this->isConfigured) {
             Log::error('ModerationService: Gemini configuration is missing or incomplete. Moderation will be permissive.');
@@ -121,7 +124,7 @@ class ModerationService
     public function moderateText(string $text, string $languageCode = 'en'): array
     {
         if (!$this->isConfigured) {
-            Log::warning('ModerationService: Service not configured. Allowing text content by default.');
+            Log::warning('ModerationService: Service not configured for text. Allowing text content by default.');
             return ['is_appropriate' => true, 'reason' => null, 'category' => 'NONE'];
         }
         if (empty(trim($text))) {
@@ -161,7 +164,7 @@ class ModerationService
     public function moderateImage(UploadedFile $imageFile, string $languageCode = 'en'): array
     {
         if (!$this->isConfigured) {
-            Log::warning('ModerationService: Service not configured. Allowing image by default.');
+            Log::warning('ModerationService: Service not configured for images. Allowing image by default.');
             return ['is_appropriate' => true, 'reason' => null, 'category' => 'NONE'];
         }
 
@@ -202,6 +205,50 @@ class ModerationService
             $logContext = "Image: " . $imageFile->getClientOriginalName();
             Log::error("ModerationService: Exception during image moderation for {$logContext}", ['message' => $e->getMessage()]);
             return ['is_appropriate' => false, 'reason' => "Image moderation system unavailable (exception). Context: {$logContext}", 'category' => 'EXCEPTION'];
+        }
+    }
+
+    public function moderateUrl(string $url, string $languageCode = 'en'): array
+    {
+        if (!$this->isConfigured || empty($this->urlPromptTemplate)) {
+            Log::warning('ModerationService: Service not configured for URLs or URL prompt missing. Allowing URL by default.', ['url' => $url]);
+            return ['is_appropriate' => true, 'reason' => null, 'category' => 'NONE'];
+        }
+        if (empty(trim($url))) {
+            return ['is_appropriate' => true, 'reason' => null, 'category' => 'NONE'];
+        }
+
+        if (!Str::startsWith($url, ['http://', 'https://'])) {
+            Log::warning("ModerationService: moderateUrl called with a non-HTTP(S) URL: {$url}. This should ideally be caught by controller validation.");
+        }
+
+        $languageName = $this->getLanguageName($languageCode);
+        $prompt = str_replace(['{URL_TEXT}', '{LANGUAGE_NAME}'], [$url, $languageName], $this->urlPromptTemplate);
+
+        $payload = ['contents' => [['parts' => [['text' => $prompt]]]]];
+        if ($this->useJsonMode) {
+            $payload['generationConfig'] = ['responseMimeType' => 'application/json'];
+        }
+
+        $requestUrl = rtrim($this->apiUrl, '/') . '/' . $this->model . ':generateContent?key=' . $this->apiKey;
+
+        try {
+            $logContext = "URL: " . Str::limit($url, 100);
+            Log::debug("ModerationService: Sending URL moderation request for {$logContext}", ['url' => $requestUrl, 'using_json_mode' => $this->useJsonMode, 'prompt' => $prompt]);
+            $response = Http::timeout(30)->post($requestUrl, $payload);
+
+            if ($response->failed()) {
+                Log::error("ModerationService: API request failed for URL moderation on {$logContext}", [
+                    'status' => $response->status(), 'body' => $response->body()
+                ]);
+                return ['is_appropriate' => false, 'reason' => "URL moderation service error (API). Context: {$logContext}", 'category' => 'ERROR'];
+            }
+            return $this->parseModerationResult($response->json(), $logContext);
+
+        } catch (Exception $e) {
+            $logContext = "URL: " . Str::limit($url, 100);
+            Log::error("ModerationService: Exception during URL moderation for {$logContext}", ['message' => $e->getMessage()]);
+            return ['is_appropriate' => false, 'reason' => "URL moderation system unavailable (exception). Context: {$logContext}", 'category' => 'EXCEPTION'];
         }
     }
 }

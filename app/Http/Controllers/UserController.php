@@ -250,6 +250,7 @@ class UserController extends Controller
             'external_links.max' => __('messages.external_links_max_error'),
             'external_links.*.url' => __('messages.external_link_invalid_url_error'),
             'external_links.*.max' => __('messages.external_link_too_long_error'),
+            'external_links.*.moderation' => __('messages.external_link_inappropriate'),
             'first_name.moderation' => __('messages.content_inappropriate', ['field' => __('messages.first_name_label')]),
             'last_name.moderation' => __('messages.content_inappropriate', ['field' => __('messages.last_name_label')]),
             'username.moderation' => __('messages.content_inappropriate', ['field' => __('messages.username_label')]),
@@ -300,12 +301,59 @@ class UserController extends Controller
                 $moderationPassed = false;
             }
         }
+        // 5 Moderate External Links
+        $externalLinksInput = $request->input('external_links', []);
+        $linksForStorage = [];
 
-        if (!$moderationPassed) {
-            Log::warning('UserController@update: Moderation checks failed.', $validator->errors()->toArray());
+        if (!empty($externalLinksInput) && is_array($externalLinksInput)) {
+            foreach ($externalLinksInput as $index => $linkValue) {
+                if (empty($linkValue)) {
+                    continue;
+                }
+
+                if ($validator->errors()->has("external_links.{$index}")) {
+                    $moderationPassed = false;
+                    continue;
+                }
+
+                $sanitizedLink = filter_var(trim($linkValue), FILTER_SANITIZE_URL);
+
+                if (!(filter_var($sanitizedLink, FILTER_VALIDATE_URL) && Str::startsWith($sanitizedLink, ['http://', 'https://']))) {
+                    $validator->errors()->add("external_links.{$index}", __('messages.external_link_invalid_url_error'));
+                    $moderationPassed = false;
+                    Log::warning('UserController@update: Link became invalid after sanitization right before moderation API call.', ['original_link' => $linkValue, 'sanitized' => $sanitizedLink, 'index' => $index]);
+                    continue;
+                }
+
+                Log::info("UserController@update: Moderating external link [{$index}]: {$sanitizedLink}");
+                $linkModeration = $this->moderationService->moderateUrl($sanitizedLink, $moderationLanguageCode);
+
+                if (!$linkModeration['is_appropriate']) {
+                    $errorMessage = $linkModeration['reason'] ?: __('messages.external_link_inappropriate');
+                    if (in_array($linkModeration['category'], ['ERROR', 'EXCEPTION'])) {
+                        $errorMessage = __('messages.external_link_moderation_failed');
+                    } elseif ($linkModeration['reason']) {
+                        $errorMessage = $linkModeration['reason'];
+                    } elseif ($linkModeration['category'] !== 'NONE') {
+                        $errorMessage = __('messages.external_link_flagged_unsafe', ['category' => $linkModeration['category']]);
+                    }
+
+                    $validator->errors()->add("external_links.{$index}", $errorMessage);
+                    $moderationPassed = false;
+                    Log::warning('UserController@update: External link moderation failed by Gemini.', [
+                        'link' => $sanitizedLink, 'index' => $index, 'reason' => $linkModeration['reason'], 'category' => $linkModeration['category']
+                    ]);
+                } else {
+                    $linksForStorage[] = $sanitizedLink;
+                }
+            }
+        }
+
+        if (!$moderationPassed || $validator->fails()) {
+            Log::warning('UserController@update: Overall moderation or validation checks failed.', $validator->errors()->toArray());
             return redirect()->back()->withErrors($validator)->withInput();
         }
-        Log::info('UserController@update: Moderation checks passed.');
+        Log::info('UserController@update: All moderation and validation checks passed.');
 
         $oldValues = [
             'first_name' => $user->first_name,
@@ -341,7 +389,6 @@ class UserController extends Controller
         $nameChanged = ($request->first_name !== $user->first_name || $request->last_name !== $user->last_name);
 
         if ($request->hasFile('profile_picture')) {
-            // Delete old picture if it exists and is not a URL
             if ($user->profile_picture && !filter_var($user->profile_picture, FILTER_VALIDATE_URL)) {
                 if (Storage::disk('public')->exists($user->profile_picture)) {
                     Storage::disk('public')->delete($user->profile_picture);
@@ -386,7 +433,7 @@ class UserController extends Controller
                 }
             }
         }
-        $data['external_links'] = array_slice(array_filter($processedExternalLinks), 0, 3);
+        $data['external_links'] = array_slice($linksForStorage, 0, 3);
 
         Log::info('UserController@update: Data array just before user->update(): ', $data);
         $updated = false;
@@ -396,7 +443,17 @@ class UserController extends Controller
             if ($updated) {
                 Log::info('UserController@update: User profile updated successfully.', ['user_id' => $user->id, 'changes' => $user->getChanges()]);
             } else {
-                Log::warning('UserController@update: User profile update returned false, no changes or issue.', ['user_id' => $user->id]);
+                $dirtyAttributes = $user->getDirty();
+                if (empty($dirtyAttributes) && empty(array_diff_assoc($data['external_links'] ?? [], $oldValues['external_links'] ?? [])) && count($data['external_links'] ?? []) === count($oldValues['external_links'] ?? [])) {
+                    Log::info('UserController@update: User profile update called, but no actual data changed.', ['user_id' => $user->id]);
+                } else {
+                    Log::warning('UserController@update: User profile update returned false, but there might have been changes or issues.', [
+                        'user_id' => $user->id,
+                        'dirty_attributes_model' => $dirtyAttributes,
+                        'data_submitted_for_external_links' => $data['external_links'] ?? [],
+                        'old_external_links' => $oldValues['external_links'] ?? []
+                    ]);
+                }
             }
         } catch (Exception $e) {
             Log::error('UserController@update: Exception during user update.', [
