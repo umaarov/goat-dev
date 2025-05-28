@@ -306,16 +306,52 @@
 
         function getDomainIconSvg(url) {
             try {
-                const domain = new URL(url).hostname.toLowerCase();
-                if (domain.includes('t.me') || domain.includes('telegram.me')) return SvgIconCollection.telegram;
-                if (domain.includes('twitter.com') || domain.includes('x.com')) return SvgIconCollection.twitter;
-                if (domain.includes('instagram.com')) return SvgIconCollection.instagram;
-                if (domain.includes('facebook.com')) return SvgIconCollection.facebook;
-                if (domain.includes('linkedin.com')) return SvgIconCollection.linkedin;
-                if (domain.includes('github.com')) return SvgIconCollection.github;
+                // Attempt to parse the URL. If the scheme is missing, new URL() will throw an error.
+                // Input fields with type="url" often add http:// if missing, but oninput might get partial values.
+                const rawHostname = new URL(url).hostname;
+
+                // Ensure hostname is a non-empty string before calling toLowerCase()
+                if (!rawHostname || typeof rawHostname !== 'string') {
+                    return SvgIconCollection.default;
+                }
+                const hostname = rawHostname.toLowerCase();
+
+                // Helper function to check if the hostname matches a target domain or its subdomains (e.g., www.target.com)
+                const checkDomain = (targetDomain) => {
+                    // Exact match (e.g., "t.me")
+                    if (hostname === targetDomain) {
+                        return true;
+                    }
+                    // Subdomain match (e.g., "www.telegram.me" for "telegram.me")
+                    if (hostname.endsWith('.' + targetDomain)) {
+                        return true;
+                    }
+                    return false;
+                };
+
+                if (checkDomain('t.me') || checkDomain('telegram.me')) {
+                    return SvgIconCollection.telegram;
+                }
+                if (checkDomain('twitter.com') || checkDomain('x.com')) {
+                    return SvgIconCollection.twitter;
+                }
+                if (checkDomain('instagram.com')) { // Based on existing code, this checks for instagram.com
+                    return SvgIconCollection.instagram;
+                }
+                if (checkDomain('facebook.com')) {
+                    return SvgIconCollection.facebook;
+                }
+                if (checkDomain('linkedin.com')) {
+                    return SvgIconCollection.linkedin;
+                }
+                if (checkDomain('github.com')) {
+                    return SvgIconCollection.github;
+                }
+
                 return SvgIconCollection.default;
             } catch (e) {
-                return SvgIconCollection.default; // Invalid URL or other error
+                // This catch block handles errors from new URL(), e.g., if the URL is malformed or incomplete.
+                return SvgIconCollection.default;
             }
         }
 
@@ -325,7 +361,6 @@
                 iconContainer.innerHTML = getDomainIconSvg(inputElement.value);
             }
         }
-
         // END: External Link Icon Logic
 
         // Initialize scripts on DOMContentLoaded

@@ -335,6 +335,6 @@ return [
 
     'external_links' => 'Внешние ссылки',
     'external_links_description' => 'Добавьте ссылки на ваши социальные сети, веб-сайт или другие актуальные профили. Можно отобразить до 3 ссылок.',
-    'external_links_label' => 'Внешняя ссылка :number',
+    'external_links_label' => 'Внешние ссылки',
     'external_link_placeholder' => 'Введите URL (например, https://example.com)',
 ];
