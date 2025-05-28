@@ -7,4 +7,5 @@ return [
     'prompt_template' => env('GEMINI_MODERATION_PROMPT', ''),
     'banned_words_uz' => env('GEMINI_BANNED_WORDS_UZ', ''),
     'image_prompt_template' => env('GEMINI_IMAGE_MODERATION_PROMPT', ''),
+    'use_json_mode' => env('GEMINI_USE_JSON_MODE', true),
 ];
