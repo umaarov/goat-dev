@@ -338,4 +338,20 @@ return [
     'external_links_label' => 'External Links',
     'external_link_placeholder' => 'Enter URL (e.g., https://example.com)',
 
+    'content_inappropriate' => 'The content provided for :field was deemed inappropriate. Reason: ":reason". Please revise.',
+    'image_inappropriate' => 'The uploaded image was deemed inappropriate. Reason: ":reason". Please choose a different image.',
+    'profile_update_error_occurred' => 'An unexpected error occurred while updating your profile. Please try again.',
+    'error_password_change_not_set' => 'Password change is not available as no password is set for your account.',
+
+    'username_inappropriate' => 'This username is not allowed due to content policies.',
+
+    'error_loading_posts' => 'Sorry, we couldn\'t load the posts right now. Please try again later.',
+    'voted_posts_private' => 'This user has chosen to keep their voted posts private.',
+    'error_loading_voted_posts' => 'Sorry, we couldn\'t load the voted posts right now. Please try again later.',
+
+    'external_links_max_error' => 'You can add a maximum of 3 external links.',
+    'external_link_invalid_url_error' => 'Please enter a valid URL (e.g., http://example.com).',
+    'external_link_too_long_error' => 'The external link is too long.',
+
+
 ];

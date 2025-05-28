@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Vote;
 use App\Services\AvatarService;
+use App\Services\ModerationService;
 use Exception;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
@@ -19,19 +20,21 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Intervention\Image\ImageManager;
-use Illuminate\Support\Str; // Import Str
 
 class UserController extends Controller
 {
     protected AvatarService $avatarService;
+    protected ModerationService $moderationService;
     private const PROFILE_IMAGE_SIZE = 300;
     private const PROFILE_IMAGE_QUALITY = 75;
 
-    public function __construct(AvatarService $avatarService)
+    public function __construct(AvatarService $avatarService, ModerationService $moderationService)
     {
         $this->avatarService = $avatarService;
+        $this->moderationService = $moderationService;
     }
 
     private function processAndStoreProfileImage(UploadedFile $uploadedFile, string $directory, string $baseFilename): string
@@ -65,7 +68,7 @@ class UserController extends Controller
             case 'webp':
                 $encodedImage = $image->toWebp(self::PROFILE_IMAGE_QUALITY)->toString();
                 break;
-            default: // Should not happen due to previous logic, but as a fallback
+            default:
                 $filename = $baseFilename . '.jpg';
                 $path = $directory . '/' . $filename;
                 $encodedImage = $image->toJpeg(self::PROFILE_IMAGE_QUALITY)->toString();
@@ -74,7 +77,6 @@ class UserController extends Controller
         Storage::disk('public')->put($path, $encodedImage);
         return $path;
     }
-
 
     final public function showProfile(string $username): View
     {
@@ -203,14 +205,16 @@ class UserController extends Controller
     final public function edit(): View
     {
         $user = Auth::user();
-        // $availableLocales = Config::get('app.available_locales', ['en' => 'English']); // This should be passed from AppServiceProvider or a View Composer if needed globally
-        return view('users.edit', compact('user'));
+        $available_locales = Config::get('app.available_locales', ['en' => 'English']);
+        $current_locale = Session::get('locale', Config::get('app.locale'));
+        return view('users.edit', compact('user', 'available_locales', 'current_locale'));
     }
 
     final public function update(Request $request): RedirectResponse
     {
         $user = Auth::user();
         $availableLocaleKeys = array_keys(Config::get('app.available_locales', ['en' => 'English']));
+        $moderationLanguageCode = $user->locale ?? Config::get('app.locale');
 
         Log::info('--------------------------------------------------');
         Log::info('UserController@update: Process started.');
@@ -234,20 +238,23 @@ class UserController extends Controller
             'remove_profile_picture' => 'nullable|boolean',
             'show_voted_posts_publicly' => 'required|boolean',
             'locale' => ['nullable', Rule::in($availableLocaleKeys)],
-            'external_links' => 'nullable|array|max:3', // Validate that external_links is an array and has max 3 items
+            'external_links' => 'nullable|array|max:3',
             'external_links.*' => ['nullable', 'url', 'max:255', function ($attribute, $value, $fail) {
                 if (!empty($value) && !Str::startsWith($value, ['http://', 'https://'])) {
-                    $fail(__('messages.external_link_invalid_url_error')); // Or a more specific message like 'scheme_required'
+                    $fail(__('messages.external_link_invalid_url_error'));
                 }
-            }], // Validate each item in the array is a valid URL
+            }],
         ];
 
         $customMessages = [
             'external_links.max' => __('messages.external_links_max_error'),
             'external_links.*.url' => __('messages.external_link_invalid_url_error'),
             'external_links.*.max' => __('messages.external_link_too_long_error'),
+            'first_name.moderation' => __('messages.content_inappropriate', ['field' => __('messages.first_name_label')]),
+            'last_name.moderation' => __('messages.content_inappropriate', ['field' => __('messages.last_name_label')]),
+            'username.moderation' => __('messages.content_inappropriate', ['field' => __('messages.username_label')]),
+            'profile_picture.moderation' => __('messages.image_inappropriate'),
         ];
-
 
         $validator = Validator::make($request->all(), $rules, $customMessages);
 
@@ -256,6 +263,49 @@ class UserController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
         Log::info('UserController@update: Validation passed.');
+
+        $moderationPassed = true;
+
+        if ($request->filled('first_name')) {
+            $firstNameModeration = $this->moderationService->moderateText($request->input('first_name'), $moderationLanguageCode);
+            if (!$firstNameModeration['is_appropriate']) {
+                $validator->errors()->add('first_name', $firstNameModeration['reason'] ?: $customMessages['first_name.moderation']);
+                $moderationPassed = false;
+            }
+        }
+
+        // 2. Moderate Last Name
+        if ($request->filled('last_name')) {
+            $lastNameModeration = $this->moderationService->moderateText($request->input('last_name'), $moderationLanguageCode);
+            if (!$lastNameModeration['is_appropriate']) {
+                $validator->errors()->add('last_name', $lastNameModeration['reason'] ?: $customMessages['last_name.moderation']);
+                $moderationPassed = false;
+            }
+        }
+
+        // 3. Moderate Username (only if changed)
+        if ($request->input('username') !== $user->username && $request->filled('username')) {
+            $usernameModeration = $this->moderationService->moderateText($request->input('username'), $moderationLanguageCode);
+            if (!$usernameModeration['is_appropriate']) {
+                $validator->errors()->add('username', $usernameModeration['reason'] ?: $customMessages['username.moderation']);
+                $moderationPassed = false;
+            }
+        }
+
+        // 4. Moderate Profile Picture
+        if ($request->hasFile('profile_picture')) {
+            $imageModeration = $this->moderationService->moderateImage($request->file('profile_picture'), $moderationLanguageCode);
+            if (!$imageModeration['is_appropriate']) {
+                $validator->errors()->add('profile_picture', $imageModeration['reason'] ?: $customMessages['profile_picture.moderation']);
+                $moderationPassed = false;
+            }
+        }
+
+        if (!$moderationPassed) {
+            Log::warning('UserController@update: Moderation checks failed.', $validator->errors()->toArray());
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+        Log::info('UserController@update: Moderation checks passed.');
 
         $oldValues = [
             'first_name' => $user->first_name,
@@ -291,6 +341,7 @@ class UserController extends Controller
         $nameChanged = ($request->first_name !== $user->first_name || $request->last_name !== $user->last_name);
 
         if ($request->hasFile('profile_picture')) {
+            // Delete old picture if it exists and is not a URL
             if ($user->profile_picture && !filter_var($user->profile_picture, FILTER_VALIDATE_URL)) {
                 if (Storage::disk('public')->exists($user->profile_picture)) {
                     Storage::disk('public')->delete($user->profile_picture);
@@ -299,61 +350,59 @@ class UserController extends Controller
             $data['profile_picture'] = $this->processAndStoreProfileImage(
                 $request->file('profile_picture'),
                 'profile_pictures',
-                uniqid('profile_') . '_' . $user->id
+                Str::slug($data['username'] ?: $data['first_name']) . '_' . $user->id . '_' . time()
             );
-        } else {
-            $shouldGenerateInitials = false;
-
-            if ($request->boolean('remove_profile_picture')) {
-                $shouldGenerateInitials = true;
-            } elseif ($nameChanged) {
-                if (!$user->profile_picture || ($user->profile_picture && str_contains($user->profile_picture, 'initial_'))) {
-                    $shouldGenerateInitials = true;
+        } elseif ($request->boolean('remove_profile_picture')) {
+            if ($user->profile_picture && !filter_var($user->profile_picture, FILTER_VALIDATE_URL)) {
+                if (Storage::disk('public')->exists($user->profile_picture)) {
+                    Storage::disk('public')->delete($user->profile_picture);
                 }
             }
-
-            if ($shouldGenerateInitials) {
-                if ($user->profile_picture && !filter_var($user->profile_picture, FILTER_VALIDATE_URL)) {
-                    if (Storage::disk('public')->exists($user->profile_picture)) {
-                        Storage::disk('public')->delete($user->profile_picture);
-                    }
-                }
-                $data['profile_picture'] = $this->avatarService->generateInitialsAvatar(
-                    $request->first_name,
-                    $request->last_name ?? '',
-                    $user->id
-                );
+            $data['profile_picture'] = $this->avatarService->generateInitialsAvatar(
+                $data['first_name'],
+                $data['last_name'] ?? '',
+                $user->id
+            );
+        } elseif ($nameChanged && (!$user->profile_picture || str_contains($user->profile_picture, 'initial_'))) {
+            if ($user->profile_picture && !filter_var($user->profile_picture, FILTER_VALIDATE_URL) && Storage::disk('public')->exists($user->profile_picture)) {
+                Storage::disk('public')->delete($user->profile_picture);
             }
+            $data['profile_picture'] = $this->avatarService->generateInitialsAvatar(
+                $data['first_name'],
+                $data['last_name'] ?? '',
+                $user->id
+            );
         }
 
-        // Handle external links
         $externalLinksInput = $request->input('external_links', []);
         $processedExternalLinks = [];
         foreach ($externalLinksInput as $link) {
             if (!empty($link)) {
-                // Ensure URL starts with http:// or https:// after validation.
-                // The validator should have already caught most issues.
-                $sanitizedLink = filter_var($link, FILTER_SANITIZE_URL);
-                if (Str::startsWith($sanitizedLink, ['http://', 'https://'])) {
+                $sanitizedLink = filter_var(trim($link), FILTER_SANITIZE_URL);
+                if (filter_var($sanitizedLink, FILTER_VALIDATE_URL) && Str::startsWith($sanitizedLink, ['http://', 'https://'])) {
                     $processedExternalLinks[] = $sanitizedLink;
+                } else {
+                    Log::warning('UserController@update: Discarded invalid external link after sanitization.', ['link' => $link, 'sanitized' => $sanitizedLink]);
                 }
             }
         }
-        // Store only non-empty, valid links, up to a maximum of 3
         $data['external_links'] = array_slice(array_filter($processedExternalLinks), 0, 3);
 
-
         Log::info('UserController@update: Data array just before user->update(): ', $data);
+        $updated = false;
 
         try {
-            $updateResult = $user->update($data);
-            Log::info('UserController@update: User update operation result: ' . ($updateResult ? 'Success' : 'Failure'));
-            if ($updateResult) {
-                Log::info('UserController@update: User changes detected by Eloquent: ', $user->getChanges());
+            $updated = $user->update($data);
+            if ($updated) {
+                Log::info('UserController@update: User profile updated successfully.', ['user_id' => $user->id, 'changes' => $user->getChanges()]);
+            } else {
+                Log::warning('UserController@update: User profile update returned false, no changes or issue.', ['user_id' => $user->id]);
             }
         } catch (Exception $e) {
-            Log::error('UserController@update: Exception during user->update(): ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            return redirect()->back()->with('error', 'An error occurred while updating the profile.')->withInput();
+            Log::error('UserController@update: Exception during user update.', [
+                'user_id' => $user->id, 'message' => $e->getMessage(), 'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()->with('error', __('messages.profile_update_error_occurred'))->withInput();
         }
 
 
@@ -365,7 +414,7 @@ class UserController extends Controller
         }
 
 
-        if (array_key_exists('locale', $data)) {
+        if (isset($data['locale']) && $oldValues['locale'] !== $data['locale']) {
             if ($oldValues['locale'] !== $data['locale']) {
                 if ($data['locale'] !== null) {
                     Session::put('locale', $data['locale']);
@@ -405,7 +454,7 @@ class UserController extends Controller
         $user = Auth::user();
 
         if (!$user->password) {
-            return redirect()->back()->with('error', 'You cannot change password as none is set (likely logged in via social provider). Consider setting one first if needed.');
+            return redirect()->back()->with('error', __('messages.error_password_change_not_set'));
         }
 
         $validator = Validator::make($request->all(), [
@@ -463,6 +512,13 @@ class UserController extends Controller
             return response()->json(['available' => false, 'message' => '']);
         }
 
+        if (strlen($username) < 5) return response()->json(['available' => false, 'message' => __('validation.min.string', ['attribute' => 'username', 'min' => 5])]);
+        if (strlen($username) > 24) return response()->json(['available' => false, 'message' => __('validation.max.string', ['attribute' => 'username', 'max' => 24])]);
+        if (!preg_match('/^[a-zA-Z][a-zA-Z0-9_-]*$/', $username)) return response()->json(['available' => false, 'message' => __('validation.regex', ['attribute' => 'username'])]); // Generic regex message
+        if (preg_match('/^\d+$/', $username)) return response()->json(['available' => false, 'message' => __('validation.not_regex', ['attribute' => 'username'])]);
+        if (preg_match('/(.)\1{2,}/', $username)) return response()->json(['available' => false, 'message' => __('validation.not_regex', ['attribute' => 'username']) . ' (no 3+ repeating chars)']);
+
+
         $query = User::where('username', $username);
 
         if (auth()->check()) {
@@ -470,11 +526,24 @@ class UserController extends Controller
         }
 
         $exists = $query->exists();
-        $messageKey = $exists ? 'messages.username_taken' : 'messages.username_available';
 
-        return response()->json([
-            'available' => !$exists,
-            'message' => __($messageKey)
-        ]);
+        if ($exists) {
+            return response()->json([
+                'available' => false,
+                'message' => __('messages.username_taken')
+            ]);
+        } else {
+            $moderationResult = $this->moderationService->moderateText($username, Config::get('app.locale'));
+            if (!$moderationResult['is_appropriate']) {
+                return response()->json([
+                    'available' => false,
+                    'message' => $moderationResult['reason'] ?: __('messages.username_inappropriate')
+                ]);
+            }
+            return response()->json([
+                'available' => true,
+                'message' => __('messages.username_available')
+            ]);
+        }
     }
 }
