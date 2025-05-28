@@ -1,4 +1,6 @@
-@php use Illuminate\Support\Str; @endphp
+@php
+    use Illuminate\Support\Str;
+@endphp
 @extends('layouts.app')
 
 @section('title', __('messages.profile.title', ['username' => $user->username]))
@@ -26,90 +28,102 @@
                          alt="{{ __('messages.profile.alt_profile_picture', ['username' => $user->username]) }}"
                          class="h-24 w-24 rounded-full object-cover border border-gray-200 cursor-pointer zoomable-image flex-shrink-0"
                          data-full-src="{{ $profilePic }}">
-                    <div class="ml-6 flex-1">
-                        {{-- Name / Username --}}
-                        <div class="flex items-center">
-                            <h2 class="text-2xl font-semibold text-gray-800">{{ $displayName }}</h2>
-                            @if($isVerified)
-                                <span class="ml-1.5" title="{{ __('messages.profile.verified_account') }}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500"
-                                         viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd"
-                                              d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                              clip-rule="evenodd"/>
-                                    </svg>
-                                </span>
+
+                    {{-- Info Block --}}
+                    <div class="ml-4 flex-1 flex flex-col">
+                        <div>
+                            <div class="flex items-center">
+                                <h2 class="text-2xl font-semibold text-gray-800">{{ $displayName }}</h2>
+                                @if($isVerified)
+                                    <span class="ml-1.5" title="{{ __('messages.profile.verified_account') }}">
+                                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500"
+                                               viewBox="0 0 20 20" fill="currentColor">
+                                              <path fill-rule="evenodd"
+                                                    d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                    clip-rule="evenodd"/>
+                                          </svg>
+                                      </span>
+                                @endif
+                            </div>
+
+                            @if($showSubUsername)
+                                <p class="text-gray-600 text-sm mt-0.5">{{ "@".$user->username }}</p>
                             @endif
+
+                            <p class="text-gray-500 text-xs mt-1">{{ __('messages.profile.joined_label') }} {{ $user->created_at->format('M d, Y') }}</p> {{-- Was mt-[4px], standardized to mt-1 --}}
                         </div>
 
-                        @if($showSubUsername)
-                            <p class="text-gray-600 text-sm">{{ "@".$user->username }}</p>
-                        @endif
-
-                        <p class="text-gray-500 text-xs mt-[4px]">{{ __('messages.profile.joined_label') }} {{ $user->created_at->format('M d, Y') }}</p>
-
                         {{-- Stats Section --}}
-                        <div class="mt-2 flex space-x-5 text-sm">
+                        <div class="mt-3 flex space-x-4 text-sm">
                             <div>
                                 <span class="font-semibold text-gray-800">{{ number_format($user->posts_count) }}</span>
                                 <span
                                     class="text-gray-500">{{ trans_choice('messages.profile.posts_stat_label', $user->posts_count) }}</span>
                             </div>
                             <div>
-                                <span
-                                    class="font-semibold text-gray-800">{{ number_format($totalVotesOnUserPosts) }}</span>
+                                  <span
+                                      class="font-semibold text-gray-800">{{ number_format($totalVotesOnUserPosts) }}</span>
                                 <span
                                     class="text-gray-500">{{ trans_choice('messages.profile.votes_collected_stat_label', $totalVotesOnUserPosts) }}</span>
                             </div>
                         </div>
+
+                        {{-- External Links Section --}}
                         @if(!empty($user->external_links) && count(array_filter($user->external_links)) > 0)
-                            <div class="mt-4 pt-3">
-                                <div class="flex flex-wrap gap-x-3 gap-y-2 items-center">
+                            <div class="mt-3">
+                                <div class="flex flex-wrap gap-2 items-center">
                                     @foreach($user->external_links as $link_url)
                                         @if(!empty($link_url))
                                             @php
                                                 $iconSvgHtml = '';
                                                 $displayText = '';
-                                                $host = parse_url($link_url, PHP_URL_HOST);
+                                                $host = strtolower(parse_url($link_url, PHP_URL_HOST));
+                                                $cleanedHost = preg_replace('/^www\./', '', $host);
 
-                                                if (stripos($host, 't.me') !== false || stripos($host, 'telegram.me') !== false) {
-                                                    $iconSvgHtml = '<svg class="h-5 w-5 mr-1.5 text-sky-500" fill="currentColor" viewBox="0 0 24 24"><path d="M19.2,4.4L2.9,10.7c-1.1,0.4-1.1,1.1-0.2,1.3l4.1,1.3l1.6,4.8c0.2,0.5,0.1,0.7,0.6,0.7c0.4,0,0.6-0.2,0.8-0.4c0.1-0.1,1-1,2-2l4.2,3.1c0.8,0.4,1.3,0.2,1.5-0.7l2.8-13.1C20.6,4.6,19.9,4,19.2,4.4z M17.1,7.4l-7.8,7.1L9,17.8L7.4,13l9.2-5.8C17,6.9,17.4,7.1,17.1,7.4z"/></svg>';
+                                                if (
+                                                    ($host === 't.me' || Str::endsWith($host, '.t.me')) ||
+                                                    ($host === 'telegram.me' || Str::endsWith($host, '.telegram.me'))
+                                                ) {
+                                                    $iconSvgHtml = '<svg class="h-5 w-5 text-sky-500" fill="currentColor" viewBox="0 0 24 24"><path d="M19.2,4.4L2.9,10.7c-1.1,0.4-1.1,1.1-0.2,1.3l4.1,1.3l1.6,4.8c0.2,0.5,0.1,0.7,0.6,0.7c0.4,0,0.6-0.2,0.8-0.4c0.1-0.1,1-1,2-2l4.2,3.1c0.8,0.4,1.3,0.2,1.5-0.7l2.8-13.1C20.6,4.6,19.9,4,19.2,4.4z M17.1,7.4l-7.8,7.1L9,17.8L7.4,13l9.2-5.8C17,6.9,17.4,7.1,17.1,7.4z"/></svg>';
                                                     $displayText = __('messages.profile.link_telegram');
-                                                } elseif (stripos($host, 'twitter.com') !== false || stripos($host, 'x.com') !== false) {
-                                                    $iconSvgHtml = '<svg class="h-4 w-4 mr-1.5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>';
+                                                } elseif (
+                                                    ($host === 'twitter.com' || Str::endsWith($host, '.twitter.com')) ||
+                                                    ($host === 'x.com' || Str::endsWith($host, '.x.com'))
+                                                ) {
+                                                    $iconSvgHtml = '<svg class="h-5 w-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>';
                                                     $displayText = __('messages.profile.link_twitter');
-                                                } elseif (stripos($host, 'instagram.com') !== false) {
-                                                    $iconSvgHtml = '<svg class="h-4 w-4 mr-1.5 text-pink-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.316.011 7.053.069 2.59.284.287 2.59.07 7.053.011 8.316 0 8.741 0 12c0 3.259.011 3.684.069 4.947.217 4.46 2.522 6.769 7.053 6.984 1.267.058 1.692.069 4.947.069 3.259 0 3.684-.011 4.947-.069 4.46-.217 6.769-2.522 6.984-7.053.058-1.267.069-1.692.069-4.947 0-3.259-.011-3.684-.069-4.947-.217-4.46-2.522-6.769-7.053-6.984C15.684.011 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>';
+                                                } elseif ($host === 'instagram.com' || Str::endsWith($host, '.instagram.com')) {
+                                                    $iconSvgHtml = '<svg class="h-5 w-5 text-pink-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.316.011 7.053.069 2.59.284.287 2.59.07 7.053.011 8.316 0 8.741 0 12c0 3.259.011 3.684.069 4.947.217 4.46 2.522 6.769 7.053 6.984 1.267.058 1.692.069 4.947.069 3.259 0 3.684-.011 4.947-.069 4.46-.217 6.769-2.522 6.984-7.053.058-1.267.069-1.692.069-4.947 0-3.259-.011-3.684-.069-4.947-.217-4.46-2.522-6.769-7.053-6.984C15.684.011 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>';
                                                     $displayText = __('messages.profile.link_instagram');
-                                                } elseif (stripos($host, 'facebook.com') !== false) {
-                                                    $iconSvgHtml = '<svg class="h-4 w-4 mr-1.5 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12c6.627 0 12-5.373 12-12S18.627 0 12 0zm3.055 8.181h-1.717c-.594 0-.708.282-.708.695v.978h2.399l-.311 2.445h-2.088V20.5h-2.523v-8.199H8.222V9.854h1.887V8.69c0-1.871 1.142-2.89 2.813-2.89a15.868 15.868 0 011.67.087v2.204h-.986c-.908 0-1.084.432-1.084 1.065v.025z"/></svg>';
+                                                } elseif ($host === 'facebook.com' || Str::endsWith($host, '.facebook.com')) {
+                                                    $iconSvgHtml = '<svg class="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12c6.627 0 12-5.373 12-12S18.627 0 12 0zm3.055 8.181h-1.717c-.594 0-.708.282-.708.695v.978h2.399l-.311 2.445h-2.088V20.5h-2.523v-8.199H8.222V9.854h1.887V8.69c0-1.871 1.142-2.89 2.813-2.89a15.868 15.868 0 011.67.087v2.204h-.986c-.908 0-1.084.432-1.084 1.065v.025z"/></svg>';
                                                     $displayText = __('messages.profile.link_facebook');
-                                                } elseif (stripos($host, 'linkedin.com') !== false) {
-                                                    $iconSvgHtml = '<svg class="h-4 w-4 mr-1.5 text-blue-700" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg>';
+                                                } elseif ($host === 'linkedin.com' || Str::endsWith($host, '.linkedin.com')) {
+                                                    $iconSvgHtml = '<svg class="h-5 w-5 text-blue-700" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg>';
                                                     $displayText = __('messages.profile.link_linkedin');
-                                                } elseif (stripos($host, 'github.com') !== false) {
-                                                    $iconSvgHtml = '<svg class="h-4 w-5 mr-1.5 text-gray-800 dark:text-gray-200" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.026 2.747-1.026.546 1.379.201 2.398.098 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.922.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.001 10.001 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/></svg>';
+                                                } elseif ($host === 'github.com' || Str::endsWith($host, '.github.com')) {
+                                                    $iconSvgHtml = '<svg class="h-4 w-5 text-gray-800 dark:text-gray-200" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.026 2.747-1.026.546 1.379.201 2.398.098 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.922.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.001 10.001 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/></svg>';
                                                     $displayText = __('messages.profile.link_github');
                                                 } else {
-                                                    $iconSvgHtml = '<svg class="h-5 w-5 mr-1.5 text-gray-500" fill="none" viewBox="0 0 24 24"><path d="M13.0601 10.9399C15.3101 13.1899 15.3101 16.8299 13.0601 19.0699C10.8101 21.3099 7.17009 21.3199 4.93009 19.0699C2.69009 16.8199 2.68009 13.1799 4.93009 10.9399" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>  <path d="M10.59 13.4099C8.24996 11.0699 8.24996 7.26988 10.59 4.91988C12.93 2.56988 16.73 2.57988 19.08 4.91988C21.43 7.25988 21.42 11.0599 19.08 13.4099" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-                                                    $displayText = Str::limit(preg_replace('/^www\./', '', $host), 20);
+                                                    $iconSvgHtml = '<svg class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24"><path d="M13.0601 10.9399C15.3101 13.1899 15.3101 16.8299 13.0601 19.0699C10.8101 21.3099 7.17009 21.3199 4.93009 19.0699C2.69009 16.8199 2.68009 13.1799 4.93009 10.9399" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>  <path d="M10.59 13.4099C8.24996 11.0699 8.24996 7.26988 10.59 4.91988C12.93 2.56988 16.73 2.57988 19.08 4.91988C21.43 7.25988 21.42 11.0599 19.08 13.4099" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+                                                    $displayText = Str::limit($cleanedHost, 30);
                                                 }
                                             @endphp
                                             <a href="{{ $link_url }}" target="_blank" rel="noopener noreferrer nofollow"
-                                               title="{{ $link_url }}"
-                                               class="inline-flex items-center bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm px-3 py-1.5 rounded-full transition-colors duration-150 shadow-sm border border-gray-200 dark:border-gray-600">
+                                               title="{{ $displayText }} - {{ $link_url }}"
+                                               class="inline-flex items-center justify-center w-9 h-9 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 p-2 rounded-full transition-colors duration-150 shadow-sm border border-gray-200 dark:border-gray-600">
                                                 {!! $iconSvgHtml !!}
-                                                <span class="truncate">{{ $displayText }}</span>
                                             </a>
                                         @endif
                                     @endforeach
                                 </div>
                             </div>
                         @endif
+
                         @if ($isOwnProfile)
                             <div class="mt-4">
                                 <a href="{{ route('profile.edit') }}"
-                                   class="px-4 py-2 bg-blue-800 text-white rounded-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                                   class="inline-block px-4 py-2 bg-blue-800 text-white rounded-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"> {{-- Added inline-block --}}
                                     {{ __('messages.profile.edit_profile_button') }}
                                 </a>
                             </div>

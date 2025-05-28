@@ -1,4 +1,4 @@
-@php use Illuminate\Support\Str; @endphp
+@php use Illuminate\Support\Facades\Storage;use Illuminate\Support\Str; @endphp
 @extends('layouts.app')
 
 @section('title', __('messages.edit_profile_title'))
@@ -40,7 +40,7 @@
                     <input id="username" type="text" name="username" value="{{ old('username', $user->username) }}"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                            required>
-                    <div id="username-status" class="mt-1 text-sm"></div> {{-- For JS validation messages --}}
+                    <div id="username-status" class="mt-1 text-sm"></div>
                     @error('username')
                     <span class="text-red-500 text-sm">{{ $message }}</span>
                     @enderror
@@ -62,7 +62,6 @@
                         <div id="profile_picture_current_container"
                              class="h-16 w-16 rounded-full overflow-hidden border border-gray-200">
                             <img src="{{ $profilePic }}" alt="{{ __('messages.current_pfp_label') }}"
-                                 {{-- Alt text localized --}}
                                  class="h-full w-full object-cover" id="current_profile_picture_img_display"></div>
                     </div>
 
@@ -72,7 +71,7 @@
                             <div id="profile_picture_preview_cropper"
                                  class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3 overflow-hidden">
                                 <img id="profile_picture_img_preview" src="#"
-                                     alt="{{ __('messages.upload_new_pfp_label') }}" {{-- Alt text localized --}}
+                                     alt="{{ __('messages.upload_new_pfp_label') }}"
                                      class="w-10 h-10 rounded-full object-cover hidden">
                                 <svg id="profile_picture_placeholder_icon" xmlns="http://www.w3.org/2000/svg"
                                      class="h-6 w-6 text-gray-600" fill="none"
@@ -115,7 +114,7 @@
                         class="block text-sm font-medium text-gray-700 mb-2">{{ __('messages.privacy_settings_label') }}</label>
                     <div class="flex items-center">
                         <input type="hidden" name="show_voted_posts_publicly"
-                               value="0"> {{-- Default to false if checkbox not sent --}}
+                               value="0">
                         <input type="checkbox" id="show_voted_posts_publicly" name="show_voted_posts_publicly" value="1"
                                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                @if(old('show_voted_posts_publicly', $user->show_voted_posts_publicly ?? true)) checked @endif>
@@ -234,7 +233,6 @@
     </div>
 
     <script>
-        // Translations for username checker, ensuring keys are correctly referenced from messages.php
         const usernameTranslations = {
             checking: @json(__('messages.username_availability_checking')),
             available: @json(__('messages.username_available')),
@@ -268,22 +266,19 @@
         const profilePictureImgPreview = document.getElementById('profile_picture_img_preview');
         const profilePicturePlaceholderIcon = document.getElementById('profile_picture_placeholder_icon');
 
-        // Event listener for 'remove profile picture' checkbox
         if (removeProfilePictureCheckbox && profilePictureFinalInput) {
             removeProfilePictureCheckbox.addEventListener('change', function () {
                 if (this.checked) {
-                    profilePictureFinalInput.value = ''; // Clear the file input
+                    profilePictureFinalInput.value = '';
                     const triggerInput = document.getElementById('profile_picture_trigger');
-                    if (triggerInput) triggerInput.value = ''; // Reset the trigger input
+                    if (triggerInput) triggerInput.value = '';
 
-                    // Reset cropper preview
                     if (profilePictureImgPreview) {
                         profilePictureImgPreview.classList.add('hidden');
                         profilePictureImgPreview.src = '#';
                     }
                     if (profilePicturePlaceholderIcon) profilePicturePlaceholderIcon.classList.remove('hidden');
 
-                    // Destroy cropper instance if active for this input
                     if (window.currentCropperInstance && window.lastTriggeredImageInputId === 'profile_picture_trigger') {
                         window.currentCropperInstance.destroy();
                         window.currentCropperInstance = null;
@@ -306,27 +301,19 @@
 
         function getDomainIconSvg(url) {
             try {
-                // Attempt to parse the URL. If the scheme is missing, new URL() will throw an error.
-                // Input fields with type="url" often add http:// if missing, but oninput might get partial values.
                 const rawHostname = new URL(url).hostname;
 
-                // Ensure hostname is a non-empty string before calling toLowerCase()
                 if (!rawHostname || typeof rawHostname !== 'string') {
                     return SvgIconCollection.default;
                 }
                 const hostname = rawHostname.toLowerCase();
 
-                // Helper function to check if the hostname matches a target domain or its subdomains (e.g., www.target.com)
                 const checkDomain = (targetDomain) => {
-                    // Exact match (e.g., "t.me")
                     if (hostname === targetDomain) {
                         return true;
                     }
-                    // Subdomain match (e.g., "www.telegram.me" for "telegram.me")
-                    if (hostname.endsWith('.' + targetDomain)) {
-                        return true;
-                    }
-                    return false;
+                    return hostname.endsWith('.' + targetDomain);
+
                 };
 
                 if (checkDomain('t.me') || checkDomain('telegram.me')) {
@@ -335,7 +322,7 @@
                 if (checkDomain('twitter.com') || checkDomain('x.com')) {
                     return SvgIconCollection.twitter;
                 }
-                if (checkDomain('instagram.com')) { // Based on existing code, this checks for instagram.com
+                if (checkDomain('instagram.com')) {
                     return SvgIconCollection.instagram;
                 }
                 if (checkDomain('facebook.com')) {
@@ -350,7 +337,6 @@
 
                 return SvgIconCollection.default;
             } catch (e) {
-                // This catch block handles errors from new URL(), e.g., if the URL is malformed or incomplete.
                 return SvgIconCollection.default;
             }
         }
@@ -361,11 +347,11 @@
                 iconContainer.innerHTML = getDomainIconSvg(inputElement.value);
             }
         }
+
         // END: External Link Icon Logic
 
-        // Initialize scripts on DOMContentLoaded
         document.addEventListener('DOMContentLoaded', function () {
-            initUsernameChecker(); // Initialize username availability checker
+            initUsernameChecker();
 
             const profilePictureTriggerInput = document.getElementById('profile_picture_trigger');
 
@@ -379,7 +365,6 @@
                 });
             }
 
-            // Initialize icons for existing external links on page load
             for (let i = 0; i < 3; i++) {
                 const inputElement = document.getElementById(`external_link_${i}`);
                 if (inputElement && inputElement.value) {
@@ -391,7 +376,7 @@
         // Function to initialize username availability checker
         function initUsernameChecker() {
             const usernameInput = document.getElementById('username');
-            const debounceTimeout = 500; // milliseconds
+            const debounceTimeout = 500;
             let typingTimer;
             let lastCheckedUsername = usernameInput.value.trim();
 
@@ -400,7 +385,6 @@
             function checkUsername() {
                 const username = usernameInput.value.trim();
 
-                // Clear status if username is empty
                 if (username === '') {
                     statusElement.textContent = '';
                     usernameInput.classList.remove('border-red-500', 'border-green-500');
@@ -408,25 +392,21 @@
                     return;
                 }
 
-                // Avoid re-checking if username hasn't changed and was valid, unless an error was previously shown
                 if (username === lastCheckedUsername && !usernameInput.classList.contains('border-red-500')) {
                     if (statusElement.classList.contains('text-red-600') && usernameInput.classList.contains('border-red-500')) {
-                        // It was an error, so re-validate
                     } else {
-                        return; // Username is unchanged and was valid
+                        return;
                     }
                 }
 
-                // Client-side validation rules
                 const minLength = 5;
                 const maxLength = 24;
                 const startsWithLetter = /^[a-zA-Z]/.test(username);
                 const onlyValidChars = /^[a-zA-Z0-9_-]+$/.test(username);
                 const notOnlyNumbers = !/^\d+$/.test(username);
-                const noConsecutiveChars = !/(.)\1{2,}/.test(username); // No more than 2 consecutive identical characters
+                const noConsecutiveChars = !/(.)\1{2,}/.test(username);
                 let errorMessage = null;
 
-                // Check validation rules and set error message if any fails
                 if (username.length < minLength) errorMessage = usernameTranslations.minLength;
                 else if (username.length > maxLength) errorMessage = usernameTranslations.maxLength;
                 else if (!startsWithLetter) errorMessage = usernameTranslations.startsWithLetter;
@@ -434,7 +414,6 @@
                 else if (!notOnlyNumbers) errorMessage = usernameTranslations.notOnlyNumbers;
                 else if (!noConsecutiveChars) errorMessage = usernameTranslations.noConsecutiveChars;
 
-                // Display client-side validation error if any
                 if (errorMessage) {
                     statusElement.className = 'mt-1 text-sm text-red-600';
                     statusElement.textContent = errorMessage;
@@ -443,7 +422,6 @@
                     return;
                 }
 
-                // Show 'checking' status and make API call for server-side validation
                 statusElement.className = 'mt-1 text-sm text-gray-500';
                 statusElement.textContent = usernameTranslations.checking;
 
@@ -456,13 +434,12 @@
                 })
                     .then(response => response.json())
                     .then(data => {
-                        // Update status based on API response
                         if (data.available) {
                             statusElement.className = 'mt-1 text-sm text-green-600';
                             statusElement.textContent = data.message || usernameTranslations.available;
                             usernameInput.classList.remove('border-red-500');
                             usernameInput.classList.add('border-green-500');
-                            lastCheckedUsername = username; // Update last checked username on success
+                            lastCheckedUsername = username;
                         } else {
                             statusElement.className = 'mt-1 text-sm text-red-600';
                             statusElement.textContent = data.message || usernameTranslations.taken;
@@ -480,11 +457,11 @@
 
             usernameInput.addEventListener('input', function () {
                 clearTimeout(typingTimer);
-                statusElement.textContent = ''; // Clear status on typing
+                statusElement.textContent = '';
                 usernameInput.classList.remove('border-red-500', 'border-green-500');
-                typingTimer = setTimeout(checkUsername, debounceTimeout); // Debounce API calls
+                typingTimer = setTimeout(checkUsername, debounceTimeout);
             });
-            usernameInput.addEventListener('blur', checkUsername); // Check on blur
+            usernameInput.addEventListener('blur', checkUsername);
         }
     </script>
 @endsection
