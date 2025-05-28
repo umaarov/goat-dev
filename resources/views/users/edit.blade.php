@@ -144,7 +144,7 @@
                                 @endforeach
                             @else
                                 <option value="en" selected>English
-                                </option> {{-- Fallback, consider localizing "English" if needed --}}
+                                </option>
                             @endif
                         </select>
                         @error('locale')
@@ -162,9 +162,9 @@
                         <div class="mb-3 relative">
                             <label for="external_link_{{ $i }}"
                                    class="sr-only">{{ __('messages.external_link_label', ['number' => $i + 1]) }}</label>
-                            <div class="flex items-center">
+                            <div class="flex items-center relative">
                                 <span
-                                    class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+                                    class="absolute left-3 inset-y-0 flex items-center text-gray-400 pointer-events-none"
                                     id="icon_container_external_link_{{ $i }}">
                                     {{-- Default Link Icon (generic) --}}
                                     <svg class="h-4 w-4" id="icon_external_link_{{ $i }}" fill="none"
@@ -190,7 +190,7 @@
                             @enderror
                         </div>
                     @endfor
-                    @error('external_links') {{-- For array-level errors like max items --}}
+                    @error('external_links')
                     <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
                     @enderror
                 </div>
