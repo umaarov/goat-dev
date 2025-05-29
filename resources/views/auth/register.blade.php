@@ -4,9 +4,9 @@
 
 @section('content')
     <div class="max-w-md mx-auto bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4">
-        <div class="p-6 relative">
+        <div class="p-6 relative ">
             @if(isset($available_locales) && is_array($available_locales) && count($available_locales) > 1)
-                <div class="absolute top-6 right-6 z-10">
+                <div class="absolute top-6 right-6 z-auto">
                     <div class="relative">
                         <select onchange="window.location.href=this.value;"
                                 aria-label="{{ __('messages.select_language_label') ?? 'Select Language' }}"

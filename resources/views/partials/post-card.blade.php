@@ -161,7 +161,6 @@
             data-option="option_two"
             @if($showPercentagesOnButtons) data-tooltip-show-count="true" @endif
             @if($showVotedByOwnerIcon && $voteByProfileOwner === 'option_two') data-tooltip-is-owner-choice="true"
-            title="{{ __('messages.post_card.owner_voted_for_this_option', ['username' => $profileOwnerToDisplay->username]) }}"
             @endif
         >
             <p class="button-text-truncate">{{ $post->option_two_title }} {{ $showPercentagesOnButtons ? "($percentTwo%)" : "" }}</p>
