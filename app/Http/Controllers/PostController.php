@@ -517,7 +517,24 @@ class PostController extends Controller
 
     final public function destroy(Post $post): RedirectResponse
     {
-        $user = Auth::user();
+        Log::info('--- Post Deletion Attempt ---');
+        Log::info('Post ID to delete: ' . $post->id);
+        Log::info('Post owned by User ID: ' . $post->user_id);
+        if (Auth::check()) {
+            $user = Auth::user();
+            Log::info('Auth::check() is TRUE.');
+            Log::info('Authenticated User ID: ' . $user->id);
+            Log::info('Authenticated Username: ' . $user->username);
+
+            if ($user->id !== $post->user_id) {
+                Log::warning('Authorization FAILED: Authenticated user ID does not match post owner ID.');
+                abort(403, __('messages.error_unauthorized_action'));
+            }
+        } else {
+            Log::error('Authorization FAILED: Auth::check() is FALSE. No user is logged in.');
+            abort(403, __('messages.error_unauthorized_action'));
+        }
+
         if ($user->id !== $post->user_id) {
             Log::channel('audit_trail')->warning('Unauthorized post deletion attempt.', [
                 'user_id' => $user->id,
@@ -539,6 +556,7 @@ class PostController extends Controller
         Vote::where('post_id', $post->id)->delete();
 
         $post->delete();
+        Log::info('Post deletion SUCCESSFUL for Post ID: ' . $postId);
 
         Log::channel('audit_trail')->info('Post deleted.', [
             'deleter_user_id' => $user->id,
