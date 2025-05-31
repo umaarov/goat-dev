@@ -471,19 +471,16 @@ class UserController extends Controller
         }
 
 
-        if (isset($data['locale']) && $oldValues['locale'] !== $data['locale']) {
-            if ($oldValues['locale'] !== $data['locale']) {
-                if ($data['locale'] !== null) {
-                    Session::put('locale', $data['locale']);
-                    Log::info('UserController@update: Session locale set to: "' . $data['locale'] . '"');
-                } else {
-                    Session::forget('locale');
-                    Log::info('UserController@update: Session locale forgotten (new locale is null).');
-                }
-                Session::save();
-                Log::info('UserController@update: Session::save() called.');
+        if (isset($data['locale']) && $freshUser && $oldValues['locale'] !== $freshUser->locale) {
+            if ($freshUser->locale) {
+                session(['locale' => $freshUser->locale]);
+                Log::info('UserController@update: Session locale has been set to: "' . $freshUser->locale . '"');
+            } else {
+                session()->forget('locale');
+                Log::info('UserController@update: Session locale has been forgotten (user locale is null).');
             }
         }
+
 
 
         Log::info('UserController@update: Process finished. Redirecting...');

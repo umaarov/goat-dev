@@ -140,7 +140,8 @@ class AuthController extends Controller
 
         $loginInput = $request->input('login_identifier');
         $password = $request->input('password');
-        $remember = $request->filled('remember');
+//        $remember = $request->filled('remember');
+        $remember = true;
 
         $fieldType = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
