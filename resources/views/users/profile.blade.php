@@ -936,7 +936,6 @@
                 })
                 .catch(error => {
                     console.error('Error deleting comment:', error);
-                    // Revert optimistic UI update
                     commentElement.style.opacity = '1';
                     commentElement.style.transform = 'translateY(0)';
                     if (window.showToast) {
@@ -962,7 +961,6 @@
             submitButton.disabled = true;
             submitButton.innerHTML = `<div class="inline-block animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div> ${window.i18n.profile.js.comment_button_submitting}`;
 
-
             const url = `/posts/${postId}/comments`;
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
@@ -977,12 +975,24 @@
             })
                 .then(response => {
                     if (!response.ok) {
-                        return response.json().then(errData => {
-                            const message = errData.errors ? Object.values(errData.errors).flat().join(' ') : (errData.message || 'Failed to submit comment.');
-                            throw new Error(message);
-                        }).catch(() => {
-                            throw new Error(`Failed to submit comment. Server error: ${response.status}`);
-                        });
+                        console.log('Response not OK. Status:', response.status);
+                        return response.json()
+                            .catch(jsonParseError => {
+                                console.error('Failed to parse JSON from non-OK response:', jsonParseError);
+                                throw new Error(`Server error: ${response.status}. Response body not valid JSON.`);
+                            })
+                            .then(errData => {
+                                console.log('Parsed error data from server (errData):', errData);
+                                let specificMessage = `Failed to submit comment (Server error: ${response.status}).`;
+
+                                if (errData && errData.errors && errData.errors.content && Array.isArray(errData.errors.content) && errData.errors.content.length > 0) {
+                                    specificMessage = errData.errors.content.join(' ');
+                                } else if (errData && errData.message) {
+                                    specificMessage = errData.message;
+                                }
+                                console.log('Throwing error with specific message:', specificMessage);
+                                throw new Error(specificMessage);
+                            });
                     }
                     return response.json();
                 })
@@ -1018,22 +1028,29 @@
                             window.showToast('Comment posted!', 'success');
                         }
 
-                    } else if (data.errors) {
-                        const errorMessages = Object.values(data.errors).flat().join(' ');
-                        if (window.showToast) window.showToast(`${window.i18n.profile.js.error_prefix} ${errorMessages}`, 'error');
                     } else {
-                        if (window.showToast) window.showToast(data.message || 'Failed to add comment. Unexpected response.', 'error');
+                        if (data.errors) {
+                            const errorMessages = Object.values(data.errors).flat().join(' ');
+                            if (window.showToast) window.showToast(`${window.i18n.profile.js.error_prefix} ${errorMessages}`, 'error');
+                        } else {
+                            if (window.showToast) window.showToast(data.message || 'Failed to add comment. Unexpected response format after success.', 'error');
+                        }
                     }
                 })
                 .catch(error => {
-                    console.error('Error submitting comment:', error);
-                    if (window.showToast) window.showToast(error.message || 'Failed to add comment. Please try again.', 'error');
+                    console.error('Caught in final .catch for submitComment:', error);
+                    if (window.showToast) {
+                        window.showToast(error.message || 'Failed to add comment. Please try again.', 'error');
+                    } else {
+                        alert(error.message || 'Failed to add comment. Please try again.');
+                    }
                 })
                 .finally(() => {
                     submitButton.disabled = false;
                     submitButton.innerHTML = originalButtonText;
                 });
         }
+
 
         function linkifyContent(text) {
             if (typeof text !== 'string') {
