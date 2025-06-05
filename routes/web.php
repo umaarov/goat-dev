@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\CommentLikeController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PostController;
@@ -86,6 +87,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->where('comment', '[0-9]+')
         ->name('comments.destroy');
     Route::get('/posts/{post}/comments', [CommentController::class, 'index'])->name('comments.index');
+
+    Route::post('/comments/{comment}/toggle-like', [CommentLikeController::class, 'toggleLike'])
+        ->name('comments.toggle-like');
 
     Route::get('/profile/edit', [UserController::class, 'edit'])->name('profile.edit');
     Route::put('/profile/update', [UserController::class, 'update'])->name('profile.update');

@@ -376,4 +376,16 @@ return [
         'cannot_send' => 'Вы не можете отправлять уведомления.',
         'sent_successfully' => 'Уведомление успешно отправлено.',
     ],
+
+    'js_login_to_like_comment' => 'Пожалуйста, войдите в систему, чтобы поставить лайк этому комментарию.',
+    'like_comment_title' => 'Поставить лайк комментарию',
+    'unlike_comment_title' => 'Убрать лайк с комментария',
+    'like_action' => 'Лайк',
+    'unlike_action' => 'Убрать лайк',
+    'like_singular' => 'Лайк',
+    'like_plural' => 'Лайки',
+    'js_error_liking_comment' => 'Не удалось обновить статус лайка. Пожалуйста, попробуйте еще раз.',
+    'comment_liked_successfully' => 'Комментарий понравился!',
+    'comment_unliked_successfully' => 'Лайк с комментария убран.',
+    'error_generic_server_error' => 'Произошла неожиданная ошибка. Пожалуйста, попробуйте позже.',
 ];

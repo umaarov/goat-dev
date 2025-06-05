@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Comment;
+use App\Models\CommentLike;
 use App\Models\Post;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
@@ -22,11 +23,33 @@ class CommentController extends Controller
     public function index(Request $request, Post $post)
     {
         $perPage = $request->input('per_page', 10);
+        $userId = Auth::id();
+
         $comments = Comment::where('post_id', $post->id)
             ->with('user:id,username,profile_picture')
             ->with('post:id,user_id')
+            ->withCount('likes')
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
+
+        if ($userId) {
+            $commentIds = $comments->pluck('id');
+            $userLikes = CommentLike::where('user_id', $userId)
+                ->whereIn('comment_id', $commentIds)
+                ->pluck('comment_id')
+                ->flip();
+
+            $comments->getCollection()->transform(function ($comment) use ($userLikes) {
+                $comment->is_liked_by_current_user = $userLikes->has($comment->id);
+                return $comment;
+            });
+        } else {
+            $comments->getCollection()->transform(function ($comment) {
+                $comment->is_liked_by_current_user = false;
+                return $comment;
+            });
+        }
+
 
         return response()->json([
             'comments' => $comments
@@ -224,7 +247,7 @@ class CommentController extends Controller
         ];
         $mainModerationResult = $this->callGeminiAPI($apiUrl, $mainPayload, "Main Content", Str::limit($commentContent, 100));
         if (!$mainModerationResult['is_appropriate']) {
-            Log::info('Comment rejected by main content moderation.', [ /* ... */ ]);
+            Log::info('Comment rejected by main content moderation.', [ /* ... */]);
         }
         return $mainModerationResult;
     }

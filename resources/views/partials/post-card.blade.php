@@ -619,49 +619,172 @@
             });
     }
 
-    function createCommentElement(comment, postId) {
+    function createCommentElement(commentData, postId) {
         const commentDiv = document.createElement('div');
-        commentDiv.className = 'comment mb-3 border-b border-gray-200 pb-3';
-        commentDiv.id = 'comment-' + comment.id;
+        commentDiv.className = 'comment py-3 border-b border-gray-200';
 
-        const profilePic = comment.user.profile_picture
-            ? (comment.user.profile_picture.startsWith('http') ? comment.user.profile_picture : '/storage/' + comment.user.profile_picture)
+        if (!commentData.id.toString().startsWith('temp-')) {
+            commentDiv.id = 'comment-' + commentData.id;
+        }
+
+        const profilePic = commentData.user.profile_picture
+            ? (commentData.user.profile_picture.startsWith('http') ? commentData.user.profile_picture : '/storage/' + commentData.user.profile_picture)
             : '/images/default-pfp.png';
 
-        const altProfilePic = window.translations.profile_alt_picture.replace(':username', comment.user.username);
+        const altProfilePic = (window.translations.profile_alt_picture || 'Profile picture of :username').replace(':username', commentData.user.username);
 
-        const isVerified = ['goat', 'umarov'].includes(comment.user.username);
+        const isVerified = ['goat', 'umarov'].includes(commentData.user.username);
         const verifiedIconHTML = isVerified ? `
-                <span class="ml-1" title="${window.translations.verified_account}">
+                <span class="ml-1" title="${window.translations.verified_account || 'Verified Account'}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
                 </span>` : '';
 
-        const linkedCommentContent = linkifyContent(comment.content);
+        const linkedCommentContent = linkifyContent(commentData.content);
+
+        const likesCount = commentData.likes_count || 0;
+        const isLiked = commentData.is_liked_by_current_user || false;
+
+        const filledHeartSVG = '<path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />';
+        const outlineHeartSVG = '<path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656zM10 15.93l5.828-5.828a2 2 0 10-2.828-2.828L10 10.274l-2.828-2.829a2 2 0 00-2.828 2.828L10 15.93z" clip-rule="evenodd" />';
+
+        const likeButtonHTML = `
+            <div class="mt-2 flex items-center text-xs">
+                <button onclick="toggleCommentLike(${commentData.id}, this)"
+                        class="like-comment-button flex items-center p-1 -ml-1 rounded-full transition-all duration-150 ease-in-out group ${isLiked ? 'text-red-500 hover:bg-red-100' : 'text-gray-400 hover:text-red-500 hover:bg-red-50'}"
+                        data-comment-id="${commentData.id}"
+                        title="${isLiked ? (window.translations.unlike_comment_title || 'Unlike') : (window.translations.like_comment_title || 'Like')}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 comment-like-icon group-hover:scale-125 transition-transform duration-150" viewBox="0 0 20 20" fill="currentColor">
+                        ${isLiked ? filledHeartSVG : outlineHeartSVG}
+                    </svg>
+                </button>
+                <span class="ml-1.5 comment-likes-count font-medium tabular-nums ${parseInt(likesCount) === 0 ? 'text-gray-400' : 'text-gray-700'}" id="comment-likes-count-${commentData.id}">
+                    ${likesCount}
+                </span>
+            </div>
+        `;
 
         commentDiv.innerHTML = `
-            <div class="flex items-start mb-2">
-                <img src="${profilePic}" alt="${altProfilePic}" class="w-8 h-8 rounded-full mr-2 mt-1 cursor-pointer zoomable-image" data-full-src="${profilePic}">
+            <div class="flex items-start">
+                <img src="${profilePic}" alt="${altProfilePic}" class="w-8 h-8 rounded-full mr-3 mt-0.5 cursor-pointer zoomable-image" data-full-src="${profilePic}">
                 <div class="flex-1">
                     <div class="flex items-center">
-                        <a href="/@${comment.user.username}" class="text-sm font-medium text-gray-800 hover:underline">${comment.user.username}</a>
+                        <a href="/@${commentData.user.username}" class="text-sm font-medium text-gray-800 hover:underline">${commentData.user.username}</a>
                         ${verifiedIconHTML}
-                        <span class="mx-1 text-gray-400 text-xs">·</span>
-                        <small class="text-xs text-gray-500" title="${comment.created_at}">${formatTimestamp(comment.created_at)}</small>
+                        <span class="mx-1.5 text-gray-400 text-xs">·</span>
+                        <small class="text-xs text-gray-500" title="${commentData.created_at}">${formatTimestamp(commentData.created_at)}</small>
                     </div>
-                    <div class="text-sm text-gray-700 break-words comment-content-wrapper">${linkedCommentContent}</div>
-                </div>
-                ${canDeleteComment(comment) ? `
-                <div class="ml-auto pl-2">
-                    <form onsubmit="deleteComment('${comment.id}', event)" class="inline">
-                        <button type="submit" class="text-gray-400 hover:text-red-500 text-xs p-1" title="${window.translations.delete_comment_title}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    <div class="text-sm text-gray-700 break-words comment-content-wrapper mt-1">${linkedCommentContent}</div>
+                    ${ {{ Auth::check() ? 'true' : 'false' }} ? likeButtonHTML : ''}
+        </div>
+${canDeleteComment(commentData) ? `
+                <div class="ml-2 pl-1 flex-shrink-0">
+                    <form onsubmit="deleteComment('${commentData.id}', event)" class="inline">
+                        <button type="submit" class="text-gray-400 hover:text-red-600 transition-colors duration-150 ease-in-out text-xs p-1 mt-0.5" title="${window.translations.delete_comment_title || 'Delete comment'}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
                     </form>
                 </div>` : ''}
             </div>`;
         return commentDiv;
+    }
+
+    async function toggleCommentLike(commentId, buttonElement) {
+        if (!{{ Auth::check() ? 'true' : 'false' }}) {
+            if (window.showToast) window.showToast(window.translations.js_login_to_like_comment || 'Please login to like comments.', 'warning');
+            return;
+        }
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const url = `/comments/${commentId}/toggle-like`;
+
+        const heartIcon = buttonElement.querySelector('.comment-like-icon');
+        const likesCountSpan = document.getElementById(`comment-likes-count-${commentId}`);
+
+        const originallyLiked = buttonElement.classList.contains('text-red-500');
+        const originalLikesCount = parseInt(likesCountSpan.textContent.trim());
+
+        const filledHeartSVG = '<path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />';
+        const outlineHeartSVG = '<path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656zM10 15.93l5.828-5.828a2 2 0 10-2.828-2.828L10 10.274l-2.828-2.829a2 2 0 00-2.828 2.828L10 15.93z" clip-rule="evenodd" />';
+
+        let newLikesCount;
+        if (originallyLiked) {
+            buttonElement.classList.remove('text-red-500', 'hover:bg-red-100');
+            buttonElement.classList.add('text-gray-400', 'hover:text-red-500', 'hover:bg-red-50');
+            heartIcon.innerHTML = outlineHeartSVG;
+            buttonElement.title = window.translations.like_comment_title || 'Like';
+            newLikesCount = Math.max(0, originalLikesCount - 1);
+        } else {
+            buttonElement.classList.remove('text-gray-400', 'hover:text-red-500', 'hover:bg-red-50');
+            buttonElement.classList.add('text-red-500', 'hover:bg-red-100');
+            heartIcon.innerHTML = filledHeartSVG;
+            buttonElement.title = window.translations.unlike_comment_title || 'Unlike';
+            newLikesCount = originalLikesCount + 1;
+        }
+        likesCountSpan.textContent = newLikesCount;
+        likesCountSpan.className = `ml-1.5 comment-likes-count font-medium tabular-nums ${newLikesCount === 0 ? 'text-gray-400' : 'text-gray-700'}`;
+
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || data.error_dev || 'Failed to toggle like.');
+            }
+
+            buttonElement.classList.toggle('text-red-500', data.is_liked);
+            buttonElement.classList.toggle('hover:bg-red-100', data.is_liked);
+            buttonElement.classList.toggle('text-gray-400', !data.is_liked);
+            buttonElement.classList.toggle('hover:text-red-500', !data.is_liked);
+            buttonElement.classList.toggle('hover:bg-red-50', !data.is_liked);
+
+
+            if (data.is_liked) {
+                heartIcon.innerHTML = filledHeartSVG;
+                buttonElement.title = window.translations.unlike_comment_title || 'Unlike';
+            } else {
+                heartIcon.innerHTML = outlineHeartSVG;
+                buttonElement.title = window.translations.like_comment_title || 'Like';
+            }
+            likesCountSpan.textContent = data.likes_count;
+            likesCountSpan.className = `ml-1.5 comment-likes-count font-medium tabular-nums ${parseInt(data.likes_count) === 0 ? 'text-gray-400' : 'text-gray-700'}`;
+
+
+            if (window.showToast && data.message_user) {
+                // window.showToast(data.message_user, 'success');
+            }
+
+        } catch (error) {
+            console.error('Error toggling comment like:', error);
+            if (window.showToast) window.showToast(error.message || (window.translations.js_error_liking_comment || 'Could not update like.'), 'error');
+
+            buttonElement.classList.toggle('text-red-500', originallyLiked);
+            buttonElement.classList.toggle('hover:bg-red-100', originallyLiked);
+            buttonElement.classList.toggle('text-gray-400', !originallyLiked);
+            buttonElement.classList.toggle('hover:text-red-500', !originallyLiked);
+            buttonElement.classList.toggle('hover:bg-red-50', !originallyLiked);
+
+
+            if (originallyLiked) {
+                heartIcon.innerHTML = filledHeartSVG;
+                buttonElement.title = window.translations.unlike_comment_title || 'Unlike';
+            } else {
+                heartIcon.innerHTML = outlineHeartSVG;
+                buttonElement.title = window.translations.like_comment_title || 'Like';
+            }
+            likesCountSpan.textContent = originalLikesCount;
+            likesCountSpan.className = `ml-1.5 comment-likes-count font-medium tabular-nums ${originalLikesCount === 0 ? 'text-gray-400' : 'text-gray-700'}`;
+        }
     }
 
     function canDeleteComment(comment) {

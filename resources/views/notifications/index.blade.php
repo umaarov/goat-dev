@@ -23,7 +23,7 @@
         <div id="globalNotifications" class="tab-content">
             @auth
                 @if(Auth::user()->username === 'goat')
-                    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                    <div class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] p-6 mb-8">
                         <h2 class="text-xl font-semibold text-gray-700 mb-4">{{ __('messages.notifications.send_new_global') ?? 'Send New Global Notification' }}</h2>
                         <form action="{{ route('notifications.store') }}" method="POST">
                             @csrf
@@ -31,7 +31,7 @@
                                 <label for="message"
                                        class="block text-sm font-medium text-gray-700">{{ __('messages.notifications.message_label') }}</label>
                                 <textarea name="message" id="message" rows="3"
-                                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                          class="mt-1 block w-full rounded-md border-gray-300 shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                                           required maxlength="255">{{ old('message') }}</textarea>
                                 @error('message')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -50,7 +50,7 @@
 
             <div class="space-y-4">
                 @if($globalNotifications->isEmpty())
-                    <div class="bg-white shadow-md rounded-lg p-6 text-center">
+                    <div class="bg-white shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] rounded-lg p-6 text-center">
                         <p class="text-gray-500">{{ __('messages.notifications.no_global_notifications') ?? 'No global notifications yet.' }}</p>
                     </div>
                 @else

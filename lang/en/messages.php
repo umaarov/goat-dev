@@ -376,4 +376,16 @@ return [
         'cannot_send' => 'You do not have permission to send notifications.',
         'sent_successfully' => 'Notification sent successfully!',
     ],
+
+    'js_login_to_like_comment' => 'Please login to like comments.',
+    'like_comment_title' => 'Like comment',
+    'unlike_comment_title' => 'Unlike comment',
+    'like_action' => 'Like',
+    'unlike_action' => 'Unlike',
+    'like_singular' => 'Like',
+    'like_plural' => 'Likes',
+    'js_error_liking_comment' => 'Could not update like status. Please try again.',
+    'comment_liked_successfully' => 'Comment liked!',
+    'comment_unliked_successfully' => 'Comment unliked.',
+    'error_generic_server_error' => 'An unexpected error occurred. Please try again later.',
 ];
