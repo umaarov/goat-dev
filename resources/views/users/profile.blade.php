@@ -1035,6 +1035,25 @@
                 });
         }
 
+        function linkifyContent(text) {
+            if (typeof text !== 'string') {
+                return '';
+            }
+            const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])|(\bwww\.[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+            const mentionRegex = /@([a-zA-Z0-9_]+)/g;
+
+            let linkedText = text.replace(urlRegex, function (url, p1, p2, p3) {
+                const fullUrl = p3 ? 'http://' + p3 : p1;
+                return `<a href="${fullUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline break-all">${url}</a>`;
+            });
+
+            linkedText = linkedText.replace(mentionRegex, function (match, username) {
+                return `<a href="/@${username}" class="text-blue-600 hover:underline">@${username}</a>`;
+            });
+
+            return linkedText;
+        }
+
         function createCommentElement(comment, postId) {
             const commentDiv = document.createElement('div');
             commentDiv.className = 'comment mb-3 border-b border-gray-200 pb-3';
@@ -1054,9 +1073,9 @@
                 </span>` : '';
 
             const userProfileUrl = window.i18n.profile.js.user_profile_link_template.replace(':username', comment.user.username);
-            const safeContent = document.createElement('p');
-            safeContent.className = 'text-sm text-gray-700 break-words';
-            safeContent.textContent = comment.content;
+            // const safeContent = document.createElement('p');
+            // safeContent.className = 'text-sm text-gray-700 break-words';
+            // safeContent.textContent = comment.content;
 
             const currentUserId = {{ Auth::id() ?? 'null' }};
             const canDelete = comment.user_id === currentUserId || (comment.post && comment.post.user_id === currentUserId);
@@ -1071,6 +1090,8 @@
                     </form>
                 </div>` : '';
 
+            const linkedCommentContent = linkifyContent(comment.content);
+
             commentDiv.innerHTML = `
                 <div class="flex items-start mb-2">
                     <img src="${profilePic}" alt="${window.i18n.profile.js.alt_profile_picture_js.replace(':username', comment.user.username)}"
@@ -1082,7 +1103,7 @@
                             <span class="mx-1 text-gray-400 text-xs">·</span>
                             <small class="text-xs text-gray-500" title="${new Date(comment.created_at).toLocaleString()}">${formatTimestamp(comment.created_at)}</small>
                         </div>
-                        ${safeContent.outerHTML}
+                        <div class="text-sm text-gray-700 break-words comment-content-wrapper">${linkedCommentContent}</div>
                     </div>
                     ${deleteButtonHTML}
                 </div>
