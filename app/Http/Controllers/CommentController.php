@@ -66,83 +66,40 @@ class CommentController extends Controller
         return null;
     }
 
-    private function checkCommentWithGemini(string $commentContent): array
+    private function callGeminiAPI(string $apiUrl, array $payload, string $contextForLogging, string $contentSnippet): array
     {
-        $localBlock = $this->checkForBannedWords($commentContent);
-        if ($localBlock) {
-            return $localBlock;
-        }
-
-        $apiKey = Config::get('gemini.api_key');
-        if (!$apiKey) {
-            Log::error('Gemini API key is not configured.');
-            return ['is_appropriate' => true, 'reason' => 'Gemini API key not configured. Comment allowed without check.', 'category' => 'UNCHECKED_CONFIG_ERROR', 'error' => 'Gemini API key not configured.'];
-        }
-
-        $model = Config::get('gemini.model', 'gemini-2.0-flash');
-        $apiUrl = rtrim(Config::get('gemini.api_url', 'https://generativelanguage.googleapis.com/v1beta/models/'), '/') . '/' . $model . ':generateContent?key=' . $apiKey;
-        $promptTemplate = Config::get('gemini.prompt_template');
-
-        if (empty($promptTemplate)) {
-            Log::error('Gemini moderation prompt template is not configured.');
-            return ['is_appropriate' => true, 'reason' => 'Gemini prompt not configured. Comment allowed without check.', 'category' => 'UNCHECKED_CONFIG_ERROR', 'error' => 'Gemini prompt not configured.'];
-        }
-
-        $currentLocale = App::getLocale();
-        $languageNames = [
-            'en' => 'English',
-            'ru' => 'Russian',
-        ];
-        $languageName = $languageNames[$currentLocale] ?? 'English';
-
-        $intermediatePrompt = str_replace("{LANGUAGE_NAME}", $languageName, $promptTemplate);
-        $finalPrompt = str_replace("{COMMENT_TEXT}", addslashes($commentContent), $intermediatePrompt);
-
-        $payload = [
-            'contents' => [
-                [
-                    'parts' => [
-                        ['text' => $finalPrompt]
-                    ]
-                ]
-            ],
-            'generationConfig' => [
-                'responseMimeType' => 'application/json',
-            ],
-        ];
-
         try {
             $response = Http::timeout(15)->post($apiUrl, $payload);
 
             if (!$response->successful()) {
-                Log::error('Gemini API request failed.', [
+                Log::error("Gemini API request failed for {$contextForLogging}.", [
                     'status' => $response->status(),
                     'body' => $response->body(),
-                    'comment_snippet' => Str::limit($commentContent, 100),
+                    'content_snippet' => $contentSnippet,
                 ]);
-                return ['is_appropriate' => false, 'reason' => 'Content moderation service unavailable due to API request failure.', 'category' => 'ERROR_API_REQUEST', 'error' => 'API request failed: ' . $response->status()];
+                return ['is_appropriate' => false, 'reason' => "Content moderation service ({$contextForLogging}) unavailable due to API request failure.", 'category' => 'ERROR_API_REQUEST', 'error' => 'API request failed: ' . $response->status()];
             }
 
             $responseData = $response->json();
             $jsonString = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? null;
 
             if (!$jsonString) {
-                Log::error('Gemini API response format error - JSON string missing.', [
+                Log::error("Gemini API response format error for {$contextForLogging} - JSON string missing.", [
                     'response' => $responseData,
-                    'comment_snippet' => Str::limit($commentContent, 100),
+                    'content_snippet' => $contentSnippet,
                 ]);
-                return ['is_appropriate' => false, 'reason' => 'Content moderation service error due to malformed API response.', 'category' => 'ERROR_API_RESPONSE_FORMAT', 'error' => 'Malformed API response (JSON string missing)'];
+                return ['is_appropriate' => false, 'reason' => "Content moderation service ({$contextForLogging}) error due to malformed API response.", 'category' => 'ERROR_API_RESPONSE_FORMAT', 'error' => 'Malformed API response (JSON string missing)'];
             }
 
             $moderationResult = json_decode($jsonString, true);
 
             if (json_last_error() !== JSON_ERROR_NONE || !isset($moderationResult['is_appropriate']) || !isset($moderationResult['violation_category'])) {
-                Log::error('Gemini API response parsing error or invalid structure.', [
+                Log::error("Gemini API response parsing error or invalid structure for {$contextForLogging}.", [
                     'json_string' => $jsonString,
                     'json_error' => json_last_error_msg(),
-                    'comment_snippet' => Str::limit($commentContent, 100),
+                    'content_snippet' => $contentSnippet,
                 ]);
-                return ['is_appropriate' => false, 'reason' => 'Content moderation service response error due to parsing/validation failure.', 'category' => 'ERROR_API_RESPONSE_PARSE', 'error' => 'Failed to parse or validate moderation result.'];
+                return ['is_appropriate' => false, 'reason' => "Content moderation service ({$contextForLogging}) response error due to parsing/validation failure.", 'category' => 'ERROR_API_RESPONSE_PARSE', 'error' => 'Failed to parse or validate moderation result.'];
             }
 
             return [
@@ -153,17 +110,117 @@ class CommentController extends Controller
             ];
 
         } catch (ConnectionException $e) {
-            Log::error('Gemini API connection exception: ' . $e->getMessage(), [
-                'comment_snippet' => Str::limit($commentContent, 100),
+            Log::error("Gemini API connection exception for {$contextForLogging}: " . $e->getMessage(), [
+                'content_snippet' => $contentSnippet,
             ]);
-            return ['is_appropriate' => false, 'reason' => 'Content moderation service connection error.', 'category' => 'ERROR_API_CONNECTION', 'error' => 'Connection error: ' . $e->getMessage()];
+            return ['is_appropriate' => false, 'reason' => "Content moderation service ({$contextForLogging}) connection error.", 'category' => 'ERROR_API_CONNECTION', 'error' => 'Connection error: ' . $e->getMessage()];
         } catch (Exception $e) {
-            Log::error('Generic error during Gemini moderation: ' . $e->getMessage(), [
-                'comment_snippet' => Str::limit($commentContent, 100),
+            Log::error("Generic error during Gemini moderation for {$contextForLogging}: " . $e->getMessage(), [
+                'content_snippet' => $contentSnippet,
                 'trace' => Str::limit($e->getTraceAsString(), 500),
             ]);
-            return ['is_appropriate' => false, 'reason' => 'An unexpected error occurred during content moderation.', 'category' => 'ERROR_UNKNOWN', 'error' => 'Exception: ' . $e->getMessage()];
+            return ['is_appropriate' => false, 'reason' => "An unexpected error occurred during content moderation ({$contextForLogging}).", 'category' => 'ERROR_UNKNOWN', 'error' => 'Exception: ' . $e->getMessage()];
         }
+    }
+
+    private function checkCommentWithGemini(string $commentContent): array
+    {
+        // 1. local banned words check
+        $localBlock = $this->checkForBannedWords($commentContent);
+        if ($localBlock) {
+            return $localBlock;
+        }
+
+        $apiKey = Config::get('gemini.api_key');
+        if (!$apiKey) {
+            Log::error('Gemini API key is not configured.');
+            return ['is_appropriate' => true, 'reason' => 'Gemini API key not configured. Comment allowed without API check.', 'category' => 'UNCHECKED_CONFIG_ERROR', 'error' => 'Gemini API key not configured.'];
+        }
+
+        $model = Config::get('gemini.model', 'gemini-2.0-flash');
+        $baseApiUrl = rtrim(Config::get('gemini.api_url', 'https://generativelanguage.googleapis.com/v1beta/models/'), '/');
+        $apiUrl = $baseApiUrl . '/' . $model . ':generateContent?key=' . $apiKey;
+
+        $currentLocale = App::getLocale();
+        $languageNames = ['en' => 'English', 'ru' => 'Russian'];
+        $languageName = $languageNames[$currentLocale] ?? 'English';
+
+        // 2. Extract and moderate URLs
+        $urls = [];
+        preg_match_all('/(\b(?:(?:https?|ftp|file):\/\/|www\.|ftp\.)[-A-Z0-9+&@#\/%=~_|$?!:,.]*[A-Z0-9+&@#\/%=~_|$])|(^|\s)www\.[-A-Z0-9+&@#\/%=~_|$?!:,.]*[A-Z0-9+&@#\/%=~_|$]/i', $commentContent, $matches);
+
+        if (!empty($matches[0])) {
+            foreach ($matches[0] as $url) {
+                $url = trim($url);
+                if (stripos($url, 'www.') === 0 && stripos($url, 'http') !== 0 && stripos($url, 'ftp') !== 0) {
+                    $urls[] = 'http://' . $url;
+                } elseif (filter_var($url, FILTER_VALIDATE_URL)) {
+                    $urls[] = $url;
+                }
+            }
+            $urls = array_unique($urls);
+        }
+
+        if (!empty($urls)) {
+            $urlPromptTemplate = Config::get('gemini.url_prompt_template');
+            if (empty($urlPromptTemplate)) {
+                Log::error('Gemini URL moderation prompt template is not configured.');
+                // return ['is_appropriate' => false, 'reason' => 'URL moderation cannot be performed (config missing).', 'category' => 'UNCHECKED_CONFIG_ERROR_URL', 'error' => 'URL prompt not configured.'];
+            } else {
+                foreach ($urls as $urlToCheck) {
+                    $finalUrlPrompt = str_replace(["{URL_TEXT}", "{LANGUAGE_NAME}"], [addslashes($urlToCheck), $languageName], $urlPromptTemplate);
+                    $urlPayload = [
+                        'contents' => [['parts' => [['text' => $finalUrlPrompt]]]],
+                        'generationConfig' => ['responseMimeType' => 'application/json'],
+                    ];
+
+                    $urlModerationResult = $this->callGeminiAPI($apiUrl, $urlPayload, "URL: {$urlToCheck}", Str::limit($urlToCheck, 100));
+
+                    if (!$urlModerationResult['is_appropriate']) {
+                        // If any URL is inappropriate, reject the whole comment
+                        Log::info('Comment rejected due to URL moderation.', [
+                            'url' => $urlToCheck,
+                            'reason' => $urlModerationResult['reason'],
+                            'category' => $urlModerationResult['category'],
+                            'comment_snippet' => Str::limit($commentContent, 100),
+                        ]);
+                        return [
+                            'is_appropriate' => false,
+                            // Append URL-specific reason to the general message
+                            'reason' => 'A URL in the comment was flagged: ' . ($urlModerationResult['reason'] ?: 'Unsafe URL detected.'),
+                            'category' => $urlModerationResult['category'] ?: 'URL_POLICY_VIOLATION',
+                            'error' => $urlModerationResult['error']
+                        ];
+                    }
+                }
+            }
+        }
+
+        // 3. Moderate the full comment text if all URLs passed (or no URLs)
+        $mainPromptTemplate = Config::get('gemini.prompt_template');
+        if (empty($mainPromptTemplate)) {
+            Log::error('Gemini main moderation prompt template is not configured.');
+            return ['is_appropriate' => true, 'reason' => 'Gemini main prompt not configured. Comment allowed without full text check.', 'category' => 'UNCHECKED_CONFIG_ERROR_MAIN', 'error' => 'Main prompt not configured.'];
+        }
+
+        $intermediateMainPrompt = str_replace("{LANGUAGE_NAME}", $languageName, $mainPromptTemplate);
+        $finalMainPrompt = str_replace("{COMMENT_TEXT}", addslashes($commentContent), $intermediateMainPrompt);
+
+        $mainPayload = [
+            'contents' => [['parts' => [['text' => $finalMainPrompt]]]],
+            'generationConfig' => ['responseMimeType' => 'application/json'],
+        ];
+
+        $mainModerationResult = $this->callGeminiAPI($apiUrl, $mainPayload, "Main Content", Str::limit($commentContent, 100));
+
+        if (!$mainModerationResult['is_appropriate']) {
+            Log::info('Comment rejected by main content moderation.', [
+                'reason' => $mainModerationResult['reason'],
+                'category' => $mainModerationResult['category'],
+                'comment_snippet' => Str::limit($commentContent, 100),
+            ]);
+        }
+        return $mainModerationResult;
     }
 
     final public function store(Request $request, Post $post)
