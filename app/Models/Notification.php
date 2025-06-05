@@ -9,21 +9,15 @@ class Notification extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+    const TYPE_GLOBAL = 'global';
+    const TYPE_PERSONAL = 'personal';
+
     protected $fillable = [
-        'user_id', // The ID of the user who sent the notification
+        'user_id',
         'message',
-        // Add 'read_at' if you want to track read status per user,
-        // but for global notifications, it's simpler without it for now.
+        'type',
     ];
 
-    /**
-     * Get the user who created the notification.
-     */
     public function user()
     {
         return $this->belongsTo(User::class);
