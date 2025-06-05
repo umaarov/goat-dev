@@ -357,5 +357,16 @@ return [
     'external_link_moderation_failed' => 'Could not verify the safety of the external link at this time. Please try a different link or remove it.',
     'external_link_flagged_unsafe' => 'This external link was flagged as potentially unsafe (type: :category). Please use a different link.',
 
+    'notifications' => [
+        'page_title' => 'Notifications',
+        'header' => 'All Notifications',
+        'send_new' => 'Send a New Notification',
+        'message_label' => 'Message',
+        'send_button' => 'Send Notification',
+        'sent_by' => 'Sent by',
+        'no_notifications' => 'No notifications yet.',
+        'cannot_send' => 'You are not authorized to send notifications.',
+        'sent_successfully' => 'Notification sent successfully.',
+    ],
 
 ];

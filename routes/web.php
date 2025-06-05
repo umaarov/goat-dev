@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -99,6 +100,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/@{username}/voted-data', [UserController::class, 'getUserVotedPosts'])
         ->where('username', '[a-zA-Z0-9_\-]+')
         ->name('profile.voted.data');
+
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/send', [NotificationController::class, 'store'])->name('notifications.store');
 });
 
 Route::fallback(function () {
