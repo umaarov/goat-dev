@@ -2,9 +2,9 @@
 
 return [
     'api_key' => env('GEMINI_API_KEY'),
-//    'model' => 'gemini-2.0-flash',
+    'model' => 'gemini-2.0-flash',
 //    'model' => 'gemini-1.5-pro-001',
-    'model' => 'gemini-1.5-flash-8b',
+//    'model' => 'gemini-1.5-flash-8b',
     'api_url' => 'https://generativelanguage.googleapis.com/v1beta/models/',
     'prompt_template' => env('GEMINI_MODERATION_PROMPT', ''),
     'banned_words_uz' => env('GEMINI_BANNED_WORDS_UZ', ''),

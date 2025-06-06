@@ -84,14 +84,19 @@ class ModerationService
 
         Log::debug("ModerationService: Raw text content from API for {$contextForLogging}.", ['raw_text_content' => $jsonStringToParse]);
 
-        $extractedJson = $this->extractJsonFromString($jsonStringToParse);
+        $extractedJson = null;
+        if ($this->useJsonMode) {
+            $extractedJson = $jsonStringToParse;
+        } else {
+            $extractedJson = $this->extractJsonFromString($jsonStringToParse);
 
-        if (!$extractedJson) {
-            Log::error("ModerationService: Could not extract a valid JSON-like string from Gemini's response for {$contextForLogging}.", [
-                'received_string' => $jsonStringToParse
-            ]);
-            $reason = Str::limit("Moderation analysis failed (JSON extraction). Gemini's raw response: " . $jsonStringToParse, 150);
-            return ['is_appropriate' => false, 'reason' => $reason, 'category' => 'ERROR_JSON_EXTRACTION'];
+            if (!$extractedJson) {
+                Log::error("ModerationService: Could not extract a valid JSON-like string from Gemini's response for {$contextForLogging}.", [
+                    'received_string' => $jsonStringToParse
+                ]);
+                $reason = Str::limit("Moderation analysis failed (JSON extraction). Gemini's raw response: " . $jsonStringToParse, 150);
+                return ['is_appropriate' => false, 'reason' => $reason, 'category' => 'ERROR_JSON_EXTRACTION'];
+            }
         }
 
         Log::debug("ModerationService: Extracted JSON string for {$contextForLogging}.", ['extracted_json' => $extractedJson]);
