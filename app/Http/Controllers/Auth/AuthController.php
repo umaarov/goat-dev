@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\InvalidStateException;
+use App\Events\UserRegistered;
 
 class AuthController extends Controller
 {
@@ -86,6 +87,12 @@ class AuthController extends Controller
 
         $user = User::findOrFail($request->id);
 
+        if ($user->hasVerifiedEmail()) {
+            return Auth::check()
+                ? redirect()->route('home')->with('success', __('messages.email_already_verified'))
+                : redirect()->route('login')->with('success', __('messages.email_already_verified'));
+        }
+
         if ($this->emailVerificationService->verify($user, $request->token)) {
             Log::channel('audit_trail')->info('User email verified.', [
                 'user_id' => $user->id,
@@ -93,6 +100,8 @@ class AuthController extends Controller
                 'email' => $user->email,
                 'ip_address' => $request->ip(),
             ]);
+            event(new UserRegistered($user));
+
             return Auth::check()
                 ? redirect()->route('home')->with('success', __('messages.email_verified_success'))
                 : redirect()->route('login')->with('success', __('messages.email_verified_can_login'));
@@ -297,6 +306,7 @@ class AuthController extends Controller
 
                 if ($userModel->wasRecentlyCreated) {
                     $action = 'Registered and logged in';
+                    event(new UserRegistered($userModel));
                 } elseif ($initialUserModelNull && $userModel->google_id == $googleUser->getId()) {
                     $action = 'Logged in (linked Google to existing email account)';
                 } else {
