@@ -8,7 +8,7 @@ class AppServiceProvider extends ServiceProvider
 {
     final function register(): void
     {
-        $this->app->register(EventServiceProvider::class);
+//        $this->app->register(EventServiceProvider::class);
     }
 
     final function boot(): void

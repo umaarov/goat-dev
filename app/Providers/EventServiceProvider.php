@@ -13,4 +13,13 @@ class EventServiceProvider extends ServiceProvider
             SendWelcomeMessage::class,
         ],
     ];
+    public function boot(): void
+    {
+        parent::boot();
+    }
+
+    public function shouldDiscoverEvents(): bool
+    {
+        return false;
+    }
 }

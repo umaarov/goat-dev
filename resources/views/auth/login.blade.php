@@ -31,19 +31,6 @@
 
             <form method="POST" action="{{ route('login') }}">
                 @csrf
-                @if(session('success') && session('success_type') !== 'language_change')
-                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4"
-                         role="alert">
-                        <span class="block sm:inline">{{ session('success') }}</span>
-                    </div>
-                @endif
-                @if(session('error'))
-                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
-                         role="alert">
-                        <span class="block sm:inline">{{ session('error') }}</span>
-                    </div>
-                @endif
-
                 <div class="mb-4">
                     <label for="login_identifier"
                            class="block text-gray-700 mb-2">{{ __('messages.auth.email_or_username') }}</label>
