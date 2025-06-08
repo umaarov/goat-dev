@@ -5,6 +5,8 @@ namespace App\Mail;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
 class RegistrationExpired extends Mailable
@@ -18,9 +20,22 @@ class RegistrationExpired extends Mailable
         $this->user = $user;
     }
 
-    final public function build(): RegistrationExpired
+    public function envelope(): Envelope
     {
-        return $this->subject('Your Registration Has Expired')
-            ->markdown('emails.registration-expired');
+        return new Envelope(
+            subject: __('messages.mail.registration_expired.subject'),
+        );
+    }
+
+    public function content(): Content
+    {
+        return new Content(
+            markdown: 'emails.registration-expired',
+        );
+    }
+
+    public function attachments(): array
+    {
+        return [];
     }
 }

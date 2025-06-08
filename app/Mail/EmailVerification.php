@@ -5,6 +5,8 @@ namespace App\Mail;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
 class EmailVerification extends Mailable
@@ -20,9 +22,22 @@ class EmailVerification extends Mailable
         $this->verificationUrl = $verificationUrl;
     }
 
-    final public function build(): EmailVerification
+    public function envelope(): Envelope
     {
-        return $this->subject('Verify Your Email Address')
-            ->markdown('emails.verification');
+        return new Envelope(
+            subject: __('messages.mail.verify_email.subject'),
+        );
+    }
+
+    public function content(): Content
+    {
+        return new Content(
+            markdown: 'emails.verification',
+        );
+    }
+
+    public function attachments(): array
+    {
+        return [];
     }
 }

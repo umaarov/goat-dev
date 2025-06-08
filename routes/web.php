@@ -112,3 +112,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::fallback(function () {
     return response()->view('errors.404', [], 404);
 });
+
+
