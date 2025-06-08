@@ -1,17 +1,16 @@
 <x-mail::message>
-    # Hey!
+     # Welcome to {{ config('app.name') }}, {{ $user->first_name }}! 👋
 
-    My name is Ismoiljon Umarov, I’m the founder of GOAT.uz — thanks a lot for signing up recently!
+    We are thrilled to have you join our community.
 
-    We’ve just posted new polls and would love for you to check them out. If you have a minute, I’d really appreciate hearing your thoughts:
+    To get started, we recommend exploring your dashboard and customizing your profile.
 
-    - What did you like or dislike about the platform?
+    <x-mail::button :url="route('profile')">
+        Go to Your Dashboard
+    </x-mail::button>
 
-    - Are there any topics, features, or improvements you’d like to see?
+    If you have any questions or need assistance, feel free to visit our support center or reply to this email.
 
-    Your feedback would mean a lot and help us make our platform even better.
-
-    Thanks again,
-    Ismoiljon
-    goat.uz
+    Thanks,
+    The {{ config('app.name') }} Team
 </x-mail::message>
