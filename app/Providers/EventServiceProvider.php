@@ -9,9 +9,9 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvi
 class EventServiceProvider extends ServiceProvider
 {
     protected $listen = [
-        UserRegistered::class => [
-            SendWelcomeMessage::class,
-        ],
+//        UserRegistered::class => [
+//            SendWelcomeMessage::class,
+//        ],
     ];
     public function boot(): void
     {
