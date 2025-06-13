@@ -4,7 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', __('messages.app.default_title', ['default_app_name' => config('app.name', 'GOAT')]))</title>
-    <link rel="icon" href="{{ asset('images/goat.jpg') }}" type="image/png">
+    <link rel="icon" href="{{ asset('images/favicon-96x96.png') }}" type="image/png" sizes="96x96">
+    <link rel="icon" href="{{ asset('images/favicon.svg') }}" type="image/svg+xml">
+    <link rel="shortcut" href="{{ asset('images/favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/apple-touch-icon.png') }}">
+    <meta name="apple-mobile-web-app-title" content="GOAT">
+    <link rel="manifest" href="{{ asset('images/site.webmanifest') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @stack('styles')
     @vite('resources/css/app.css')
@@ -18,6 +23,8 @@
     <link rel="canonical" href="@yield('canonical_url', url()->current())"/>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
             crossorigin="anonymous"></script>
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#1f2937">
     <script>
         window.translations = {
             cropperModalTitle: "{{ __('messages.app.js.cropper_modal_title') }}",
