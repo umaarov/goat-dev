@@ -10,6 +10,9 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/apple-touch-icon.png') }}">
     <meta name="apple-mobile-web-app-title" content="GOAT">
     <link rel="manifest" href="{{ asset('images/site.webmanifest') }}">
+    <meta name="msapplication-TileColor" content="#1f2937">
+    <meta name="msapplication-config" content="/browserconfig.xml">
+    <link rel="search" type="application/opensearchdescription+xml" title="GOAT.uz" href="{{ asset('opensearch.xml') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @stack('styles')
     @vite('resources/css/app.css')
