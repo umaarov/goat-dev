@@ -4,31 +4,31 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 
     <url>
-        <loc>https://goat.uz</loc>
+        <loc>{{ url('/') }}</loc>
         <lastmod>{{ now()->startOfDay()->toAtomString() }}</lastmod>
         <changefreq>daily</changefreq>
         <priority>1.0</priority>
     </url>
     <url>
-        <loc>https://goat.uz/about</loc>
+        <loc>{{ url('/about') }}</loc>
         <lastmod>2024-01-01T00:00:00+05:00</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>
     <url>
-        <loc>https://goat.uz/terms</loc>
+        <loc>{{ url('/terms') }}</loc>
         <lastmod>2024-01-01T00:00:00+05:00</lastmod>
         <changefreq>yearly</changefreq>
         <priority>0.3</priority>
     </url>
     <url>
-        <loc>https://goat.uz/sponsorship</loc>
+        <loc>{{ url('/sponsorship') }}</loc>
         <lastmod>2024-01-01T00:00:00+05:00</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.4</priority>
     </url>
     <url>
-        <loc>https://goat.uz/ads</loc>
+        <loc>{{ url('/ads') }}</loc>
         <lastmod>2024-01-01T00:00:00+05:00</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.4</priority>
@@ -43,6 +43,7 @@
             @if ($post->option_one_image)
                 <image:image>
                     <image:loc>{{ asset('storage/' . $post->option_one_image) }}</image:loc>
+                    {{-- Use htmlspecialchars to prevent XML errors from special characters --}}
                     <image:title>{{ htmlspecialchars($post->option_one_title) }}</image:title>
                     <image:caption>{{ htmlspecialchars($post->question) }}</image:caption>
                 </image:image>
