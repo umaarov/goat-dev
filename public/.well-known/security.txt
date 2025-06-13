@@ -1,0 +1,5 @@
+Contact: mailto:security@goat.uz
+Expires: 2026-06-13T10:00:00.000Z
+Preferred-Languages: en, ru, uz
+Policy: https://goat.uz/terms
+Encryption: https://goat.uz/pgp-key.asc
