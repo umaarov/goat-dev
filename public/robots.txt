@@ -1,19 +1,14 @@
+# Last updated: 2025-06-13
 User-agent: *
-Allow: /
-Allow: /p/
-Allow: /@
-Allow: /images/
-Allow: /storage/
-
 Disallow: /login
 Disallow: /register
 Disallow: /logout
-Disallow: /email/verify
-Disallow: /email/resend
-Disallow: /auth/google
-Disallow: /profile/edit
-Disallow: /profile/change-password
+Disallow: /auth/
+Disallow: /email/
+Disallow: /profile/
 Disallow: /posts/create
-Disallow: /posts/*/edit
+Disallow: /*/edit$
+
+Allow: /
 
 Sitemap: https://goat.uz/sitemap.xml
