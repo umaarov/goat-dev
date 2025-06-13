@@ -6,6 +6,7 @@ use App\Http\Controllers\CommentLikeController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -109,8 +110,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/notifications/send', [NotificationController::class, 'store'])->name('notifications.store');
 });
 
+Route::get('/sitemap.xml', [SitemapController::class, 'index']);
+
 Route::fallback(function () {
     return response()->view('errors.404', [], 404);
 });
+
 
 
