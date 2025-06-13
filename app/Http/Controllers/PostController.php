@@ -367,7 +367,7 @@ class PostController extends Controller
             'question' => Str::limit($post->question, 100),
         ]));
 
-        PingSearchEngines::dispatch()
+        PingSearchEngines::dispatch();
         return redirect()->route('home')->with('success', __('messages.post_created_successfully'));
     }
 
@@ -514,7 +514,7 @@ class PostController extends Controller
 
         $post->update($data);
         Log::channel('audit_trail')->info('Post updated and passed all moderation.', array_merge($logContextBase, ['updated_fields' => array_keys($data)]));
-        PingSearchEngines::dispatch()
+        PingSearchEngines::dispatch();
         return redirect()->route('profile.show', ['username' => $post->user->username])->with('success', __('messages.post_updated_successfully'));
     }
 
@@ -587,7 +587,7 @@ class PostController extends Controller
             return redirect()->route('profile.show', ['username' => $user->username])
                 ->with('success', __('messages.post_deleted_successfully'));
         }
-        PingSearchEngines::dispatch()
+        PingSearchEngines::dispatch();
 
         return redirect()->route('home')->with('success', __('messages.post_deleted_successfully'));
     }
