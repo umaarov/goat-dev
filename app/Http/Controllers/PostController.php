@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Jobs\PingSearchEngines;
 use App\Models\Post;
 use App\Models\Vote;
+use App\Services\GoogleIndexingService;
 use Exception;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
@@ -368,6 +369,7 @@ class PostController extends Controller
         ]));
 
         PingSearchEngines::dispatch();
+        GoogleIndexingService::submitSitemap();
         return redirect()->route('home')->with('success', __('messages.post_created_successfully'));
     }
 
