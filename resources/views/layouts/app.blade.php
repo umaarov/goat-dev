@@ -28,6 +28,28 @@
             crossorigin="anonymous"></script>
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <meta name="theme-color" content="#1f2937">
+    <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": "GOAT.uz",
+          "url": "https://goat.uz",
+          "logo": "https://goat.uz/images/icons/icon-512x512.png",
+          "founder": {
+            "@type": "Person",
+            "name": "Ismoiljon Umarov"
+          },
+          "sameAs": [
+            "https://www.instagram.com/voteongoat",
+          ],
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "email": "info@goat.uz",
+            "telephone": "+998-33-500-25-17"
+          }
+        }
+    </script>
     <script>
         window.translations = {
             cropperModalTitle: "{{ __('messages.app.js.cropper_modal_title') }}",
