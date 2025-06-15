@@ -8,12 +8,12 @@
         <form action="{{ route('search') }}" method="GET" class="w-full max-w-xl mx-auto">
             <div class="relative">
                 <input
-                        type="search"
-                        name="q"
-                        value="{{ old('q', $queryTerm) }}"
-                        placeholder="{{ __('messages.search_results.placeholder') }}"
-                        class="w-full pl-10 pr-4 py-2 border-1 border-gray-300 rounded-2xl transition duration-150 ease-in-out"
-                        autocomplete="off"
+                    type="search"
+                    name="q"
+                    value="{{ old('q', $queryTerm) }}"
+                    placeholder="{{ __('messages.search_results.placeholder') }}"
+                    class="w-full pl-10 pr-4 py-2 border-1 border-gray-300 rounded-2xl transition duration-150 ease-in-out"
+                    autocomplete="off"
                 />
                 <button type="submit"
                         class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-600">
@@ -33,7 +33,7 @@
 
                 {{-- 1. USERS RESULTS SECTION --}}
                 @if ($users->isNotEmpty())
-{{--                    <h2 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2 border-gray-200">{{ __('messages.search_results.users') }}</h2>--}}
+                    {{-- <h2 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2 border-gray-200">{{ __('messages.search_results.users') }}</h2>--}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         @foreach($users as $user)
                             @php
@@ -42,16 +42,39 @@
                                         ? $user->profile_picture
                                         : asset('storage/' . $user->profile_picture))
                                     : asset('images/default-pfp.png');
+
+                                $isVerified = in_array($user->username, ['goat', 'umarov']);
                             @endphp
                             <a href="{{ route('profile.show', ['username' => $user->username]) }}"
                                class="flex items-center p-3 bg-white border-1 border-gray-200 rounded-lg hover:border-blue-500 transition duration-200">
+
                                 <img src="{{ $profilePic }}"
                                      alt="{{ __('messages.profile.alt_profile_picture', ['username' => $user->username]) }}"
                                      class="h-12 w-12 rounded-full object-cover border-1 border-gray-200 cursor-pointer zoomable-image flex-shrink-0"
                                      data-full-src="{{ $profilePic }}">
-                                <div class="ml-4">
-                                    <p class="text-md font-semibold text-gray-900">{{ $user->first_name }}</p>
-                                    <p class="text-sm text-gray-600">{{ $user->username }}</p>
+
+                                <div class="ml-4 flex-1 min-w-0">
+                                    <div class="flex items-center">
+                                        <p class="text-md font-semibold text-gray-900 truncate"
+                                           title="{{ $user->first_name }}">
+                                            {{ $user->first_name }}
+                                        </p>
+
+                                        @if($isVerified)
+                                            <span class="ml-1 flex-shrink-0"
+                                                  title="{{ __('messages.profile.verified_account') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" viewBox="0 0 20 20"
+                         fill="currentColor">
+                        <path fill-rule="evenodd"
+                              d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                              clip-rule="evenodd"/>
+                    </svg>
+                </span>
+                                        @endif
+                                    </div>
+                                    <p class="text-sm text-gray-600 truncate" title="{{ $user->username }}">
+                                        {{ $user->username }}
+                                    </p>
                                 </div>
                             </a>
                         @endforeach
@@ -60,7 +83,7 @@
 
                 {{-- 2. POSTS RESULTS SECTION --}}
                 @if ($posts->isNotEmpty())
-{{--                    <h2 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2 border-gray-200">{{ __('messages.search_results.posts') }}</h2>--}}
+                    {{-- <h2 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2 border-gray-200">{{ __('messages.search_results.posts') }}</h2>--}}
                     <div class="space-y-4">
                         @foreach ($posts as $post)
                             @include('partials.post-card', ['post' => $post])
@@ -73,7 +96,7 @@
 
                 {{-- 3. "NO RESULTS" MESSAGE --}}
                 @if ($users->isEmpty() && $posts->isEmpty())
-                    <div class="text-center mt-2">
+                    <div class="text-center mt-2 mb-8">
                         <p>{{ __('messages.search_results.no_results_found', ['queryTerm' => e($queryTerm)]) }}</p>
                         <p>{{ __('messages.search_results.try_different_keywords') }}</p>
                     </div>
