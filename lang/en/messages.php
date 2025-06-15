@@ -278,11 +278,23 @@ return [
     'edit_post.update_post_button' => 'Update Post',
     'edit_post.js.fill_required_fields_warning' => 'Please fill all required fields (Question and Titles).',
 
-    'search_results.title_with_query' => 'Search Results for ":queryTerm"',
-    'search_results.title_default' => 'Search',
-    'search_results.placeholder' => 'Search...',
-    'search_results.no_posts_found' => 'No posts found matching your search query.',
-    'search_results.enter_term_prompt' => 'Enter a term above to search for posts.',
+//    'search_results.title_with_query' => 'Search Results for ":queryTerm"',
+//    'search_results.title_default' => 'Search',
+//    'search_results.placeholder' => 'Search...',
+//    'search_results.no_posts_found' => 'No posts found matching your search query.',
+//    'search_results.enter_term_prompt' => 'Enter a term above to search for posts.',
+
+    'search_results' => [
+        'title_with_query' => 'Search Results for ":queryTerm"',
+        'title_default' => 'Search',
+        'placeholder' => 'Search for posts or users...',
+        'users' => 'Users',
+        'posts' => 'Posts',
+        'no_results_found' => 'No results found for ":queryTerm"',
+        'try_different_keywords' => 'Try searching for something else.',
+        'enter_term_prompt' => 'Enter a term above to search for posts/users.',
+        'no_posts_found' => 'No posts matched your search criteria.',
+    ],
 
     'app.no_posts_found' => 'No posts found.',
 

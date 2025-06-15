@@ -277,11 +277,23 @@ return [
     'edit_post.update_post_button' => 'Обновить пост',
     'edit_post.js.fill_required_fields_warning' => 'Пожалуйста, заполните все обязательные поля (Вопрос и Заголовки).',
 
-    'search_results.title_with_query' => 'Результаты поиска по запросу ":queryTerm"',
-    'search_results.title_default' => 'Поиск',
-    'search_results.placeholder' => 'Поиск...',
-    'search_results.no_posts_found' => 'По вашему запросу ничего не найдено.',
-    'search_results.enter_term_prompt' => 'Введите поисковый запрос выше для поиска постов.',
+//    'search_results.title_with_query' => 'Результаты поиска по запросу ":queryTerm"',
+//    'search_results.title_default' => 'Поиск',
+//    'search_results.placeholder' => 'Поиск...',
+//    'search_results.no_posts_found' => 'По вашему запросу ничего не найдено.',
+//    'search_results.enter_term_prompt' => 'Введите поисковый запрос выше для поиска постов.',
+
+    'search_results' => [
+        'title_with_query' => 'Результаты поиска по запросу ":queryTerm"',
+        'title_default' => 'Поиск',
+        'placeholder' => 'Поиск постов или пользователей...',
+        'users' => 'Пользователи',
+        'posts' => 'Посты',
+        'no_results_found' => 'По вашему запросу ничего не найдено.',
+        'try_different_keywords' => 'Попробуйте использовать другие ключевые слова.',
+        'enter_term_prompt' => 'Введите поисковый запрос выше для поиска постов/пользователей.',
+        'no_posts_found' => 'Посты не найдены.',
+    ],
 
     'app.no_posts_found' => 'Посты не найдены.',
 

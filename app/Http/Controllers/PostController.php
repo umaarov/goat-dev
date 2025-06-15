@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\PingSearchEngines;
 use App\Models\Post;
+use App\Models\User;
 use App\Models\Vote;
 use App\Services\GoogleIndexingService;
 use Exception;
@@ -686,7 +687,7 @@ class PostController extends Controller
     public function incrementShareCount(Request $request, Post $post)
     {
         $post->increment('shares_count');
-        $user = Auth::user(); // Can be null if guest sharing is allowed
+        $user = Auth::user();
         Log::channel('audit_trail')->info('Post share count incremented.', [
             'user_id' => $user ? $user->id : null,
             'username' => $user ? $user->username : 'Guest/Unconfirmed',
@@ -705,12 +706,21 @@ class PostController extends Controller
                 return response()->json(['data' => []]);
             }
             $posts = Post::query()->whereRaw('0 = 1')->paginate(15);
-            return view('search.results', ['posts' => $posts, 'queryTerm' => null]);
+            $users = collect();
+            return view('search.results', ['posts' => $posts, 'users' => $users, 'queryTerm' => null]);
         }
 
-        $query = Post::query()->withPostData();
+        // --- 2. SEARCH FOR USERS (NEW) ---
+        $users = User::query()
+            ->where('username', 'LIKE', "%{$queryTerm}%")
+            ->orWhere('first_name', 'LIKE', "%{$queryTerm}%")
+            ->limit(10)
+            ->get();
 
-        $query->where(function (Builder $subQuery) use ($queryTerm) {
+        // --- 3. SEARCH FOR POSTS ---
+        $postQuery = Post::query()->withPostData();
+
+        $postQuery->where(function (Builder $subQuery) use ($queryTerm) {
             $subQuery->where('question', 'LIKE', "%{$queryTerm}%")
                 ->orWhere('option_one_title', 'LIKE', "%{$queryTerm}%")
                 ->orWhere('option_two_title', 'LIKE', "%{$queryTerm}%")
@@ -719,13 +729,18 @@ class PostController extends Controller
                 });
         });
 
-        $posts = $query->latest()->paginate(15)->withQueryString();
+        $posts = $postQuery->latest()->paginate(15)->withQueryString();
         $this->attachUserVoteStatus($posts);
 
         if ($request->expectsJson()) {
-            return response()->json($posts);
+            return response()->json([
+                'users' => $users,
+                'posts' => $posts
+            ]);
         }
-        return view('search.results', compact('posts', 'queryTerm'));
+
+        // --- 4. RETURN VIEW WITH BOTH DATASETS ---
+        return view('search.results', compact('posts', 'users', 'queryTerm'));
     }
 
     private function attachUserVoteStatus(LengthAwarePaginator $posts): void
