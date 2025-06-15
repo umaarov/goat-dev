@@ -37,7 +37,7 @@ Route::get('/auth/google/callback', [AuthController::class, 'googleCallback']);
 Route::get('/', [PostController::class, 'index'])->name('home');
 Route::get('/search', [PostController::class, 'search'])->name('search');
 
-Route::get('/p/{id}/{slug?}', [PostController::class, 'showBySlug'])->name('posts.show.slug');
+Route::get('/p/{id}/{slug?}', [PostController::class, 'showBySlug'])->name('posts.showSlug');
 Route::post('/posts/{post}/share', [PostController::class, 'incrementShareCount']);
 
 Route::get('about', function () {
