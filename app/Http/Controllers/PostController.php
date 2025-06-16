@@ -533,75 +533,46 @@ class PostController extends Controller
 
     final public function destroy(Post $post): RedirectResponse
     {
-        Log::info('--- Post Deletion Attempt ---');
-        Log::info('Post ID to delete: ' . $post->id);
-        Log::info('Post owned by User ID: ' . $post->user_id);
-        if (Auth::check()) {
-            $user = Auth::user();
-            Log::info('Auth::check() is TRUE.');
-            Log::info('Authenticated User ID: ' . $user->id);
-            Log::info('Authenticated Username: ' . $user->username);
+        $user = Auth::user();
 
-            if ((int)$user->id !== (int)$post->user_id) {
-                Log::warning('Authorization FAILED: Authenticated user ID does not match post owner ID.');
-                abort(403, __('messages.error_unauthorized_action'));
-            }
-        } else {
-            Log::error('Authorization FAILED: Auth::check() is FALSE. No user is logged in.');
-            abort(403, __('messages.error_unauthorized_action'));
-        }
-
-        if ((int)$user->id !== (int)$post->user_id) {
-            Log::channel('audit_trail')->warning('Unauthorized post deletion attempt.', [
-                'user_id' => $user->id,
-                'username' => $user->username,
-                'post_id' => $post->id,
-                'post_owner_id' => $post->user_id,
-                'ip_address' => request()->ip(),
+        if (!$user || (int)$user->id !== (int)$post->user_id) {
+            Log::warning('Authorization FAILED', [
+                'checked_user_id' => $user ? $user->id : 'none',
+                'post_owner_id' => $post->user_id
             ]);
             abort(403, __('messages.error_unauthorized_action'));
         }
 
         $postId = $post->id;
         $postQuestion = $post->question;
+        $postOwnerId = (int)$post->user_id;
         $postOwnerUsername = $post->user->username;
 
         if ($post->option_one_image) Storage::disk('public')->delete($post->option_one_image);
         if ($post->option_two_image) Storage::disk('public')->delete($post->option_two_image);
-
         Vote::where('post_id', $post->id)->delete();
-
         $post->delete();
-        Log::info('Post deletion SUCCESSFUL for Post ID: ' . $postId);
 
         Log::channel('audit_trail')->info('Post deleted.', [
             'deleter_user_id' => $user->id,
             'deleter_username' => $user->username,
             'deleted_post_id' => $postId,
             'original_post_question' => Str::limit($postQuestion, 100),
-            'original_post_owner_id' => $post->user_id,
+            'original_post_owner_id' => $postOwnerId,
             'original_post_owner_username' => $postOwnerUsername,
             'ip_address' => request()->ip(),
-            'deleted_by_admin' => $user->isAdmin() && $user->id !== $post->user_id,
         ]);
 
         $previousUrl = url()->previous();
         $profileUrlOfPostOwner = route('profile.show', ['username' => $postOwnerUsername]);
-        $profileUrlOfCurrentUser = route('profile.show', ['username' => $user->username]);
+        $currentUserId = (int)$user->id;
 
-        if (str_contains($previousUrl, $profileUrlOfPostOwner) && $user->id === $post->user_id) {
-            return redirect()->route('profile.show', ['username' => $user->username])
+        if (str_contains($previousUrl, $profileUrlOfPostOwner)) {
+            return redirect()->route('profile.show', ['username' => $postOwnerUsername])
                 ->with('success', __('messages.post_deleted_successfully'));
         }
-        if (str_contains($previousUrl, $profileUrlOfPostOwner) && $user->isAdmin() && $user->id !== $post->user_id) {
-            return redirect($previousUrl)->with('success', __('messages.post_deleted_successfully'));
-        }
-        if (str_contains($previousUrl, $profileUrlOfCurrentUser)) {
-            return redirect()->route('profile.show', ['username' => $user->username])
-                ->with('success', __('messages.post_deleted_successfully'));
-        }
+
         PingSearchEngines::dispatch();
-
         return redirect()->route('home')->with('success', __('messages.post_deleted_successfully'));
     }
 
