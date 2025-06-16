@@ -536,28 +536,13 @@ class PostController extends Controller
         Log::info('--- Post Deletion Attempt ---');
         Log::info('Post ID to delete: ' . $post->id);
         Log::info('Post owned by User ID: ' . $post->user_id);
-        if (Auth::check()) {
-            $user = Auth::user();
-            Log::info('Auth::check() is TRUE.');
-            Log::info('Authenticated User ID: ' . $user->id);
-            Log::info('Authenticated Username: ' . $user->username);
 
-            if ((int)$user->id !== (int)$post->user_id) {
-                Log::warning('Authorization FAILED: Authenticated user ID does not match post owner ID.');
-                abort(403, __('messages.error_unauthorized_action'));
-            }
-        } else {
-            Log::error('Authorization FAILED: Auth::check() is FALSE. No user is logged in.');
-            abort(403, __('messages.error_unauthorized_action'));
-        }
+        $user = Auth::user();
 
-        if ($user->id !== $post->user_id) {
-            Log::channel('audit_trail')->warning('Unauthorized post deletion attempt.', [
-                'user_id' => $user->id,
-                'username' => $user->username,
-                'post_id' => $post->id,
-                'post_owner_id' => $post->user_id,
-                'ip_address' => request()->ip(),
+        if (!$user || (int)$user->id !== (int)$post->user_id) {
+            Log::warning('Authorization FAILED', [
+                'checked_user_id' => $user ? $user->id : 'none',
+                'post_owner_id' => $post->user_id
             ]);
             abort(403, __('messages.error_unauthorized_action'));
         }
@@ -589,11 +574,11 @@ class PostController extends Controller
         $profileUrlOfPostOwner = route('profile.show', ['username' => $postOwnerUsername]);
         $profileUrlOfCurrentUser = route('profile.show', ['username' => $user->username]);
 
-        if (str_contains($previousUrl, $profileUrlOfPostOwner) && $user->id === $post->user_id) {
+        if (str_contains($previousUrl, $profileUrlOfPostOwner) && (int)$user->id === (int)$post->user_id) {
             return redirect()->route('profile.show', ['username' => $user->username])
                 ->with('success', __('messages.post_deleted_successfully'));
         }
-        if (str_contains($previousUrl, $profileUrlOfPostOwner) && $user->isAdmin() && $user->id !== $post->user_id) {
+        if (str_contains($previousUrl, $profileUrlOfPostOwner) && $user->isAdmin() && (int)$user->id !== (int)$post->user_id) {
             return redirect($previousUrl)->with('success', __('messages.post_deleted_successfully'));
         }
         if (str_contains($previousUrl, $profileUrlOfCurrentUser)) {
