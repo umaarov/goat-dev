@@ -104,7 +104,7 @@
 
             </div>
         @else
-            <p class="mt-2 mb-8">{{ __('messages.search_results.enter_term_prompt') }}</p>
+            <p class="mt-2 mb-8 text-center">{{ __('messages.search_results.enter_term_prompt') }}</p>
         @endif
     </div>
 @endsection
