@@ -246,7 +246,7 @@
                 const startsWithLetter = /^[a-zA-Z]/.test(username);
                 const onlyValidChars = /^[a-zA-Z0-9_-]+$/.test(username);
                 const notOnlyNumbers = !/^\d+$/.test(username);
-                const noConsecutiveChars = !/(.)\1{2,}/.test(username);
+                const noConsecutiveChars = !/(.)\1{3,}/.test(username);
 
                 let clientSideError = false;
                 let errorMessageKey = null;
