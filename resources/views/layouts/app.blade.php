@@ -373,7 +373,7 @@
                 currentCropperInstance.destroy();
             }
             currentCropperInstance = new Cropper(imageToCropElement, {
-                aspectRatio: 1 / 1,
+                aspectRatio: 1,
                 viewMode: 1,
                 background: false,
                 autoCropArea: 0.85,

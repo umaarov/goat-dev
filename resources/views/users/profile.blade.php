@@ -892,7 +892,8 @@
                 headers: {
                     'X-CSRF-TOKEN': csrfToken,
                     'Accept': 'application/json'
-                }
+                },
+                credentials: 'include'
             })
                 .then(response => {
                     if (!response.ok) {
