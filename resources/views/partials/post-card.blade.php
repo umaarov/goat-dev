@@ -400,6 +400,22 @@
             opacity: 1;
         }
     }
+
+    .shimmer-bg {
+        animation: shimmer 1.5s linear infinite;
+        background-image: linear-gradient(to right, #e2e8f0 0%, #f8fafc 50%, #e2e8f0 100%);
+        background-size: 200% 100%;
+        background-color: #e2e8f0;
+    }
+
+    @keyframes shimmer {
+        0% {
+            background-position: 200% 0;
+        }
+        100% {
+            background-position: -200% 0;
+        }
+    }
 </style>
 
 <script>

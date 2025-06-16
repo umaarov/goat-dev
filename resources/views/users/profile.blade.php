@@ -156,8 +156,9 @@
     </div>
 
     <div id="posts-container" class="space-y-4">
-        <p class="text-gray-500 text-center py-8">{{ __('messages.profile.loading_posts') }}</p>
-    </div>
+        @for ($i = 0; $i < 3; $i++)
+            @include('partials.post-card-shimmer')
+        @endfor
     </div>
 @endsection
 
@@ -291,6 +292,7 @@
         window.i18n.profile.js.user_profile_link_template = "{{ route('profile.show', ['username' => ':USERNAME_PLACEHOLDER']) }}".replace(':USERNAME_PLACEHOLDER', ':username');
 
         document.addEventListener('DOMContentLoaded', function () {
+            const shimmerTemplate = document.getElementById('shimmer-template')?.innerHTML || '';
             @if(session('scrollToPost'))
             scrollToPost({{ session('scrollToPost') }});
             @endif
@@ -1372,7 +1374,11 @@
                 if (!loadMore) {
                     currentPage[type] = 1;
                     hasMorePages[type] = true;
-                    postsContainer.innerHTML = `<p class="text-center py-4">${window.i18n.profile.js.loading}</p>`;
+                    if (shimmerTemplate) {
+                        postsContainer.innerHTML = shimmerTemplate;
+                    } else {
+                        postsContainer.innerHTML = `<p class="text-center py-4">${window.i18n.profile.js.loading}</p>`;
+                    }
                     Object.keys(isLoading).forEach(key => {
                         if (key !== type) isLoading[key] = false;
                     });
