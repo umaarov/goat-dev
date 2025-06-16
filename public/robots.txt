@@ -9,6 +9,6 @@ Disallow: /profile/
 Disallow: /posts/create
 Disallow: /*/edit$
 
-Allow: /
+# Allow: /
 
 Sitemap: https://goat.uz/sitemap.xml

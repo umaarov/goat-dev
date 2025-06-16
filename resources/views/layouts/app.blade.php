@@ -32,9 +32,27 @@
     <script type="application/ld+json">
         {
           "@context": "https://schema.org",
-          "@type": "Organization",
+          "@type": "WebSite",
           "name": "GOAT.uz",
           "url": "https://goat.uz",
+          "alternateName": "GOAT",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://goat.uz/search?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "GOAT.uz",
+            "url": "https://goat.uz",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://goat.uz/images/icons/icon-512x512.png",
+            }
+          },
           "logo": "https://goat.uz/images/icons/icon-512x512.png",
           "founder": {
             "@type": "Person",
@@ -167,7 +185,8 @@
                 <a href="{{ route('terms') }}" class="hover:underline">{{ __('messages.terms_of_use') }}</a>
                 <a href="{{ route('sponsorship') }}" class="hover:underline">{{ __('messages.sponsorship') }}</a>
                 <a href="{{ route('ads') }}" class="hover:underline">{{ __('messages.ads') }}</a>
-                <a href="{{ route('contribution') }}" class="hover:underline">{{ __('messages.contribution.title') }}</a>
+                <a href="{{ route('contribution') }}"
+                   class="hover:underline">{{ __('messages.contribution.title') }}</a>
             </div>
 
             <p class="font-semibold">{{ __('messages.copyright_text') }}</p>
