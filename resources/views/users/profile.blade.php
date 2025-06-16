@@ -1101,9 +1101,12 @@
 
             const userProfileUrl = (window.i18n && window.i18n.profile && window.i18n.profile.js && window.i18n.profile.js.user_profile_link_template || '/@:username').replace(':username', comment.user ? comment.user.username : 'unknown');
 
-            const currentUserId = typeof _currentUserId !== 'undefined' ? _currentUserId : null;
+            const currentUserId = window._currentUserId;
+            const commentOwnerId = comment.user_id ? parseInt(comment.user_id, 10) : null;
+            const postOwnerId = comment.post && comment.post.user_id ? parseInt(comment.post.user_id, 10) : null;
 
-            const canDelete = comment.user_id === currentUserId || (comment.post && comment.post.user_id === currentUserId);
+            const canDelete = (currentUserId !== null) && (commentOwnerId === currentUserId || postOwnerId === currentUserId);
+
             const deleteButtonHTML = canDelete ? `
 <div class="ml-auto pl-2">
     <form onsubmit="deleteComment('${comment.id}', event)" class="inline">
