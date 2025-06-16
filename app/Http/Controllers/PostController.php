@@ -7,6 +7,7 @@ use App\Models\Post;
 use App\Models\User;
 use App\Models\Vote;
 use App\Services\GoogleIndexingService;
+use App\Services\LevenshteinService;
 use Exception;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
@@ -15,6 +16,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
@@ -33,6 +35,14 @@ class PostController extends Controller
 
     private const MAX_POST_IMAGE_SIZE_KB = 2048;
     private const MAX_POST_IMAGE_SIZE_MB = self::MAX_POST_IMAGE_SIZE_KB / 1024;
+
+    private LevenshteinService $levenshteinService;
+
+    public function __construct(LevenshteinService $levenshteinService)
+    {
+        $this->levenshteinService = $levenshteinService;
+    }
+
 
     private function checkForBannedWords(string $textContent, string $contextLabel): ?array
     {
@@ -700,47 +710,80 @@ class PostController extends Controller
     final public function search(Request $request): View|JsonResponse
     {
         $queryTerm = $request->input('q');
+        $perPage = 15;
 
         if (!$queryTerm) {
-            if ($request->expectsJson()) {
-                return response()->json(['data' => []]);
-            }
-            $posts = Post::query()->whereRaw('0 = 1')->paginate(15);
-            $users = collect();
-            return view('search.results', ['posts' => $posts, 'users' => $users, 'queryTerm' => null]);
+            $posts = Post::query()->whereRaw('0 = 1')->paginate($perPage);
+            return view('search.results', ['posts' => $posts, 'users' => collect(), 'queryTerm' => null]);
         }
 
-        // --- 2. SEARCH FOR USERS (NEW) ---
-        $users = User::query()
-            ->where('username', 'LIKE', "%{$queryTerm}%")
-            ->orWhere('first_name', 'LIKE', "%{$queryTerm}%")
-            ->limit(10)
+        $soundexCode = soundex($queryTerm);
+
+        // --- 1. GET CANDIDATE RESULTS (NOW WITH SOUNDEX) ---
+        $candidatePosts = Post::query()->withPostData()
+            ->where(function (Builder $subQuery) use ($queryTerm, $soundexCode) {
+                $subQuery->where('question', 'LIKE', "%{$queryTerm}%")
+                    ->orWhereRaw('SOUNDEX(question) = ?', [$soundexCode]) // Check phonetic match
+                    ->orWhere('option_one_title', 'LIKE', "%{$queryTerm}%")
+                    ->orWhereRaw('SOUNDEX(option_one_title) = ?', [$soundexCode])
+                    ->orWhere('option_two_title', 'LIKE', "%{$queryTerm}%")
+                    ->orWhereRaw('SOUNDEX(option_two_title) = ?', [$soundexCode])
+                    ->orWhereHas('user', fn(Builder $q) => $q->where('username', 'LIKE', "%{$queryTerm}%"));
+            })
+            ->latest()
+            ->limit(200)
             ->get();
 
-        // --- 3. SEARCH FOR POSTS ---
-        $postQuery = Post::query()->withPostData();
+        $candidateUsers = User::query()
+            ->where(function (Builder $subQuery) use ($queryTerm, $soundexCode) {
+                $subQuery->where('username', 'LIKE', "%{$queryTerm}%")
+                    ->orWhereRaw('SOUNDEX(username) = ?', [$soundexCode]) // Check phonetic match
+                    ->orWhere('first_name', 'LIKE', "%{$queryTerm}%")
+                    ->orWhereRaw('SOUNDEX(first_name) = ?', [$soundexCode]);
+            })
+            ->limit(50)
+            ->get();
 
-        $postQuery->where(function (Builder $subQuery) use ($queryTerm) {
-            $subQuery->where('question', 'LIKE', "%{$queryTerm}%")
-                ->orWhere('option_one_title', 'LIKE', "%{$queryTerm}%")
-                ->orWhere('option_two_title', 'LIKE', "%{$queryTerm}%")
-                ->orWhereHas('user', function (Builder $userQuery) use ($queryTerm) {
-                    $userQuery->where('username', 'LIKE', "%{$queryTerm}%");
-                });
-        });
+        // --- 2. SCORE AND SORT CANDIDATES ---
+        $sortedPosts = $this->levenshteinService->findBestMatches(
+            $queryTerm,
+            $candidatePosts,
+            ['question', 'option_one_title', 'option_two_title', 'user.username']
+        );
 
-        $posts = $postQuery->latest()->paginate(15)->withQueryString();
+        $sortedUsers = $this->levenshteinService->findBestMatches(
+            $queryTerm,
+            $candidateUsers,
+            ['username', 'first_name', 'last_name']
+        );
+
+        // --- 3. MANUALLY PAGINATE THE SORTED POSTS ---
+        $currentPage = Paginator::resolveCurrentPage('page');
+        $currentPagePosts = $sortedPosts->slice(($currentPage - 1) * $perPage, $perPage);
+
+        $posts = new \Illuminate\Pagination\LengthAwarePaginator(
+            $currentPagePosts,
+            $sortedPosts->count(),
+            $perPage,
+            $currentPage,
+            ['path' => Paginator::resolveCurrentPath(), 'query' => $request->query()]
+        );
+
         $this->attachUserVoteStatus($posts);
 
+        // --- 4. HANDLE RESPONSE TYPE ---
         if ($request->expectsJson()) {
             return response()->json([
-                'users' => $users,
+                'users' => $sortedUsers->take(10),
                 'posts' => $posts
             ]);
         }
 
-        // --- 4. RETURN VIEW WITH BOTH DATASETS ---
-        return view('search.results', compact('posts', 'users', 'queryTerm'));
+        return view('search.results', [
+            'posts' => $posts,
+            'users' => $sortedUsers->take(10),
+            'queryTerm' => $queryTerm
+        ]);
     }
 
     private function attachUserVoteStatus(LengthAwarePaginator $posts): void
