@@ -542,7 +542,7 @@ class PostController extends Controller
             Log::info('Authenticated User ID: ' . $user->id);
             Log::info('Authenticated Username: ' . $user->username);
 
-            if ($user->id !== $post->user_id) {
+            if ((int)$user->id !== (int)$post->user_id) {
                 Log::warning('Authorization FAILED: Authenticated user ID does not match post owner ID.');
                 abort(403, __('messages.error_unauthorized_action'));
             }
