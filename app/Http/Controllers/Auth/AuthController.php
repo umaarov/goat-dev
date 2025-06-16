@@ -394,7 +394,7 @@ class AuthController extends Controller
                 'unique:users',
                 'regex:/^[a-zA-Z][a-zA-Z0-9_-]*$/',
                 'not_regex:/^\d+$/',
-                'not_regex:/(.)\1{2,}/',
+                'not_regex:/(.)\1{3,}/',
             ],
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',

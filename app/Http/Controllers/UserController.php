@@ -232,7 +232,7 @@ class UserController extends Controller
             'username' => [
                 'required', 'string', 'min:5', 'max:24', 'alpha_dash',
                 Rule::unique('users')->ignore($user->id),
-                'regex:/^[a-zA-Z][a-zA-Z0-9_-]*$/', 'not_regex:/^\d+$/', 'not_regex:/(.)\1{2,}/',
+                'regex:/^[a-zA-Z][a-zA-Z0-9_-]*$/', 'not_regex:/^\d+$/', 'not_regex:/(.)\1{3,}/',
             ],
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'remove_profile_picture' => 'nullable|boolean',
@@ -568,9 +568,9 @@ class UserController extends Controller
 
         if (strlen($username) < 5) return response()->json(['available' => false, 'message' => __('validation.min.string', ['attribute' => 'username', 'min' => 5])]);
         if (strlen($username) > 24) return response()->json(['available' => false, 'message' => __('validation.max.string', ['attribute' => 'username', 'max' => 24])]);
-        if (!preg_match('/^[a-zA-Z][a-zA-Z0-9_-]*$/', $username)) return response()->json(['available' => false, 'message' => __('validation.regex', ['attribute' => 'username'])]); // Generic regex message
+        if (!preg_match('/^[a-zA-Z][a-zA-Z0-9_-]*$/', $username)) return response()->json(['available' => false, 'message' => __('validation.regex', ['attribute' => 'username'])]);
         if (preg_match('/^\d+$/', $username)) return response()->json(['available' => false, 'message' => __('validation.not_regex', ['attribute' => 'username'])]);
-        if (preg_match('/(.)\1{2,}/', $username)) return response()->json(['available' => false, 'message' => __('validation.not_regex', ['attribute' => 'username']) . ' (no 3+ repeating chars)']);
+        if (preg_match('/(.)\1{3,}/', $username)) return response()->json(['available' => false, 'message' => __('validation.not_regex', ['attribute' => 'username']) . ' (no 4+ repeating chars)']);
 
 
         $query = User::where('username', $username);
