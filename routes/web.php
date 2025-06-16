@@ -56,6 +56,10 @@ Route::get('ads', function () {
     return view('ads');
 })->name('ads');
 
+Route::get('/contribution', function () {
+    return view('contribution');
+})->name('contribution');
+
 Route::get('/@{username}', [UserController::class, 'showProfile'])
     ->where('username', '[a-zA-Z0-9_\-]+')
     ->name('profile.show');

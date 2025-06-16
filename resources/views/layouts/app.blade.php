@@ -167,6 +167,7 @@
                 <a href="{{ route('terms') }}" class="hover:underline">{{ __('messages.terms_of_use') }}</a>
                 <a href="{{ route('sponsorship') }}" class="hover:underline">{{ __('messages.sponsorship') }}</a>
                 <a href="{{ route('ads') }}" class="hover:underline">{{ __('messages.ads') }}</a>
+                <a href="{{ route('contribution') }}" class="hover:underline">{{ __('messages.contribution.title') }}</a>
             </div>
 
             <p class="font-semibold">{{ __('messages.copyright_text') }}</p>

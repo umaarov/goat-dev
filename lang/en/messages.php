@@ -99,7 +99,7 @@ return [
     'username_startsWithLetter' => 'Username must start with a letter',
     'username_onlyValidChars' => 'Username can only contain letters, numbers, underscores, and hyphens',
     'username_notOnlyNumbers' => 'Username cannot consist of only numbers',
-    'username_noConsecutiveChars' => 'Username cannot contain more than 2 consecutive identical characters',
+    'username_noConsecutiveChars' => 'Username cannot contain more than 3 consecutive identical characters',
 
     'home' => 'Home',
     'search' => 'Search',
@@ -334,6 +334,35 @@ return [
     'terms.section4_text' => 'We reserve the right to update or change these terms at any time. Continued use of the platform after changes means you accept the revised terms.',
     'terms.section5_heading' => '5. Disclaimer',
     'terms.section5_text' => 'We provide this platform "as is" with no guarantees. We are not responsible for any loss, damages, or issues that may arise from using our service.',
+
+    'contribution' => [
+        'title' => 'Contribution Guidelines',
+        'main_heading' => 'Contribute to GOAT.UZ',
+        'intro_p1' => 'Thank you for your interest in contributing to GOAT! We are building a community-driven platform, and every contribution, no matter how small, is valuable and deeply appreciated.',
+        'intro_p2' => 'This document provides a set of guidelines to help you contribute effectively. Following them helps us maintain code quality, streamline the review process, and work together more efficiently.',
+
+        'ways_to_contribute_heading' => 'How You Can Contribute',
+        'ways_to_contribute_p1' => 'There are many ways to contribute, from writing code and documentation to reporting bugs and suggesting new features.',
+
+        'bugs_heading' => 'Reporting Bugs',
+        'bugs_text' => 'If you find a bug, please ensure it hasn\'t already been reported by searching the issues on GitHub. If you can\'t find an open issue addressing the problem, open a new one. Be sure to include a clear title, a detailed description of the steps to reproduce the bug, and any relevant logs or screenshots on',
+        'issue_tracker_link' => 'our issue tracker',
+
+        'enhancements_heading' => 'Suggesting Enhancements',
+        'enhancements_text' => 'Enhancement suggestions are tracked as GitHub issues. Before creating a suggestion, please check the existing issues to see if your idea has already been discussed. Provide a clear and detailed explanation of the feature, its potential impact, and why it would be useful.',
+
+        'pr_heading' => 'Submitting a Pull Request',
+        'pr_intro' => 'We actively welcome your pull requests. To ensure a smooth process, please follow these steps:',
+        'pr_step_1' => 'Fork the repository and create your branch from `master`. Use a descriptive branch name (e.g., `feature/user-profiles` or `fix/login-bug`).',
+        'pr_step_2' => 'Set up your local environment and make your changes. Adhere to the existing coding style.',
+        'pr_step_3' => 'Issue the pull request to the `master` branch. Provide a clear description of the problem and solution. Include the relevant issue number (e.g., `Closes #37`) if applicable.',
+
+        'coc_heading' => 'Code of Conduct',
+        'coc_text' => 'This project and everyone participating in it is governed by the GOAT Code of Conduct. By participating, you are expected to uphold this code. Please report unacceptable behavior to the project maintainers.',
+        'coc_link_text' => 'Read our Code of Conduct',
+
+        'thanks_text' => 'We look forward to your contributions!',
+    ],
 
     'language_changed_successfully' => 'Language changed to :language.',
     'error_invalid_locale_selected' => 'The selected language ":locale" is not valid.',
