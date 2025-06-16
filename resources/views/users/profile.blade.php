@@ -1332,6 +1332,12 @@
             const votedPostsButton = document.getElementById('load-voted-posts');
             const votedPostsIndicator = votedPostsButton ? document.getElementById('voted-posts-indicator') : null;
 
+            const shimmerHTML = `
+                @for ($i = 0; $i < 3; $i++)
+            @include('partials.post-card-shimmer')
+            @endfor
+            `;
+
             const buttons = [myPostsButton, votedPostsButton].filter(btn => btn != null);
             const indicators = [myPostsIndicator, votedPostsIndicator].filter(ind => ind != null);
 
@@ -1374,17 +1380,12 @@
                 if (!loadMore) {
                     currentPage[type] = 1;
                     hasMorePages[type] = true;
-                    if (shimmerTemplate) {
-                        postsContainer.innerHTML = shimmerTemplate;
-                    } else {
-                        postsContainer.innerHTML = `<p class="text-center py-4">${window.i18n.profile.js.loading}</p>`;
-                    }
+                    postsContainer.innerHTML = shimmerHTML;
                     Object.keys(isLoading).forEach(key => {
                         if (key !== type) isLoading[key] = false;
                     });
                 } else {
                     if (!hasMorePages[type]) {
-                        console.log('No more pages to load for', type);
                         const existingLoadMoreButton = postsContainer.querySelector(`.load-more-button[data-type="${type}"]`);
                         if (existingLoadMoreButton) existingLoadMoreButton.remove();
                         return;
@@ -1407,7 +1408,7 @@
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
                             'Accept': 'application/json',
-                            'Content-Type': 'application/json',
+                            // 'Content-Type': 'application/json',
                             // 'X-CSRF-TOKEN': csrfToken
                         },
                         // credentials: 'same-origin'
