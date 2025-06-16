@@ -403,7 +403,7 @@ class PostController extends Controller
     final public function update(Request $request, Post $post): RedirectResponse
     {
         $user = Auth::user();
-        if ($user->id !== $post->user_id) {
+        if ((int)$user->id !== (int)$post->user_id) {
             Log::channel('audit_trail')->warning('Unauthorized post update attempt.', [
                 'user_id' => $user->id,
                 'username' => $user->username,

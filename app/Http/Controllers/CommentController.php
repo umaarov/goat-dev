@@ -427,7 +427,7 @@ class CommentController extends Controller
     {
         $user = Auth::user();
         $postOwnerId = $comment->post->user_id;
-        if (Auth::id() !== $comment->user_id && Auth::id() !== $postOwnerId) {
+        if ((int)Auth::id() !== (int)$comment->user_id && (int)Auth::id() !== (int)$postOwnerId) {
             Log::channel('audit_trail')->warning('Unauthorized comment deletion attempt.', [
                 'attempting_user_id' => Auth::id(),
                 'comment_id' => $comment->id,
