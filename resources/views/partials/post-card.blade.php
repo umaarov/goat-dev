@@ -58,7 +58,7 @@
                 </div>
                 <p class="text-xs text-gray-500">{{ $post->created_at->format('Y-m-d H:i:s') }}</p>
             </div>
-            @if ($showManagementOptions && Auth::check() && Auth::id() === $post->user_id)
+            @if ($showManagementOptions && Auth::check() && (int)Auth::id() === (int)$post->user_id)
                 <div class="flex justify-end border-gray-200 pl-4 ml-auto">
                     <form action="{{ route('posts.destroy', $post) }}" method="POST"
                           onsubmit="return confirm('{{ __('messages.confirm_delete_post_text') }}');">
