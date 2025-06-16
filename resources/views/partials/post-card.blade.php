@@ -806,9 +806,12 @@ ${canDeleteComment(commentData) ? `
     function canDeleteComment(comment) {
         const currentUserId = {{ Auth::id() ?? 'null' }};
         if (currentUserId === null) return false;
-        if (comment.user_id === currentUserId) return true;
-        if (comment.post && typeof comment.post.user_id !== 'undefined' && comment.post.user_id === currentUserId) return true;
-        return false;
+        const commentOwnerId = parseInt(comment.user_id, 10);
+        const postOwnerId = comment.post ? parseInt(comment.post.user_id, 10) : null;
+        if (commentOwnerId === currentUserId) {
+            return true;
+        }
+        return postOwnerId !== null && postOwnerId === currentUserId;
     }
 
     function formatTimestamp(timestamp) {
