@@ -3,7 +3,8 @@
         @include('partials.post-card', [
             'post' => $post,
             'showManagementOptions' => $showManagementOptions ?? false,
-            'profileOwnerToDisplay' => $profileOwnerToDisplay ?? null
+            'profileOwnerToDisplay' => $profileOwnerToDisplay ?? null,
+            'isFirst' => $loop->first,
         ])
     @endforeach
 @else

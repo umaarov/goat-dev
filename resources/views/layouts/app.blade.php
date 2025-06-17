@@ -17,7 +17,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @stack('styles')
     @vite('resources/css/app.css')
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
     {{-- Cropper.js --}}
@@ -193,7 +195,7 @@
     @endif
 
     @yield('content')
-    <footer class="mb-8 text-center text-gray-500 text-xs leading-relaxed px-4">
+    <footer class="mb-8 text-center text-gray-700 text-xs leading-relaxed px-4">
         <div class="space-y-4">
             <div class="flex flex-wrap justify-center gap-4 text-sm text-blue-800">
                 <a href="{{ route('about') }}" class="hover:underline">{{ __('messages.about_us_nav') }}</a>

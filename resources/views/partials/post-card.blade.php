@@ -3,6 +3,7 @@
     use Illuminate\Support\Str;
     $showManagementOptions = $showManagementOptions ?? false;
     $profileOwnerToDisplay = $profileOwnerToDisplay ?? null;
+    $isFirst = $isFirst ?? false;
     $currentViewerVote = $post->user_vote ?? null;
 
     $voteByProfileOwner = null;
@@ -140,7 +141,7 @@
                 @php $optionOneImageUrl = asset('storage/' . $post->option_one_image); @endphp
                 <img src="{{ $optionOneImageUrl }}" alt="{{ $post->question }} - {{ $post->option_one_title }}"
                      class="h-full w-full object-cover object-center cursor-pointer zoomable-image"
-                     data-full-src="{{ $optionOneImageUrl }}" loading="lazy" decoding="async">
+                     data-full-src="{{ $optionOneImageUrl }}" @if(!$isFirst) loading="lazy" @endif decoding="async">
             @else
                 <div class="bg-gray-100 h-full flex items-center justify-center">
                     <div class="bg-gray-200 rounded-full p-2">
@@ -159,7 +160,7 @@
                 <img src="{{ asset('storage/' . $post->option_two_image) }}"
                      alt="{{ $post->question }} - {{ $post->option_two_title }}"
                      class="h-full w-full object-cover object-center cursor-pointer zoomable-image"
-                     data-full-src="{{ $optionTwoImageUrl }}" loading="lazy" decoding="async">
+                     data-full-src="{{ $optionTwoImageUrl }}" @if(!$isFirst)  loading="lazy" @endif decoding="async">
             @else
                 <div class="bg-gray-100 h-full flex items-center justify-center">
                     <div class="bg-gray-200 rounded-full p-2">

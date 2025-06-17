@@ -28,7 +28,7 @@
 
         <div id="posts-container" class="hidden">
             @forelse ($posts as $post)
-                @include('partials.post-card', ['post' => $post])
+                @include('partials.post-card', ['post' => $post, 'isFirst' => $loop->first])
             @empty
                 <div class="text-center p-8 bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)]">
                     <p>{{ __('messages.app.no_posts_found') }}</p>
