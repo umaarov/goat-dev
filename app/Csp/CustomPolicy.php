@@ -3,6 +3,7 @@
 namespace App\Csp;
 
 use Spatie\Csp\Directive;
+//use Spatie\Csp\Policies\Policy;
 use Spatie\Csp\Policy;
 
 class CustomPolicy extends Policy
@@ -10,7 +11,25 @@ class CustomPolicy extends Policy
     public function configure()
     {
         $this
-            ->addDirective(Directive::BASE, ['self'])
+            ->addDirective(Directive::BASE, 'self')
+            ->addDirective(Directive::CONNECT, [
+                'self',
+                'https://stats.g.doubleclick.net',
+                'https://pagead2.googlesyndication.com',
+            ])
+            ->addDirective(Directive::DEFAULT, 'self')
+            ->addDirective(Directive::FORM_ACTION, 'self')
+            ->addDirective(Directive::IMG, [
+                'self',
+                'data:',
+                'https:',
+            ])
+            ->addDirective(Directive::FONT, [
+                'self',
+                'https://fonts.gstatic.com',
+            ])
+            ->addDirective(Directive::MEDIA, 'self')
+            ->addDirective(Directive::OBJECT, 'none')
             ->addDirective(Directive::SCRIPT, [
                 'self',
                 'https://code.jquery.com',
@@ -20,6 +39,8 @@ class CustomPolicy extends Policy
                 'https://pagead2.googlesyndication.com',
                 'https://fundingchoicesmessages.google.com',
                 'https://www.google.com',
+                'https://www.googletagservices.com',
+                'https://adservice.google.com',
                 "'unsafe-inline'",
                 "'unsafe-eval'",
             ])
@@ -29,19 +50,11 @@ class CustomPolicy extends Policy
                 'https://cdnjs.cloudflare.com',
                 "'unsafe-inline'",
             ])
-            ->addDirective(Directive::FONT, [
+            ->addDirective(Directive::FRAME, [
                 'self',
-                'https://fonts.gstatic.com',
-            ])
-            ->addDirective(Directive::IMG, [
-                'self',
-                'data:',
-                'https://lh3.googleusercontent.com',
-            ])
-            ->addDirective(Directive::OBJECT, ['none'])
-            ->addDirective(Directive::CONNECT, [
-                'self',
-                'https://stats.g.doubleclick.net',
+                'https://googleads.g.doubleclick.net',
+                'https://tpc.googlesyndication.com',
+                'https://fundingchoicesmessages.google.com'
             ]);
     }
 }
