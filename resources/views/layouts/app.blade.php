@@ -181,12 +181,12 @@
     <footer class="mb-8 text-center text-gray-500 text-xs leading-relaxed px-4">
         <div class="space-y-4">
             <div class="flex flex-wrap justify-center gap-4 text-sm text-blue-800">
-                <a href="{{ route('about') }}" class="hover:underline">{{ __('messages.about_us') }}</a>
-                <a href="{{ route('terms') }}" class="hover:underline">{{ __('messages.terms_of_use') }}</a>
-                <a href="{{ route('sponsorship') }}" class="hover:underline">{{ __('messages.sponsorship') }}</a>
-                <a href="{{ route('ads') }}" class="hover:underline">{{ __('messages.ads') }}</a>
+                <a href="{{ route('about') }}" class="hover:underline">{{ __('messages.about_us_nav') }}</a>
+                <a href="{{ route('terms') }}" class="hover:underline">{{ __('messages.terms_of_use_nav') }}</a>
+                <a href="{{ route('sponsorship') }}" class="hover:underline">{{ __('messages.sponsorship_nav') }}</a>
+                <a href="{{ route('ads') }}" class="hover:underline">{{ __('messages.ads_nav') }}</a>
                 <a href="{{ route('contribution') }}"
-                   class="hover:underline">{{ __('messages.contribution.title') }}</a>
+                   class="hover:underline">{{ __('messages.contribution.title_nav') }}</a>
             </div>
 
             <p class="font-semibold">{{ __('messages.copyright_text') }}</p>

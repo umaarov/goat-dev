@@ -159,9 +159,13 @@ return [
     'confirm_delete_comment_title' => 'Confirm Deletion',
     'confirm_delete_comment_text' => 'Are you sure you want to delete this comment?',
     'about_us' => 'About Us | GOAT.uz',
+    'about_us_nav' => 'About Us',
     'terms_of_use' => 'Terms of Use | GOAT.uz',
+    'terms_of_use_nav' => 'Terms of Use',
     'sponsorship' => 'Sponsorship | GOAT.uz',
+    'sponsorship_nav' => 'Sponsorship',
     'ads' => 'Advertising | GOAT.uz',
+    'ads_nav' => 'Advertising',
     'copyright_text' => 'GOAT © 2025',
 
     'error_comment_moderation_violation' => 'Your comment could not be posted as it violates community guidelines.',
@@ -338,6 +342,7 @@ return [
 
     'contribution' => [
         'title' => 'Contribution Guidelines | GOAT.UZ',
+        'title_nav' => 'Contribution Guidelines',
         'main_heading' => 'Contribute to GOAT.UZ',
         'intro_p1' => 'Thank you for your interest in contributing to GOAT! We are building a community-driven platform, and every contribution, no matter how small, is valuable and deeply appreciated.',
         'intro_p2' => 'This document provides a set of guidelines to help you contribute effectively. Following them helps us maintain code quality, streamline the review process, and work together more efficiently.',
