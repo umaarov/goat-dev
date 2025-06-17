@@ -8,7 +8,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\HandleCors;
-use Spatie\Csp\AddCspHeaders;
+use Spatie\ResponseCache\Middlewares\CacheResponse;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->alias([
+            'cache.response' => CacheResponse::class
+        ]);
         $middleware->append(HandleCors::class);
 //        $middleware->prepend(EnsureEmailIsVerified::class);
         $middleware->append(SecurityHeaders::class);
