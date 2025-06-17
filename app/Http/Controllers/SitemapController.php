@@ -4,20 +4,30 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use App\Models\User;
-use Illuminate\Http\Response;
+use Illuminate\Support\Facades\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SitemapController extends Controller
 {
-    public function index(): Response
+    public function index(): StreamedResponse
     {
-        $posts = Post::latest()->get();
-        $users = User::all();
+        $stream = function () {
+            echo View::make('sitemap.partials.header')->render();
+            echo View::make('sitemap.partials.static')->render();
 
-        $sitemap = view('sitemap.index', [
-            'posts' => $posts,
-            'users' => $users,
-        ])->render();
+            Post::chunkById(2000, function ($posts) {
+                echo View::make('sitemap.partials.posts', ['posts' => $posts])->render();
+            });
 
-        return response($sitemap)->header('Content-Type', 'text/xml');
+            User::chunkById(2000, function ($users) {
+                echo View::make('sitemap.partials.users', ['users' => $users])->render();
+            });
+
+            echo View::make('sitemap.partials.footer')->render();
+        };
+
+        return response()->stream($stream, 200, [
+            'Content-Type' => 'text/xml',
+        ]);
     }
 }
