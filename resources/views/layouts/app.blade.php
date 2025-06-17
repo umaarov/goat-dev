@@ -16,7 +16,10 @@
           href="{{ asset('opensearch.xml') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @stack('styles')
-    @vite('resources/css/app.css')
+{{--    @vite('resources/css/app.css')--}}
+    @include('partials.critical-css')
+    <link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}"></noscript>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
