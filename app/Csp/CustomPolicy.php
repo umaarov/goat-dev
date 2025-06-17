@@ -3,14 +3,14 @@
 namespace App\Csp;
 
 use Spatie\Csp\Directive;
-use Spatie\Csp\Policies\Policy;
+use Spatie\Csp\Policy;
 
 class CustomPolicy extends Policy
 {
     public function configure()
     {
         $this
-            ->addDirective(Directive::DEFAULT, ['self'])
+            ->addDirective(Directive::BASE, ['self'])
             ->addDirective(Directive::SCRIPT, [
                 'self',
                 'https://code.jquery.com',
@@ -19,6 +19,7 @@ class CustomPolicy extends Policy
                 'https://static.cloudflareinsights.com',
                 'https://pagead2.googlesyndication.com',
                 'https://fundingchoicesmessages.google.com',
+                'https://www.google.com',
                 "'unsafe-inline'",
                 "'unsafe-eval'",
             ])
@@ -37,6 +38,10 @@ class CustomPolicy extends Policy
                 'data:',
                 'https://lh3.googleusercontent.com',
             ])
-            ->addDirective(Directive::OBJECT, ['none']);
+            ->addDirective(Directive::OBJECT, ['none'])
+            ->addDirective(Directive::CONNECT, [
+                'self',
+                'https://stats.g.doubleclick.net',
+            ]);
     }
 }
