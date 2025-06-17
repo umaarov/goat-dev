@@ -20,11 +20,19 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"
+            integrity="sha256-sEM35gIayIm5BVLJp/5pa5r5e2pQSkL22wT8a2Q0VfI="
+            crossorigin="anonymous" defer></script>
     {{-- Cropper.js --}}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" media="print" onload="this.media='all'">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css"
+          integrity="sha512-zxCiCl9qt9HgcizsOrWYvG5lJdWJroMmQvDaub2HPQsCjrJbaK_7UKG3PEIZs60gsKCSSmGVoOrEoRa3H9BIJQ=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"
+            integrity="sha512-9KkIqUpNqN4u9GVYLFiuREIRebBHbkCdx25+Scbjv/2YDUQXCOBHEXKzKT4QJpgOFoAALoEHh1ROdK_wGzCq4g=="
+            crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
     <meta name="description" content="@yield('meta_description', __('messages.app.meta_description_default'))">
     <link rel="canonical" href="@yield('canonical_url', url()->current())"/>
     <meta name="robots" content="@yield('meta_robots', 'index, follow')">
