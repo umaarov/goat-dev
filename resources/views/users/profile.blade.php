@@ -51,7 +51,7 @@
                                 <p class="text-gray-600 text-sm mt-0.5">{{ "@".$user->username }}</p>
                             @endif
 
-{{--                            <p class="text-gray-500 text-xs mt-1">{{ __('messages.profile.joined_label') }} {{ $user->created_at->format('M d, Y') }}</p> {{-- Was mt-[4px], standardized to mt-1 --}}--}}
+{{--                            <p class="text-gray-500 text-xs mt-1">{{ __('messages.profile.joined_label') }} {{ $user->created_at->format('M d, Y') }}</p> {{-- Was mt-[4px], standardized to mt-1 --}}
                             <p class="text-gray-500 text-xs mt-1">{{ __('messages.profile.joined_label') }} <time datetime="{{ $user->created_at->toIso8601String() }}">{{ $user->created_at->format('M d, Y') }}</time></p>
                         </div>
 
