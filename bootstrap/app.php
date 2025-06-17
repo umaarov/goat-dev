@@ -23,7 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(SecurityHeaders::class);
         $middleware->web(append: [
             SetLocale::class,
-            AddCspHeaders::class,
+//            AddCspHeaders::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
