@@ -2,9 +2,9 @@
 
 return [
 
-    'profile.title' => ":username's Profile",
+    'profile.title' => ':username\'s Polls & Profile | GOAT.uz',
     'profile.meta_description' => "View the profile, created polls, and activity of :username on GOAT. Join the discussion!",
-    'profile.alt_profile_picture' => ":username's profile picture",
+    'profile.alt_profile_picture' => "Profile picture of :username on GOAT.uz",
     'profile.verified_account' => 'Verified Account',
     'profile.joined_label' => 'Joined:',
     'profile.posts_stat_label' => 'Post|Posts',
@@ -14,7 +14,7 @@ return [
     'profile.users_posts_tab' => ":username's Posts",
     'profile.voted_posts_tab' => 'Voted Posts',
     'profile.loading_posts' => 'Loading posts...',
-    'profile.schema_description' => "View :username's profile and polls on GOAT.",
+    'profile.schema_description' => "View :username's profile, polls, and voting activity on GOAT.uz.",
 
     'profile.js.link_copied' => 'Link copied to clipboard!',
     'profile.js.time.just_now' => 'Just now',
@@ -158,10 +158,10 @@ return [
     'confirm_delete_post_text' => 'Are you sure you want to delete this post? This action cannot be undone.',
     'confirm_delete_comment_title' => 'Confirm Deletion',
     'confirm_delete_comment_text' => 'Are you sure you want to delete this comment?',
-    'about_us' => 'About Us',
-    'terms_of_use' => 'Terms of Use',
-    'sponsorship' => 'Sponsorship',
-    'ads' => 'Ads',
+    'about_us' => 'About Us | GOAT.uz',
+    'terms_of_use' => 'Terms of Use | GOAT.uz',
+    'sponsorship' => 'Sponsorship | GOAT.uz',
+    'ads' => 'Advertising | GOAT.uz',
     'copyright_text' => 'GOAT © 2025',
 
     'error_comment_moderation_violation' => 'Your comment could not be posted as it violates community guidelines.',
@@ -225,16 +225,16 @@ return [
     'mail.verify_email.no_action_required' => 'If you did not create an account, no further action is required.',
     'mail.verify_email.if_copy_paste' => 'If you\'re having trouble clicking the button, copy and paste the URL below into your web browser:',
 
-    'error.404.page_title' => '404 - Page Not Found',
-    'error.404.user_not_found_title' => '404 - User Not Found',
+    'error.404.page_title' => '404 - Page Not Found | GOAT.uz',
+    'error.404.user_not_found_title' => '404 - User Not Found | GOAT.uz',
     'error.404.heading' => '404',
     'error.404.user_not_found_message' => 'Even the GOAT gets lost sometimes. The user you\'re looking for might not exist.',
     'error.404.page_not_found_message' => 'Even the GOAT gets lost sometimes. The page you\'re looking for might not exist.',
     'error.404.lost_goat_alt' => 'Lost Goat',
 
-    'app.default_title' => config('app.name', 'GOAT'),
-    'app.meta_description_default' => 'Engage in fun polls, ask "this or that" questions, and see what the community thinks on GOAT!',
-    'app.logo_alt' => 'GOAT Application Logo',
+    'app.default_title' => 'GOAT | Community Polls',
+    'app.meta_description_default' => 'What is the GOAT? Create and vote on "this or that" polls. Join the community, share your opinion, and see what\'s trending.',
+    'app.logo_alt' => 'GOAT.uz - Community Polls Logo',
 
     'app.js.cropper_modal_title' => 'Crop Image (1x1)',
     'app.js.apply_crop_button' => 'Apply Crop',
@@ -246,7 +246,7 @@ return [
     'app.js.image_viewer_alt' => 'Full screen image',
     'app.js.image_viewer_close_title' => 'Close image viewer',
 
-    'create_post.title' => 'Create New Post',
+    'create_post.title' => 'Create New Post | GOAT.uz',
     'create_post.ask_unique_question' => 'Ask a unique question!',
     'create_post.choose_titles_images_categories' => 'Choose titles, images and categories to fit your subjects for the world to vote on.',
     'create_post.question_placeholder' => 'Question...',
@@ -258,7 +258,7 @@ return [
     'create_post.submit_button' => 'Submit',
     'create_post.js.fill_all_fields_warning' => 'Please fill all required fields, including images.',
 
-    'edit_post.title' => 'Edit Post',
+    'edit_post.title' => 'Edit Post | GOAT.uz',
     'edit_post.heading' => 'Edit Post',
     'edit_post.cannot_edit_voted_post_message' => 'This post cannot be edited because it has already received votes.',
     'edit_post.your_question_label' => 'Your Question',
@@ -285,8 +285,8 @@ return [
 //    'search_results.enter_term_prompt' => 'Enter a term above to search for posts.',
 
     'search_results' => [
-        'title_with_query' => 'Search Results for ":queryTerm"',
-        'title_default' => 'Search',
+        'title_with_query' => 'Search Results for ":queryTerm" | GOAT.uz',
+        'title_default' => 'Search for Polls and Users | GOAT.uz',
         'placeholder' => 'Search for posts or users...',
         'users' => 'Users',
         'posts' => 'Posts',
@@ -316,7 +316,8 @@ return [
     'ads.reach_out_prompt' => 'Contact us at',
     'ads.reach_out_get_started' => 'to get started.',
 
-    'home.page_title_posts' => 'Home - Posts',
+//    'home.page_title_posts' => 'Home - Posts',
+    'home.page_title_posts' => 'Trending Polls & Questions | GOAT.uz',
     'home.meta_description' => 'Discover the latest and trending community polls on GOAT. Vote, comment, and share your opinions on a variety of "this or that" questions.',
 
     'sponsorship.opportunities_heading' => 'Sponsorship Opportunities',
@@ -336,7 +337,7 @@ return [
     'terms.section5_text' => 'We provide this platform "as is" with no guarantees. We are not responsible for any loss, damages, or issues that may arise from using our service.',
 
     'contribution' => [
-        'title' => 'Contribution Guidelines',
+        'title' => 'Contribution Guidelines | GOAT.UZ',
         'main_heading' => 'Contribute to GOAT.UZ',
         'intro_p1' => 'Thank you for your interest in contributing to GOAT! We are building a community-driven platform, and every contribution, no matter how small, is valuable and deeply appreciated.',
         'intro_p2' => 'This document provides a set of guidelines to help you contribute effectively. Following them helps us maintain code quality, streamline the review process, and work together more efficiently.',

@@ -1,9 +1,9 @@
 <?php
 
 return [
-    'profile.title' => "Профиль :username",
+    'profile.title' => "Опросы и профиль :username | GOAT.uz",
     'profile.meta_description' => "Просмотр профиля, созданных опросов и активности :username на GOAT. Присоединяйтесь к обсуждению!",
-    'profile.alt_profile_picture' => "Фото профиля :username",
+    'profile.alt_profile_picture' => "Фото профиля :username на GOAT.uz",
     'profile.verified_account' => 'Подтвержденный аккаунт',
     'profile.joined_label' => 'Присоединился:',
     'profile.posts_stat_label' => 'Пост|Поста|Постов',
@@ -13,7 +13,7 @@ return [
     'profile.users_posts_tab' => "Посты :username",
     'profile.voted_posts_tab' => 'Оцененные посты',
     'profile.loading_posts' => 'Загрузка постов...',
-    'profile.schema_description' => "Просмотреть профиль и опросы :username на GOAT.",
+    'profile.schema_description' => "Просмотреть профиль и опросы :username на GOAT.uz",
 
     'profile.js.link_copied' => 'Ссылка скопирована в буфер обмена!',
     'profile.js.time.just_now' => 'Только что',
@@ -157,10 +157,10 @@ return [
     'confirm_delete_post_text' => 'Вы уверены, что хотите удалить этот пост? Это действие нельзя будет отменить.',
     'confirm_delete_comment_title' => 'Подтвердить удаление',
     'confirm_delete_comment_text' => 'Вы уверены, что хотите удалить этот комментарий?',
-    'about_us' => 'О нас',
-    'terms_of_use' => 'Условия использования',
-    'sponsorship' => 'Спонсорство',
-    'ads' => 'Реклама',
+    'about_us' => 'О нас | GOAT.uz',
+    'terms_of_use' => 'Условия использования | GOAT.uz',
+    'sponsorship' => 'Спонсорство | GOAT.uz',
+    'ads' => 'Реклама | GOAT.uz',
     'copyright_text' => 'GOAT © 2025',
 
     'error_comment_moderation_violation' => 'Ваш комментарий не может быть опубликован, так как он нарушает правила сообщества.',
@@ -224,14 +224,14 @@ return [
     'mail.verify_email.no_action_required' => 'Если вы не создавали учетную запись, никаких дальнейших действий не требуется.',
     'mail.verify_email.if_copy_paste' => 'Если у вас возникли проблемы с нажатием кнопки, скопируйте и вставьте URL-адрес ниже в свой веб-браузер:',
 
-    'error.404.page_title' => '404 - Страница не найдена',
-    'error.404.user_not_found_title' => '404 - Пользователь не найден',
+    'error.404.page_title' => '404 - Страница не найдена | GOAT.uz',
+    'error.404.user_not_found_title' => '404 - Пользователь не найден | GOAT.uz',
     'error.404.heading' => '404',
     'error.404.user_not_found_message' => 'Даже GOAT иногда теряется. Пользователь, которого вы ищете, может не существовать.',
     'error.404.page_not_found_message' => 'Даже GOAT иногда теряется. Страница, которую вы ищете, может не существовать.',
     'error.404.lost_goat_alt' => 'Заблудившийся козёл',
 
-    'app.default_title' => config('app.name', 'GOAT'),
+    'app.default_title' => 'GOAT - Опросы и голосования',
     'app.meta_description_default' => 'Участвуйте в веселых опросах, задавайте вопросы "это или то" и узнайте, что думает сообщество на GOAT!',
     'app.logo_alt' => 'Логотип приложения GOAT',
 
@@ -245,7 +245,7 @@ return [
     'app.js.image_viewer_alt' => 'Изображение в полноэкранном режиме',
     'app.js.image_viewer_close_title' => 'Закрыть просмотрщик изображений',
 
-    'create_post.title' => 'Создать новый пост',
+    'create_post.title' => 'Создать новый пост | GOAT.uz',
     'create_post.ask_unique_question' => 'Задайте уникальный вопрос!',
     'create_post.choose_titles_images_categories' => 'Выберите заголовки, изображения и категории, соответствующие вашим темам, чтобы мир мог проголосовать.',
     'create_post.question_placeholder' => 'Вопрос...',
@@ -257,7 +257,7 @@ return [
     'create_post.submit_button' => 'Отправить',
     'create_post.js.fill_all_fields_warning' => 'Пожалуйста, заполните все обязательные поля, включая изображения.',
 
-    'edit_post.title' => 'Редактировать пост',
+    'edit_post.title' => 'Редактировать пост | GOAT.uz',
     'edit_post.heading' => 'Редактировать пост',
     'edit_post.cannot_edit_voted_post_message' => 'Этот пост нельзя редактировать, так как за него уже проголосовали.',
     'edit_post.your_question_label' => 'Ваш вопрос',
@@ -284,8 +284,8 @@ return [
 //    'search_results.enter_term_prompt' => 'Введите поисковый запрос выше для поиска постов.',
 
     'search_results' => [
-        'title_with_query' => 'Результаты поиска по запросу ":queryTerm"',
-        'title_default' => 'Поиск',
+        'title_with_query' => 'Результаты поиска по запросу ":queryTerm" | GOAT.uz',
+        'title_default' => 'Поиск опросов и пользователей | GOAT.uz',
         'placeholder' => 'Поиск постов или пользователей...',
         'users' => 'Пользователи',
         'posts' => 'Посты',
@@ -315,7 +315,8 @@ return [
     'ads.reach_out_prompt' => 'Свяжитесь с нами по адресу',
     'ads.reach_out_get_started' => 'чтобы начать.',
 
-    'home.page_title_posts' => 'Главная - Посты',
+//    'home.page_title_posts' => 'Главная - Посты',
+    'home.page_title_posts' => 'Посты - GOAT',
     'home.meta_description' => 'Откройте для себя последние и популярные опросы сообщества на GOAT. Голосуйте, комментируйте и делитесь своим мнением по различным вопросам "это или то".',
 
     'sponsorship.opportunities_heading' => 'Возможности спонсорства',
@@ -335,7 +336,7 @@ return [
     'terms.section5_text' => 'Мы предоставляем эту платформу "как есть" без каких-либо гарантий. Мы не несем ответственности за любые убытки, ущерб или проблемы, которые могут возникнуть в результате использования нашего сервиса.',
 
     'contribution' => [
-        'title' => 'Руководство по вкладу',
+        'title' => 'Руководство по вкладу | GOAT.uz',
         'main_heading' => 'Сотрудничество с GOAT.UZ',
         'intro_p1' => 'Благодарим вас за интерес к участию в развитии GOAT! Мы создаём платформу, основанную на сообществе, и каждый вклад, даже самый небольшой, ценен и вызывает искреннюю признательность.',
         'intro_p2' => 'Этот документ содержит рекомендации, которые помогут вам эффективно внести свой вклад. Соблюдение этих правил способствует поддержанию высокого качества кода, упрощает процесс ревью и обеспечивает более продуктивную совместную работу.',
