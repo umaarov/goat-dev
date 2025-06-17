@@ -135,7 +135,7 @@
                                class="rounded border-gray-300 text-blue-800 focus:ring-blue-500" required>
                         <span class="ml-2 text-gray-700">{{ __('messages.auth.i_agree_to') }} <a
                                 href="{{ route('terms') }}"
-                                class="text-blue-800 hover:underline">{{ __('messages.terms_of_use') }}</a></span>
+                                class="text-blue-800 hover:underline">{{ __('messages.terms_of_use_nav') }}</a></span>
                     </label>
                     @error('terms')
                     <span class="text-red-500 text-sm">{{ $message }}</span>

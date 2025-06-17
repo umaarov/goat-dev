@@ -69,7 +69,7 @@
                 </div>
                 <div class="mb-4 text-sm text-gray-600">
                     {{ __('messages.auth.agree_to_terms_prefix') }} <a href="{{ route('terms') }}"
-                                                                       class="text-blue-800 hover:underline">{{ __('messages.terms_of_use') }}</a>.
+                                                                       class="text-blue-800 hover:underline">{{ __('messages.terms_of_use_nav') }}</a>.
                 </div>
             </form>
 
