@@ -7,6 +7,7 @@
 @endphp
 
 @section('title', $pageTitle)
+@section('meta_robots', 'noindex, follow')
 
 @section('content')
     <div class="max-w-md mx-auto bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4">

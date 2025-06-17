@@ -3,6 +3,21 @@
 @section('title', __('messages.home.page_title_posts'))
 @section('meta_description', __('messages.home.meta_description'))
 
+@push('schema')
+    <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "url": "{{ route('home') }}",
+          "name": "{{ __('messages.home.page_title_posts') }}",
+          "description": "{{ __('messages.home.meta_description') }}",
+          "isPartOf": {
+            "@id": "{{ config('app.url', 'https://goat.uz') }}#website"
+        }
+    }
+    </script>
+@endpush
+
 @section('content')
     <div id="posts-wrapper">
         <div id="posts-loading-shimmer">

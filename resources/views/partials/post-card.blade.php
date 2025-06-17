@@ -12,7 +12,55 @@
     $highlightOptionForViewer = $currentViewerVote;
     $showPercentagesOnButtons = $currentViewerVote || $voteByProfileOwner;
     $showVotedByOwnerIcon = $profileOwnerToDisplay && !$showManagementOptions && $voteByProfileOwner;
+    $postSlug = Str::slug($post->question, '-', 'en');
+    $postUrl = route('posts.show', ['post' => $post, 'slug' => $postSlug]);
 @endphp
+@push('schema')
+    <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "SocialMediaPosting",
+          "headline": "{{ addslashes($post->question) }}",
+          "url": "{{ $postUrl }}",
+          "datePublished": "{{ $post->created_at->toIso8601String() }}",
+          "author": {
+            "@type": "Person",
+            "name": "{{ '@' . $post->user->username }}",
+            "url": "{{ route('profile.show', $post->user->username) }}"
+          },
+          @if($post->option_one_image || $post->option_two_image)
+            "image": [
+            @if($post->option_one_image)
+                "{{ asset('storage/' . $post->option_one_image) }}"@if($post->option_two_image),@endif
+            @endif
+            @if($post->option_two_image)
+                "{{ asset('storage/' . $post->option_two_image) }}"
+            @endif
+            ],
+          @endif
+          "interactionStatistic": [
+          {
+            "@type": "InteractionCounter",
+            "interactionType": { "@type": "CommentAction" },
+            "userInteractionCount": {{ $post->comments_count }}
+          },
+          {
+            "@type": "InteractionCounter",
+            "interactionType": { "@type": "LikeAction" },
+            "userInteractionCount": {{ $post->total_votes }}
+          }
+         ],
+         "publisher": {
+            "@type": "Organization",
+            "name": "GOAT.uz",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "{{ asset('images/icons/icon-512x512.png') }}"
+         }
+    }
+}
+    </script>
+@endpush
 <article class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4"
          id="post-{{ $post->id }}"
          data-option-one-title="{{ $post->option_one_title }}"
@@ -57,6 +105,11 @@
                     @endif
                 </div>
                 <p class="text-xs text-gray-500">{{ $post->created_at->format('Y-m-d H:i:s') }}</p>
+{{--                <a href="{{ $postUrl }}" class="text-xs text-gray-500 hover:underline">--}}
+{{--                    <time datetime="{{ $post->created_at->toIso8601String() }}">--}}
+{{--                        {{ $post->created_at->diffForHumans() }}--}}
+{{--                    </time>--}}
+{{--                </a>--}}
             </div>
             @if ($showManagementOptions && Auth::check() && (int)Auth::id() === (int)$post->user_id)
                 <div class="flex justify-end border-gray-200 pl-4 ml-auto">
@@ -77,14 +130,15 @@
     <div class="border-b w-full border-gray-200"></div>
 
     <div class="pt-4 px-4 font-semibold text-center">
-        <p class="text-lg text-gray-800">{{ $post->question }}</p>
+{{--        <p class="text-lg text-gray-800">{{ $post->question }}</p>--}}
+        <h2 class="text-lg text-gray-800" style="font-size: inherit; font-weight: inherit; margin: 0; padding: 0;">{{ $post->question }}</h2>
     </div>
 
     <div class="grid grid-cols-2 gap-4 p-4 h-52">
         <div class="rounded-md overflow-hidden">
             @if($post->option_one_image)
                 @php $optionOneImageUrl = asset('storage/' . $post->option_one_image); @endphp
-                <img src="{{ $optionOneImageUrl }}" alt="{{ __('messages.post_card.option_1_image_alt') }}"
+                <img src="{{ $optionOneImageUrl }}" alt="{{ $post->question }} - {{ $post->option_one_title }}"
                      class="h-full w-full object-cover object-center cursor-pointer zoomable-image"
                      data-full-src="{{ $optionOneImageUrl }}">
             @else
@@ -103,7 +157,7 @@
             @if($post->option_two_image)
                 @php $optionTwoImageUrl = asset('storage/' . $post->option_two_image); @endphp
                 <img src="{{ asset('storage/' . $post->option_two_image) }}"
-                     alt="{{ __('messages.post_card.option_2_image_alt') }}"
+                     alt="{{ $post->question }} - {{ $post->option_two_title }}"
                      class="h-full w-full object-cover object-center cursor-pointer zoomable-image"
                      data-full-src="{{ $optionTwoImageUrl }}">
             @else

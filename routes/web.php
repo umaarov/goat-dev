@@ -78,6 +78,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/posts/{post}', [PostController::class, 'destroy'])
         ->where('post', '[0-9]+')
         ->name('posts.destroy');
+    Route::get('/posts/{post}', [PostController::class, 'show'])
+        ->where('post', '[0-9]+')
+        ->name('posts.show');
 
     Route::post('/posts/{post}/vote', [PostController::class, 'vote'])
         ->where('post', '[0-9]+')

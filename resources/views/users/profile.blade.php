@@ -33,7 +33,8 @@
                     <div class="ml-4 flex-1 flex flex-col">
                         <div>
                             <div class="flex items-center">
-                                <h2 class="text-2xl font-semibold text-gray-800">{{ $displayName }}</h2>
+{{--                                <h2 class="text-2xl font-semibold text-gray-800">{{ $displayName }}</h2>--}}
+                                <h1 class="text-2xl font-semibold text-gray-800" style="font-size: 1.5rem; line-height: 2rem; font-weight: 600; display: inline;">{{ $displayName }}</h1>
                                 @if($isVerified)
                                     <span class="ml-1.5" title="{{ __('messages.profile.verified_account') }}">
                                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500"
@@ -50,7 +51,8 @@
                                 <p class="text-gray-600 text-sm mt-0.5">{{ "@".$user->username }}</p>
                             @endif
 
-                            <p class="text-gray-500 text-xs mt-1">{{ __('messages.profile.joined_label') }} {{ $user->created_at->format('M d, Y') }}</p> {{-- Was mt-[4px], standardized to mt-1 --}}
+{{--                            <p class="text-gray-500 text-xs mt-1">{{ __('messages.profile.joined_label') }} {{ $user->created_at->format('M d, Y') }}</p> {{-- Was mt-[4px], standardized to mt-1 --}}--}}
+                            <p class="text-gray-500 text-xs mt-1">{{ __('messages.profile.joined_label') }} <time datetime="{{ $user->created_at->toIso8601String() }}">{{ $user->created_at->format('M d, Y') }}</time></p>
                         </div>
 
                         {{-- Stats Section --}}
@@ -1501,16 +1503,37 @@
         {
             "@context": "https://schema.org",
             "@type": "Person",
-            "name": "{{ $user->username }}",
-        "url": "{{ route('profile.show', ['username' => $user->username]) }}",
-        @if($user->profile_picture_url && !str_contains($user->profile_picture_url, 'initial_'))
-            "image": "{{ $user->profile_picture_url }}",
+            "name": "{{ addslashes($displayName) }}",
+    "alternateName": "{{ '@' . $user->username }}",
+    "url": "{{ route('profile.show', ['username' => $user->username]) }}",
+        @if($profilePic && !Str::contains($profilePic, 'default-pfp.png'))
+            "image": "{{ $profilePic }}",
         @endif
-        "description": "{{ __('messages.profile.schema_description', ['username' => $user->username]) }}",
-        "mainEntityOfPage": {
-            "@type": "ProfilePage",
-            "@id": "{{ route('profile.show', ['username' => $user->username]) }}"
+        "description": "{{ addslashes(__('messages.profile.meta_description', ['username' => $user->username])) }}",
+    "mainEntityOfPage": {
+        "@type": "ProfilePage",
+        "@id": "{{ route('profile.show', ['username' => $user->username]) }}"
+    },
+    "interactionStatistic": [
+        {
+            "@type": "InteractionCounter",
+            "interactionType": { "@type": "WriteAction" },
+            "userInteractionCount": {{ $user->posts_count }}
+        },
+        {
+            "@type": "InteractionCounter",
+            "interactionType": { "@type": "LikeAction" },
+            "userInteractionCount": {{ $totalVotesOnUserPosts }}
         }
-    }
+    ]
+        @if(!empty($user->external_links) && count(array_filter($user->external_links)) > 0)
+            ,"sameAs": [
+            @foreach(array_filter($user->external_links) as $index => $link_url)
+                "{{ $link_url }}"{{ !$loop->last ? ',' : '' }}
+            @endforeach
+            ]
+        @endif
+        }
+    </script>
     </script>
 @endsection

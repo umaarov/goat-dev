@@ -384,6 +384,18 @@ class PostController extends Controller
         return redirect()->route('home')->with('success', __('messages.post_created_successfully'));
     }
 
+    final public function show(Post $post): View
+    {
+        $post->loadPostData();
+        $this->attachUserVoteStatus(new \Illuminate\Pagination\LengthAwarePaginator(
+            collect([$post]),
+            1,
+            1,
+            1
+        ));
+        return view('posts.show', compact('post'));
+    }
+
     final public function edit(Post $post): View|RedirectResponse
     {
         if (Auth::id() !== $post->user_id) {

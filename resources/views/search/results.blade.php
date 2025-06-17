@@ -2,6 +2,7 @@
 @extends('layouts.app')
 
 @section('title', $queryTerm ? __('messages.search_results.title_with_query', ['queryTerm' => e($queryTerm)]) : __('messages.search_results.title_default'))
+@section('meta_robots', 'noindex, follow')
 
 @section('content')
     <div class="flex flex-col items-center justify-center w-full">

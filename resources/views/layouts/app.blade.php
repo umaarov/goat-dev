@@ -25,6 +25,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js" defer></script>
     <meta name="description" content="@yield('meta_description', __('messages.app.meta_description_default'))">
     <link rel="canonical" href="@yield('canonical_url', url()->current())"/>
+    <meta name="robots" content="@yield('meta_robots', 'index, follow')">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
             crossorigin="anonymous"></script>
     <link rel="manifest" href="{{ asset('manifest.json') }}">
@@ -36,6 +37,7 @@
           "name": "GOAT.uz",
           "url": "https://goat.uz",
           "alternateName": "GOAT",
+          "@id": "{{ config('app.url', 'https://goat.uz') }}#website"
           "potentialAction": {
             "@type": "SearchAction",
             "target": {
@@ -58,9 +60,6 @@
             "@type": "Person",
             "name": "Ismoiljon Umarov"
           },
-          "sameAs": [
-            "https://www.instagram.com/voteongoat",
-          ],
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
@@ -69,6 +68,7 @@
           }
         }
     </script>
+    @stack('schema')
     <script>
         window.translations = {
             cropperModalTitle: "{{ __('messages.app.js.cropper_modal_title') }}",
@@ -128,7 +128,7 @@
         </a>
         <div>
             @auth
-                <a href="{{ route('notifications.index') }}" class="text-black">
+                <a href="{{ route('notifications.index') }}" title="Notifications" class="text-black">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                          stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -136,7 +136,7 @@
                     </svg>
                 </a>
             @else
-                <a href="{{ route('login') }}" class="text-black">
+                <a href="{{ route('login') }}" title="Login Button" class="text-black">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                          stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -199,7 +199,7 @@
 <nav
     class="fixed bottom-0 left-0 right-0 bg-white shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] rounded-t-xl z-10 h-20 max-w-[450px] mx-auto">
     <div class="w-full max-w-md mx-auto flex items-center justify-around h-full">
-        <a href="{{ route('home') }}"
+        <a href="{{ route('home') }}" title="{{ __('messages.home') }}"
            class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-800">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor">
@@ -208,7 +208,7 @@
             </svg>
             <span class="text-xs mt-1">{{ __('messages.home') }}</span>
         </a>
-        <a href="{{ route('search') }}"
+        <a href="{{ route('search') }}" title="{{ __('messages.search') }}"
            class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-800">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor">
@@ -217,7 +217,7 @@
             </svg>
             <span class="text-xs mt-1">{{ __('messages.search') }}</span>
         </a>
-        <a href="{{ route('posts.create') }}"
+        <a href="{{ route('posts.create') }}" title="{{ __('messages.post') }}"
            class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-800">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor">
@@ -226,7 +226,7 @@
             <span class="text-xs mt-1">{{ __('messages.post') }}</span>
         </a>
         @auth
-            <a href="{{ route('profile.show', ['username' => Auth::user()->username]) }}"
+            <a href="{{ route('profile.show', ['username' => Auth::user()->username]) }}" title="{{ __('messages.account') }}"
                class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-800">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                      stroke="currentColor">
@@ -236,7 +236,7 @@
                 <span class="text-xs mt-1">{{ __('messages.account') }}</span>
             </a>
         @else
-            <a href="{{ route('login') }}"
+            <a href="{{ route('login') }}" title="{{ __('messages.account') }}"
                class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-800">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                      stroke="currentColor">
