@@ -165,7 +165,7 @@ return [
     'sponsorship' => 'Sponsorship | GOAT.uz',
     'sponsorship_nav' => 'Sponsorship',
     'ads' => 'Advertising | GOAT.uz',
-    'ads_nav' => 'Advertising',
+    'ads_nav' => 'Ads',
     'copyright_text' => 'GOAT © 2025',
 
     'error_comment_moderation_violation' => 'Your comment could not be posted as it violates community guidelines.',
