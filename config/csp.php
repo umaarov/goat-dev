@@ -15,6 +15,7 @@ return [
             'https://fundingchoicesmessages.google.com',
             'https://www.google.com',
             'https://www.googletagservices.com',
+            'https://adservice.google.com',
             "'unsafe-inline'",
             "'unsafe-eval'",
         ],
@@ -47,20 +48,21 @@ return [
         'form-action' => [
             'self',
         ],
-        'frame-ancestors' => [
+        'frame-src' => [
             'self',
+            'https://googleads.g.doubleclick.net',
+            'https://tpc.googlesyndication.com',
+            'https://fundingchoicesmessages.google.com'
         ],
     ],
 
-    'report_only_policy' => '',
-
-    'report_uri' => env('CSP_REPORT_URI'),
+    'report_uri' => null,
 
     'enabled' => env('CSP_ENABLED', true),
 
     'policy_header' => 'Content-Security-Policy',
 
-    'report_only_header' => 'Content-Security-Policy-Report-Only',
+    'nonce_generator' => '',
 
     'add_nonce_to' => [],
 ];
