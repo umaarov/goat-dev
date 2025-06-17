@@ -62,5 +62,6 @@ return Application::configure(basePath: dirname(__DIR__))
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
+        Spatie\ResponseCache\ResponseCacheServiceProvider::class,
     ])
     ->create();

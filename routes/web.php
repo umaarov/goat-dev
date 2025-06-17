@@ -34,31 +34,31 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/auth/google', [AuthController::class, 'googleRedirect'])->name('auth.google');
 Route::get('/auth/google/callback', [AuthController::class, 'googleCallback']);
 
-Route::get('/', [PostController::class, 'index'])->name('home');
+Route::get('/', [PostController::class, 'index'])->name('home')->middleware('cache.response:10');
 Route::get('/search', [PostController::class, 'search'])->name('search');
 
-Route::get('/p/{id}/{slug?}', [PostController::class, 'showBySlug'])->name('posts.showSlug');
+Route::get('/p/{id}/{slug?}', [PostController::class, 'showBySlug'])->name('posts.showSlug')->middleware('cache.response:60');
 Route::post('/posts/{post}/share', [PostController::class, 'incrementShareCount']);
 
 Route::get('about', function () {
     return view('about');
-})->name('about');
+})->name('about')->middleware('cache.response:1440');
 
 Route::get('terms', function () {
     return view('terms');
-})->name('terms');
+})->name('terms')->middleware('cache.response:1440');
 
 Route::get('sponsorship', function () {
     return view('sponsorship');
-})->name('sponsorship');
+})->name('sponsorship')->middleware('cache.response:1440');
 
 Route::get('ads', function () {
     return view('ads');
-})->name('ads');
+})->name('ads')->middleware('cache.response:1440');
 
 Route::get('/contribution', function () {
     return view('contribution');
-})->name('contribution');
+})->name('contribution')->middleware('cache.response:1440');
 
 Route::get('/@{username}', [UserController::class, 'showProfile'])
     ->where('username', '[a-zA-Z0-9_\-]+')
@@ -121,7 +121,7 @@ Route::get('/sitemap.xml', [SitemapController::class, 'index']);
 
 Route::fallback(function () {
     return response()->view('errors.404', [], 404);
-});
+})->middleware('cache.response:1440');;
 
 
 
