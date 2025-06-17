@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
+use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\ImageManager;
 
 class PostController extends Controller
@@ -201,18 +202,15 @@ class PostController extends Controller
         $manager = new ImageManager(new GdDriver());
         $image = $manager->read($uploadedFile->getRealPath());
 
-        $image->resize(self::MAX_POST_IMAGE_WIDTH, null, function ($constraint) {
-            $constraint->aspectRatio();
-            $constraint->upsize();
-        });
+        $image->scaleDown(width: self::MAX_POST_IMAGE_WIDTH);
 
         $newExtension = 'webp';
         $filename = $baseFilename . '.' . $newExtension;
         $path = $directory . '/' . $filename;
 
-        $encodedImage = $image->encode($newExtension, self::POST_IMAGE_QUALITY);
-        Storage::disk('public')->put($path, $encodedImage);
+        $encodedImage = $image->encode(new WebpEncoder(quality: self::POST_IMAGE_QUALITY));
 
+        Storage::disk('public')->put($path, $encodedImage);
         return $path;
     }
 

@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
+use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\ImageManager;
 
 class UserController extends Controller
@@ -42,11 +43,15 @@ class UserController extends Controller
     {
         $manager = new ImageManager(new GdDriver());
         $image = $manager->read($uploadedFile->getRealPath());
-        $image->cover(self::PROFILE_IMAGE_SIZE, self::PROFILE_IMAGE_SIZE);
+
+        $image->coverDown(self::PROFILE_IMAGE_SIZE, self::PROFILE_IMAGE_SIZE);
+
         $newExtension = 'webp';
         $filename = $baseFilename . '.' . $newExtension;
         $path = $directory . '/' . $filename;
-        $encodedImage = $image->encode($newExtension, self::PROFILE_IMAGE_QUALITY);
+
+        $encodedImage = $image->encode(new WebpEncoder(quality: self::PROFILE_IMAGE_QUALITY));
+
         Storage::disk('public')->put($path, $encodedImage);
         return $path;
     }
