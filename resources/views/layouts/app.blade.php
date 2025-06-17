@@ -24,14 +24,14 @@
             integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
             crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"
-            integrity="sha256-sEM35gIayIm5BVLJp/5pa5r5e2pQSkL22wT8a2Q0VfI="
+            integrity="sha256-tgDjY9mdlURNtUrL+y3v/smueSqpmgkim82geOW1VkM="
             crossorigin="anonymous" defer></script>
     {{-- Cropper.js --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css"
-          integrity="sha512-zxCiCl9qt9HgcizsOrWYvG5lJdWJroMmQvDaub2HPQsCjrJbaK_7UKG3PEIZs60gsKCSSmGVoOrEoRa3H9BIJQ=="
-          crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'" />
+            integrity="sha512-hvNR0F/e2J7zPPfLC9auFe3/SE0yG4aJCOd/qxew74NN7eyiSKjr7xJJMu1Jy2wf7FXITpWS1E/RY8yzuXN7VA=="
+            crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"
-            integrity="sha512-9KkIqUpNqN4u9GVYLFiuREIRebBHbkCdx25+Scbjv/2YDUQXCOBHEXKzKT4QJpgOFoAALoEHh1ROdK_wGzCq4g=="
+            integrity="sha512-9KkIqdfN7ipEW6B6k+Aq20PV31bjODg4AA52W+tYtAE0jE0kMx49bjJ3FgvS56wzmyfMUHbQ4Km2b7l9+Y/+Eg=="
             crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
     <meta name="description" content="@yield('meta_description', __('messages.app.meta_description_default'))">
     <link rel="canonical" href="@yield('canonical_url', url()->current())"/>
