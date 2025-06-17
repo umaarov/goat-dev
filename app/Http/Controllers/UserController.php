@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\ImageManager;
 
 class UserController extends Controller
@@ -39,41 +40,13 @@ class UserController extends Controller
 
     private function processAndStoreProfileImage(UploadedFile $uploadedFile, string $directory, string $baseFilename): string
     {
-        $manager = ImageManager::gd();
+        $manager = new ImageManager(new GdDriver());
         $image = $manager->read($uploadedFile->getRealPath());
-
         $image->cover(self::PROFILE_IMAGE_SIZE, self::PROFILE_IMAGE_SIZE);
-
-        $originalExtension = $uploadedFile->getClientOriginalExtension();
-        $extension = strtolower($originalExtension);
-
-        $allowedExtensions = ['jpeg', 'jpg', 'png', 'webp'];
-        $outputExtension = in_array($extension, $allowedExtensions) ? $extension : 'jpg';
-
-        if ($extension === 'gif') {
-            $outputExtension = 'jpg';
-        }
-
-        $filename = $baseFilename . '.' . $outputExtension;
+        $newExtension = 'webp';
+        $filename = $baseFilename . '.' . $newExtension;
         $path = $directory . '/' . $filename;
-
-        switch ($outputExtension) {
-            case 'jpeg':
-            case 'jpg':
-                $encodedImage = $image->toJpeg(self::PROFILE_IMAGE_QUALITY)->toString();
-                break;
-            case 'png':
-                $encodedImage = $image->toPng()->toString();
-                break;
-            case 'webp':
-                $encodedImage = $image->toWebp(self::PROFILE_IMAGE_QUALITY)->toString();
-                break;
-            default:
-                $filename = $baseFilename . '.jpg';
-                $path = $directory . '/' . $filename;
-                $encodedImage = $image->toJpeg(self::PROFILE_IMAGE_QUALITY)->toString();
-        }
-
+        $encodedImage = $image->encode($newExtension, self::PROFILE_IMAGE_QUALITY);
         Storage::disk('public')->put($path, $encodedImage);
         return $path;
     }
@@ -480,7 +453,6 @@ class UserController extends Controller
                 Log::info('UserController@update: Session locale has been forgotten (user locale is null).');
             }
         }
-
 
 
         Log::info('UserController@update: Process finished. Redirecting...');

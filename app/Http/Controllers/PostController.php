@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\ImageManager;
 
 class PostController extends Controller
@@ -197,38 +198,21 @@ class PostController extends Controller
 
     private function processAndStoreImage(UploadedFile $uploadedFile, string $directory, string $baseFilename): string
     {
-        $manager = ImageManager::gd();
+        $manager = new ImageManager(new GdDriver());
         $image = $manager->read($uploadedFile->getRealPath());
 
-        $image->scaleDown(self::MAX_POST_IMAGE_WIDTH, self::MAX_POST_IMAGE_HEIGHT);
+        $image->resize(self::MAX_POST_IMAGE_WIDTH, null, function ($constraint) {
+            $constraint->aspectRatio();
+            $constraint->upsize();
+        });
 
-        $originalExtension = $uploadedFile->getClientOriginalExtension();
-        $filename = $baseFilename . '.' . $originalExtension;
+        $newExtension = 'webp';
+        $filename = $baseFilename . '.' . $newExtension;
         $path = $directory . '/' . $filename;
-        $extension = strtolower($originalExtension);
 
-        switch ($extension) {
-            case 'jpeg':
-            case 'jpg':
-                $encodedImage = $image->toJpeg(self::POST_IMAGE_QUALITY)->toString();
-                break;
-            case 'png':
-                $encodedImage = $image->toPng()->toString();
-                break;
-            case 'gif':
-                // $encodedImage = file_get_contents($uploadedFile->getRealPath());
-                $encodedImage = $image->toGif()->toString();
-                break;
-            case 'webp':
-                $encodedImage = $image->toWebp(self::POST_IMAGE_QUALITY)->toString();
-                break;
-            default:
-                $newExtension = 'jpg';
-                $filename = $baseFilename . '.' . $newExtension;
-                $path = $directory . '/' . $filename;
-                $encodedImage = $image->toJpeg(self::POST_IMAGE_QUALITY)->toString();
-        }
+        $encodedImage = $image->encode($newExtension, self::POST_IMAGE_QUALITY);
         Storage::disk('public')->put($path, $encodedImage);
+
         return $path;
     }
 

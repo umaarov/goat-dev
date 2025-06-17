@@ -87,7 +87,7 @@
             <img src="{{ $profilePic }}"
                  alt="{{ __('messages.profile.alt_profile_picture', ['username' => $post->user->username]) }}"
                  class="w-10 h-10 rounded-full border border-gray-300 cursor-pointer zoomable-image"
-                 data-full-src="{{ $profilePic }}">
+                 data-full-src="{{ $profilePic }}" loading="lazy" decoding="async">
             <div class="ml-3">
                 <div class="flex items-center">
                     <a href="{{ route('profile.show', $post->user->username) }}"
@@ -140,7 +140,7 @@
                 @php $optionOneImageUrl = asset('storage/' . $post->option_one_image); @endphp
                 <img src="{{ $optionOneImageUrl }}" alt="{{ $post->question }} - {{ $post->option_one_title }}"
                      class="h-full w-full object-cover object-center cursor-pointer zoomable-image"
-                     data-full-src="{{ $optionOneImageUrl }}">
+                     data-full-src="{{ $optionOneImageUrl }}" loading="lazy" decoding="async">
             @else
                 <div class="bg-gray-100 h-full flex items-center justify-center">
                     <div class="bg-gray-200 rounded-full p-2">
@@ -159,7 +159,7 @@
                 <img src="{{ asset('storage/' . $post->option_two_image) }}"
                      alt="{{ $post->question }} - {{ $post->option_two_title }}"
                      class="h-full w-full object-cover object-center cursor-pointer zoomable-image"
-                     data-full-src="{{ $optionTwoImageUrl }}">
+                     data-full-src="{{ $optionTwoImageUrl }}" loading="lazy" decoding="async">
             @else
                 <div class="bg-gray-100 h-full flex items-center justify-center">
                     <div class="bg-gray-200 rounded-full p-2">
@@ -737,7 +737,7 @@
 
         commentDiv.innerHTML = `
             <div class="flex items-start">
-                <img src="${profilePic}" alt="${altProfilePic}" class="w-8 h-8 rounded-full mr-3 mt-0.5 cursor-pointer zoomable-image" data-full-src="${profilePic}">
+                <img src="${profilePic}" alt="${altProfilePic}" loading="lazy" decoding="async" class="w-8 h-8 rounded-full mr-3 mt-0.5 cursor-pointer zoomable-image" data-full-src="${profilePic}">
                 <div class="flex-1">
                     <div class="flex items-center">
                         <a href="/@${commentData.user.username}" class="text-sm font-medium text-gray-800 hover:underline">${commentData.user.username}</a>
