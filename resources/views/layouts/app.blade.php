@@ -26,6 +26,14 @@
     <meta name="description" content="@yield('meta_description', __('messages.app.meta_description_default'))">
     <link rel="canonical" href="@yield('canonical_url', url()->current())"/>
     <meta name="robots" content="@yield('meta_robots', 'index, follow')">
+    @if(isset($alternateUrls))
+        @foreach($alternateUrls as $locale => $url)
+            <link rel="alternate" hreflang="{{ $locale }}" href="{{ $url }}" />
+        @endforeach
+    @endif
+    @if(isset($defaultHreflangUrl))
+        <link rel="alternate" hreflang="x-default" href="{{ $defaultHreflangUrl }}" />
+    @endif
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
             crossorigin="anonymous"></script>
     <link rel="manifest" href="{{ asset('manifest.json') }}">
@@ -37,7 +45,7 @@
           "name": "GOAT.uz",
           "url": "https://goat.uz",
           "alternateName": "GOAT",
-          "@id": "{{ config('app.url', 'https://goat.uz') }}#website"
+          "@id": "{{ config('app.url', 'https://goat.uz') }}#website",
           "potentialAction": {
             "@type": "SearchAction",
             "target": {
