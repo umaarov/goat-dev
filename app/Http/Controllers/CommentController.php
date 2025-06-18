@@ -308,6 +308,11 @@ class CommentController extends Controller
 //        }
 
         if ($validator->fails()) {
+            if ($validator->errors()->has('parent_id')) {
+                return response()->json([
+                    'errors' => ['parent_id' => [__('messages.error_parent_comment_deleted', ['default' => 'The comment you are replying to has been deleted.'])]]
+                ], 422);
+            }
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
@@ -316,8 +321,14 @@ class CommentController extends Controller
 
         if ($parentId) {
             $parentComment = Comment::find($parentId);
+
             if (!$parentComment || $parentComment->post_id !== $post->id) {
-                return response()->json(['errors' => ['parent_id' => ['Invalid parent comment.']]], 422);
+                Log::warning('Parent comment mismatch attempt.', [
+                    'user_id' => Auth::id(),
+                    'post_id' => $post->id,
+                    'parent_id_submitted' => $parentId,
+                ]);
+                return response()->json(['errors' => ['parent_id' => [__('messages.error_parent_comment_invalid', ['default' => 'The parent comment is invalid or does not belong to this post.'])]]], 422);
             }
             $rootId = $parentComment->root_comment_id ?? $parentComment->id;
         }
