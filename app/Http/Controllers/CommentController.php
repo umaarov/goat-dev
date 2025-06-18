@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Comment;
-use App\Models\CommentLike;
 use App\Models\Post;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
@@ -25,31 +24,28 @@ class CommentController extends Controller
         $perPage = $request->input('per_page', 10);
         $userId = Auth::id();
 
-        $comments = Comment::where('post_id', $post->id)
-            ->with('user:id,username,profile_picture')
-            ->with('post:id,user_id')
+        $commentsQuery = Comment::where('post_id', $post->id)
+            ->whereNull('parent_id')
             ->withCount('likes')
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+            ->with([
+                'user:id,username,profile_picture',
+                'flatReplies' => function ($query) use ($userId) {
+                    $query->withCount('likes')
+                        ->with('user:id,username,profile_picture')
+                        ->with('parent:id,user_id', 'parent.user:id,username');
+
+                    if ($userId) {
+                        $query->with(['likes' => fn($q) => $q->where('user_id', $userId)]);
+                    }
+                },
+            ])
+            ->orderBy('created_at', 'desc');
 
         if ($userId) {
-            $commentIds = $comments->pluck('id');
-            $userLikes = CommentLike::where('user_id', $userId)
-                ->whereIn('comment_id', $commentIds)
-                ->pluck('comment_id')
-                ->flip();
-
-            $comments->getCollection()->transform(function ($comment) use ($userLikes) {
-                $comment->is_liked_by_current_user = $userLikes->has($comment->id);
-                return $comment;
-            });
-        } else {
-            $comments->getCollection()->transform(function ($comment) {
-                $comment->is_liked_by_current_user = false;
-                return $comment;
-            });
+            $commentsQuery->with(['likes' => fn($q) => $q->where('user_id', $userId)]);
         }
 
+        $comments = $commentsQuery->paginate($perPage);
 
         return response()->json([
             'comments' => $comments
@@ -256,14 +252,38 @@ class CommentController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'content' => 'required|string|max:1000',
+            'parent_id' => 'nullable|integer|exists:comments,id',
         ]);
 
+
+//        if ($validator->fails()) {
+//            if ($request->expectsJson() || $request->ajax()) {
+//                return response()->json(['errors' => $validator->errors()], 422);
+//            }
+//            return redirect()->back()->withErrors($validator)->withInput()->with('error', __('messages.error_failed_to_add_comment'));
+//        }
+
         if ($validator->fails()) {
-            if ($request->expectsJson() || $request->ajax()) {
-                return response()->json(['errors' => $validator->errors()], 422);
-            }
-            return redirect()->back()->withErrors($validator)->withInput()->with('error', __('messages.error_failed_to_add_comment'));
+            return response()->json(['errors' => $validator->errors()], 422);
         }
+
+        $parentId = $request->input('parent_id');
+        $rootId = null;
+
+        if ($parentId) {
+            $parentComment = Comment::find($parentId);
+            if (!$parentComment || $parentComment->post_id !== $post->id) {
+                return response()->json(['errors' => ['parent_id' => ['Invalid parent comment.']]], 422);
+            }
+            $rootId = $parentComment->root_comment_id ?? $parentComment->id;
+        }
+
+//        if ($request->filled('parent_id')) {
+//            $parentComment = Comment::find($request->input('parent_id'));
+//            if (!$parentComment || $parentComment->post_id !== $post->id) {
+//                return response()->json(['errors' => ['parent_id' => ['Invalid parent comment.']]], 422);
+//            }
+//        }
 
         $user = Auth::user();
         $content = $request->input('content');
@@ -317,6 +337,8 @@ class CommentController extends Controller
             'user_id' => Auth::id(),
             'post_id' => $post->id,
             'content' => $content,
+            'parent_id' => $request->input('parent_id', null),
+            'root_comment_id' => $rootId,
         ]);
 
         Log::channel('audit_trail')->info('Comment created and passed moderation.', [
@@ -329,8 +351,7 @@ class CommentController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
-        $comment->load('user:id,username,profile_picture');
-        $comment->load('post:id,user_id');
+        $comment->load('user:id,username,profile_picture', 'post:id,user_id', 'parent.user');
 
         $successMessage = __('messages.comment_added_successfully');
         if ($request->expectsJson() || $request->ajax()) {

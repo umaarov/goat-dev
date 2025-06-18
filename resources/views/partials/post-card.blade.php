@@ -273,12 +273,22 @@
                       onsubmit="submitComment('{{ $post->id }}', event)"
                       class="flex flex-col space-y-2">
                     @csrf
+                    <input type="hidden" name="parent_id" value="">
+
                     <textarea name="content" rows="2" placeholder="{{ __('messages.add_comment_placeholder') }}"
                               required
                               class="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+
+                    <div id="reply-indicator-{{ $post->id }}" class="text-xs text-gray-500 hidden items-center">
+                        <span></span>
+                        <button type="button" onclick="cancelReply('{{ $post->id }}')" class="ml-2 text-red-500 hover:underline">
+                            {{ __('messages.cancel_button') }}
+                        </button>
+                    </div>
+
                     <div class="flex justify-between">
                         <button type="button" onclick="toggleComments('{{ $post->id }}')"
-                                class="bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm py-1 px-4 rounded-md">{{ __('messages.cancel_button') }} {{-- Or a more specific 'Close' --}}
+                                class="bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm py-1 px-4 rounded-md">{{ __('messages.cancel_button') }}
                         </button>
                         <button type="submit"
                                 class="bg-blue-800 hover:bg-blue-900 text-white text-sm py-1 px-4 rounded-md">{{ __('messages.submit_comment_button') }}
@@ -338,6 +348,19 @@
     }
 
     .comments-list .comment:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+        margin-bottom: 0;
+    }
+
+    .replies-container {
+        margin-left: 1.25rem;
+        padding-left: 1.25rem;
+        border-left: 2px solid #e5e7eb;
+        margin-top: 0.75rem;
+    }
+
+    .replies-container .comment:last-child {
         border-bottom: none;
         padding-bottom: 0;
         margin-bottom: 0;
@@ -664,16 +687,25 @@
                 if (loadingElement) {
                     loadingElement.remove();
                 }
-                commentsContainer.innerHTML = '';
+                // commentsContainer.innerHTML = '';
+                if (page === 1) commentsContainer.innerHTML = '';
 
-                if (data.comments.data.length === 0) {
+                if (data.comments.data.length === 0 && page === 1) {
                     commentsContainer.innerHTML = `<p class="text-sm text-gray-500 text-center">${window.translations.js_no_comments_be_first}</p>`;
                     return;
                 }
 
                 data.comments.data.forEach(comment => {
-                    const commentDiv = createCommentElement(comment, postId);
+                    const commentDiv = createCommentElement(comment, postId, false);
                     commentsContainer.appendChild(commentDiv);
+
+                    if (comment.flat_replies && comment.flat_replies.length > 0) {
+                        const repliesContainer = commentDiv.querySelector('.replies-container');
+                        comment.flat_replies.forEach(reply => {
+                            const replyDiv = createCommentElement(reply, postId, true);
+                            repliesContainer.appendChild(replyDiv);
+                        });
+                    }
                 });
 
                 animateComments(commentsContainer);
@@ -690,9 +722,14 @@
             });
     }
 
-    function createCommentElement(commentData, postId) {
+    function createCommentElement(commentData, postId, isReply = false) {
         const commentDiv = document.createElement('div');
-        commentDiv.className = 'comment py-3 border-b border-gray-200';
+        // commentDiv.className = 'comment py-3 border-b border-gray-200';
+        commentDiv.className = 'comment py-3';
+
+        if (!isReply) {
+            commentDiv.classList.add('border-b', 'border-gray-200');
+        }
 
         if (!commentData.id.toString().startsWith('temp-')) {
             commentDiv.id = 'comment-' + commentData.id;
@@ -735,6 +772,19 @@
                 </span>
             </div>
         `;
+        let replyToHTML = '';
+        // if (commentData.parent_id && commentData.parent && commentData.parent.user) {
+        //     const parentUsername = commentData.parent.user.username;
+        //     if (!commentData.content.includes(`@${parentUsername}`)) {
+        //         replyToHTML = `<a href="/@${parentUsername}" class="text-blue-600 hover:underline mr-1">@${parentUsername}</a>`;
+        //     }
+        // }
+        if (isReply && commentData.parent && commentData.parent.user) {
+            const parentUsername = commentData.parent.user.username;
+            if (!commentData.content.includes(`@${parentUsername}`)) {
+                replyToHTML = `<a href="/@${parentUsername}" class="text-blue-600 hover:underline mr-1">@${parentUsername}</a>`;
+            }
+        }
 
         commentDiv.innerHTML = `
             <div class="flex items-start">
@@ -746,8 +796,15 @@
                         <span class="mx-1.5 text-gray-400 text-xs">·</span>
                         <small class="text-xs text-gray-500" title="${commentData.created_at}">${formatTimestamp(commentData.created_at)}</small>
                     </div>
-                    <div class="text-sm text-gray-700 break-words comment-content-wrapper mt-1">${linkedCommentContent}</div>
-                    ${ {{ Auth::check() ? 'true' : 'false' }} ? likeButtonHTML : ''}
+                    <div class="text-sm text-gray-700 break-words comment-content-wrapper mt-1">${replyToHTML} ${linkedCommentContent}</div>
+                    <div class="mt-2 flex items-center text-xs text-gray-500 space-x-4">
+                        ${ {{ Auth::check() ? 'true' : 'false' }} ? likeButtonHTML : ''}
+                    <button onclick="prepareReply('${postId}', '${commentData.id}', '${commentData.user.username}')"
+                                class="font-medium hover:underline"
+                                title="Reply to ${commentData.user.username}">
+                            ${window.translations.reply_button_text || 'Reply'}
+                    </button>
+                    </div>
         </div>
 ${canDeleteComment(commentData) ? `
                 <div class="ml-2 pl-1 flex-shrink-0">
@@ -757,8 +814,41 @@ ${canDeleteComment(commentData) ? `
                         </button>
                     </form>
                 </div>` : ''}
-            </div>`;
+            </div>
+            <div class="replies-container"></div>
+            `;
         return commentDiv;
+    }
+
+    function prepareReply(postId, commentId, username) {
+        const form = document.getElementById(`comment-form-${postId}`);
+        if (!form) return;
+
+        form.elements.parent_id.value = commentId;
+
+        const textarea = form.elements.content;
+        textarea.value = `@${username} `;
+        textarea.focus();
+
+        const end = textarea.value.length;
+        textarea.setSelectionRange(end, end);
+
+        const indicator = document.getElementById(`reply-indicator-${postId}`);
+        indicator.querySelector('span').textContent = `Replying to @${username}`;
+        indicator.classList.remove('hidden');
+        indicator.classList.add('flex');
+    }
+
+    function cancelReply(postId) {
+        const form = document.getElementById(`comment-form-${postId}`);
+        if (!form) return;
+
+        form.elements.parent_id.value = '';
+        form.elements.content.value = '';
+
+        const indicator = document.getElementById(`reply-indicator-${postId}`);
+        indicator.classList.add('hidden');
+        indicator.classList.remove('flex');
     }
 
     async function toggleCommentLike(commentId, buttonElement) {
@@ -1015,6 +1105,7 @@ ${canDeleteComment(commentData) ? `
         const form = event.target;
         const submitButton = form.querySelector('button[type="submit"]');
         const content = form.elements.content.value;
+        const parentId = form.elements.parent_id.value;
 
         if (!content.trim()) {
             showToast(window.translations.js_comment_empty);
@@ -1034,7 +1125,7 @@ ${canDeleteComment(commentData) ? `
                 'X-CSRF-TOKEN': csrfToken,
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({content: content})
+            body: JSON.stringify({content: content, parent_id: parentId || null})
         })
             .then(response => response.json())
             .then(data => {
@@ -1047,10 +1138,11 @@ ${canDeleteComment(commentData) ? `
                     return;
                 }
                 const newComment = data.comment;
+                const isReply = !!newComment.parent_id;
                 newComment.user = data.comment.user || {
-                    id: {{ Auth::id() ?? 'null' }},
-                    username: '{{ Auth::check() ? Auth::user()->username : "" }}',
-                    profile_picture: '{{ Auth::check() ? (Auth::user()->profile_picture ? (Str::startsWith(Auth::user()->profile_picture, ["http", "https"]) ? Auth::user()->profile_picture : asset("storage/" . Auth::user()->profile_picture)) : asset("images/default-pfp.png")) : "" }}'
+                        id: {{ Auth::id() ?? 'null' }},
+                        username: '{{ Auth::check() ? Auth::user()->username : "" }}',
+                        profile_picture: '{{ Auth::check() ? (Auth::user()->profile_picture ? (Str::startsWith(Auth::user()->profile_picture, ["http", "https"]) ? Auth::user()->profile_picture : asset("storage/" . Auth::user()->profile_picture)) : asset("images/default-pfp.png")) : "" }}'
                 };
 
 
@@ -1061,15 +1153,28 @@ ${canDeleteComment(commentData) ? `
                     commentsContainer.innerHTML = '';
                 }
 
-                const commentElement = createCommentElement(newComment, postId);
-                if (commentsContainer.firstChild) {
-                    commentsContainer.insertBefore(commentElement, commentsContainer.firstChild);
+                const commentElement = createCommentElement(newComment, postId, isReply);
+
+                if (isReply) {
+                    const rootCommentId = newComment.root_comment_id || newComment.parent_id;
+                    const repliesContainer = document.querySelector(`#comment-${rootCommentId} .replies-container`);
+
+                    if (repliesContainer) {
+                        repliesContainer.appendChild(commentElement);
+                    } else {
+                        loadComments(postId, 1);
+                    }
                 } else {
-                    commentsContainer.appendChild(commentElement);
+                    const commentsContainer = document.getElementById(`comments-section-${postId}`).querySelector('.comments-list');
+                    const noCommentsMessage = commentsContainer.querySelector('p.text-center');
+                    if (noCommentsMessage) noCommentsMessage.remove();
+                    commentsContainer.insertBefore(commentElement, commentsContainer.firstChild);
                 }
-                setTimeout(() => {
-                    commentElement.classList.add('visible');
-                }, 10);
+
+                setTimeout(() => commentElement.classList.add('visible'), 10);
+
+                cancelReply(postId);
+                form.elements.content.value = '';
 
                 const commentCountElement = document.querySelector(`#post-${postId} .flex.justify-between.items-center.px-8.py-3 button:first-child span`);
                 if (commentCountElement) {
@@ -1078,6 +1183,7 @@ ${canDeleteComment(commentData) ? `
             })
             .catch(error => {
                 console.error('Error:', error);
+                cancelReply(postId);
                 submitButton.disabled = false;
                 submitButton.innerHTML = window.translations.js_submit_comment_button;
                 showToast(window.translations.js_failed_add_comment);
