@@ -631,19 +631,17 @@
     }
 
     function linkifyContent(text) {
-        if (typeof text !== 'string') {
-            return '';
-        }
+        if (typeof text !== 'string') return '';
         const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])|(\bwww\.[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
         const mentionRegex = /@([a-zA-Z0-9_]+)/g;
 
         let linkedText = text.replace(urlRegex, function(url, p1, p2, p3) {
-            const fullUrl = p3 ? 'http://' + p3 : p1; //
+            const fullUrl = p3 ? 'http://' + p3 : p1;
             return `<a href="${fullUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline break-all">${url}</a>`;
         });
 
         linkedText = linkedText.replace(mentionRegex, function(match, username) {
-            return `<a href="/@${username}" class="text-blue-600 hover:underline">@${username}</a>`;
+            return `<a href="/@${username}" class="text-blue-600 hover:underline font-medium">@${username}</a>`;
         });
 
         return linkedText;
@@ -792,8 +790,6 @@
         const verifiedIconHTML = isVerified ? `<span class="ml-1 self-center" title="${window.translations.verified_account || 'Verified Account'}"><svg class="h-4 w-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg></span>` : '';
 
 
-        const linkedCommentContent = linkifyContent(commentData.content);
-
         const likesCount = commentData.likes_count || 0;
         const isLiked = commentData.is_liked_by_current_user || false;
 
@@ -829,6 +825,13 @@
             }
         }
 
+        const linkedCommentContent = linkifyContent(commentData.content);
+
+        let goToParentArrowHTML = '';
+        if (isReply) {
+            goToParentArrowHTML = `<button onclick="scrollToComment('comment-${commentData.parent_id}')" class="p-1 -ml-1 rounded-full hover:bg-gray-200" title="${window.translations.go_to_parent_comment_title || 'Go to parent comment'}"><svg class="h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612L5.28 9.68a.75.75 0 01-1.06-1.06l5.25-5.25a.75.75 0 011.06 0l5.25 5.25a.75.75 0 11-1.06 1.06L10.75 5.612V16.25A.75.75 0 0110 17z" clip-rule="evenodd" /></svg></button>`;
+        }
+
         let repliesToggleHTML = '';
         if (!isReply && commentData.flat_replies && commentData.flat_replies.length > 0) {
             const replyCount = commentData.flat_replies.length;
@@ -851,6 +854,7 @@
                         <small title="${commentData.created_at}">${formatTimestamp(commentData.created_at)}</small>
                         ${ {{ Auth::check() ? 'true' : 'false' }} ? `<div class="flex items-center">${likeButtonHTML}</div>` : ''}
                         <button onclick="prepareReply('${postId}', '${commentData.id}', '${commentData.user.username}')" class="font-semibold hover:underline" title="Reply to ${commentData.user.username}">${window.translations.reply_button_text || 'Reply'}</button>
+                        ${goToParentArrowHTML}
                         ${repliesToggleHTML}
                     </div>
                 </div>
@@ -863,7 +867,7 @@ ${canDeleteComment(commentData) ? `
                     </form>
                 </div>` : ''}
             </div>
-            <div class="replies-container"></div>
+            <div class="replies-container hidden"></div>
             `;
         return commentDiv;
     }
@@ -915,11 +919,9 @@ ${canDeleteComment(commentData) ? `
         if (!form) return;
 
         form.elements.parent_id.value = commentId;
-
         const textarea = form.elements.content;
         textarea.value = `@${username} `;
         textarea.focus();
-
         const end = textarea.value.length;
         textarea.setSelectionRange(end, end);
 
@@ -927,6 +929,17 @@ ${canDeleteComment(commentData) ? `
         indicator.querySelector('span').textContent = `Replying to @${username}`;
         indicator.classList.remove('hidden');
         indicator.classList.add('flex');
+
+        const parentCommentEl = document.getElementById(`comment-${commentId}`);
+        if (parentCommentEl) {
+            const repliesContainer = parentCommentEl.querySelector('.replies-container');
+            if (repliesContainer && repliesContainer.classList.contains('hidden')) {
+                const toggleButton = parentCommentEl.querySelector('.view-replies-button');
+                if (toggleButton) {
+                    toggleButton.click();
+                }
+            }
+        }
     }
 
     function cancelReply(postId) {
