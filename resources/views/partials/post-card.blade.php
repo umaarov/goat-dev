@@ -834,12 +834,62 @@
         //         replyToHTML = `<a href="/@${parentUsername}" class="text-blue-600 hover:underline mr-1">@${parentUsername}</a>`;
         //     }
         // }
-        if (isReply && commentData.parent && commentData.parent.user && commentData.parent_id !== commentData.root_comment_id) {
-            const parentUsername = commentData.parent.user.username;
-            if (!commentData.content.includes(`@${parentUsername}`)) {
-                replyToHTML = `<a href="javascript:void(0)" onclick="scrollToComment('comment-${commentData.parent_id}')" class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
+        // const isNestedReply = commentData.parent && commentData.parent.parent_id !== null;
+        // if (isNestedReply) {
+        //     if (commentData.parent.user) {
+        //         const parentUsername = commentData.parent.user.username;
+        //         if (!commentData.content.includes(`@${parentUsername}`)) {
+        //             replyToHTML = `<a href="javascript:void(0)" onclick="scrollToComment('comment-${commentData.parent_id}')" class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
+        //         }
+        //     }
+        // }
+
+        // if (isReply) {
+        //     console.log('%c DEBUG: Checking reply logic... ', 'background: #f2f2f2; color: #333;', {
+        //         parent_id: commentData.parent_id,
+        //         root_comment_id: commentData.root_comment_id,
+        //         parent_id_type: typeof commentData.parent_id,
+        //         root_comment_id_type: typeof commentData.root_comment_id,
+        //     });
+        //
+        //     const isNestedReply = commentData.parent_id &&
+        //         commentData.root_comment_id &&
+        //         Number(commentData.parent_id) !== Number(commentData.root_comment_id);
+        //
+        //     console.log(`%c DEBUG: Is this a nested reply? -> ${isNestedReply}`, 'font-weight: bold;');
+        //
+        //     if (isNestedReply) {
+        //         if (commentData.parent && commentData.parent.user) {
+        //             const parentUsername = commentData.parent.user.username;
+        //             if (!commentData.content.includes(`@${parentUsername}`)) {
+        //                 console.log(`%c DEBUG: Decision: ADDING @mention for nested reply.`, 'color: green');
+        //                 replyToHTML = `<a href="javascript:void(0)" onclick="scrollToComment('comment-${commentData.parent_id}')" class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
+        //             }
+        //         }
+        //     } else {
+        //         console.log(`%c DEBUG: Decision: NOT adding @mention.`, 'color: orange');
+        //     }
+        // }
+
+        const isNestedReply = commentData.parent_id &&
+            commentData.root_comment_id &&
+            Number(commentData.parent_id) !== Number(commentData.root_comment_id);
+
+        if (isNestedReply) {
+            if (commentData.parent && commentData.parent.user) {
+                const parentUsername = commentData.parent.user.username;
+                if (!commentData.content.includes(`@${parentUsername}`)) {
+                    replyToHTML = `<a href="javascript:void(0)" onclick="scrollToComment('comment-${commentData.parent_id}')" class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
+                }
             }
         }
+
+        // if (isReply && commentData.parent && commentData.parent.user && commentData.parent_id !== commentData.root_comment_id) {
+        //     const parentUsername = commentData.parent.user.username;
+        //     if (!commentData.content.includes(`@${parentUsername}`)) {
+        //         replyToHTML = `<a href="javascript:void(0)" onclick="scrollToComment('comment-${commentData.parent_id}')" class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
+        //     }
+        // }
 
         const linkedCommentContent = linkifyContent(commentData.content);
 
@@ -847,7 +897,7 @@
 
         let goToParentArrowHTML = '';
         if (isReply && Number(commentData.parent_id) !== Number(commentData.root_comment_id)) {
-            goToParentArrowHTML = `<button onclick="scrollToComment('comment-${commentData.parent_id}')" class="p-1 -ml-1 rounded-full hover:bg-gray-200" title="${window.translations.go_to_parent_comment_title || 'Go to parent comment'}"><svg class="h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612L5.28 9.68a.75.75 0 01-1.06-1.06l5.25-5.25a.75.75 0 011.06 0l5.25 5.25a.75.75 0 11-1.06 1.06L10.75 5.612V16.25A.75.75 0 0110 17z" clip-rule="evenodd" /></svg></button>`;
+            goToParentArrowHTML = `<button onclick="scrollToComment('comment-${commentData.parent_id}')" class="p-1 rounded-full hover:bg-gray-200" title="${window.translations.go_to_parent_comment_title || 'Go to parent comment'}"><svg class="h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612L5.28 9.68a.75.75 0 01-1.06-1.06l5.25-5.25a.75.75 0 011.06 0l5.25 5.25a.75.75 0 11-1.06 1.06L10.75 5.612V16.25A.75.75 0 0110 17z" clip-rule="evenodd" /></svg></button>`;
         }
 
         let repliesToggleHTML = '';
@@ -874,6 +924,7 @@
                         ${ {{ Auth::check() ? 'true' : 'false' }} ? `<div class="flex items-center">${likeButtonHTML}</div>` : ''}
                         ${replyButton}
                         ${repliesActionsHTML}
+                        ${goToParentArrowHTML}
                     </div>
                 </div>
 ${canDeleteComment(commentData) ? `
