@@ -435,4 +435,8 @@ return [
     'comment_liked_successfully' => 'Comment liked!',
     'comment_unliked_successfully' => 'Comment unliked.',
     'error_generic_server_error' => 'An unexpected error occurred. Please try again later.',
+
+    'error_parent_comment_invalid' => 'The parent comment is invalid or does not belong to this post.',
+    'error_parent_comment_deleted' => 'The comment you are replying to has been deleted.', // Also good to have this one
+
 ];
