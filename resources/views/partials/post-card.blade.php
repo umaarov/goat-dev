@@ -710,11 +710,13 @@
     }
 
     function animateComments(container) {
-        const comments = container.querySelectorAll('.comment:not(.visible)');
+        const comments = container.querySelectorAll(':scope > .comment:not(.visible)');
+
         comments.forEach((comment, index) => {
+            const delay = Math.min(index * 80, 800);
             setTimeout(() => {
                 comment.classList.add('visible');
-            }, 100 * (index + 1));
+            }, delay);
         });
     }
 
