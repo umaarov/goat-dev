@@ -337,9 +337,9 @@
         opacity: 0;
         transform: translateY(10px);
         transition: opacity 0.3s ease, transform 0.3s ease;
-        border-bottom: 1px solid #e5e7eb;
+        /*border-bottom: 1px solid #e5e7eb;*/
         padding-bottom: 12px;
-        margin-bottom: 12px;
+        margin-bottom: 0;
     }
 
     .comment.visible {
@@ -347,17 +347,54 @@
         transform: translateY(0);
     }
 
+    .comments-list .comment {
+        padding-bottom: 12px;
+    }
+
     .comments-list .comment:last-child {
-        border-bottom: none;
+        /*border-bottom: none;*/
         padding-bottom: 0;
-        margin-bottom: 0;
+        /*margin-bottom: 0;*/
     }
 
     .replies-container {
-        margin-left: 1.25rem;
-        padding-left: 1.25rem;
+        margin-left: 0;
         border-left: 2px solid #e5e7eb;
-        margin-top: 0.75rem;
+        margin-top: 12px;
+        padding-left: 1rem;
+        transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out;
+        max-height: 2000px;
+        overflow: hidden;
+    }
+
+    .replies-container.hidden {
+        max-height: 0;
+        margin-top: 0;
+        padding-left: 1rem;
+        opacity: 0;
+        overflow: hidden;
+    }
+
+    .view-replies-button {
+        display: inline-flex;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .view-replies-button .line {
+        height: 1px;
+        width: 2rem;
+        background-color: #d1d5db;
+        margin-right: 0.5rem;
+        transition: width 0.3s ease;
+    }
+
+    .view-replies-button:hover .line {
+        background-color: #6b7280;
+    }
+
+    .view-replies-button.active .line {
+        width: 1rem;
     }
 
     .replies-container .comment:last-child {
@@ -725,7 +762,7 @@
     function createCommentElement(commentData, postId, isReply = false) {
         const commentDiv = document.createElement('div');
         // commentDiv.className = 'comment py-3 border-b border-gray-200';
-        commentDiv.className = 'comment py-3';
+        commentDiv.className = 'comment pt-3';
 
         if (!isReply) {
             commentDiv.classList.add('border-b', 'border-gray-200');
@@ -781,9 +818,26 @@
         // }
         if (isReply && commentData.parent && commentData.parent.user) {
             const parentUsername = commentData.parent.user.username;
-            if (!commentData.content.includes(`@${parentUsername}`)) {
-                replyToHTML = `<a href="/@${parentUsername}" class="text-blue-600 hover:underline mr-1">@${parentUsername}</a>`;
+            if (commentData.root_comment_id !== commentData.parent_id) {
+                if (!commentData.content.includes(`@${parentUsername}`)) {
+                    replyToHTML = `<a href="/@${parentUsername}" class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
+                }
             }
+        }
+
+        let repliesToggleHTML = '';
+        if (!isReply && commentData.flat_replies && commentData.flat_replies.length > 0) {
+            const replyCount = commentData.flat_replies.length;
+            const viewText = (window.translations.view_replies_text || 'View replies (:count)').replace(':count', replyCount);
+            repliesToggleHTML = `
+                <div class="mt-3">
+                    <button class="view-replies-button text-xs font-semibold text-gray-500 hover:text-gray-800"
+                            onclick="toggleRepliesContainer(this, 'comment-${commentData.id}')">
+                        <span class="line"></span>
+                        <span class="button-text">${viewText}</span>
+                    </button>
+                </div>
+            `;
         }
 
         commentDiv.innerHTML = `
@@ -805,6 +859,7 @@
                             ${window.translations.reply_button_text || 'Reply'}
                     </button>
                     </div>
+                    ${repliesToggleHTML}
         </div>
 ${canDeleteComment(commentData) ? `
                 <div class="ml-2 pl-1 flex-shrink-0">
@@ -818,6 +873,27 @@ ${canDeleteComment(commentData) ? `
             <div class="replies-container"></div>
             `;
         return commentDiv;
+    }
+
+    function toggleRepliesContainer(button, commentId) {
+        const commentElement = document.getElementById(commentId);
+        if (!commentElement) return;
+
+        const repliesContainer = commentElement.querySelector('.replies-container');
+        const buttonTextSpan = button.querySelector('.button-text');
+
+        const isHidden = repliesContainer.classList.contains('hidden');
+
+        if (isHidden) {
+            repliesContainer.classList.remove('hidden');
+            buttonTextSpan.textContent = window.translations.hide_replies_text || 'Hide replies';
+            button.classList.add('active');
+        } else {
+            repliesContainer.classList.add('hidden');
+            const replyCount = repliesContainer.children.length;
+            buttonTextSpan.textContent = (window.translations.view_replies_text || 'View replies (:count)').replace(':count', replyCount);
+            button.classList.remove('active');
+        }
     }
 
     function prepareReply(postId, commentId, username) {
