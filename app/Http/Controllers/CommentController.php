@@ -19,20 +19,23 @@ use Illuminate\Support\Str;
 
 class CommentController extends Controller
 {
-    public function index(Request $request, Post $post)
+    public function index(Request $request, Post $post): JsonResponse
     {
         $perPage = $request->input('per_page', 10);
         $userId = Auth::id();
 
         $commentsQuery = Comment::where('post_id', $post->id)
             ->whereNull('parent_id')
-            ->withCount('likes')
+            ->withCount(['flatReplies as replies_count'])
             ->with([
                 'user:id,username,profile_picture',
                 'flatReplies' => function ($query) use ($userId) {
-                    $query->withCount('likes')
+                    $query
+//                        ->withCount('likes')
                         ->with('user:id,username,profile_picture')
-                        ->with('parent:id,user_id', 'parent.user:id,username');
+                        ->with('parent:id,user_id', 'parent.user:id,username')
+                        ->orderBy('created_at', 'desc')
+                        ->limit(3);
 
                     if ($userId) {
                         $query->with(['likes' => fn($q) => $q->where('user_id', $userId)]);
@@ -47,9 +50,46 @@ class CommentController extends Controller
 
         $comments = $commentsQuery->paginate($perPage);
 
-        return response()->json([
-            'comments' => $comments
-        ]);
+        $comments->getCollection()->each(function ($comment) {
+            $comment->is_liked_by_current_user = $comment->likes->isNotEmpty();
+            $comment->setRelation('flatReplies', $comment->flatReplies->reverse()->values());
+            $comment->flatReplies->each(function ($reply) {
+                $reply->is_liked_by_current_user = $reply->likes->isNotEmpty();
+                unset($reply->likes);
+            });
+            unset($comment->likes);
+        });
+
+        return response()->json(['comments' => $comments]);
+    }
+    public function getReplies(Request $request, Comment $comment): JsonResponse
+    {
+        if ($comment->parent_id !== null) {
+            return response()->json(['error' => 'Can only fetch replies for a top-level comment.'], 400);
+        }
+
+        $userId = Auth::id();
+        $perPage = 15;
+        $excludeIds = $request->input('exclude_ids', []);
+
+        $repliesQuery = Comment::where('root_comment_id', $comment->id)
+            ->whereNotIn('id', $excludeIds)
+            ->withCount('likes')
+            ->with(['user:id,username,profile_picture', 'parent:id,user_id.user:id,username'])
+            ->orderBy('created_at', 'asc');
+
+        if ($userId) {
+            $repliesQuery->with(['likes' => fn($q) => $q->where('user_id', $userId)]);
+        }
+
+        $replies = $repliesQuery->paginate($perPage);
+
+        $replies->getCollection()->each(function ($reply) {
+            $reply->is_liked_by_current_user = $reply->likes->isNotEmpty();
+            unset($reply->likes);
+        });
+
+        return response()->json($replies);
     }
 
     private function checkForBannedWords(string $commentContent): ?array

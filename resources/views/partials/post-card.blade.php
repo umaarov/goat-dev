@@ -308,6 +308,19 @@
     </div>
 </article>
 
+<template id="comment-shimmer-template">
+    <div class="shimmer-comment py-3">
+        <div class="flex items-start space-x-3">
+            <div class="shimmer-bg w-8 h-8 rounded-full flex-shrink-0"></div>
+            <div class="flex-1 space-y-2 py-1">
+                <div class="shimmer-bg h-4 rounded w-1/3"></div>
+                <div class="shimmer-bg h-4 rounded w-5/6"></div>
+                <div class="shimmer-bg h-3 rounded w-1/4 mt-2"></div>
+            </div>
+        </div>
+    </div>
+</template>
+
 <style>
     .comments-section {
         max-height: 0;
@@ -389,6 +402,7 @@
         display: inline-flex;
         align-items: center;
         cursor: pointer;
+        margin-top: 1px;
     }
 
     .view-replies-button .line {
@@ -463,6 +477,21 @@
     #comments-loading {
         opacity: 0;
         animation: fade-in 0.3s ease forwards;
+    }
+
+    .shimmer-comment {
+        user-select: none;
+        pointer-events: none;
+    }
+    .shimmer-bg {
+        animation: shimmer 1.5s linear infinite;
+        background-image: linear-gradient(to right, #e2e8f0 0%, #f8fafc 50%, #e2e8f0 100%);
+        background-size: 200% 100%;
+        background-color: #e2e8f0;
+    }
+    @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
     }
 
     @keyframes fade-in {
@@ -689,6 +718,16 @@
         });
     }
 
+    function getCommentShimmerHTML() {
+        const template = document.getElementById('comment-shimmer-template');
+        if (!template) {
+            console.warn("Shimmer template not found. Using fallback.");
+            return '<div class="text-center py-4 text-sm text-gray-500">Loading comments...</div>';
+        }
+        const shimmerContent = template.innerHTML;
+        return shimmerContent.repeat(3);
+    }
+
     function loadComments(postId, page) {
         const commentsSection = document.getElementById(`comments-section-${postId}`);
         const commentsContainer = commentsSection.querySelector('.comments-list');
@@ -708,50 +747,25 @@
             return;
         }
 
-        const loadingIndicator = document.createElement('div');
-        loadingIndicator.className = 'text-center py-4';
-        loadingIndicator.id = 'comments-loading';
-        loadingIndicator.innerHTML = '<div class="inline-block animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-500"></div>';
-
-        if (!commentsSection.dataset.loaded || page === 1) {
-            commentsContainer.innerHTML = '';
-            commentsContainer.appendChild(loadingIndicator);
-        } else {
-            commentsContainer.appendChild(loadingIndicator);
-            const existingComments = commentsContainer.querySelectorAll('.comment');
-            existingComments.forEach(comment => {
-                comment.style.opacity = '0.5';
-                comment.style.pointerEvents = 'none';
-            });
-        }
+        commentsContainer.innerHTML = getCommentShimmerHTML();
 
         fetch(`/posts/${postId}/comments?page=${page}`)
             .then(response => response.json())
             .then(data => {
-                const loadingElement = commentsContainer.querySelector('#comments-loading');
-                if (loadingElement) {
-                    loadingElement.remove();
-                }
-                // commentsContainer.innerHTML = '';
-                if (page === 1) commentsContainer.innerHTML = '';
+                commentsContainer.innerHTML = '';
 
                 if (data.comments.data.length === 0 && page === 1) {
                     commentsContainer.innerHTML = `<p class="text-sm text-gray-500 text-center">${window.translations.js_no_comments_be_first}</p>`;
                     return;
                 }
 
+                const fragment = document.createDocumentFragment();
                 data.comments.data.forEach(comment => {
                     const commentDiv = createCommentElement(comment, postId, false);
-                    commentsContainer.appendChild(commentDiv);
+                    fragment.appendChild(commentDiv);
 
-                    if (comment.flat_replies && comment.flat_replies.length > 0) {
-                        const repliesContainer = commentDiv.querySelector('.replies-container');
-                        comment.flat_replies.forEach(reply => {
-                            const replyDiv = createCommentElement(reply, postId, true);
-                            repliesContainer.appendChild(replyDiv);
-                        });
-                    }
                 });
+                commentsContainer.appendChild(fragment);
 
                 animateComments(commentsContainer);
                 const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
@@ -827,6 +841,8 @@
 
         const linkedCommentContent = linkifyContent(commentData.content);
 
+        let repliesActionsHTML = '';
+
         let goToParentArrowHTML = '';
         if (isReply && Number(commentData.parent_id) !== Number(commentData.root_comment_id)) {
             goToParentArrowHTML = `<button onclick="scrollToComment('comment-${commentData.parent_id}')" class="p-1 -ml-1 rounded-full hover:bg-gray-200" title="${window.translations.go_to_parent_comment_title || 'Go to parent comment'}"><svg class="h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612L5.28 9.68a.75.75 0 01-1.06-1.06l5.25-5.25a.75.75 0 011.06 0l5.25 5.25a.75.75 0 11-1.06 1.06L10.75 5.612V16.25A.75.75 0 0110 17z" clip-rule="evenodd" /></svg></button>`;
@@ -851,12 +867,11 @@
                         </div>
                         <span class="text-gray-800">${replyToHTML} ${linkedCommentContent}</span>
                     </div>
-                    <div class="mt-1.5 flex items-center space-x-3 text-xs text-gray-500">
+                    <div class="comment-actions mt-1.5 flex items-center space-x-3 text-xs text-gray-500">
                         <small class="text-xs text-gray-500" title="${commentData.created_at}">${formatTimestamp(commentData.created_at)}</small>
                         ${ {{ Auth::check() ? 'true' : 'false' }} ? `<div class="flex items-center">${likeButtonHTML}</div>` : ''}
                         ${replyButton}
-                        ${goToParentArrowHTML}
-                        ${repliesToggleHTML}
+                        ${repliesActionsHTML}
                     </div>
                 </div>
 ${canDeleteComment(commentData) ? `
@@ -870,6 +885,38 @@ ${canDeleteComment(commentData) ? `
             </div>
             <div class="replies-container hidden"></div>
             `;
+        const actionsContainer = commentDiv.querySelector('.comment-actions');
+        const repliesContainer = commentDiv.querySelector('.replies-container');
+
+        if (!isReply) {
+            const loadedRepliesCount = commentData.flat_replies ? commentData.flat_replies.length : 0;
+            const totalRepliesCount = commentData.replies_count || 0;
+            const hasMoreReplies = totalRepliesCount > loadedRepliesCount;
+
+            if (totalRepliesCount > 0) {
+                const toggleButton = document.createElement('button');
+                toggleButton.className = 'view-replies-button font-semibold hover:underline';
+                toggleButton.textContent = (window.translations.view_replies_text || 'View replies (:count)').replace(':count', totalRepliesCount);
+                toggleButton.onclick = () => toggleRepliesContainer(toggleButton, 'comment-' + commentData.id);
+                actionsContainer.appendChild(toggleButton);
+            }
+
+            if (loadedRepliesCount > 0) {
+                commentData.flat_replies.forEach(replyData => {
+                    const replyElement = createCommentElement(replyData, postId, true);
+                    repliesContainer.appendChild(replyElement);
+                });
+            }
+
+            if (hasMoreReplies) {
+                const remainingCount = totalRepliesCount - loadedRepliesCount;
+                const loadMoreWrapper = document.createElement('div');
+                loadMoreWrapper.className = 'load-more-replies-wrapper mt-2'; // Added margin
+                loadMoreWrapper.innerHTML = `<button class="text-xs font-semibold text-blue-600 hover:underline" onclick="loadMoreReplies(this, ${commentData.id})">${(window.translations.view_more_replies_text || 'View :count more replies').replace(':count', remainingCount)}</button>`;
+                repliesContainer.appendChild(loadMoreWrapper);
+            }
+        }
+
         return commentDiv;
     }
 
@@ -909,17 +956,73 @@ ${canDeleteComment(commentData) ? `
         if (!commentElement) return;
 
         const repliesContainer = commentElement.querySelector('.replies-container');
+        const loadMoreWrapper = commentElement.querySelector('.load-more-replies-wrapper');
         const isHidden = repliesContainer.classList.contains('hidden');
+
 
         if (isHidden) {
             repliesContainer.classList.remove('hidden');
+            if (loadMoreWrapper) loadMoreWrapper.classList.remove('hidden');
+            button.classList.add('active');
             button.textContent = window.translations.hide_replies_text || 'Hide replies';
         } else {
             repliesContainer.classList.add('hidden');
-            const replyCount = repliesContainer.children.length;
-            button.textContent = (window.translations.view_replies_text || 'View replies (:count)').replace(':count', replyCount);
+            button.classList.remove('active');
+            const totalReplies = commentElement.querySelectorAll('.replies-container > .comment').length;
+            const loadMoreButton = commentElement.querySelector('.load-more-replies-wrapper button');
+            let totalCount = totalReplies;
+            if(loadMoreButton){
+                const matches = loadMoreButton.textContent.match(/\d+/);
+                if(matches) totalCount += parseInt(matches[0]);
+            }
+            button.textContent = (window.translations.view_replies_text || 'View replies (:count)').replace(':count', totalCount);
         }
     }
+
+    async function loadMoreReplies(button, rootCommentId) {
+        const commentElement = document.getElementById(`comment-${rootCommentId}`);
+        if (!commentElement) return;
+
+        const repliesContainer = commentElement.querySelector('.replies-container');
+        const existingReplyIds = Array.from(repliesContainer.querySelectorAll('.comment[id^="comment-"]')).map(el => el.id.replace('comment-', ''));
+
+        button.disabled = true;
+        button.textContent = 'Loading...';
+        const loadMoreWrapper = button.parentElement;
+
+        const excludeParams = existingReplyIds.map(id => `exclude_ids[]=${id}`).join('&');
+        const url = `/comments/${rootCommentId}/replies?${excludeParams}`;
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Network response was not ok.');
+            const paginatedReplies = await response.json();
+
+            const fragment = document.createDocumentFragment();
+            paginatedReplies.data.forEach(reply => {
+                const replyDiv = createCommentElement(reply, reply.post_id, true);
+                fragment.appendChild(replyDiv);
+            });
+            repliesContainer.insertBefore(fragment, loadMoreWrapper);
+
+            animateComments(repliesContainer);
+
+            const totalLoaded = existingReplyIds.length + paginatedReplies.data.length;
+            const totalAvailable = paginatedReplies.total;
+            if (totalLoaded >= totalAvailable) {
+                loadMoreWrapper.remove();
+            } else {
+                const remaining = totalAvailable - totalLoaded;
+                button.textContent = (window.translations.view_more_replies_text || 'View :count more replies').replace(':count', remaining);
+                button.disabled = false;
+            }
+        } catch (error) {
+            console.error('Error loading more replies:', error);
+            button.textContent = 'Error. Click to retry.';
+            button.disabled = false;
+        }
+    }
+
 
     function prepareReply(postId, commentId, username) {
         const form = document.getElementById(`comment-form-${postId}`);

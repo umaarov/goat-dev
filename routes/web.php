@@ -98,6 +98,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/comments/{comment}/toggle-like', [CommentLikeController::class, 'toggleLike'])
         ->name('comments.toggle-like');
+    Route::get('/comments/{comment}/replies', [CommentController::class, 'getReplies'])->name('comments.getReplies');
 
     Route::get('/profile/edit', [UserController::class, 'edit'])->name('profile.edit');
     Route::put('/profile/update', [UserController::class, 'update'])->name('profile.update');
@@ -121,7 +122,7 @@ Route::get('/sitemap.xml', [SitemapController::class, 'index']);
 
 Route::fallback(function () {
     return response()->view('errors.404', [], 404);
-})->middleware('cache.response:1440');;
+})->middleware('cache.response:1440');
 
 
 
