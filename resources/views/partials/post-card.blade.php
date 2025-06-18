@@ -312,13 +312,12 @@
     .comments-section {
         max-height: 0;
         overflow: hidden;
-        transition: max-height 0.5s ease-in-out, opacity 0.3s ease-in-out;
+        transition: max-height 0.5s ease-in-out;
         opacity: 0;
-        margin-bottom: -12px;
     }
 
     .comments-section.active {
-        max-height: 2000px;
+        max-height: 5000px;
         opacity: 1;
     }
 
@@ -333,13 +332,16 @@
         transform: translateY(0);
     }
 
+    .comments-list {
+        transition: opacity 0.3s ease;
+        min-height: 50px;
+    }
+
     .comment {
         opacity: 0;
         transform: translateY(10px);
-        transition: opacity 0.3s ease, transform 0.3s ease;
-        /*border-bottom: 1px solid #e5e7eb;*/
-        padding-bottom: 12px;
-        margin-bottom: 0;
+        transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.8s ease;
+        padding: 8px 0;
     }
 
     .comment.visible {
@@ -357,22 +359,30 @@
         /*margin-bottom: 0;*/
     }
 
+    .comment.highlighted-comment {
+        background-color: rgba(59, 130, 246, 0.1);
+        border-radius: 8px;
+    }
+
     .replies-container {
-        margin-left: 0;
-        border-left: 2px solid #e5e7eb;
-        margin-top: 12px;
-        padding-left: 1rem;
-        transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out;
-        max-height: 2000px;
+        margin-left: calc(2rem + 0.75rem);
+        margin-top: 8px;
+        transition: max-height 0.4s ease, opacity 0.3s ease;
+        max-height: 5000px;
         overflow: hidden;
     }
 
     .replies-container.hidden {
         max-height: 0;
         margin-top: 0;
-        padding-left: 1rem;
         opacity: 0;
-        overflow: hidden;
+    }
+    .replies-container .comment {
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+    .replies-container .comment:last-child {
+        padding-bottom: 0;
     }
 
     .view-replies-button {
@@ -762,11 +772,11 @@
     function createCommentElement(commentData, postId, isReply = false) {
         const commentDiv = document.createElement('div');
         // commentDiv.className = 'comment py-3 border-b border-gray-200';
-        commentDiv.className = 'comment pt-3';
+        commentDiv.className = 'comment';
 
-        if (!isReply) {
-            commentDiv.classList.add('border-b', 'border-gray-200');
-        }
+        // if (!isReply) {
+        //     commentDiv.classList.add('border-b', 'border-gray-200');
+        // }
 
         if (!commentData.id.toString().startsWith('temp-')) {
             commentDiv.id = 'comment-' + commentData.id;
@@ -779,12 +789,8 @@
         const altProfilePic = (window.translations.profile_alt_picture || 'Profile picture of :username').replace(':username', commentData.user.username);
 
         const isVerified = ['goat', 'umarov'].includes(commentData.user.username);
-        const verifiedIconHTML = isVerified ? `
-                <span class="ml-1" title="${window.translations.verified_account || 'Verified Account'}">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                    </svg>
-                </span>` : '';
+        const verifiedIconHTML = isVerified ? `<span class="ml-1 self-center" title="${window.translations.verified_account || 'Verified Account'}"><svg class="h-4 w-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg></span>` : '';
+
 
         const linkedCommentContent = linkifyContent(commentData.content);
 
@@ -795,16 +801,16 @@
         const outlineHeartSVG = '<path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656zM10 15.93l5.828-5.828a2 2 0 10-2.828-2.828L10 10.274l-2.828-2.829a2 2 0 00-2.828 2.828L10 15.93z" clip-rule="evenodd" />';
 
         const likeButtonHTML = `
-            <div class="mt-2 flex items-center text-xs">
+            <div class="flex items-center text-xs">
                 <button onclick="toggleCommentLike(${commentData.id}, this)"
-                        class="like-comment-button flex items-center p-1 -ml-1 rounded-full transition-all duration-150 ease-in-out group ${isLiked ? 'text-red-500 hover:bg-red-100' : 'text-gray-400 hover:text-red-500 hover:bg-red-50'}"
+                        class="like-comment-button flex items-center mb-0.5 rounded-full transition-all duration-150 ease-in-out group ${isLiked ? 'text-red-500 hover:bg-red-100' : 'text-gray-400 hover:text-red-500 hover:bg-red-50'}"
                         data-comment-id="${commentData.id}"
                         title="${isLiked ? (window.translations.unlike_comment_title || 'Unlike') : (window.translations.like_comment_title || 'Like')}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 comment-like-icon group-hover:scale-125 transition-transform duration-150" viewBox="0 0 20 20" fill="currentColor">
                         ${isLiked ? filledHeartSVG : outlineHeartSVG}
                     </svg>
                 </button>
-                <span class="ml-1.5 comment-likes-count font-medium tabular-nums ${parseInt(likesCount) === 0 ? 'text-gray-400' : 'text-gray-700'}" id="comment-likes-count-${commentData.id}">
+                <span class="ml-0.5 comment-likes-count font-medium tabular-nums ${parseInt(likesCount) === 0 ? 'text-gray-400' : 'text-gray-700'}" id="comment-likes-count-${commentData.id}">
                     ${likesCount}
                 </span>
             </div>
@@ -816,12 +822,10 @@
         //         replyToHTML = `<a href="/@${parentUsername}" class="text-blue-600 hover:underline mr-1">@${parentUsername}</a>`;
         //     }
         // }
-        if (isReply && commentData.parent && commentData.parent.user) {
+        if (isReply && commentData.parent && commentData.parent.user && commentData.parent_id !== commentData.root_comment_id) {
             const parentUsername = commentData.parent.user.username;
-            if (commentData.root_comment_id !== commentData.parent_id) {
-                if (!commentData.content.includes(`@${parentUsername}`)) {
-                    replyToHTML = `<a href="/@${parentUsername}" class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
-                }
+            if (!commentData.content.includes(`@${parentUsername}`)) {
+                replyToHTML = `<a href="javascript:void(0)" onclick="scrollToComment('comment-${commentData.parent_id}')" class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
             }
         }
 
@@ -829,38 +833,27 @@
         if (!isReply && commentData.flat_replies && commentData.flat_replies.length > 0) {
             const replyCount = commentData.flat_replies.length;
             const viewText = (window.translations.view_replies_text || 'View replies (:count)').replace(':count', replyCount);
-            repliesToggleHTML = `
-                <div class="mt-3">
-                    <button class="view-replies-button text-xs font-semibold text-gray-500 hover:text-gray-800"
-                            onclick="toggleRepliesContainer(this, 'comment-${commentData.id}')">
-                        <span class="line"></span>
-                        <span class="button-text">${viewText}</span>
-                    </button>
-                </div>
-            `;
+            repliesToggleHTML = `<button class="view-replies-button font-semibold hover:underline" onclick="toggleRepliesContainer(this, 'comment-${commentData.id}')">${viewText}</button>`;
         }
 
         commentDiv.innerHTML = `
-            <div class="flex items-start">
-                <img src="${profilePic}" alt="${altProfilePic}" loading="lazy" decoding="async" class="w-8 h-8 rounded-full mr-3 mt-0.5 cursor-pointer zoomable-image" data-full-src="${profilePic}">
+            <div class="flex items-start space-x-3">
+                <img src="${profilePic}" alt="${altProfilePic}" loading="lazy" decoding="async" class="w-8 h-8 rounded-full flex-shrink-0 cursor-pointer zoomable-image" data-full-src="${profilePic}">
                 <div class="flex-1">
-                    <div class="flex items-center">
-                        <a href="/@${commentData.user.username}" class="text-sm font-medium text-gray-800 hover:underline">${commentData.user.username}</a>
-                        ${verifiedIconHTML}
-                        <span class="mx-1.5 text-gray-400 text-xs">·</span>
-                        <small class="text-xs text-gray-500" title="${commentData.created_at}">${formatTimestamp(commentData.created_at)}</small>
+                    <div class="text-sm">
+                        <div class="flex items center">
+                            <a href="/@${commentData.user.username}" class="font-semibold text-gray-900 hover:underline">${commentData.user.username}</a>
+                                            ${verifiedIconHTML}
+                        </div>
+                        <span class="text-gray-800">${replyToHTML} ${linkedCommentContent}</span>
                     </div>
-                    <div class="text-sm text-gray-700 break-words comment-content-wrapper mt-1">${replyToHTML} ${linkedCommentContent}</div>
-                    <div class="mt-2 flex items-center text-xs text-gray-500 space-x-4">
-                        ${ {{ Auth::check() ? 'true' : 'false' }} ? likeButtonHTML : ''}
-                    <button onclick="prepareReply('${postId}', '${commentData.id}', '${commentData.user.username}')"
-                                class="font-medium hover:underline"
-                                title="Reply to ${commentData.user.username}">
-                            ${window.translations.reply_button_text || 'Reply'}
-                    </button>
+                    <div class="mt-1.5 flex items-center space-x-3 text-xs text-gray-500">
+                        <small title="${commentData.created_at}">${formatTimestamp(commentData.created_at)}</small>
+                        ${ {{ Auth::check() ? 'true' : 'false' }} ? `<div class="flex items-center">${likeButtonHTML}</div>` : ''}
+                        <button onclick="prepareReply('${postId}', '${commentData.id}', '${commentData.user.username}')" class="font-semibold hover:underline" title="Reply to ${commentData.user.username}">${window.translations.reply_button_text || 'Reply'}</button>
+                        ${repliesToggleHTML}
                     </div>
-                    ${repliesToggleHTML}
-        </div>
+                </div>
 ${canDeleteComment(commentData) ? `
                 <div class="ml-2 pl-1 flex-shrink-0">
                     <form onsubmit="deleteComment('${commentData.id}', event)" class="inline">
@@ -875,24 +868,45 @@ ${canDeleteComment(commentData) ? `
         return commentDiv;
     }
 
+    function scrollToComment(commentId) {
+        const element = document.getElementById(commentId);
+        if (!element) {
+            console.warn(`Could not find comment ${commentId} to scroll to.`);
+            return;
+        }
+
+        const repliesContainer = element.closest('.replies-container');
+        if (repliesContainer && repliesContainer.classList.contains('hidden')) {
+            const rootComment = repliesContainer.closest('.comment');
+            const toggleButton = rootComment.querySelector('.view-replies-button');
+            if (toggleButton) {
+                toggleButton.click();
+            }
+        }
+
+        setTimeout(() => {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            element.classList.add('highlighted-comment');
+            setTimeout(() => {
+                element.classList.remove('highlighted-comment');
+            }, 1500);
+        }, 100);
+    }
+
     function toggleRepliesContainer(button, commentId) {
         const commentElement = document.getElementById(commentId);
         if (!commentElement) return;
 
         const repliesContainer = commentElement.querySelector('.replies-container');
-        const buttonTextSpan = button.querySelector('.button-text');
-
         const isHidden = repliesContainer.classList.contains('hidden');
 
         if (isHidden) {
             repliesContainer.classList.remove('hidden');
-            buttonTextSpan.textContent = window.translations.hide_replies_text || 'Hide replies';
-            button.classList.add('active');
+            button.textContent = window.translations.hide_replies_text || 'Hide replies';
         } else {
             repliesContainer.classList.add('hidden');
             const replyCount = repliesContainer.children.length;
-            buttonTextSpan.textContent = (window.translations.view_replies_text || 'View replies (:count)').replace(':count', replyCount);
-            button.classList.remove('active');
+            button.textContent = (window.translations.view_replies_text || 'View replies (:count)').replace(':count', replyCount);
         }
     }
 
