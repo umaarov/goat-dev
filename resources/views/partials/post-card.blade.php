@@ -828,7 +828,7 @@
         const linkedCommentContent = linkifyContent(commentData.content);
 
         let goToParentArrowHTML = '';
-        if (isReply) {
+        if (isReply && Number(commentData.parent_id) !== Number(commentData.root_comment_id)) {
             goToParentArrowHTML = `<button onclick="scrollToComment('comment-${commentData.parent_id}')" class="p-1 -ml-1 rounded-full hover:bg-gray-200" title="${window.translations.go_to_parent_comment_title || 'Go to parent comment'}"><svg class="h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612L5.28 9.68a.75.75 0 01-1.06-1.06l5.25-5.25a.75.75 0 011.06 0l5.25 5.25a.75.75 0 11-1.06 1.06L10.75 5.612V16.25A.75.75 0 0110 17z" clip-rule="evenodd" /></svg></button>`;
         }
 
@@ -838,13 +838,14 @@
             const viewText = (window.translations.view_replies_text || 'View replies (:count)').replace(':count', replyCount);
             repliesToggleHTML = `<button class="view-replies-button font-semibold hover:underline" onclick="toggleRepliesContainer(this, 'comment-${commentData.id}')">${viewText}</button>`;
         }
+        const replyButton = `<button onclick="prepareReply('${postId}', '${commentData.id}', '${commentData.user.username}')" class="font-semibold hover:underline" title="Reply to ${commentData.user.username}">${window.translations.reply_button_text || 'Reply'}</button>`;
 
         commentDiv.innerHTML = `
             <div class="flex items-start space-x-3">
                 <img src="${profilePic}" alt="${altProfilePic}" loading="lazy" decoding="async" class="w-8 h-8 rounded-full flex-shrink-0 cursor-pointer zoomable-image" data-full-src="${profilePic}">
                 <div class="flex-1">
                     <div class="text-sm">
-                        <div class="flex items center">
+                        <div class="flex items-center">
                             <a href="/@${commentData.user.username}" class="font-semibold text-gray-900 hover:underline">${commentData.user.username}</a>
                                             ${verifiedIconHTML}
                         </div>
@@ -853,7 +854,7 @@
                     <div class="mt-1.5 flex items-center space-x-3 text-xs text-gray-500">
                         <small title="${commentData.created_at}">${formatTimestamp(commentData.created_at)}</small>
                         ${ {{ Auth::check() ? 'true' : 'false' }} ? `<div class="flex items-center">${likeButtonHTML}</div>` : ''}
-                        <button onclick="prepareReply('${postId}', '${commentData.id}', '${commentData.user.username}')" class="font-semibold hover:underline" title="Reply to ${commentData.user.username}">${window.translations.reply_button_text || 'Reply'}</button>
+                        ${replyButton}
                         ${goToParentArrowHTML}
                         ${repliesToggleHTML}
                     </div>
@@ -874,8 +875,14 @@ ${canDeleteComment(commentData) ? `
 
     function scrollToComment(commentId) {
         const element = document.getElementById(commentId);
+
         if (!element) {
-            console.warn(`Could not find comment ${commentId} to scroll to.`);
+            if (window.showToast) {
+                const message = window.translations.js_parent_comment_deleted || 'The comment you are replying to has been deleted.';
+                window.showToast(message, 'warning');
+            } else {
+                console.warn(`Could not find comment ${commentId} to scroll to.`);
+            }
             return;
         }
 
@@ -918,9 +925,23 @@ ${canDeleteComment(commentData) ? `
         const form = document.getElementById(`comment-form-${postId}`);
         if (!form) return;
 
+        const targetCommentElement = document.getElementById(`comment-${commentId}`);
+        if (!targetCommentElement) {
+            console.error(`Could not find comment element with ID: comment-${commentId}`);
+            return;
+        }
+
+        const isTargetANestedReply = targetCommentElement.parentElement.classList.contains('replies-container');
+
         form.elements.parent_id.value = commentId;
         const textarea = form.elements.content;
-        textarea.value = `@${username} `;
+
+        if (isTargetANestedReply) {
+            textarea.value = `@${username} `;
+        } else {
+            textarea.value = '';
+        }
+
         textarea.focus();
         const end = textarea.value.length;
         textarea.setSelectionRange(end, end);
@@ -930,11 +951,10 @@ ${canDeleteComment(commentData) ? `
         indicator.classList.remove('hidden');
         indicator.classList.add('flex');
 
-        const parentCommentEl = document.getElementById(`comment-${commentId}`);
-        if (parentCommentEl) {
-            const repliesContainer = parentCommentEl.querySelector('.replies-container');
+        if (targetCommentElement) {
+            const repliesContainer = targetCommentElement.querySelector('.replies-container');
             if (repliesContainer && repliesContainer.classList.contains('hidden')) {
-                const toggleButton = parentCommentEl.querySelector('.view-replies-button');
+                const toggleButton = targetCommentElement.querySelector('.view-replies-button');
                 if (toggleButton) {
                     toggleButton.click();
                 }
@@ -1203,6 +1223,33 @@ ${canDeleteComment(commentData) ? `
         return pageItem;
     }
 
+    function updateParentUIAfterReply(rootCommentId) {
+        const rootCommentEl = document.getElementById(`comment-${rootCommentId}`);
+        if (!rootCommentEl) return;
+
+        const repliesContainer = rootCommentEl.querySelector('.replies-container');
+        let toggleButton = rootCommentEl.querySelector('.view-replies-button');
+        const actionsContainer = rootCommentEl.querySelector('.mt-1\\.5.flex');
+
+        if (!toggleButton && actionsContainer) {
+            toggleButton = document.createElement('button');
+            toggleButton.className = 'view-replies-button font-semibold hover:underline text-xs text-gray-500';
+            toggleButton.onclick = () => toggleRepliesContainer(toggleButton, `comment-${rootCommentId}`);
+            actionsContainer.appendChild(toggleButton);
+        }
+
+        if (toggleButton) {
+            const replyCount = repliesContainer.children.length;
+            const viewText = (window.translations.view_replies_text || 'View replies (:count)').replace(':count', replyCount);
+
+            toggleButton.textContent = window.translations.hide_replies_text || 'Hide replies';
+
+            if(repliesContainer.classList.contains('hidden')) {
+                repliesContainer.classList.remove('hidden');
+            }
+        }
+    }
+
     function submitComment(postId, event) {
         event.preventDefault();
         const form = event.target;
@@ -1211,85 +1258,63 @@ ${canDeleteComment(commentData) ? `
         const parentId = form.elements.parent_id.value;
 
         if (!content.trim()) {
-            showToast(window.translations.js_comment_empty);
+            if(window.showToast) showToast(window.translations.js_comment_empty);
             return;
         }
 
         submitButton.disabled = true;
-        submitButton.innerHTML = `<div class="inline-block animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div> ${window.translations.js_comment_button_submitting}`;
+        submitButton.innerHTML = `<div class="inline-block animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>`;
 
-        const url = `/posts/${postId}/comments`;
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-        fetch(url, {
+        fetch(`/posts/${postId}/comments`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json'
-            },
+            headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json'},
             body: JSON.stringify({content: content, parent_id: parentId || null})
         })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) return response.json().then(err => Promise.reject(err));
+                return response.json();
+            })
             .then(data => {
-                form.elements.content.value = '';
                 submitButton.disabled = false;
-                submitButton.innerHTML = window.translations.js_submit_comment_button;
+                submitButton.innerHTML = window.translations.js_submit_comment_button || 'Submit';
+                cancelReply(postId);
+                form.elements.content.value = '';
 
-                if (data.errors) {
-                    showToast(window.translations.js_error_prefix + ' ' + Object.values(data.errors).join('\n'));
-                    return;
-                }
                 const newComment = data.comment;
                 const isReply = !!newComment.parent_id;
-                newComment.user = data.comment.user || {
-                        id: {{ Auth::id() ?? 'null' }},
-                        username: '{{ Auth::check() ? Auth::user()->username : "" }}',
-                        profile_picture: '{{ Auth::check() ? (Auth::user()->profile_picture ? (Str::startsWith(Auth::user()->profile_picture, ["http", "https"]) ? Auth::user()->profile_picture : asset("storage/" . Auth::user()->profile_picture)) : asset("images/default-pfp.png")) : "" }}'
-                };
-
-
-                const commentsSection = document.getElementById(`comments-section-${postId}`);
-                const commentsContainer = commentsSection.querySelector('.comments-list');
-                const noCommentsMessage = commentsContainer.querySelector('p.text-center');
-                if (noCommentsMessage && noCommentsMessage.textContent === window.translations.js_no_comments_be_first) {
-                    commentsContainer.innerHTML = '';
-                }
 
                 const commentElement = createCommentElement(newComment, postId, isReply);
 
                 if (isReply) {
-                    const rootCommentId = newComment.root_comment_id || newComment.parent_id;
+                    const rootCommentId = newComment.root_comment_id;
                     const repliesContainer = document.querySelector(`#comment-${rootCommentId} .replies-container`);
-
                     if (repliesContainer) {
                         repliesContainer.appendChild(commentElement);
+                        updateParentUIAfterReply(rootCommentId);
                     } else {
                         loadComments(postId, 1);
                     }
                 } else {
-                    const commentsContainer = document.getElementById(`comments-section-${postId}`).querySelector('.comments-list');
+                    const commentsContainer = document.querySelector(`#comments-section-${postId} .comments-list`);
                     const noCommentsMessage = commentsContainer.querySelector('p.text-center');
                     if (noCommentsMessage) noCommentsMessage.remove();
                     commentsContainer.insertBefore(commentElement, commentsContainer.firstChild);
                 }
 
-                setTimeout(() => commentElement.classList.add('visible'), 10);
+                setTimeout(() => { commentElement.classList.add('visible'); }, 10);
 
-                cancelReply(postId);
-                form.elements.content.value = '';
-
-                const commentCountElement = document.querySelector(`#post-${postId} .flex.justify-between.items-center.px-8.py-3 button:first-child span`);
+                const commentCountElement = document.querySelector(`#post-${postId} button[onclick^="toggleComments"] span`);
                 if (commentCountElement) {
                     commentCountElement.textContent = parseInt(commentCountElement.textContent) + 1;
                 }
+                if (window.showToast) showToast(data.message || 'Comment posted!', 'success');
             })
-            .catch(error => {
-                console.error('Error:', error);
-                cancelReply(postId);
+            .catch(errorData => {
+                console.error('Error:', errorData);
                 submitButton.disabled = false;
-                submitButton.innerHTML = window.translations.js_submit_comment_button;
-                showToast(window.translations.js_failed_add_comment);
+                submitButton.innerHTML = window.translations.js_submit_comment_button || 'Submit';
+                const errorMessage = errorData?.errors ? Object.values(errorData.errors).join(' ') : (window.translations.js_failed_add_comment || 'Failed to add comment.');
+                if (window.showToast) showToast(errorMessage, 'error');
             });
     }
 
