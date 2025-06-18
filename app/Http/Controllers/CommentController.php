@@ -322,12 +322,12 @@ class CommentController extends Controller
         if ($parentId) {
             $parentComment = Comment::find($parentId);
 
-            Log::info('Checking parent comment object as seen by Laravel:', [
-                'comment_object_from_app' => $parentComment ? $parentComment->toArray() : 'NOT FOUND'
-            ]);
+//            Log::info('Checking parent comment object as seen by Laravel:', [
+//                'comment_object_from_app' => $parentComment ? $parentComment->toArray() : 'NOT FOUND'
+//            ]);
             // ------------------------------------------
 
-            if (!$parentComment || $parentComment->post_id !== $post->id) {
+            if (!$parentComment || (int)$parentComment->post_id !== (int)$post->id) {
                 Log::warning('Parent comment mismatch attempt.', [
                     'user_id' => Auth::id(),
                     'post_id' => $post->id,
