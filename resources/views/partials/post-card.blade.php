@@ -1191,6 +1191,23 @@ ${canDeleteComment(commentData) ? `
                 }
             });
 
+            if (!response.ok) {
+                const commentElement = document.getElementById(`comment-${commentId}`);
+
+                if (response.status === 404) {
+                    if (window.showToast) window.showToast('This comment has been deleted.', 'error');
+                    if (commentElement) {
+                        commentElement.style.transition = 'opacity 0.3s ease';
+                        commentElement.style.opacity = '0';
+                        setTimeout(() => commentElement.remove(), 300);
+                    }
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to toggle like.');
+                }
+                return;
+            }
+
             const data = await response.json();
 
             if (!response.ok) {
