@@ -26,6 +26,7 @@ class CommentLikeController extends Controller
         try {
             $existingLike = CommentLike::where('user_id', $user->id)
                 ->where('comment_id', $comment->id)
+                ->lockForUpdate()
                 ->first();
 
             $isLiked = false;

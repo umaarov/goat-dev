@@ -537,6 +537,11 @@
         animation: dot-dot-dot 1s infinite;
     }
 
+    .like-comment-button.processing-like {
+        cursor: wait;
+        opacity: 0.6;
+    }
+
     @keyframes dot-dot-dot {
         0%, 80%, 100% {
             opacity: 0;
@@ -1151,6 +1156,13 @@ ${canDeleteComment(commentData) ? `
             return;
         }
 
+        if (buttonElement.disabled) {
+            return;
+        }
+
+        buttonElement.disabled = true;
+        buttonElement.classList.add('processing-like');
+
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         const url = `/comments/${commentId}/toggle-like`;
 
@@ -1256,6 +1268,9 @@ ${canDeleteComment(commentData) ? `
             }
             likesCountSpan.textContent = originalLikesCount;
             likesCountSpan.className = `ml-1.5 comment-likes-count font-medium tabular-nums ${originalLikesCount === 0 ? 'text-gray-400' : 'text-gray-700'}`;
+        } finally {
+            buttonElement.disabled = false;
+            buttonElement.classList.remove('processing-like');
         }
     }
 
@@ -1586,6 +1601,10 @@ ${canDeleteComment(commentData) ? `
         const clickedButton = postElement.querySelector(`button.vote-button[data-option="${option}"]`);
         const otherButtonOption = option === 'option_one' ? 'option_two' : 'option_one';
         const otherButton = postElement.querySelector(`button.vote-button[data-option="${otherButtonOption}"]`);
+        if (clickedButton.disabled || otherButton.disabled) {
+            console.log('Vote already in progress. Ignoring click.');
+            return;
+        }
         if (!clickedButton || !otherButton || clickedButton.disabled) return;
 
         const knownUserVote = postElement.dataset.userVote;
@@ -1610,6 +1629,7 @@ ${canDeleteComment(commentData) ? `
         clickedButton.classList.add('voting-in-progress');
         clickedButton.disabled = true;
         otherButton.disabled = true;
+
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
