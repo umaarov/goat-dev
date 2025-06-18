@@ -852,7 +852,7 @@
                         <span class="text-gray-800">${replyToHTML} ${linkedCommentContent}</span>
                     </div>
                     <div class="mt-1.5 flex items-center space-x-3 text-xs text-gray-500">
-                        <small title="${commentData.created_at}">${formatTimestamp(commentData.created_at)}</small>
+                        <small class="text-xs text-gray-500" title="${commentData.created_at}">${formatTimestamp(commentData.created_at)}</small>
                         ${ {{ Auth::check() ? 'true' : 'false' }} ? `<div class="flex items-center">${likeButtonHTML}</div>` : ''}
                         ${replyButton}
                         ${goToParentArrowHTML}
