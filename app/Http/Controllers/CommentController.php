@@ -75,7 +75,11 @@ class CommentController extends Controller
         $repliesQuery = Comment::where('root_comment_id', $comment->id)
             ->whereNotIn('id', $excludeIds)
             ->withCount('likes')
-            ->with(['user:id,username,profile_picture', 'parent:id,user_id.user:id,username'])
+            ->with([
+                'user:id,username,profile_picture',
+                'parent:id,user_id',
+                'parent.user:id,username'
+            ])
             ->orderBy('created_at', 'asc');
 
         if ($userId) {

@@ -956,24 +956,39 @@ ${canDeleteComment(commentData) ? `
         if (!commentElement) return;
 
         const repliesContainer = commentElement.querySelector('.replies-container');
+        if (!repliesContainer) return;
+
         const loadMoreWrapper = commentElement.querySelector('.load-more-replies-wrapper');
         const isHidden = repliesContainer.classList.contains('hidden');
 
-
         if (isHidden) {
             repliesContainer.classList.remove('hidden');
-            if (loadMoreWrapper) loadMoreWrapper.classList.remove('hidden');
+
+            setTimeout(() => {
+                animateComments(repliesContainer);
+            }, 50);
+
+            if (loadMoreWrapper) {
+                loadMoreWrapper.classList.remove('hidden');
+            }
+
             button.classList.add('active');
             button.textContent = window.translations.hide_replies_text || 'Hide replies';
+
         } else {
             repliesContainer.classList.add('hidden');
             button.classList.remove('active');
-            const totalReplies = commentElement.querySelectorAll('.replies-container > .comment').length;
-            const loadMoreButton = commentElement.querySelector('.load-more-replies-wrapper button');
-            let totalCount = totalReplies;
-            if(loadMoreButton){
+
+            const existingRepliesCount = repliesContainer.querySelectorAll('.comment').length;
+            const loadMoreButton = repliesContainer.querySelector('.load-more-replies-wrapper button');
+            let totalCount = existingRepliesCount;
+
+            if (loadMoreButton) {
                 const matches = loadMoreButton.textContent.match(/\d+/);
-                if(matches) totalCount += parseInt(matches[0]);
+                if (matches) {
+                    const remainingCount = parseInt(matches[0], 10);
+                    totalCount = existingRepliesCount + remainingCount;
+                }
             }
             button.textContent = (window.translations.view_replies_text || 'View replies (:count)').replace(':count', totalCount);
         }
