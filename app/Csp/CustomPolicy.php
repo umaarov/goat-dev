@@ -15,6 +15,7 @@ class CustomPolicy extends Policy
                 'self',
                 'https://stats.g.doubleclick.net',
                 'https://pagead2.googlesyndication.com',
+                'https://ep2.adtrafficquality.google',
             ])
             ->addDirective(Directive::DEFAULT, 'self')
             ->addDirective(Directive::FORM_ACTION, 'self')
@@ -23,6 +24,7 @@ class CustomPolicy extends Policy
                 'data:',
                 'https:',
                 'blob:',
+                '*',
             ])
             ->addDirective(Directive::FONT, [
                 'self',
@@ -51,6 +53,14 @@ class CustomPolicy extends Policy
                 "'unsafe-inline'",
             ])
             ->addDirective(Directive::FRAME, [
+                'self',
+                'https://googleads.g.doubleclick.net',
+                'https://tpc.googlesyndication.com',
+                'https://fundingchoicesmessages.google.com',
+                'https://ep2.adtrafficquality.google',
+                'https://www.google.com',
+            ])
+            ->addDirective('fenced-frame-src', [
                 'self',
                 'https://googleads.g.doubleclick.net',
                 'https://tpc.googlesyndication.com',
