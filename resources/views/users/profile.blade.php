@@ -168,12 +168,12 @@
     .comments-section {
         max-height: 0;
         overflow: hidden;
-        transition: max-height 0.5s ease-in-out, opacity 0.3s ease-in-out;
+        transition: max-height 0.5s ease-in-out;
         opacity: 0;
     }
 
     .comments-section.active {
-        max-height: 2000px;
+        max-height: 5000px;
         opacity: 1;
     }
 
@@ -188,18 +188,86 @@
         transform: translateY(0);
     }
 
+    .comments-list {
+        transition: opacity 0.3s ease;
+        min-height: 50px;
+    }
+
     .comment {
         opacity: 0;
         transform: translateY(10px);
-        transition: opacity 0.3s ease, transform 0.3s ease;
-        border-bottom: 1px solid #e5e7eb;
-        padding-bottom: 12px;
-        margin-bottom: 12px;
+        transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.8s ease;
+        padding: 8px 0;
     }
 
     .comment.visible {
         opacity: 1;
         transform: translateY(0);
+    }
+
+    .comments-list .comment {
+        padding-bottom: 12px;
+    }
+
+    .comments-list .comment:last-child {
+        /*border-bottom: none;*/
+        padding-bottom: 0;
+        /*margin-bottom: 0;*/
+    }
+
+    .comment.highlighted-comment {
+        background-color: rgba(59, 130, 246, 0.1);
+        border-radius: 8px;
+    }
+
+    .replies-container {
+        margin-left: calc(2rem + 0.75rem);
+        margin-top: 8px;
+        transition: max-height 0.4s ease, opacity 0.3s ease;
+        max-height: 5000px;
+        overflow: hidden;
+    }
+
+    .replies-container.hidden {
+        max-height: 0;
+        margin-top: 0;
+        opacity: 0;
+    }
+    .replies-container .comment {
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+    .replies-container .comment:last-child {
+        padding-bottom: 0;
+    }
+
+    .view-replies-button {
+        display: inline-flex;
+        align-items: center;
+        cursor: pointer;
+        margin-top: 1px;
+    }
+
+    .view-replies-button .line {
+        height: 1px;
+        width: 2rem;
+        background-color: #d1d5db;
+        margin-right: 0.5rem;
+        transition: width 0.3s ease;
+    }
+
+    .view-replies-button:hover .line {
+        background-color: #6b7280;
+    }
+
+    .view-replies-button.active .line {
+        width: 1rem;
+    }
+
+    .replies-container .comment:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+        margin-bottom: 0;
     }
 
     .pagination {
@@ -235,8 +303,120 @@
         border-color: #2563eb;
     }
 
+    .pagination .page-item.disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+
+    .pagination .page-item.disabled .page-link {
+        pointer-events: none;
+    }
+
+    .comments-list {
+        transition: opacity 0.3s ease;
+        min-height: 50px;
+    }
+
+    #comments-loading {
+        opacity: 0;
+        animation: fade-in 0.3s ease forwards;
+    }
+
+    .shimmer-comment {
+        user-select: none;
+        pointer-events: none;
+    }
+    .shimmer-bg {
+        animation: shimmer 1.5s linear infinite;
+        background-image: linear-gradient(to right, #e2e8f0 0%, #f8fafc 50%, #e2e8f0 100%);
+        background-size: 200% 100%;
+        background-color: #e2e8f0;
+    }
+    @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+
+    @keyframes fade-in {
+        0% {
+            opacity: 0;
+        }
+        100% {
+            opacity: 1;
+        }
+    }
+
+    .highlight-post {
+        animation: micro-lift 0.8s ease-out;
+    }
+
+    @keyframes micro-lift {
+        0% {
+            transform: translateY(1px);
+        }
+        100% {
+            transform: translateY(0);
+        }
+    }
+
     .zoomable-image {
         cursor: pointer;
+    }
+
+    .button-text-truncate {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+    }
+
+    .vote-button.voting-in-progress {
+        opacity: 0.7;
+        cursor: wait;
+    }
+
+    .vote-button.voting-in-progress .button-text-truncate::after {
+        content: ' ...';
+        display: inline-block;
+        animation: dot-dot-dot 1s infinite;
+    }
+
+    .like-comment-button.processing-like {
+        cursor: wait;
+        opacity: 0.6;
+    }
+
+    @keyframes dot-dot-dot {
+        0%, 80%, 100% {
+            opacity: 0;
+        }
+        40% {
+            opacity: 1;
+        }
+    }
+
+    @-webkit-keyframes dot-dot-dot {
+        0%, 80%, 100% {
+            opacity: 0;
+        }
+        40% {
+            opacity: 1;
+        }
+    }
+
+    .shimmer-bg {
+        animation: shimmer 1.5s linear infinite;
+        background-image: linear-gradient(to right, #e2e8f0 0%, #f8fafc 50%, #e2e8f0 100%);
+        background-size: 200% 100%;
+        background-color: #e2e8f0;
+    }
+
+    @keyframes shimmer {
+        0% {
+            background-position: 200% 0;
+        }
+        100% {
+            background-position: -200% 0;
+        }
     }
 </style>
 
@@ -298,6 +478,16 @@
             @if(session('scrollToPost'))
             scrollToPost({{ session('scrollToPost') }});
             @endif
+            const commentsSections = document.querySelectorAll('[id^="comments-section-"]');
+            commentsSections.forEach(section => {
+                if (!section.classList.contains('comments-section')) {
+                    section.classList.add('comments-section');
+                }
+                if (!section.classList.contains('hidden')) {
+                    section.classList.add('hidden');
+                }
+                section.classList.remove('active');
+            });
         });
 
         function scrollToPost(postId) {
@@ -562,111 +752,96 @@
         function toggleComments(postId) {
             const clickedCommentsSection = document.getElementById(`comments-section-${postId}`);
             if (!clickedCommentsSection) return;
+            const isActive = clickedCommentsSection.classList.contains('active');
 
-            if (currentlyOpenCommentsId && currentlyOpenCommentsId !== postId) {
-                const previousCommentsSection = document.getElementById(`comments-section-${currentlyOpenCommentsId}`);
+            if (window.currentlyOpenCommentsId && window.currentlyOpenCommentsId !== postId) {
+                const previousCommentsSection = document.getElementById(`comments-section-${window.currentlyOpenCommentsId}`);
                 if (previousCommentsSection) {
                     previousCommentsSection.classList.remove('active');
                     setTimeout(() => {
-                        if (!previousCommentsSection.classList.contains('active')) {
-                            previousCommentsSection.classList.add('hidden');
-                        }
+                        previousCommentsSection.classList.add('hidden');
                     }, 500);
                 }
             }
 
-            if (clickedCommentsSection.classList.contains('hidden') || !clickedCommentsSection.classList.contains('active')) {
+            if (isActive) {
+                clickedCommentsSection.classList.remove('active');
+                window.currentlyOpenCommentsId = null;
+                setTimeout(() => {
+                    clickedCommentsSection.classList.add('hidden');
+                }, 500);
+            } else {
                 clickedCommentsSection.classList.remove('hidden');
                 setTimeout(() => {
                     clickedCommentsSection.classList.add('active');
-                    currentlyOpenCommentsId = postId;
+                    window.currentlyOpenCommentsId = postId;
                     if (!clickedCommentsSection.dataset.loaded) {
                         loadComments(postId, 1);
                     }
                 }, 10);
-            } else {
-                clickedCommentsSection.classList.remove('active');
-                currentlyOpenCommentsId = null;
-                setTimeout(() => {
-                    if (!clickedCommentsSection.classList.contains('active')) {
-                        clickedCommentsSection.classList.add('hidden');
-                    }
-                }, 500)
             }
         }
 
+        function getCommentShimmerHTML() {
+            const template = document.getElementById('comment-shimmer-template');
+            if (!template) {
+                console.warn("Shimmer template not found. Using fallback.");
+                return '<div class="text-center py-4 text-sm text-gray-500">Loading comments...</div>';
+            }
+            const shimmerContent = template.innerHTML;
+            return shimmerContent.repeat(3);
+        }
 
         function loadComments(postId, page) {
             const commentsSection = document.getElementById(`comments-section-${postId}`);
             const commentsContainer = commentsSection.querySelector('.comments-list');
-
             if (!commentsContainer) {
-                console.error('Comments container not found for post', postId);
+                console.error('Comments container not found');
+                return;
+            }
+            const isLoggedIn = {{ Auth::check() ? 'true' : 'false' }};
+
+            if (!isLoggedIn) {
+                commentsContainer.innerHTML = `<div class="text-center py-4"><p class="text-sm text-gray-500">${window.translations.js_login_to_comment}</p></div>`;
+                const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
+                if (paginationContainer) {
+                    paginationContainer.innerHTML = '';
+                }
+                commentsSection.dataset.loaded = "true";
                 return;
             }
 
-            let loadingIndicator = commentsContainer.querySelector('.comments-loading-indicator');
-            if (!loadingIndicator) {
-                loadingIndicator = document.createElement('div');
-                loadingIndicator.className = 'text-center py-4 comments-loading-indicator';
-                loadingIndicator.innerHTML = `<div class="inline-block animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-500"></div>`;
-            }
-
-
-            if (page === 1) {
-                commentsContainer.innerHTML = '';
-                commentsContainer.appendChild(loadingIndicator);
-            } else {
-                const existingLoadMoreButton = commentsSection.querySelector('.load-more-comments-button');
-                if (existingLoadMoreButton) existingLoadMoreButton.remove();
-                commentsContainer.appendChild(loadingIndicator);
-            }
-
+            commentsContainer.innerHTML = getCommentShimmerHTML();
 
             fetch(`/posts/${postId}/comments?page=${page}`)
                 .then(response => response.json())
                 .then(data => {
-                    loadingIndicator.remove();
+                    commentsContainer.innerHTML = '';
 
                     if (data.comments.data.length === 0 && page === 1) {
-                        commentsContainer.innerHTML = `<p class="text-sm text-gray-500 text-center">${window.i18n.profile.js.no_comments_alt} ${window.i18n.profile.js.be_first_to_comment}</p>`;
-                        return;
-                    }
-                    if (data.comments.data.length === 0 && page > 1) {
-                        if (window.showToast) window.showToast('No more comments.', 'info');
+                        commentsContainer.innerHTML = `<p class="text-sm text-gray-500 text-center">${window.translations.js_no_comments_be_first}</p>`;
                         return;
                     }
 
-
+                    const fragment = document.createDocumentFragment();
                     data.comments.data.forEach(comment => {
-                        const commentDiv = createCommentElement(comment, postId);
-                        commentsContainer.appendChild(commentDiv);
+                        const commentDiv = createCommentElement(comment, postId, false);
+                        fragment.appendChild(commentDiv);
+
                     });
+                    commentsContainer.appendChild(fragment);
 
                     animateComments(commentsContainer);
-
-                    const paginationContainer = commentsSection.querySelector(`#pagination-container-${postId}`);
+                    const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
                     if (paginationContainer) {
                         renderPagination(data.comments, postId, paginationContainer);
                     }
-
-                    if (data.comments.current_page < data.comments.last_page) {
-                        const loadMoreButton = document.createElement('button');
-                        loadMoreButton.textContent = window.i18n.profile.js.load_more;
-                        loadMoreButton.className = 'load-more-comments-button w-full mt-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm';
-                        loadMoreButton.onclick = () => loadComments(postId, data.comments.current_page + 1);
-                        commentsContainer.parentNode.appendChild(loadMoreButton);
-                    }
-
-
                     commentsSection.dataset.loaded = "true";
                     commentsSection.dataset.currentPage = page;
-                    // initializeZoomableImages(commentsContainer);
                 })
                 .catch(error => {
-                    console.error('Error loading comments:', error);
-                    loadingIndicator.remove();
-                    commentsContainer.innerHTML = `<p class="text-red-500 text-center">${window.i18n.profile.js.failed_load_comments}</p>`;
+                    console.error('Error:', error);
+                    commentsContainer.innerHTML = `<p class="text-red-500 text-center">${window.translations.js_failed_load_comments}</p>`;
                 });
         }
 
@@ -1061,109 +1236,393 @@
 
 
         function linkifyContent(text) {
-            if (typeof text !== 'string') {
-                return '';
-            }
+            if (typeof text !== 'string') return '';
             const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])|(\bwww\.[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
             const mentionRegex = /@([a-zA-Z0-9_]+)/g;
 
-            let linkedText = text.replace(urlRegex, function (url, p1, p2, p3) {
+            let linkedText = text.replace(urlRegex, function(url, p1, p2, p3) {
                 const fullUrl = p3 ? 'http://' + p3 : p1;
                 return `<a href="${fullUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline break-all">${url}</a>`;
             });
 
-            linkedText = linkedText.replace(mentionRegex, function (match, username) {
-                return `<a href="/@${username}" class="text-blue-600 hover:underline">@${username}</a>`;
+            linkedText = linkedText.replace(mentionRegex, function(match, username) {
+                return `<a href="/@${username}" class="text-blue-600 hover:underline font-medium">@${username}</a>`;
             });
 
             return linkedText;
         }
 
-        function createCommentElement(comment, postId) {
+        function createCommentElement(commentData, postId, isReply = false) {
             const commentDiv = document.createElement('div');
-            commentDiv.className = 'comment mb-3 border-b border-gray-200 pb-3';
-            if (comment.id) {
-                commentDiv.id = 'comment-' + comment.id;
+            // commentDiv.className = 'comment py-3 border-b border-gray-200';
+            commentDiv.className = 'comment';
+
+            // if (!isReply) {
+            //     commentDiv.classList.add('border-b', 'border-gray-200');
+            // }
+
+            if (!commentData.id.toString().startsWith('temp-')) {
+                commentDiv.id = 'comment-' + commentData.id;
             }
 
-            let profilePic = '/images/default-pfp.png';
-            if (comment.user && comment.user.profile_picture) {
-                profilePic = comment.user.profile_picture.startsWith('http') ? comment.user.profile_picture : `/storage/${comment.user.profile_picture}`;
-            } else if (comment.user && !comment.user.profile_picture) {
-                profilePic = '/images/default-pfp.png';
-            }
+            const profilePic = commentData.user.profile_picture
+                ? (commentData.user.profile_picture.startsWith('http') ? commentData.user.profile_picture : '/storage/' + commentData.user.profile_picture)
+                : '/images/default-pfp.png';
 
-            const isVerified = comment.user && ['goat', 'umarov'].includes(comment.user.username);
-            const verifiedIconHTML = isVerified ? `
-<span class="ml-1" title="${window.i18n && window.i18n.profile && window.i18n.profile.js && window.i18n.profile.js.verified_account || 'Verified Account'}">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-    </svg>
-</span>` : '';
+            const altProfilePic = (window.translations.profile_alt_picture || 'Profile picture of :username').replace(':username', commentData.user.username);
 
-            const userProfileUrl = (window.i18n && window.i18n.profile && window.i18n.profile.js && window.i18n.profile.js.user_profile_link_template || '/@:username').replace(':username', comment.user ? comment.user.username : 'unknown');
+            const isVerified = ['goat', 'umarov'].includes(commentData.user.username);
+            const verifiedIconHTML = isVerified ? `<span class="ml-1 self-center" title="${window.translations.verified_account || 'Verified Account'}"><svg class="h-4 w-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg></span>` : '';
 
-            const currentUserId = window._currentUserId;
-            const commentOwnerId = comment.user_id ? parseInt(comment.user_id, 10) : null;
-            const postOwnerId = comment.post && comment.post.user_id ? parseInt(comment.post.user_id, 10) : null;
 
-            const canDelete = (currentUserId !== null) && (commentOwnerId === currentUserId || postOwnerId === currentUserId);
-
-            const deleteButtonHTML = canDelete ? `
-<div class="ml-auto pl-2">
-    <form onsubmit="deleteComment('${comment.id}', event)" class="inline">
-        <button type="submit" class="text-gray-400 hover:text-red-500 text-xs p-1" title="${window.i18n && window.i18n.profile && window.i18n.profile.js && window.i18n.profile.js.delete_comment_button_title || 'Delete comment'}">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-        </button>
-    </form>
-</div>` : '';
-
-            const linkedCommentContent = linkifyContent(comment.content);
-
-            const likesCount = comment.likes_count || 0;
-            const isLikedByCurrentUser = comment.is_liked_by_current_user || false;
+            const likesCount = commentData.likes_count || 0;
+            const isLiked = commentData.is_liked_by_current_user || false;
 
             const filledHeartSVG = '<path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />';
             const outlineHeartSVG = '<path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656zM10 15.93l5.828-5.828a2 2 0 10-2.828-2.828L10 10.274l-2.828-2.829a2 2 0 00-2.828 2.828L10 15.93z" clip-rule="evenodd" />';
 
-            const isLoggedIn = currentUserId !== null;
-
             const likeButtonHTML = `
-<div class="mt-2 flex items-center text-xs">
-    <button onclick="toggleCommentLike(${comment.id}, this)"
-            class="like-comment-button flex items-center p-1 -ml-1 rounded-full transition-all duration-150 ease-in-out group ${isLikedByCurrentUser ? 'text-red-500 hover:bg-red-100' : 'text-gray-400 hover:text-red-500 hover:bg-red-50'}"
-            data-comment-id="${comment.id}"
-            title="${isLikedByCurrentUser ? (window.i18n && window.i18n.profile && window.i18n.profile.js && window.i18n.profile.js.unlike_comment_title || 'Unlike') : (window.i18n && window.i18n.profile && window.i18n.profile.js && window.i18n.profile.js.like_comment_title || 'Like')}">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 comment-like-icon group-hover:scale-125 transition-transform duration-150" viewBox="0 0 20 20" fill="currentColor">
-            ${isLikedByCurrentUser ? filledHeartSVG : outlineHeartSVG}
-        </svg>
-    </button>
-    <span class="ml-1.5 comment-likes-count font-medium tabular-nums ${parseInt(likesCount) === 0 ? 'text-gray-400' : 'text-gray-700'}" id="comment-likes-count-${comment.id}">
-        ${likesCount}
-    </span>
-</div>
-`;
+            <div class="flex items-center text-xs">
+                <button onclick="toggleCommentLike(${commentData.id}, this)"
+                        class="like-comment-button flex items-center mb-0.5 rounded-full transition-all duration-150 ease-in-out group ${isLiked ? 'text-red-500 hover:bg-red-100' : 'text-gray-400 hover:text-red-500 hover:bg-red-50'}"
+                        data-comment-id="${commentData.id}"
+                        title="${isLiked ? (window.translations.unlike_comment_title || 'Unlike') : (window.translations.like_comment_title || 'Like')}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 comment-like-icon group-hover:scale-125 transition-transform duration-150" viewBox="0 0 20 20" fill="currentColor">
+                        ${isLiked ? filledHeartSVG : outlineHeartSVG}
+                    </svg>
+                </button>
+                <span class="ml-0.5 comment-likes-count font-medium tabular-nums ${parseInt(likesCount) === 0 ? 'text-gray-400' : 'text-gray-700'}" id="comment-likes-count-${commentData.id}">
+                    ${likesCount}
+                </span>
+            </div>
+        `;
+            let replyToHTML = '';
+            // if (commentData.parent_id && commentData.parent && commentData.parent.user) {
+            //     const parentUsername = commentData.parent.user.username;
+            //     if (!commentData.content.includes(`@${parentUsername}`)) {
+            //         replyToHTML = `<a href="/@${parentUsername}" class="text-blue-600 hover:underline mr-1">@${parentUsername}</a>`;
+            //     }
+            // }
+            // const isNestedReply = commentData.parent && commentData.parent.parent_id !== null;
+            // if (isNestedReply) {
+            //     if (commentData.parent.user) {
+            //         const parentUsername = commentData.parent.user.username;
+            //         if (!commentData.content.includes(`@${parentUsername}`)) {
+            //             replyToHTML = `<a href="javascript:void(0)" onclick="scrollToComment('comment-${commentData.parent_id}')" class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
+            //         }
+            //     }
+            // }
+
+            // if (isReply) {
+            //     console.log('%c DEBUG: Checking reply logic... ', 'background: #f2f2f2; color: #333;', {
+            //         parent_id: commentData.parent_id,
+            //         root_comment_id: commentData.root_comment_id,
+            //         parent_id_type: typeof commentData.parent_id,
+            //         root_comment_id_type: typeof commentData.root_comment_id,
+            //     });
+            //
+            //     const isNestedReply = commentData.parent_id &&
+            //         commentData.root_comment_id &&
+            //         Number(commentData.parent_id) !== Number(commentData.root_comment_id);
+            //
+            //     console.log(`%c DEBUG: Is this a nested reply? -> ${isNestedReply}`, 'font-weight: bold;');
+            //
+            //     if (isNestedReply) {
+            //         if (commentData.parent && commentData.parent.user) {
+            //             const parentUsername = commentData.parent.user.username;
+            //             if (!commentData.content.includes(`@${parentUsername}`)) {
+            //                 console.log(`%c DEBUG: Decision: ADDING @mention for nested reply.`, 'color: green');
+            //                 replyToHTML = `<a href="javascript:void(0)" onclick="scrollToComment('comment-${commentData.parent_id}')" class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
+            //             }
+            //         }
+            //     } else {
+            //         console.log(`%c DEBUG: Decision: NOT adding @mention.`, 'color: orange');
+            //     }
+            // }
+
+            const isNestedReply = commentData.parent_id &&
+                commentData.root_comment_id &&
+                Number(commentData.parent_id) !== Number(commentData.root_comment_id);
+
+            if (isNestedReply) {
+                if (commentData.parent && commentData.parent.user) {
+                    const parentUsername = commentData.parent.user.username;
+                    if (!commentData.content.includes(`@${parentUsername}`)) {
+                        replyToHTML = `<a href="javascript:void(0)" onclick="scrollToComment('comment-${commentData.parent_id}')" class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
+                    }
+                }
+            }
+
+            // if (isReply && commentData.parent && commentData.parent.user && commentData.parent_id !== commentData.root_comment_id) {
+            //     const parentUsername = commentData.parent.user.username;
+            //     if (!commentData.content.includes(`@${parentUsername}`)) {
+            //         replyToHTML = `<a href="javascript:void(0)" onclick="scrollToComment('comment-${commentData.parent_id}')" class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
+            //     }
+            // }
+
+            const linkedCommentContent = linkifyContent(commentData.content);
+
+            let repliesActionsHTML = '';
+
+            let goToParentArrowHTML = '';
+            if (isReply && Number(commentData.parent_id) !== Number(commentData.root_comment_id)) {
+                goToParentArrowHTML = `<button onclick="scrollToComment('comment-${commentData.parent_id}')" class="p-1 rounded-full hover:bg-gray-200" title="${window.translations.go_to_parent_comment_title || 'Go to parent comment'}"><svg class="h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612L5.28 9.68a.75.75 0 01-1.06-1.06l5.25-5.25a.75.75 0 011.06 0l5.25 5.25a.75.75 0 11-1.06 1.06L10.75 5.612V16.25A.75.75 0 0110 17z" clip-rule="evenodd" /></svg></button>`;
+            }
+
+            let repliesToggleHTML = '';
+            if (!isReply && commentData.flat_replies && commentData.flat_replies.length > 0) {
+                const replyCount = commentData.flat_replies.length;
+                const viewText = (window.translations.view_replies_text || 'View replies (:count)').replace(':count', replyCount);
+                repliesToggleHTML = `<button class="view-replies-button font-semibold hover:underline" onclick="toggleRepliesContainer(this, 'comment-${commentData.id}')">${viewText}</button>`;
+            }
+            const replyButton = `<button onclick="prepareReply('${postId}', '${commentData.id}', '${commentData.user.username}')" class="font-semibold hover:underline" title="Reply to ${commentData.user.username}">${window.translations.reply_button_text || 'Reply'}</button>`;
 
             commentDiv.innerHTML = `
-<div class="flex items-start mb-2">
-    <img src="${profilePic}" alt="${(window.i18n && window.i18n.profile && window.i18n.profile.js && window.i18n.profile.js.alt_profile_picture_js || 'Profile picture of :username').replace(':username', comment.user ? comment.user.username : 'unknown')}"
-         class="w-8 h-8 rounded-full mr-2 mt-1 cursor-pointer zoomable-image" data-full-src="${profilePic}">
-    <div class="flex-1">
-        <div class="flex items-center">
-            <a href="${userProfileUrl}" class="text-sm font-medium text-gray-800 hover:underline">${comment.user ? comment.user.username : 'Guest'}</a>
-            ${verifiedIconHTML}
-            <span class="mx-1 text-gray-400 text-xs">·</span>
-            <small class="text-xs text-gray-500" title="${comment.created_at ? new Date(comment.created_at).toLocaleString() : ''}">${formatTimestamp(comment.created_at)}</small>
-        </div>
-        <div class="text-sm text-gray-700 break-words comment-content-wrapper mt-0.5">${linkedCommentContent}</div>
-        ${isLoggedIn ? likeButtonHTML : ''}
-    </div>
-    ${deleteButtonHTML}
-</div>
-`;
+            <div class="flex items-start space-x-3">
+                <img src="${profilePic}" alt="${altProfilePic}" loading="lazy" decoding="async" class="w-8 h-8 rounded-full flex-shrink-0 cursor-pointer zoomable-image" data-full-src="${profilePic}">
+                <div class="flex-1">
+                    <div class="text-sm">
+                        <div class="flex items-center">
+                            <a href="/@${commentData.user.username}" class="font-semibold text-gray-900 hover:underline">${commentData.user.username}</a>
+                                            ${verifiedIconHTML}
+                        </div>
+                        <span class="text-gray-800">${replyToHTML} ${linkedCommentContent}</span>
+                    </div>
+                    <div class="comment-actions mt-1.5 flex items-center space-x-3 text-xs text-gray-500">
+                        <small class="text-xs text-gray-500" title="${commentData.created_at}">${formatTimestamp(commentData.created_at)}</small>
+                        ${ {{ Auth::check() ? 'true' : 'false' }} ? `<div class="flex items-center">${likeButtonHTML}</div>` : ''}
+                        ${replyButton}
+                        ${repliesActionsHTML}
+                        ${goToParentArrowHTML}
+                    </div>
+                </div>
+${canDeleteComment(commentData) ? `
+                <div class="ml-2 pl-1 flex-shrink-0">
+                    <form onsubmit="deleteComment('${commentData.id}', event)" class="inline">
+                        <button type="submit" class="text-gray-400 hover:text-red-600 transition-colors duration-150 ease-in-out text-xs p-1 mt-0.5" title="${window.translations.delete_comment_title || 'Delete comment'}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                    </form>
+                </div>` : ''}
+            </div>
+            <div class="replies-container hidden"></div>
+            `;
+            const actionsContainer = commentDiv.querySelector('.comment-actions');
+            const repliesContainer = commentDiv.querySelector('.replies-container');
+
+            if (!isReply) {
+                const loadedRepliesCount = commentData.flat_replies ? commentData.flat_replies.length : 0;
+                const totalRepliesCount = commentData.replies_count || 0;
+                const hasMoreReplies = totalRepliesCount > loadedRepliesCount;
+
+                if (totalRepliesCount > 0) {
+                    const toggleButton = document.createElement('button');
+                    toggleButton.className = 'view-replies-button font-semibold hover:underline';
+                    toggleButton.textContent = (window.translations.view_replies_text || 'View replies (:count)').replace(':count', totalRepliesCount);
+                    toggleButton.onclick = () => toggleRepliesContainer(toggleButton, 'comment-' + commentData.id);
+                    actionsContainer.appendChild(toggleButton);
+                }
+
+                if (loadedRepliesCount > 0) {
+                    commentData.flat_replies.forEach(replyData => {
+                        const replyElement = createCommentElement(replyData, postId, true);
+                        repliesContainer.appendChild(replyElement);
+                    });
+                }
+
+                if (hasMoreReplies) {
+                    const remainingCount = totalRepliesCount - loadedRepliesCount;
+                    const loadMoreWrapper = document.createElement('div');
+                    loadMoreWrapper.className = 'load-more-replies-wrapper mt-2'; // Added margin
+                    loadMoreWrapper.innerHTML = `<button class="text-xs font-semibold text-blue-600 hover:underline" onclick="loadMoreReplies(this, ${commentData.id})">${(window.translations.view_more_replies_text || 'View :count more replies').replace(':count', remainingCount)}</button>`;
+                    repliesContainer.appendChild(loadMoreWrapper);
+                }
+            }
+
             return commentDiv;
+        }
+
+        function scrollToComment(commentId) {
+            const element = document.getElementById(commentId);
+
+            if (!element) {
+                if (window.showToast) {
+                    const message = window.translations.js_parent_comment_deleted || 'The comment you are replying to has been deleted.';
+                    window.showToast(message, 'warning');
+                } else {
+                    console.warn(`Could not find comment ${commentId} to scroll to.`);
+                }
+                return;
+            }
+
+            const repliesContainer = element.closest('.replies-container');
+            if (repliesContainer && repliesContainer.classList.contains('hidden')) {
+                const rootComment = repliesContainer.closest('.comment');
+                const toggleButton = rootComment.querySelector('.view-replies-button');
+                if (toggleButton) {
+                    toggleButton.click();
+                }
+            }
+
+            setTimeout(() => {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                element.classList.add('highlighted-comment');
+                setTimeout(() => {
+                    element.classList.remove('highlighted-comment');
+                }, 1500);
+            }, 100);
+        }
+
+        function toggleRepliesContainer(button, commentId) {
+            const commentElement = document.getElementById(commentId);
+            if (!commentElement) return;
+
+            const repliesContainer = commentElement.querySelector('.replies-container');
+            if (!repliesContainer) return;
+
+            const loadMoreWrapper = commentElement.querySelector('.load-more-replies-wrapper');
+            const isHidden = repliesContainer.classList.contains('hidden');
+
+            if (isHidden) {
+                repliesContainer.classList.remove('hidden');
+
+                setTimeout(() => {
+                    animateComments(repliesContainer);
+                }, 50);
+
+                if (loadMoreWrapper) {
+                    loadMoreWrapper.classList.remove('hidden');
+                }
+
+                button.classList.add('active');
+                button.textContent = window.translations.hide_replies_text || 'Hide replies';
+
+            } else {
+                repliesContainer.classList.add('hidden');
+                button.classList.remove('active');
+
+                const existingRepliesCount = repliesContainer.querySelectorAll('.comment').length;
+                const loadMoreButton = repliesContainer.querySelector('.load-more-replies-wrapper button');
+                let totalCount = existingRepliesCount;
+
+                if (loadMoreButton) {
+                    const matches = loadMoreButton.textContent.match(/\d+/);
+                    if (matches) {
+                        const remainingCount = parseInt(matches[0], 10);
+                        totalCount = existingRepliesCount + remainingCount;
+                    }
+                }
+                button.textContent = (window.translations.view_replies_text || 'View replies (:count)').replace(':count', totalCount);
+            }
+        }
+
+        async function loadMoreReplies(button, rootCommentId) {
+            const commentElement = document.getElementById(`comment-${rootCommentId}`);
+            if (!commentElement) return;
+
+            const repliesContainer = commentElement.querySelector('.replies-container');
+            const existingReplyIds = Array.from(repliesContainer.querySelectorAll('.comment[id^="comment-"]')).map(el => el.id.replace('comment-', ''));
+
+            button.disabled = true;
+            button.textContent = 'Loading...';
+            const loadMoreWrapper = button.parentElement;
+
+            const excludeParams = existingReplyIds.map(id => `exclude_ids[]=${id}`).join('&');
+            const url = `/comments/${rootCommentId}/replies?${excludeParams}`;
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response was not ok.');
+                const paginatedReplies = await response.json();
+
+                const fragment = document.createDocumentFragment();
+                paginatedReplies.data.forEach(reply => {
+                    const replyDiv = createCommentElement(reply, reply.post_id, true);
+                    fragment.appendChild(replyDiv);
+                });
+                repliesContainer.insertBefore(fragment, loadMoreWrapper);
+
+                animateComments(repliesContainer);
+
+                const totalLoaded = existingReplyIds.length + paginatedReplies.data.length;
+                const totalAvailable = paginatedReplies.total;
+                if (totalLoaded >= totalAvailable) {
+                    loadMoreWrapper.remove();
+                } else {
+                    const remaining = totalAvailable - totalLoaded;
+                    button.textContent = (window.translations.view_more_replies_text || 'View :count more replies').replace(':count', remaining);
+                    button.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error loading more replies:', error);
+                button.textContent = 'Error. Click to retry.';
+                button.disabled = false;
+            }
+        }
+
+
+        function prepareReply(postId, commentId, username) {
+            const form = document.getElementById(`comment-form-${postId}`);
+            if (!form) return;
+
+            const targetCommentElement = document.getElementById(`comment-${commentId}`);
+            if (!targetCommentElement) {
+                console.error(`Could not find comment element with ID: comment-${commentId}`);
+                return;
+            }
+
+            const isTargetANestedReply = targetCommentElement.parentElement.classList.contains('replies-container');
+
+            form.elements.parent_id.value = commentId;
+            const textarea = form.elements.content;
+
+            if (isTargetANestedReply) {
+                textarea.value = `@${username} `;
+            } else {
+                textarea.value = '';
+            }
+
+            textarea.focus();
+            const end = textarea.value.length;
+            textarea.setSelectionRange(end, end);
+
+            const indicator = document.getElementById(`reply-indicator-${postId}`);
+            indicator.querySelector('span').textContent = `Replying to @${username}`;
+            indicator.classList.remove('hidden');
+            indicator.classList.add('flex');
+
+            if (targetCommentElement) {
+                const repliesContainer = targetCommentElement.querySelector('.replies-container');
+                if (repliesContainer && repliesContainer.classList.contains('hidden')) {
+                    const toggleButton = targetCommentElement.querySelector('.view-replies-button');
+                    if (toggleButton) {
+                        toggleButton.click();
+                    }
+                }
+            }
+        }
+
+        function cancelReply(postId) {
+            const form = document.getElementById(`comment-form-${postId}`);
+            if (!form) return;
+
+            form.elements.parent_id.value = '';
+            form.elements.content.value = '';
+
+            const indicator = document.getElementById(`reply-indicator-${postId}`);
+            indicator.classList.add('hidden');
+            indicator.classList.remove('flex');
+        }
+
+        function canDeleteComment(comment) {
+            const currentUserId = {{ Auth::id() ?? 'null' }};
+            if (currentUserId === null) return false;
+            const commentOwnerId = parseInt(comment.user_id, 10);
+            const postOwnerId = comment.post ? parseInt(comment.post.user_id, 10) : null;
+            if (commentOwnerId === currentUserId) {
+                return true;
+            }
+            return postOwnerId !== null && postOwnerId === currentUserId;
         }
 
         async function toggleCommentLike(commentId, buttonElement) {
@@ -1264,11 +1723,13 @@
         }
 
         function animateComments(container) {
-            const commentsToAnimate = container.querySelectorAll('.comment:not(.visible)');
-            commentsToAnimate.forEach((comment, index) => {
+            const comments = container.querySelectorAll(':scope > .comment:not(.visible)');
+
+            comments.forEach((comment, index) => {
+                const delay = Math.min(index * 80, 800);
                 setTimeout(() => {
                     comment.classList.add('visible');
-                }, 100 * (index + 1));
+                }, delay);
             });
         }
 
@@ -1534,6 +1995,5 @@
             ]
         @endif
         }
-    </script>
     </script>
 @endsection
