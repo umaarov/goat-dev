@@ -1,8 +1,8 @@
 <?php
+// In app/Csp/CustomPolicy.php
 
 namespace App\Csp;
 
-use Illuminate\Support\Facades\Log;
 use Spatie\Csp\Directive;
 use Spatie\Csp\Policy;
 
@@ -10,31 +10,12 @@ class CustomPolicy extends Policy
 {
     public function configure()
     {
-        Log::info('CustomPolicy::configure() called');
-        app('config')->set('csp.policy', self::class);
-
         $this
             ->addDirective(Directive::BASE, 'self')
-            ->addDirective(Directive::CONNECT, [
-                'self',
-                'https://stats.g.doubleclick.net',
-                'https://pagead2.googlesyndication.com',
-                'https://ep2.adtrafficquality.google',
-            ])
             ->addDirective(Directive::DEFAULT, 'self')
             ->addDirective(Directive::FORM_ACTION, 'self')
-            ->addDirective(Directive::IMG, [
-                'self',
-                'data:',
-                'https:',
-                'blob:',
-            ])
-            ->addDirective(Directive::FONT, [
-                'self',
-                'https://fonts.gstatic.com',
-            ])
-            ->addDirective(Directive::MEDIA, 'self')
             ->addDirective(Directive::OBJECT, 'none')
+            ->addDirective(Directive::FRAME_ANCESTORS, 'self')
             ->addDirective(Directive::SCRIPT, [
                 'self',
                 'https://code.jquery.com',
@@ -55,15 +36,25 @@ class CustomPolicy extends Policy
                 'https://cdnjs.cloudflare.com',
                 "'unsafe-inline'",
             ])
-            ->addDirective(Directive::FRAME, [
+            ->addDirective(Directive::FONT, [
                 'self',
-                'https://googleads.g.doubleclick.net',
-                'https://tpc.googlesyndication.com',
-                'https://fundingchoicesmessages.google.com',
-                'https://ep2.adtrafficquality.google',
-                'https://www.google.com',
+                'https://fonts.gstatic.com',
             ])
-            ->addDirective('fenced-frame-src', [
+            ->addDirective(Directive::IMG, [
+                'self',
+                'data:',
+                'blob:',
+                'https:',
+            ])
+            ->addDirective(Directive::CONNECT, [
+                'self',
+                'https://stats.g.doubleclick.net',
+                'https://pagead2.googlesyndication.com',
+                'https://ep1.adtrafficquality.google',
+                'https://ep2.adtrafficquality.google',
+                'https://fundingchoicesmessages.google.com',
+            ])
+            ->addDirective(Directive::FRAME, [
                 'self',
                 'https://googleads.g.doubleclick.net',
                 'https://tpc.googlesyndication.com',
