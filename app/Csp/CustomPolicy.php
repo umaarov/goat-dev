@@ -23,6 +23,7 @@ class CustomPolicy extends Policy
                 'self',
                 'data:',
                 'https:',
+                'blob:',
             ])
             ->addDirective(Directive::FONT, [
                 'self',
