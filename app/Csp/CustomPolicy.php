@@ -3,7 +3,6 @@
 namespace App\Csp;
 
 use Spatie\Csp\Directive;
-//use Spatie\Csp\Policies\Policy;
 use Spatie\Csp\Policy;
 
 class CustomPolicy extends Policy
@@ -55,7 +54,9 @@ class CustomPolicy extends Policy
                 'self',
                 'https://googleads.g.doubleclick.net',
                 'https://tpc.googlesyndication.com',
-                'https://fundingchoicesmessages.google.com'
+                'https://fundingchoicesmessages.google.com',
+                'https://ep2.adtrafficquality.google',
+                'https://www.google.com',
             ]);
     }
 }
