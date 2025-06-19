@@ -12,6 +12,7 @@
                   id="createPostForm">
                 @csrf
 
+                {{-- Question Input --}}
                 <div class="mb-4">
                     <input type="text"
                            class="w-full px-3 py-2 border @error('question') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -24,12 +25,12 @@
                     @enderror
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mb-4 mx">
+                <div class="grid grid-cols-2 gap-4 mb-4">
                     {{-- Option 1 --}}
                     <div>
                         <label for="option_one_image_trigger" class="block mb-2 cursor-pointer">
                             <div id="option_one_preview"
-                                 class="bg-gray-100 h-40 rounded-md flex items-center justify-center border-2 border-dashed @error('option_one_image') border-red-500 @else border-gray-300 hover:border-blue-500 @enderror">
+                                 class="bg-gray-100 h-40 rounded-md flex items-center justify-center border-2 border-dashed @error('option_one_image') border-red-500 @else border-gray-300 @enderror hover:border-blue-500">
                                 <div id="option_one_placeholder" class="text-center text-gray-500 p-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400"
                                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -38,9 +39,7 @@
                                     </svg>
                                     <p class="mt-1 text-xs">{{ __('messages.create_post.click_to_upload_image') }}</p>
                                 </div>
-                                <img id="option_one_img" {{-- For the small preview --}}
-                                class="h-full w-full object-cover object-center hidden rounded-md" src="#"
-                                     alt="{{ __('messages.create_post.option_1_preview_alt') }}">
+                                <img id="option_one_img" class="h-full w-full object-cover object-center hidden rounded-md" src="#" alt="{{ __('messages.create_post.option_1_preview_alt') }}">
                             </div>
                         </label>
                         <input type="file" id="option_one_image_trigger" class="hidden"
@@ -67,7 +66,7 @@
                     <div>
                         <label for="option_two_image_trigger" class="block mb-2 cursor-pointer">
                             <div id="option_two_preview"
-                                 class="bg-gray-100 h-40 rounded-md flex items-center justify-center border-2 border-dashed @error('option_two_image') border-red-500 @else border-gray-300 hover:border-blue-500 @enderror">
+                                 class="bg-gray-100 h-40 rounded-md flex items-center justify-center border-2 border-dashed @error('option_two_image') border-red-500 @else border-gray-300 @enderror hover:border-blue-500">
                                 <div id="option_two_placeholder" class="text-center text-gray-500 p-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400"
                                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -76,9 +75,7 @@
                                     </svg>
                                     <p class="mt-1 text-xs">{{ __('messages.create_post.click_to_upload_image') }}</p>
                                 </div>
-                                <img id="option_two_img" {{-- For the small preview --}}
-                                class="h-full w-full object-cover object-center hidden rounded-md" src="#"
-                                     alt="{{ __('messages.create_post.option_2_preview_alt') }}">
+                                <img id="option_two_img" class="h-full w-full object-cover object-center hidden rounded-md" src="#" alt="{{ __('messages.create_post.option_2_preview_alt') }}">
                             </div>
                         </label>
                         <input type="file" id="option_two_image_trigger" class="hidden"
@@ -102,6 +99,7 @@
                     </div>
                 </div>
 
+                {{-- Submit Button --}}
                 <div class="mt-6">
                     <button type="submit"
                             class="w-full bg-blue-800 text-white py-3 rounded-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-150">
@@ -113,6 +111,32 @@
     </div>
 
     <script>
+        function openImageCropper(event, finalInputId, previewImgId, placeholderId, previewContainerId) {
+            const triggerInput = event.target;
+            const previewImg = document.getElementById(previewImgId);
+            const placeholder = document.getElementById(placeholderId);
+            const finalInput = document.getElementById(finalInputId);
+            const previewContainer = document.getElementById(previewContainerId);
+
+            if (triggerInput.files && triggerInput.files[0]) {
+                const file = triggerInput.files[0];
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewImg.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                finalInput.files = dataTransfer.files;
+
+                previewContainer?.classList.remove('border-red-500');
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             const createPostForm = document.getElementById('createPostForm');
 
@@ -126,12 +150,10 @@
 
                     let allFieldsValid = true;
 
-                    if (questionInput.value.trim() === '') {
-                        allFieldsValid = false;
-                    }
-                    if (optionOneTitleInput.value.trim() === '') {
-                        allFieldsValid = false;
-                    }
+                    if (questionInput.value.trim() === '') allFieldsValid = false;
+                    if (optionOneTitleInput.value.trim() === '') allFieldsValid = false;
+                    if (optionTwoTitleInput.value.trim() === '') allFieldsValid = false;
+
                     if (!optionOneImageInput || optionOneImageInput.files.length === 0) {
                         allFieldsValid = false;
                         document.getElementById('option_one_preview')?.classList.add('border-red-500');
@@ -139,9 +161,6 @@
                         document.getElementById('option_one_preview')?.classList.remove('border-red-500');
                     }
 
-                    if (optionTwoTitleInput.value.trim() === '') {
-                        allFieldsValid = false;
-                    }
                     if (!optionTwoImageInput || optionTwoImageInput.files.length === 0) {
                         allFieldsValid = false;
                         document.getElementById('option_two_preview')?.classList.add('border-red-500');
