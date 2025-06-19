@@ -2,6 +2,7 @@
 
 namespace App\Csp;
 
+use Illuminate\Support\Facades\Log;
 use Spatie\Csp\Directive;
 use Spatie\Csp\Policy;
 
@@ -9,6 +10,9 @@ class CustomPolicy extends Policy
 {
     public function configure()
     {
+        Log::info('CustomPolicy::configure() called');
+        app('config')->set('csp.policy', self::class);
+
         $this
             ->addDirective(Directive::BASE, 'self')
             ->addDirective(Directive::CONNECT, [
