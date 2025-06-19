@@ -61,6 +61,7 @@ class CustomPolicy extends Policy
                 'https://fundingchoicesmessages.google.com',
                 'https://ep2.adtrafficquality.google',
                 'https://www.google.com',
-            ]);
+            ])
+            ->addDirective(Directive::MANIFEST, 'self');
     }
 }
