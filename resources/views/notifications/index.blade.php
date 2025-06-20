@@ -6,7 +6,7 @@
     <div class="container mb-4 mx-auto px-4">
 
         <div class="max-w-3xl mx-auto">
-            <h1 class="text-2xl font-bold text-gray-800 mb-6">{{ __('messages.notifications.page_title') ?? 'Notifications' }}</h1>
+{{--            <h1 class="text-2xl font-bold text-gray-800 mb-6">{{ __('messages.notifications.page_title') ?? 'Notifications' }}</h1>--}}
 
             <div class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)]">
                 <ul class="divide-y divide-gray-200">
