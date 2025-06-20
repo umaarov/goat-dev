@@ -429,7 +429,7 @@ class CommentController extends Controller
 
     private function dispatchNotifications(Comment $comment, User $actor, ?Comment $parentComment): void
     {
-        if ($parentComment && $parentComment->user_id !== $actor->id) {
+        if ($parentComment && (int)$parentComment->user_id !== (int)$actor->id) {
             $parentComment->user->notify(new NewReplyToYourComment($actor, $comment));
         }
 
