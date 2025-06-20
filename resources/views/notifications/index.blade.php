@@ -33,8 +33,8 @@
                                             <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
                                         </svg>
                                     @elseif($notificationType === 'NewReplyToYourComment')
-                                        <svg class="h-6 w-6 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm-1 11H7v-2h2v2zm1-3H8V5h4v5h-2z"></path>
+                                        <svg class="h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 016 6v3" />
                                         </svg>
                                     @elseif($notificationType === 'YouWereMentioned')
                                         <svg class="h-6 w-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
