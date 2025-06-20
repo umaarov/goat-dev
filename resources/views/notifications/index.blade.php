@@ -5,113 +5,74 @@
 @section('content')
     <div class="container mb-4 mx-auto px-4">
 
-        {{-- Tab Navigation --}}
-        <div class="mb-6 border-b border-gray-200">
-            <nav class="-mb-px flex space-x-4" aria-label="Tabs">
-                <button onclick="openTab(event, 'globalNotifications')"
-                        class="tab-link whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-blue-500 text-blue-600 focus:outline-none">
-                    {{ __('messages.notifications.global_tab') ?? 'Global Notifications' }}
-                </button>
-                <button onclick="openTab(event, 'personalNotifications')"
-                        class="tab-link whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none">
-                    {{ __('messages.notifications.personal_tab') ?? 'Personal Notifications' }}
-                </button>
-            </nav>
-        </div>
+        <div class="max-w-3xl mx-auto">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">{{ __('messages.notifications.page_title') ?? 'Notifications' }}</h1>
 
-        {{-- Tab Content --}}
-        <div id="globalNotifications" class="tab-content">
-            @auth
-                @if(Auth::user()->username === 'goat')
-                    <div class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] p-6 mb-8">
-                        <h2 class="text-xl font-semibold text-gray-700 mb-4">{{ __('messages.notifications.send_new_global') ?? 'Send New Global Notification' }}</h2>
-                        <form action="{{ route('notifications.store') }}" method="POST">
-                            @csrf
-                            <div class="mb-4">
-                                <label for="message"
-                                       class="block text-sm font-medium text-gray-700">{{ __('messages.notifications.message_label') }}</label>
-                                <textarea name="message" id="message" rows="3"
-                                          class="mt-1 block w-full rounded-md border-gray-300 shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                          required maxlength="255">{{ old('message') }}</textarea>
-                                @error('message')
-                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                @enderror
-                            </div>
-                            <div>
-                                <button type="submit"
-                                        class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">
-                                    {{ __('messages.notifications.send_button') }}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                @endif
-            @endauth
+            <div class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)]">
+                <ul class="divide-y divide-gray-200">
+                    @forelse ($notifications as $notification)
+                        <li class="p-4 hover:bg-gray-50 transition-colors duration-150
+                        {{ is_null($notification->read_at) ? 'bg-blue-50' : '' }}">
+                            @php
+                                $notificationType = class_basename($notification->type);
+                                $data = $notification->data;
 
-            <div class="space-y-4">
-                @if($globalNotifications->isEmpty())
-                    <div class="bg-white shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] rounded-lg p-6 text-center">
-                        <p class="text-gray-500">{{ __('messages.notifications.no_global_notifications') ?? 'No global notifications yet.' }}</p>
-                    </div>
-                @else
-                    @foreach($globalNotifications as $notification)
-                        <div
-                            class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] p-4">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="text-gray-800">{{ $notification->message }}</p>
-                                    <p class="text-xs text-gray-500 mt-1">
-                                        {{ __('messages.notifications.sent_by') }}
-                                        @if($notification->user)
-                                            <a href="{{ route('profile.show', ['username' => $notification->user->username]) }}"
-                                               class="text-blue-600 hover:underline">
-                                                {{ $notification->user->username }}
-                                            </a>
-                                        @else
-                                            <span
-                                                class="text-gray-400">{{ __('messages.notifications.unknown_user') ?? 'Unknown User' }}</span>
+                                $commentId = $data['comment_id'] ?? $data['reply_id'] ?? 0;
+
+                                $postUrl = route('posts.showSlug', [
+                                    'id' => $data['post_id'] ?? 0,
+                                    'slug' => 'post',
+                                    'comment' => $commentId
+                                ]);
+                            @endphp
+
+                            <div class="flex items-start space-x-4">
+                                <div class="flex-shrink-0">
+                                    @if($notificationType === 'CommentLiked')
+                                        <svg class="h-6 w-6 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+                                        </svg>
+                                    @elseif($notificationType === 'NewReplyToYourComment')
+                                        <svg class="h-6 w-6 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm-1 11H7v-2h2v2zm1-3H8V5h4v5h-2z"></path>
+                                        </svg>
+                                    @elseif($notificationType === 'YouWereMentioned')
+                                        <svg class="h-6 w-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
+                                        </svg>
+                                    @endif
+                                </div>
+
+                                <div class="flex-grow">
+                                    <p class="text-sm text-gray-800">
+                                        @if($notificationType === 'CommentLiked')
+                                            <a href="{{ route('profile.show', $data['liker_name']) }}" class="font-bold hover:underline">{{ $data['liker_name'] }}</a>
+                                            liked your comment: "{{ $data['comment_content'] }}"
+                                        @elseif($notificationType === 'NewReplyToYourComment')
+                                            <a href="{{ route('profile.show', $data['replier_name']) }}" class="font-bold hover:underline">{{ $data['replier_name'] }}</a>
+                                            replied to your comment: "{{ $data['reply_content'] }}"
+                                        @elseif($notificationType === 'YouWereMentioned')
+                                            <a href="{{ route('profile.show', $data['mentioner_name']) }}" class="font-bold hover:underline">{{ $data['mentioner_name'] }}</a>
+                                            mentioned you in a comment: "{{ $data['comment_content'] }}"
                                         @endif
-                                        - {{ $notification->created_at->diffForHumans() }}
                                     </p>
+                                    <a href="{{ $postUrl }}" class="text-xs text-blue-600 hover:underline">
+                                        {{ $notification->created_at->diffForHumans() }}
+                                    </a>
                                 </div>
                             </div>
-                        </div>
-                    @endforeach
-                @endif
+                        </li>
+                    @empty
+                        <li class="p-6 text-center">
+                            <p class="text-gray-500">{{ __('messages.notifications.no_personal_notifications_placeholder') ?? 'You have no notifications yet.' }}</p>
+                        </li>
+                    @endforelse
+                </ul>
             </div>
-        </div>
 
-        <div id="personalNotifications" class="tab-content" style="display: none;">
-            <div class="bg-white bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] p-6 text-center">
-                <p class="text-gray-500">{{ __('messages.notifications.no_personal_notifications_placeholder') ?? 'Personal notifications will appear here in the future.' }}</p>
+            <div class="mt-6">
+                {{ $notifications->links() }}
             </div>
         </div>
     </div>
-
-    @push('scripts')
-        <script>
-            function openTab(event, tabId) {
-                document.querySelectorAll('.tab-content').forEach(function (tabContent) {
-                    tabContent.style.display = 'none';
-                });
-
-                document.querySelectorAll('.tab-link').forEach(function (tabLink) {
-                    tabLink.classList.remove('border-blue-500', 'text-blue-600');
-                    tabLink.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
-                });
-
-                document.getElementById(tabId).style.display = 'block';
-
-                event.currentTarget.classList.add('border-blue-500', 'text-blue-600');
-                event.currentTarget.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
-            }
-
-            document.addEventListener('DOMContentLoaded', function () {
-                const firstTab = document.querySelector('.tab-link');
-                if (firstTab) {
-                    firstTab.click();
-                }
-            });
-        </script>
-    @endpush
 @endsection

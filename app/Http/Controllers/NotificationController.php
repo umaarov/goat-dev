@@ -2,40 +2,29 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
-    public function index()
+    public function __construct()
     {
-        $globalNotifications = Notification::where('type', Notification::TYPE_GLOBAL)
-            ->with('user')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        // $personalNotifications = collect();
-
-        return view('notifications.index', compact('globalNotifications'));
+        $this->middleware('auth');
     }
 
-    public function store(Request $request)
+    public function index()
     {
-        if (Auth::user()->username !== 'goat') {
-            return redirect()->route('notifications.index')->with('error', __('messages.notifications.cannot_send'));
-        }
+        $user = Auth::user();
 
-        $request->validate([
-            'message' => 'required|string|max:255',
-        ]);
+        $notifications = $user->notifications()->paginate(20);
 
-        Notification::create([
-            'user_id' => Auth::id(),
-            'message' => $request->message,
-            'type' => Notification::TYPE_GLOBAL,
-        ]);
+        $user->unreadNotifications->markAsRead();
 
-        return redirect()->route('notifications.index')->with('success', __('messages.notifications.sent_successfully'));
+        return view('notifications.index', compact('notifications'));
+    }
+
+    public function getUnreadCount()
+    {
+        return response()->json(['count' => Auth::user()->unreadNotifications->count()]);
     }
 }

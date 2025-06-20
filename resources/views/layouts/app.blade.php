@@ -17,22 +17,24 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @stack('styles')
     @vite('resources/css/app.css')
-{{--    @include('partials.critical-css')--}}
-{{--    <link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}" media="print" onload="this.media='all'">--}}
-{{--    <noscript><link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}"></noscript>--}}
+    {{--    @include('partials.critical-css')--}}
+    {{--    <link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}" media="print" onload="this.media='all'">--}}
+    {{--    <noscript><link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}"></noscript>--}}
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
-{{--    <script src="https://code.jquery.com/jquery-3.6.0.min.js"--}}
-{{--            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="--}}
-{{--            crossorigin="anonymous" defer></script>--}}
+    <link rel="preload" as="style"
+          href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+          media="print" onload="this.media='all'">
+    {{--    <script src="https://code.jquery.com/jquery-3.6.0.min.js"--}}
+    {{--            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="--}}
+    {{--            crossorigin="anonymous" defer></script>--}}
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"
             integrity="sha256-tgDjY9mdlURNtUrL+y3v/smueSqpmgkim82geOW1VkM="
             crossorigin="anonymous" defer></script>
     {{-- Cropper.js --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css"
-            integrity="sha512-hvNR0F/e2J7zPPfLC9auFe3/SE0yG4aJCOd/qxew74NN7eyiSKjr7xJJMu1Jy2wf7FXITpWS1E/RY8yzuXN7VA=="
-            crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'" />
+          integrity="sha512-hvNR0F/e2J7zPPfLC9auFe3/SE0yG4aJCOd/qxew74NN7eyiSKjr7xJJMu1Jy2wf7FXITpWS1E/RY8yzuXN7VA=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"
             integrity="sha512-9KkIqdfN7ipEW6B6k+Aq20PV31bjODg4AA52W+tYtAE0jE0kMx49bjJ3FgvS56wzmyfMUHbQ4Km2b7l9+Y/+Eg=="
             crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
@@ -41,17 +43,17 @@
     <meta name="robots" content="@yield('meta_robots', 'index, follow')">
     @if(isset($alternateUrls))
         @foreach($alternateUrls as $locale => $url)
-            <link rel="alternate" hreflang="{{ $locale }}" href="{{ $url }}" />
+            <link rel="alternate" hreflang="{{ $locale }}" href="{{ $url }}"/>
         @endforeach
     @endif
     @if(isset($defaultHreflangUrl))
-        <link rel="alternate" hreflang="x-default" href="{{ $defaultHreflangUrl }}" />
+        <link rel="alternate" hreflang="x-default" href="{{ $defaultHreflangUrl }}"/>
     @endif
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
             crossorigin="anonymous"></script>
-{{--    <script src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false"></script>--}}
-{{--    <script src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false"></script>--}}
-{{--    <script async src="//www.ezojs.com/ezoic/sa.min.js"></script>--}}
+    {{--    <script src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false"></script>--}}
+    {{--    <script src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false"></script>--}}
+    {{--    <script async src="//www.ezojs.com/ezoic/sa.min.js"></script>--}}
     <script>
         window.ezstandalone = window.ezstandalone || {};
         ezstandalone.cmd = ezstandalone.cmd || [];
@@ -156,12 +158,21 @@
         </a>
         <div>
             @auth
-                <a href="{{ route('notifications.index') }}" title="Notifications" class="text-black">
+                <a href="{{ route('notifications.index') }}" title="Notifications"
+                   class="relative inline-block text-black">
+
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                          stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                     </svg>
+
+                    <span id="notification-badge"
+                          class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white
+                         {{ $unreadNotificationsCount > 0 ? 'active-pulse' : 'hidden' }}">
+                {{ $unreadNotificationsCount > 9 ? '9+' : $unreadNotificationsCount }}
+            </span>
+
                 </a>
             @else
                 <a href="{{ route('login') }}" title="Login Button" class="text-black">
@@ -254,7 +265,8 @@
             <span class="text-xs mt-1">{{ __('messages.post') }}</span>
         </a>
         @auth
-            <a href="{{ route('profile.show', ['username' => Auth::user()->username]) }}" title="{{ __('messages.account') }}"
+            <a href="{{ route('profile.show', ['username' => Auth::user()->username]) }}"
+               title="{{ __('messages.account') }}"
                class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-800">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                      stroke="currentColor">
@@ -436,6 +448,7 @@
         reader.readAsDataURL(file);
     }
 
+
     document.addEventListener('DOMContentLoaded', initCropperModal);
 </script>
 
@@ -459,6 +472,35 @@
         </button>
     </div>
 </div>
+<style>
+    #notification-badge.active-pulse::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 9999px;
+        background-color: #dc2626;
+        animation: pulse 1.5s infinite;
+        z-index: -1;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(0.9);
+            opacity: 0.7;
+        }
+        70% {
+            transform: scale(1.6);
+            opacity: 0;
+        }
+        100% {
+            transform: scale(0.9);
+            opacity: 0;
+        }
+    }
+</style>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const modal = document.getElementById('imageViewerModal');
@@ -656,5 +698,87 @@
         }
     });
 </script>
+
+@if (session('scrollToPost'))
+    <script>
+        if (typeof window.currentlyOpenCommentsId === 'undefined') {
+            window.currentlyOpenCommentsId = null;
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            @if (session('scrollToPost'))
+            console.log('[DEBUG] Session data found. Starting notification scroll process.');
+            const postId = @json(session('scrollToPost'));
+            const commentId = @json(session('scrollToComment'));
+
+            if (!postId) {
+                return;
+            }
+
+            const postElement = document.getElementById(`post-${postId}`);
+
+            if (postElement) {
+                postElement.scrollIntoView({behavior: 'smooth', block: 'center'});
+                postElement.classList.add('highlight-flash');
+
+                if (commentId) {
+                    setTimeout(() => {
+                        fetchAndShowComment(postId, commentId);
+                    }, 400);
+                }
+            } else {
+                console.warn(`[DEBUG] Could not find post element with ID: post-${postId} on this page.`);
+            }
+            @endif
+        });
+
+    </script>
+@endif
+
+@auth
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const badge = document.getElementById('notification-badge');
+
+            if (!badge) return;
+
+            const fetchNotificationCount = async () => {
+                try {
+                    const response = await fetch('{{ route("notifications.unread.count") }}', {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        console.error('Failed to fetch notification count.');
+                        return;
+                    }
+
+                    const data = await response.json();
+                    const count = data.count;
+
+                    if (count > 0) {
+                        badge.textContent = count > 9 ? '9+' : count;
+                        badge.classList.remove('hidden');
+                        badge.classList.add('active-pulse');
+                    } else {
+                        badge.classList.add('hidden');
+                        badge.classList.remove('active-pulse');
+                    }
+
+                } catch (error) {
+                    console.error('Error fetching notification count:', error);
+                }
+            };
+
+            fetchNotificationCount();
+
+            setInterval(fetchNotificationCount, 30000);
+        });
+    </script>
+@endauth
+
 </body>
 </html>

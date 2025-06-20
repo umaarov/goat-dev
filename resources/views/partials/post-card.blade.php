@@ -578,26 +578,6 @@
 </style>
 
 <script>
-    if (typeof window.currentlyOpenCommentsId === 'undefined') {
-        window.currentlyOpenCommentsId = null;
-    }
-    document.addEventListener('DOMContentLoaded', function () {
-        @if(session('scrollToPost'))
-        scrollToPost({{ session('scrollToPost') }});
-        @endif
-
-        const commentsSections = document.querySelectorAll('[id^="comments-section-"]');
-        commentsSections.forEach(section => {
-            if (!section.classList.contains('comments-section')) {
-                section.classList.add('comments-section');
-            }
-            if (!section.classList.contains('hidden')) {
-                section.classList.add('hidden');
-            }
-            section.classList.remove('active');
-        });
-    });
-
     function scrollToPost(postId) {
         const postElement = document.getElementById(`post-${postId}`);
         if (!postElement) return;
@@ -679,6 +659,89 @@
         });
 
         return linkedText;
+    }
+
+    async function fetchAndShowComment(postId, commentId) {
+        console.log(`[DEBUG] Starting fetchAndShowComment for post #${postId}, comment #${commentId}`);
+        const commentsSection = document.getElementById(`comments-section-${postId}`);
+        const commentsContainer = commentsSection.querySelector('.comments-list');
+        const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
+        if (!commentsSection || !commentsContainer || !paginationContainer) {
+            console.error('[DEBUG] Could not find essential comment section elements. Aborting.');
+            return;
+        }
+
+        if (window.currentlyOpenCommentsId && window.currentlyOpenCommentsId !== postId) {
+            const previousSection = document.getElementById(`comments-section-${window.currentlyOpenCommentsId}`);
+            if (previousSection) {
+                previousSection.classList.remove('active');
+                previousSection.classList.add('hidden');
+            }
+        }
+        commentsSection.classList.remove('hidden');
+        setTimeout(() => commentsSection.classList.add('active'), 10);
+        window.currentlyOpenCommentsId = postId;
+
+        commentsContainer.innerHTML = getCommentShimmerHTML();
+        paginationContainer.innerHTML = '';
+
+        try {
+            const fetchUrl = `/posts/${postId}/comments/context/${commentId}`;
+            console.log(`[DEBUG] Fetching comments from URL: ${fetchUrl}`);
+            const response = await fetch(fetchUrl);
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch comment context. Status: ${response.status}`);
+            }
+            const data = await response.json();
+            console.log('[DEBUG] Successfully received data:', data);
+
+            commentsContainer.innerHTML = '';
+            if (data.comments.data.length === 0) {
+                commentsContainer.innerHTML = `<p class="text-sm text-gray-500 text-center">${window.translations.js_no_comments_be_first}</p>`;
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            data.comments.data.forEach(comment => {
+                fragment.appendChild(createCommentElement(comment, postId, false));
+            });
+            commentsContainer.appendChild(fragment);
+
+            animateComments(commentsContainer);
+            renderPagination(data.comments, postId, paginationContainer);
+            commentsSection.dataset.loaded = "true";
+            commentsSection.dataset.currentPage = data.comments.current_page;
+
+            setTimeout(() => {
+                const fullCommentId = 'comment-' + commentId;
+                const targetElement = document.getElementById(fullCommentId);
+                console.log(`[DEBUG] Attempting to find final element with ID: ${fullCommentId}. Found:`, targetElement);
+
+                if (targetElement) {
+                    const repliesContainer = targetElement.closest('.replies-container');
+                    if (repliesContainer && repliesContainer.classList.contains('hidden')) {
+                        console.log('[DEBUG] Target is a reply in a hidden container. Opening replies...');
+                        const rootCommentElement = repliesContainer.closest('.comment');
+                        const toggleButton = rootCommentElement.querySelector('.view-replies-button');
+                        if (toggleButton) {
+                            toggleButton.click();
+                        }
+                    }
+                    console.log('[DEBUG] Scrolling to element...');
+                    scrollToComment(fullCommentId);
+                } else {
+                    console.error(`[DEBUG] FAILED! The comment element #${commentId} was not found in the HTML after loading.`);
+                    if(window.showToast) {
+                        window.showToast('Could not find the specific comment.', 'warning');
+                    }
+                }
+            }, 500);
+
+        } catch (error) {
+            console.error('[DEBUG] An error occurred during the fetch/render process:', error);
+            commentsContainer.innerHTML = `<p class="text-red-500 text-center">${window.translations.js_failed_load_comments}</p>`;
+        }
     }
 
     function toggleComments(postId) {

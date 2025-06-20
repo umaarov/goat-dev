@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use App\Models\Post;
+use App\Models\User;
+use App\Notifications\NewReplyToYourComment;
+use App\Notifications\YouWereMentioned;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
@@ -62,6 +65,7 @@ class CommentController extends Controller
 
         return response()->json(['comments' => $comments]);
     }
+
     public function getReplies(Request $request, Comment $comment): JsonResponse
     {
         if ($comment->parent_id !== null) {
@@ -318,6 +322,7 @@ class CommentController extends Controller
 
         $parentId = $request->input('parent_id');
         $rootId = null;
+        $parentComment = null;
 
         if ($parentId) {
             $parentComment = Comment::find($parentId);
@@ -401,6 +406,8 @@ class CommentController extends Controller
             'root_comment_id' => $rootId,
         ]);
 
+        $this->dispatchNotifications($comment, $user, $parentComment);
+
         Log::channel('audit_trail')->info('Comment created and passed moderation.', [
             'user_id' => $user->id,
             'username' => $user->username,
@@ -418,6 +425,67 @@ class CommentController extends Controller
             return response()->json(['message' => $successMessage, 'comment' => $comment], 201);
         }
         return redirect()->back()->with('success', $successMessage);
+    }
+
+    private function dispatchNotifications(Comment $comment, User $actor, ?Comment $parentComment): void
+    {
+        if ($parentComment && $parentComment->user_id !== $actor->id) {
+            $parentComment->user->notify(new NewReplyToYourComment($actor, $comment));
+        }
+
+        preg_match_all('/@([\w\-]+)/', $comment->content, $matches);
+        if (!empty($matches[1])) {
+            $mentionedUsernames = array_unique($matches[1]);
+
+            $parentAuthorUsername = $parentComment ? $parentComment->user->username : null;
+
+            foreach ($mentionedUsernames as $username) {
+                if (strtolower($username) === strtolower($actor->username)) {
+                    continue;
+                }
+
+                if ($parentComment && strtolower($username) === strtolower($parentAuthorUsername)) {
+                    continue;
+                }
+
+                $mentionedUser = User::where('username', $username)->first();
+                if ($mentionedUser) {
+                    $mentionedUser->notify(new YouWereMentioned($actor, $comment));
+                }
+            }
+        }
+    }
+
+    public function showCommentContext(Request $request, Post $post, Comment $comment): JsonResponse
+    {
+        if ((int) $comment->post_id !== (int) $post->id) {
+            abort(404, 'Comment does not belong to this post.');
+        }
+
+        $rootComment = $comment->root_comment_id ? Comment::find($comment->root_comment_id) : $comment;
+        if (!$rootComment) {
+            abort(404, 'Root comment not found.');
+        }
+
+        $perPage = 10;
+
+        $newerOrSameCommentsCount = Comment::where('post_id', $post->id)
+            ->whereNull('parent_id')
+            ->where(function ($query) use ($rootComment) {
+                $query->where('created_at', '>', $rootComment->created_at)
+                    ->orWhere(function ($subQuery) use ($rootComment) {
+                        $subQuery->where('created_at', $rootComment->created_at)
+                            ->where('id', '>=', $rootComment->id);
+                    });
+            })
+            ->count();
+
+
+        $page = (int) ceil($newerOrSameCommentsCount / $perPage);
+        if ($page < 1) $page = 1;
+
+        $request->merge(['page' => $page]);
+        return $this->index($request, $post);
     }
 
     final public function update(Request $request, Comment $comment): RedirectResponse|JsonResponse

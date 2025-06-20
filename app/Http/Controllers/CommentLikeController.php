@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use App\Models\CommentLike;
+use App\Notifications\CommentLiked;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,7 +22,8 @@ class CommentLikeController extends Controller
     public function toggleLike(Request $request, Comment $comment)
     {
         $user = Auth::user();
-
+        $commentOwner = $comment->user;
+        $notify = $commentOwner && $commentOwner->id !== $user->id;
         DB::beginTransaction();
         try {
             $existingLike = CommentLike::where('user_id', $user->id)
@@ -49,6 +51,10 @@ class CommentLikeController extends Controller
                 }
                 $isLiked = true;
                 $messageUser = __('messages.comment_liked_successfully');
+
+                if ($notify) {
+                    $commentOwner->notify(new CommentLiked($user, $comment));
+                }
             }
 
             DB::commit();

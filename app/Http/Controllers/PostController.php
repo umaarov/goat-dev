@@ -368,13 +368,18 @@ class PostController extends Controller
 
     final public function show(Post $post): View
     {
-        $post->loadPostData();
-        $this->attachUserVoteStatus(new \Illuminate\Pagination\LengthAwarePaginator(
+        $post->load('user:id,username,profile_picture');
+        $post->loadCount(['comments', 'shares as shares_relation_count']);
+
+        $paginatorForOnePost = new \Illuminate\Pagination\LengthAwarePaginator(
             collect([$post]),
             1,
             1,
             1
-        ));
+        );
+
+        $this->attachUserVoteStatus($paginatorForOnePost);
+
         return view('posts.show', compact('post'));
     }
 
@@ -631,9 +636,9 @@ class PostController extends Controller
         ]);
     }
 
-    public function showBySlug($id, $slug = null)
+    public function showBySlug(Request $request, $id, $slug = null)
     {
-        $post = Post::withCount('votes')->findOrFail($id);
+        $post = Post::findOrFail($id);
 
         $newerOrSamePostsCount = Post::query()
             ->where('created_at', '>', $post->created_at)
@@ -641,23 +646,22 @@ class PostController extends Controller
                 $query->where('created_at', $post->created_at)
                     ->where('id', '>=', $post->id);
             })
-            // ->orderBy('created_at', 'desc')
-            // ->orderBy('id', 'desc')
             ->count();
 
         $perPage = 15;
         $page = ceil($newerOrSamePostsCount / $perPage);
         if ($page < 1) $page = 1;
 
+        $redirect = redirect()->route('home', ['page' => $page])
+            ->with('scrollToPost', $id);
 
-        $expectedSlug = Str::slug($post->question);
-        if ($slug !== null && $slug !== $expectedSlug) {
-            return redirect()->route('posts.showSlug', ['id' => $post->id, 'slug' => $expectedSlug, 'page' => $page], 301)->with('scrollToPost', $id);
+        if ($request->has('comment') && $request->input('comment') > 0) {
+            $redirect->with('scrollToComment', $request->input('comment'));
         }
 
-        return redirect()->route('home', ['page' => $page])
-            ->with('scrollToPost', $id);
+        return $redirect;
     }
+
 
     public function incrementShareCount(Request $request, Post $post)
     {
@@ -684,7 +688,7 @@ class PostController extends Controller
 
         $soundexCode = soundex($queryTerm);
 
-        // --- 1. GET CANDIDATE RESULTS (NOW WITH SOUNDEX) ---
+        // --- 1. GET CANDIDATE RESULTS ---
         $candidatePosts = Post::query()->withPostData()
             ->where(function (Builder $subQuery) use ($queryTerm, $soundexCode) {
                 $subQuery->where('question', 'LIKE', "%{$queryTerm}%")

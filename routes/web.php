@@ -48,7 +48,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::controller(PostController::class)->group(function () {
         Route::get('/posts/create', 'create')->name('posts.create');
-        Route::post('/posts', 'store')->name('posts.store')->middleware('throttle:10,1'); // Limit post creation
+        Route::post('/posts', 'store')->name('posts.store')->middleware('throttle:10,1');
         Route::get('/posts/{post}/edit', 'edit')->name('posts.edit');
         Route::put('/posts/{post}', 'update')->name('posts.update');
         Route::delete('/posts/{post}', 'destroy')->name('posts.destroy');
@@ -60,10 +60,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::controller(CommentController::class)->group(function () {
         Route::get('/posts/{post}/comments', 'index')->name('comments.index');
-        Route::post('/posts/{post}/comments', 'store')->name('comments.store')->middleware('throttle:30,1'); // Limit comment creation
+        Route::post('/posts/{post}/comments', 'store')->name('comments.store')->middleware('throttle:30,1');
         Route::put('/comments/{comment}', 'update')->name('comments.update');
         Route::delete('/comments/{comment}', 'destroy')->name('comments.destroy');
         Route::get('/comments/{comment}/replies', 'getReplies')->name('comments.getReplies');
+        Route::get('/posts/{post}/comments/context/{comment}', 'showCommentContext')->name('comments.showContext');
     })->whereNumber(['post', 'comment']);
 
     Route::post('/comments/{comment}/toggle-like', [CommentLikeController::class, 'toggleLike'])
@@ -71,7 +72,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('throttle:30,1');
 
     Route::controller(NotificationController::class)->group(function () {
-        Route::get('/notifications', 'index')->name('notifications.index');
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount'])->name('notifications.unread.count');
         Route::post('/notifications/send', 'store')->name('notifications.store');
     });
 
