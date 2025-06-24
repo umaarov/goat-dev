@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class RatingController extends Controller
@@ -17,6 +17,7 @@ class RatingController extends Controller
         $topByPostVotes = DB::table('users')
             ->select('users.id', 'users.first_name', 'users.last_name', 'users.username', 'users.profile_picture', DB::raw('SUM(posts.total_votes) as total_post_votes'))
             ->join('posts', 'users.id', '=', 'posts.user_id')
+            ->where('posts.total_votes', '!=', 0)
             ->groupBy('users.id', 'users.first_name', 'users.last_name', 'users.username', 'users.profile_picture')
             ->orderByDesc('total_post_votes')
             ->take($limit)
@@ -26,7 +27,7 @@ class RatingController extends Controller
         $topByPostCount = User::query()
             ->withCount('posts')
             ->orderByDesc('posts_count')
-            ->where('posts_count', '>', 0)
+            ->having('posts_count', '>', 0)
             ->take($limit)
             ->get();
 
@@ -34,7 +35,7 @@ class RatingController extends Controller
         $topByCommentCount = User::query()
             ->withCount('comments')
             ->orderByDesc('comments_count')
-            ->where('comments_count', '>', 0)
+            ->having('comments_count', '>', 0)
             ->take($limit)
             ->get();
 
@@ -48,7 +49,7 @@ class RatingController extends Controller
             ->take($limit)
             ->get();
 
-        return view('rating.index', compact(
+        return view('ratings.index', compact(
             'topByPostVotes',
             'topByPostCount',
             'topByCommentCount',
