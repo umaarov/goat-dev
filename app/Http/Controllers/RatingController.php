@@ -15,9 +15,22 @@ class RatingController extends Controller
 
         // Most votes collected on posts
         $topByPostVotes = User::query()
-            ->select('users.*', DB::raw('SUM(posts.total_votes) as total_post_votes'))
+            ->select([
+                'users.id',
+                'users.first_name',
+                'users.last_name',
+                'users.username',
+                'users.profile_picture',
+                DB::raw('SUM(posts.total_votes) as total_post_votes')
+            ])
             ->join('posts', 'users.id', '=', 'posts.user_id')
-            ->groupBy('users.id')
+            ->groupBy(
+                'users.id',
+                'users.first_name',
+                'users.last_name',
+                'users.username',
+                'users.profile_picture'
+            )
             ->orderByDesc('total_post_votes')
             ->take($limit)
             ->get();
@@ -38,10 +51,23 @@ class RatingController extends Controller
 
         // Most likes collected on comments
         $topByCommentLikes = User::query()
-            ->select('users.*', DB::raw('SUM(comments.likes_count) as total_comment_likes'))
+            ->select([
+                'users.id',
+                'users.first_name',
+                'users.last_name',
+                'users.username',
+                'users.profile_picture',
+                DB::raw('SUM(comments.likes_count) as total_comment_likes')
+            ])
             ->join('comments', 'users.id', '=', 'comments.user_id')
             ->where('comments.likes_count', '>', 0)
-            ->groupBy('users.id')
+            ->groupBy(
+                'users.id',
+                'users.first_name',
+                'users.last_name',
+                'users.username',
+                'users.profile_picture'
+            )
             ->orderByDesc('total_comment_likes')
             ->take($limit)
             ->get();
