@@ -24,10 +24,17 @@
                         $displayName = ($user->first_name || $user->last_name) ? trim($user->first_name . ' ' . $user->last_name) : "@".$user->username;
                         $showSubUsername = ($user->first_name || $user->last_name);
                     @endphp
-                    <img src="{{ $profilePic }}"
-                         alt="{{ __('messages.profile.alt_profile_picture', ['username' => $user->username]) }}"
-                         class="h-24 w-24 rounded-full object-cover border border-gray-200 cursor-pointer zoomable-image flex-shrink-0"
-                         data-full-src="{{ $profilePic }}">
+                    <div class="relative flex-shrink-0">
+
+                        <div id="badge-container">
+                            <canvas id="badge-canvas"></canvas>
+                        </div>
+
+                        <img src="{{ $profilePic }}"
+                             alt="{{ __('messages.profile.alt_profile_picture', ['username' => $user->username]) }}"
+                             class="h-24 w-24 rounded-full object-cover border border-gray-200 cursor-pointer zoomable-image"
+                             data-full-src="{{ $profilePic }}">
+                    </div>
 
                     {{-- Info Block --}}
                     <div class="ml-4 flex-1 flex flex-col">
