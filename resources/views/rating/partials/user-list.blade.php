@@ -1,3 +1,8 @@
+@php
+    use Illuminate\Support\Str;
+    use Illuminate\Support\Facades\Storage;
+@endphp
+
 <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200">
         <h3 class="text-xl font-semibold text-gray-800">{{ $title }}</h3>
@@ -19,8 +24,9 @@
                     </div>
 
                     <div class="flex-shrink-0">
+                        {{-- FIX: Updated logic for the image src attribute --}}
                         <img class="h-11 w-11 rounded-full object-cover"
-                             src="{{ $user->profile_picture ?? asset('images/default-avatar.png') }}"
+                             src="{{ $user->profile_picture ? (Str::startsWith($user->profile_picture, 'http') ? $user->profile_picture : Storage::disk('public')->url($user->profile_picture)) : asset('images/default-avatar.png') }}"
                              alt="{{ $user->username }}">
                     </div>
                     <div class="flex-1 min-w-0">
