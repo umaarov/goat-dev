@@ -7,36 +7,38 @@
 @section('meta_description', __('messages.ratings.meta_description'))
 
 @section('content')
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <header class="mb-8 text-center">
-            <h1 class="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">{{ __('messages.ratings.main_title') }}</h1>
-            <p class="mt-2 text-lg text-gray-600 dark:text-gray-400">{{ __('messages.ratings.subtitle') }}</p>
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">{{ __('messages.ratings.main_title') }}</h1>
+            <p class="mt-1 text-md text-gray-500">{{ __('messages.ratings.subtitle') }}</p>
         </header>
 
         <div x-data="{ tab: 'post_votes' }">
-            <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
-                <nav class="-mb-px flex flex-wrap justify-center space-x-4 sm:space-x-8" aria-label="Tabs">
-                    <a href="#" @click.prevent="tab = 'post_votes'"
-                       :class="tab === 'post_votes' ? 'border-blue-600 text-blue-700 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200'"
-                       class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-150">
-                        {{ __('messages.ratings.tabs.top_post_votes') }}
-                    </a>
-                    <a href="#" @click.prevent="tab = 'post_count'"
-                       :class="tab === 'post_count' ? 'border-blue-600 text-blue-700 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200'"
-                       class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-150">
-                        {{ __('messages.ratings.tabs.top_post_creators') }}
-                    </a>
-                    <a href="#" @click.prevent="tab = 'comment_likes'"
-                       :class="tab === 'comment_likes' ? 'border-blue-600 text-blue-700 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200'"
-                       class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-150">
-                        {{ __('messages.ratings.tabs.top_comment_likes') }}
-                    </a>
-                    <a href="#" @click.prevent="tab = 'comment_count'"
-                       :class="tab === 'comment_count' ? 'border-blue-600 text-blue-700 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200'"
-                       class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-150">
-                        {{ __('messages.ratings.tabs.top_commentators') }}
-                    </a>
-                </nav>
+            <div class="mb-6">
+                <div class="bg-gray-200/75 rounded-lg p-1">
+                    <div class="flex flex-wrap justify-center gap-1">
+                        <button @click.prevent="tab = 'post_votes'"
+                                :class="tab === 'post_votes' ? 'bg-white ' : 'text-gray-600 hover:bg-white/70'"
+                                class="flex-grow text-center whitespace-nowrap py-2 px-3 rounded-md font-medium text-sm transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            {{ __('messages.ratings.tabs.top_post_votes') }}
+                        </button>
+                        <button @click.prevent="tab = 'post_count'"
+                                :class="tab === 'post_count' ? 'bg-white ' : 'text-gray-600 hover:bg-white/70'"
+                                class="flex-grow text-center whitespace-nowrap py-2 px-3 rounded-md font-medium text-sm transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            {{ __('messages.ratings.tabs.top_post_creators') }}
+                        </button>
+                        <button @click.prevent="tab = 'comment_likes'"
+                                :class="tab === 'comment_likes' ? 'bg-white ' : 'text-gray-600 hover:bg-white/70'"
+                                class="flex-grow text-center whitespace-nowrap py-2 px-3 rounded-md font-medium text-sm transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            {{ __('messages.ratings.tabs.top_comment_likes') }}
+                        </button>
+                        <button @click.prevent="tab = 'comment_count'"
+                                :class="tab === 'comment_count' ? 'bg-white ' : 'text-gray-600 hover:bg-white/70'"
+                                class="flex-grow text-center whitespace-nowrap py-2 px-3 rounded-md font-medium text-sm transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            {{ __('messages.ratings.tabs.top_commentators') }}
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div class="transition-all duration-300">
@@ -87,6 +89,20 @@
 
 @push('styles')
     <style>
-        [x-cloak] { display: none !important; }
+        [x-cloak] {
+            display: none !important;
+        }
+
+        .podium-1 {
+            color: #FFD700;
+        }
+
+        .podium-2 {
+            color: #C0C0C0;
+        }
+
+        .podium-3 {
+            color: #CD7F32;
+        }
     </style>
 @endpush

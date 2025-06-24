@@ -1,92 +1,57 @@
-@php
-    use Illuminate\Support\Str;
-@endphp
-@extends('layouts.app')
-
-@section('title', __('messages.ratings.title'))
-@section('meta_description', __('messages.ratings.meta_description'))
-
-@section('content')
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <header class="mb-8 text-center">
-            <h1 class="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">{{ __('messages.ratings.main_title') }}</h1>
-            <p class="mt-2 text-lg text-gray-600 dark:text-gray-400">{{ __('messages.ratings.subtitle') }}</p>
-        </header>
-
-        <div x-data="{ tab: 'post_votes' }">
-            <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
-                <nav class="-mb-px flex flex-wrap justify-center space-x-4 sm:space-x-8" aria-label="Tabs">
-                    <a href="#" @click.prevent="tab = 'post_votes'"
-                       :class="tab === 'post_votes' ? 'border-blue-600 text-blue-700 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200'"
-                       class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-150">
-                        {{ __('messages.ratings.tabs.top_post_votes') }}
-                    </a>
-                    <a href="#" @click.prevent="tab = 'post_count'"
-                       :class="tab === 'post_count' ? 'border-blue-600 text-blue-700 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200'"
-                       class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-150">
-                        {{ __('messages.ratings.tabs.top_post_creators') }}
-                    </a>
-                    <a href="#" @click.prevent="tab = 'comment_likes'"
-                       :class="tab === 'comment_likes' ? 'border-blue-600 text-blue-700 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200'"
-                       class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-150">
-                        {{ __('messages.ratings.tabs.top_comment_likes') }}
-                    </a>
-                    <a href="#" @click.prevent="tab = 'comment_count'"
-                       :class="tab === 'comment_count' ? 'border-blue-600 text-blue-700 dark:text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200'"
-                       class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-150">
-                        {{ __('messages.ratings.tabs.top_commentators') }}
-                    </a>
-                </nav>
-            </div>
-
-            <div class="transition-all duration-300">
-                <div x-show="tab === 'post_votes'" x-cloak>
-                    @include('rating.partials.user-list', [
-                        'users' => $topByPostVotes,
-                        'title' => __('messages.ratings.tabs.top_post_votes'),
-                        'description' => __('messages.ratings.descriptions.post_votes'),
-                        'value_accessor' => 'total_post_votes',
-                        'value_label_singular' => __('messages.ratings.labels.vote_singular'),
-                        'value_label_plural' => __('messages.ratings.labels.vote_plural')
-                    ])
-                </div>
-                <div x-show="tab === 'post_count'" x-cloak>
-                    @include('rating.partials.user-list', [
-                        'users' => $topByPostCount,
-                        'title' => __('messages.ratings.tabs.top_post_creators'),
-                        'description' => __('messages.ratings.descriptions.post_count'),
-                        'value_accessor' => 'posts_count',
-                        'value_label_singular' => __('messages.ratings.labels.post_singular'),
-                        'value_label_plural' => __('messages.ratings.labels.post_plural')
-                    ])
-                </div>
-                <div x-show="tab === 'comment_likes'" x-cloak>
-                    @include('rating.partials.user-list', [
-                        'users' => $topByCommentLikes,
-                        'title' => __('messages.ratings.tabs.top_comment_likes'),
-                        'description' => __('messages.ratings.descriptions.comment_likes'),
-                        'value_accessor' => 'total_comment_likes',
-                        'value_label_singular' => __('messages.ratings.labels.like_singular'),
-                        'value_label_plural' => __('messages.ratings.labels.like_plural')
-                    ])
-                </div>
-                <div x-show="tab === 'comment_count'" x-cloak>
-                    @include('rating.partials.user-list', [
-                        'users' => $topByCommentCount,
-                        'title' => __('messages.ratings.tabs.top_commentators'),
-                        'description' => __('messages.ratings.descriptions.comment_count'),
-                        'value_accessor' => 'comments_count',
-                        'value_label_singular' => __('messages.ratings.labels.comment_singular'),
-                        'value_label_plural' => __('messages.ratings.labels.comment_plural')
-                    ])
-                </div>
-            </div>
-        </div>
+<div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-xl font-semibold text-gray-800">{{ $title }}</h3>
+        <p class="mt-1 text-sm text-gray-500">{{ $description }}</p>
     </div>
-@endsection
+    <ul class="divide-y divide-gray-200">
+        @forelse($users as $index => $user)
+            <li class="p-4 flex items-center space-x-4 transition-colors hover:bg-gray-50">
+                <div class="flex items-center justify-center w-8 text-center">
+                    @if($index < 3)
+                        <span class="text-lg font-bold podium-{{$index + 1}}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
+                                 fill="currentColor">
+                                <path fill-rule="evenodd"
+                                      d="M11.25 2.25a.75.75 0 00-1.5 0v1.134a3.752 3.752 0 00-2.821 1.446l-.001.001-3.32 4.013a.75.75 0 00.95 1.13l.001-.001 3.32-4.013a2.25 2.25 0 012.822-1.446V14.25a.75.75 0 001.5 0V2.25z"
+                                      clip-rule="evenodd"/>
+                                <path
+                                    d="M4.152 10.533a.75.75 0 00-1.06 1.06l1.06-1.06zM15.848 10.533a.75.75 0 10-1.06-1.06l1.06 1.06zM8.375 16.125a.75.75 0 001.5 0h-1.5zM12.875 16.125a.75.75 0 001.5 0h-1.5zM4.152 10.533l-.53.53a.75.75 0 001.06 1.06L4.152 10.533zm11.696 0l.53.53a.75.75 0 00-1.06-1.06l.53-.53zM8.375 16.125V12h-1.5v4.125h1.5zm4.5 0V12h-1.5v4.125h1.5zM4.682 11.593l3.693 4.53v-1.06l-3.693-4.53-1.06 1.06zm6.576 4.53l3.693-4.53-1.06-1.06-3.693 4.53v1.06zM15.318 9.473a3.75 3.75 0 01-4.94 0l-1.06 1.06a5.25 5.25 0 006.92 0l-1.06-1.06z"/>
+                            </svg>
+                        </span>
+                    @else
+                        <span class="font-semibold text-gray-500 text-sm">{{ $index + 1 }}</span>
+                    @endif
+                </div>
 
-@push('styles')
-    <style>
-        [x-cloak] { display: none !important; }
-    </style>
-@endpush
+                <a href="{{-- route('user.profile', $user->username) --}}">
+                    <img class="h-11 w-11 rounded-full object-cover"
+                         src="{{ $user->profile_picture ?? asset('images/default-avatar.png') }}"
+                         alt="{{ $user->username }}">
+                </a>
+                <div class="flex-shrink-0">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-gray-800 truncate">
+                        <a href="{{-- route('user.profile', $user->username) --}}"
+                           class="hover:underline">{{ $user->first_name }} {{ $user->last_name }}</a>
+                    </p>
+                    <p class="text-sm text-gray-500 truncate">
+                        &#64;{{ $user->username }}
+                    </p>
+                </div>
+                <div class="text-right flex-shrink-0">
+                    @php
+                        $value = $user->{$value_accessor};
+                        $label = $value === 1 ? $value_label_singular : $value_label_plural;
+                    @endphp
+                    <p class="text-md font-bold text-gray-900">{{ number_format($value) }}</p>
+                    <p class="text-xs text-gray-500 uppercase tracking-wider">{{ $label }}</p>
+                </div>
+            </li>
+        @empty
+            <li class="p-8 text-center text-gray-500">
+                {{ __('messages.ratings.no_users_found') }}
+            </li>
+        @endforelse
+    </ul>
+</div>
