@@ -13,27 +13,28 @@
             <p class="mt-1 text-md text-gray-500">{{ __('messages.ratings.subtitle') }}</p>
         </header>
 
-        <div x-data="{ tab: 'post_votes' }">
+        <div x-data="{ tab: 'post_votes', isLoading: true }" x-init="setTimeout(() => isLoading = false, 500)">
+            {{-- Tabs --}}
             <div class="mb-6">
                 <div class="bg-gray-200/75 rounded-lg p-1">
                     <div class="flex flex-wrap justify-center gap-1">
                         <button @click.prevent="tab = 'post_votes'"
-                                :class="tab === 'post_votes' ? 'bg-white ' : 'text-gray-600 hover:bg-white/70'"
+                                :class="tab === 'post_votes' ? 'bg-white' : 'text-gray-600 hover:bg-white/70'"
                                 class="flex-grow text-center whitespace-nowrap py-2 px-3 rounded-md font-medium text-sm transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
                             {{ __('messages.ratings.tabs.top_post_votes') }}
                         </button>
                         <button @click.prevent="tab = 'post_count'"
-                                :class="tab === 'post_count' ? 'bg-white ' : 'text-gray-600 hover:bg-white/70'"
+                                :class="tab === 'post_count' ? 'bg-white' : 'text-gray-600 hover:bg-white/70'"
                                 class="flex-grow text-center whitespace-nowrap py-2 px-3 rounded-md font-medium text-sm transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
                             {{ __('messages.ratings.tabs.top_post_creators') }}
                         </button>
                         <button @click.prevent="tab = 'comment_likes'"
-                                :class="tab === 'comment_likes' ? 'bg-white ' : 'text-gray-600 hover:bg-white/70'"
+                                :class="tab === 'comment_likes' ? 'bg-white' : 'text-gray-600 hover:bg-white/70'"
                                 class="flex-grow text-center whitespace-nowrap py-2 px-3 rounded-md font-medium text-sm transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
                             {{ __('messages.ratings.tabs.top_comment_likes') }}
                         </button>
                         <button @click.prevent="tab = 'comment_count'"
-                                :class="tab === 'comment_count' ? 'bg-white ' : 'text-gray-600 hover:bg-white/70'"
+                                :class="tab === 'comment_count' ? 'bg-white' : 'text-gray-600 hover:bg-white/70'"
                                 class="flex-grow text-center whitespace-nowrap py-2 px-3 rounded-md font-medium text-sm transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
                             {{ __('messages.ratings.tabs.top_commentators') }}
                         </button>
@@ -41,8 +42,14 @@
                 </div>
             </div>
 
-            <div class="transition-all duration-300">
-                <div x-show="tab === 'post_votes'" x-cloak>
+            {{-- Shimmer Loading State --}}
+            <div x-show="isLoading" x-cloak>
+                @include('rating.partials.shimmer-list')
+            </div>
+
+            {{-- Main Content --}}
+            <div x-show="!isLoading" x-cloak class="transition-opacity duration-300">
+                <div x-show="tab === 'post_votes'">
                     @include('rating.partials.user-list', [
                         'users' => $topByPostVotes,
                         'title' => __('messages.ratings.tabs.top_post_votes'),
@@ -52,7 +59,7 @@
                         'value_label_plural' => __('messages.ratings.labels.vote_plural')
                     ])
                 </div>
-                <div x-show="tab === 'post_count'" x-cloak>
+                <div x-show="tab === 'post_count'">
                     @include('rating.partials.user-list', [
                         'users' => $topByPostCount,
                         'title' => __('messages.ratings.tabs.top_post_creators'),
@@ -62,7 +69,7 @@
                         'value_label_plural' => __('messages.ratings.labels.post_plural')
                     ])
                 </div>
-                <div x-show="tab === 'comment_likes'" x-cloak>
+                <div x-show="tab === 'comment_likes'">
                     @include('rating.partials.user-list', [
                         'users' => $topByCommentLikes,
                         'title' => __('messages.ratings.tabs.top_comment_likes'),
@@ -72,7 +79,7 @@
                         'value_label_plural' => __('messages.ratings.labels.like_plural')
                     ])
                 </div>
-                <div x-show="tab === 'comment_count'" x-cloak>
+                <div x-show="tab === 'comment_count'">
                     @include('rating.partials.user-list', [
                         'users' => $topByCommentCount,
                         'title' => __('messages.ratings.tabs.top_commentators'),
@@ -89,20 +96,26 @@
 
 @push('styles')
     <style>
-        [x-cloak] {
-            display: none !important;
+        [x-cloak] { display: none !important; }
+        .podium-1 { color: #FFD700; }
+        .podium-2 { color: #C0C0C0; }
+        .podium-3 { color: #CD7F32; }
+
+        .shimmer-bg {
+            animation-duration: 1.5s;
+            animation-fill-mode: forwards;
+            animation-iteration-count: infinite;
+            animation-name: shimmer;
+            animation-timing-function: linear;
+            background-color: #f3f4f6;
+            background-image: linear-gradient(to right, #f3f4f6 0%, #e5e7eb 50%, #f3f4f6 100%);
+            background-repeat: no-repeat;
+            background-size: 200% 100%;
         }
 
-        .podium-1 {
-            color: #FFD700;
-        }
-
-        .podium-2 {
-            color: #C0C0C0;
-        }
-
-        .podium-3 {
-            color: #CD7F32;
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
     </style>
 @endpush

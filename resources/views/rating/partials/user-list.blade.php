@@ -5,48 +5,46 @@
     </div>
     <ul class="divide-y divide-gray-200">
         @forelse($users as $index => $user)
-            <li class="p-4 flex items-center space-x-4 transition-colors hover:bg-gray-50">
-                <div class="flex items-center justify-center w-8 text-center">
-                    @if($index < 3)
-                        <span class="text-lg font-bold podium-{{$index + 1}}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
-                                 fill="currentColor">
-                                <path fill-rule="evenodd"
-                                      d="M11.25 2.25a.75.75 0 00-1.5 0v1.134a3.752 3.752 0 00-2.821 1.446l-.001.001-3.32 4.013a.75.75 0 00.95 1.13l.001-.001 3.32-4.013a2.25 2.25 0 012.822-1.446V14.25a.75.75 0 001.5 0V2.25z"
-                                      clip-rule="evenodd"/>
-                                <path
-                                    d="M4.152 10.533a.75.75 0 00-1.06 1.06l1.06-1.06zM15.848 10.533a.75.75 0 10-1.06-1.06l1.06 1.06zM8.375 16.125a.75.75 0 001.5 0h-1.5zM12.875 16.125a.75.75 0 001.5 0h-1.5zM4.152 10.533l-.53.53a.75.75 0 001.06 1.06L4.152 10.533zm11.696 0l.53.53a.75.75 0 00-1.06-1.06l.53-.53zM8.375 16.125V12h-1.5v4.125h1.5zm4.5 0V12h-1.5v4.125h1.5zM4.682 11.593l3.693 4.53v-1.06l-3.693-4.53-1.06 1.06zm6.576 4.53l3.693-4.53-1.06-1.06-3.693 4.53v1.06zM15.318 9.473a3.75 3.75 0 01-4.94 0l-1.06 1.06a5.25 5.25 0 006.92 0l-1.06-1.06z"/>
-                            </svg>
-                        </span>
-                    @else
-                        <span class="font-semibold text-gray-500 text-sm">{{ $index + 1 }}</span>
-                    @endif
-                </div>
+            <li>
+                <a href="{{ route('profile.show', ['username' => $user->username]) }}"
+                   class="p-4 flex items-center space-x-4 transition-colors hover:bg-gray-50/75">
+                    <div class="flex items-center justify-center w-8 text-center">
+                        @if($index < 3)
+                            <span class="text-lg font-bold podium-{{$index + 1}}">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                                     class="w-6 h-6">
+                                    <path fill-rule="evenodd"
+                                          d="M12.963 2.286a.75.75 0 00-1.071 1.071l2.122 2.122a.75.75 0 001.07-1.07l-2.121-2.122zM10.463 5.483a.75.75 0 00-1.07 1.07l2.121 2.121a.75.75 0 001.07-1.07l-2.121-2.12zM9.999 12.375a.75.75 0 01.75-.75h2.5a.75.75 0 010 1.5h-2.5a.75.75 0 01-.75-.75zM8.624 6.953a.75.75 0 00-1.07 1.07l2.12 2.121a.75.75 0 001.07-1.07l-2.12-2.12zM6.375 9.75a.75.75 0 01.75-.75h8.5a.75.75 0 010 1.5h-8.5a.75.75 0 01-.75-.75zM4.125 12a.75.75 0 01.75-.75h14a.75.75 0 010 1.5h-14a.75.75 0 01-.75-.75zM12 3.75a8.25 8.25 0 100 16.5 8.25 8.25 0 000-16.5zM4.67 15.11a6.75 6.75 0 019.52-9.52l-9.52 9.52zM19.33 8.89a6.75 6.75 0 01-9.52 9.52l9.52-9.52z"
+                                          clip-rule="evenodd"/>
+                                </svg>
+                            </span>
+                        @else
+                            <span class="font-semibold text-gray-500 text-sm">{{ $index + 1 }}</span>
+                        @endif
+                    </div>
 
-                <a href="{{-- route('user.profile', $user->username) --}}">
-                    <img class="h-11 w-11 rounded-full object-cover"
-                         src="{{ $user->profile_picture ?? asset('images/default-avatar.png') }}"
-                         alt="{{ $user->username }}">
+                    <div class="flex-shrink-0">
+                        <img class="h-11 w-11 rounded-full object-cover"
+                             src="{{ $user->profile_picture ?? asset('images/default-avatar.png') }}"
+                             alt="{{ $user->username }}">
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-gray-800 truncate">
+                            {{ $user->first_name }} {{ $user->last_name }}
+                        </p>
+                        <p class="text-sm text-gray-500 truncate">
+                            &#64;{{ $user->username }}
+                        </p>
+                    </div>
+                    <div class="text-right flex-shrink-0">
+                        @php
+                            $value = $user->{$value_accessor};
+                            $label = $value === 1 ? $value_label_singular : $value_label_plural;
+                        @endphp
+                        <p class="text-md font-bold text-gray-900">{{ number_format($value) }}</p>
+                        <p class="text-xs text-gray-500 uppercase tracking-wider">{{ $label }}</p>
+                    </div>
                 </a>
-                <div class="flex-shrink-0">
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm font-semibold text-gray-800 truncate">
-                        <a href="{{-- route('user.profile', $user->username) --}}"
-                           class="hover:underline">{{ $user->first_name }} {{ $user->last_name }}</a>
-                    </p>
-                    <p class="text-sm text-gray-500 truncate">
-                        &#64;{{ $user->username }}
-                    </p>
-                </div>
-                <div class="text-right flex-shrink-0">
-                    @php
-                        $value = $user->{$value_accessor};
-                        $label = $value === 1 ? $value_label_singular : $value_label_plural;
-                    @endphp
-                    <p class="text-md font-bold text-gray-900">{{ number_format($value) }}</p>
-                    <p class="text-xs text-gray-500 uppercase tracking-wider">{{ $label }}</p>
-                </div>
             </li>
         @empty
             <li class="p-8 text-center text-gray-500">
