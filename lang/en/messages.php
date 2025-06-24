@@ -424,6 +424,37 @@ return [
         'sent_successfully' => 'Notification sent successfully!',
     ],
 
+    'ratings' => [
+        'nav_title' => 'Ratings',
+        'title' => 'User Ratings & Leaderboards',
+        'meta_description' => 'Check out the top users on our platform. See who has the most votes, posts, comments, and comment likes.',
+        'main_title' => 'Community Leaderboards',
+        'subtitle' => 'Discover the most active and influential users in our community.',
+        'no_users_found' => 'No users to display',
+        'tabs' => [
+            'top_post_votes' => 'Top by Post Votes',
+            'top_post_creators' => 'Top Posters',
+            'top_comment_likes' => 'Top by Comment Likes',
+            'top_commentators' => 'Top Commentators',
+        ],
+        'descriptions' => [
+            'post_votes' => 'Users who have collected the most votes on all their posts combined.',
+            'post_count' => 'Users who have contributed the highest number of posts.',
+            'comment_likes' => 'Users whose comments have received the most likes from the community.',
+            'comment_count' => 'Users who are most active in discussions with the highest comment count.',
+        ],
+        'labels' => [
+            'vote_singular' => 'Vote',
+            'vote_plural' => 'Votes',
+            'post_singular' => 'Post',
+            'post_plural' => 'Posts',
+            'like_singular' => 'Like',
+            'like_plural' => 'Likes',
+            'comment_singular' => 'Comment',
+            'comment_plural' => 'Comments',
+        ],
+    ],
+
     'js_login_to_like_comment' => 'Please login to like comments.',
     'like_comment_title' => 'Like comment',
     'unlike_comment_title' => 'Unlike comment',

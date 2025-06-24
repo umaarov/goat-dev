@@ -6,6 +6,7 @@ use App\Http\Controllers\CommentLikeController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\RatingController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -45,6 +46,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/@{username}/posts-data', 'getUserPosts')->name('profile.posts.data');
         Route::get('/@{username}/voted-data', 'getUserVotedPosts')->name('profile.voted.data');
     });
+
+    Route::get('/rating', [RatingController::class, 'index'])->name('rating.index');
 
     Route::controller(PostController::class)->group(function () {
         Route::get('/posts/create', 'create')->name('posts.create');

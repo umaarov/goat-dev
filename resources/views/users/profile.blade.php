@@ -33,7 +33,6 @@
                     <div class="ml-4 flex-1 flex flex-col">
                         <div>
                             <div class="flex items-center">
-{{--                                <h2 class="text-2xl font-semibold text-gray-800">{{ $displayName }}</h2>--}}
                                 <h1 class="text-2xl font-semibold text-gray-800" style="font-size: 1.5rem; line-height: 2rem; font-weight: 600; display: inline;">{{ $displayName }}</h1>
                                 @if($isVerified)
                                     <span class="ml-1.5" title="{{ __('messages.profile.verified_account') }}">
@@ -50,23 +49,26 @@
                             @if($showSubUsername)
                                 <p class="text-gray-600 text-sm mt-0.5">{{ "@".$user->username }}</p>
                             @endif
-
-{{--                            <p class="text-gray-500 text-xs mt-1">{{ __('messages.profile.joined_label') }} {{ $user->created_at->format('M d, Y') }}</p> {{-- Was mt-[4px], standardized to mt-1 --}}
                             <p class="text-gray-500 text-xs mt-1">{{ __('messages.profile.joined_label') }} <time datetime="{{ $user->created_at->toIso8601String() }}">{{ $user->created_at->format('M d, Y') }}</time></p>
                         </div>
 
                         {{-- Stats Section --}}
-                        <div class="mt-3 flex space-x-4 text-sm">
+                        <div class="mt-3 flex items-center space-x-6 text-sm">
                             <div>
                                 <span class="font-semibold text-gray-800">{{ number_format($user->posts_count) }}</span>
-                                <span
-                                    class="text-gray-500">{{ trans_choice('messages.profile.posts_stat_label', $user->posts_count) }}</span>
+                                <span class="text-gray-500">{{ trans_choice('messages.profile.posts_stat_label', $user->posts_count) }}</span>
                             </div>
                             <div>
-                                  <span
-                                      class="font-semibold text-gray-800">{{ number_format($totalVotesOnUserPosts) }}</span>
-                                <span
-                                    class="text-gray-500">{{ trans_choice('messages.profile.votes_collected_stat_label', $totalVotesOnUserPosts) }}</span>
+                                <span class="font-semibold text-gray-800">{{ number_format($totalVotesOnUserPosts) }}</span>
+                                <span class="text-gray-500">{{ trans_choice('messages.profile.votes_collected_stat_label', $totalVotesOnUserPosts) }}</span>
+                            </div>
+                            <div>
+                                <a href="{{ route('rating.index') }}" title="{{ __('messages.ratings.title') }}" class="flex items-center text-gray-600 hover:text-blue-700 font-medium transition-colors duration-150">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                    <span>{{ __('messages.ratings.nav_title') }}</span>
+                                </a>
                             </div>
                         </div>
 
@@ -125,7 +127,7 @@
                         @if ($isOwnProfile)
                             <div class="mt-4">
                                 <a href="{{ route('profile.edit') }}"
-                                   class="inline-block px-4 py-2 bg-blue-800 text-white rounded-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"> {{-- Added inline-block --}}
+                                   class="inline-block px-4 py-2 bg-blue-800 text-white rounded-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                                     {{ __('messages.profile.edit_profile_button') }}
                                 </a>
                             </div>
@@ -163,7 +165,6 @@
         @endfor
     </div>
 @endsection
-
 <style>
     .comments-section {
         max-height: 0;
