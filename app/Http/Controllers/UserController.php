@@ -33,10 +33,31 @@ class UserController extends Controller
     private const PROFILE_IMAGE_SIZE = 300;
     private const PROFILE_IMAGE_QUALITY = 75;
 
+    private const HEADER_IMAGE_WIDTH = 1500;
+    private const HEADER_IMAGE_QUALITY = 80;
+
     public function __construct(AvatarService $avatarService, ModerationService $moderationService)
     {
         $this->avatarService = $avatarService;
         $this->moderationService = $moderationService;
+    }
+
+    private function getHeaderTemplates(): array
+    {
+        return [
+            'template_1.jpg' => asset('images/header-templates/template_1.jpg'),
+            'template_2.jpg' => asset('images/header-templates/template_2.jpg'),
+            'template_3.jpg' => asset('images/header-templates/template_3.jpg'),
+            'template_4.jpg' => asset('images/header-templates/template_4.jpg'),
+            'template_5.jpg' => asset('images/header-templates/template_5.jpg'),
+            'template_6.jpg' => asset('images/header-templates/template_6.jpg'),
+            'template_7.jpg' => asset('images/header-templates/template_7.jpg'),
+            'template_8.jpg' => asset('images/header-templates/template_8.jpg'),
+            'template_9.jpg' => asset('images/header-templates/template_9.jpg'),
+            'template_10.jpg' => asset('images/header-templates/template_10.jpg'),
+            'template_11.jpg' => asset('images/header-templates/template_11.jpg'),
+            'template_12.jpg' => asset('images/header-templates/template_12.jpg'),
+        ];
     }
 
     private function processAndStoreProfileImage(UploadedFile $uploadedFile, string $directory, string $baseFilename): string
@@ -56,15 +77,41 @@ class UserController extends Controller
         return $path;
     }
 
+    private function processAndStoreHeaderImage(UploadedFile $uploadedFile, string $directory, string $baseFilename): string
+    {
+        $manager = new ImageManager(new GdDriver());
+        $image = $manager->read($uploadedFile->getRealPath());
+
+        $image->scaleDown(width: self::HEADER_IMAGE_WIDTH);
+
+        $newExtension = 'webp';
+        $filename = $baseFilename . '.' . $newExtension;
+        $path = $directory . '/' . $filename;
+
+        $encodedImage = $image->encode(new WebpEncoder(quality: self::HEADER_IMAGE_QUALITY));
+
+        Storage::disk('public')->put($path, $encodedImage);
+        return $path;
+    }
+
     final public function showProfile(string $username): View
     {
         $user = User::where('username', $username)
             ->withCount('posts')
             ->firstOrFail();
 
+        $headerBackgroundUrl = null;
+        if ($user->header_background) {
+            if (Str::startsWith($user->header_background, 'template_')) {
+                $headerBackgroundUrl = $this->getHeaderTemplates()[$user->header_background] ?? null;
+            } else {
+                $headerBackgroundUrl = Storage::url($user->header_background);
+            }
+        }
+
         $isOwnProfile = Auth::check() && Auth::id() === $user->id;
         $totalVotesOnUserPosts = $user->posts()->sum('total_votes');
-        return view('users.profile', compact('user', 'isOwnProfile', 'totalVotesOnUserPosts'));
+        return view('users.profile', compact('user', 'isOwnProfile', 'totalVotesOnUserPosts', 'headerBackgroundUrl'));
     }
 
     final public function getUserPosts(Request $request, string $username): JsonResponse
@@ -185,7 +232,9 @@ class UserController extends Controller
         $user = Auth::user();
         $available_locales = Config::get('app.available_locales', ['en' => 'English']);
         $current_locale = Session::get('locale', Config::get('app.locale'));
-        return view('users.edit', compact('user', 'available_locales', 'current_locale'));
+        $headerTemplates = $this->getHeaderTemplates();
+
+        return view('users.edit', compact('user', 'available_locales', 'current_locale', 'headerTemplates'));
     }
 
     final public function update(Request $request): RedirectResponse
@@ -193,6 +242,7 @@ class UserController extends Controller
         $user = Auth::user();
         $availableLocaleKeys = array_keys(Config::get('app.available_locales', ['en' => 'English']));
         $moderationLanguageCode = $user->locale ?? Config::get('app.locale');
+        $headerTemplateKeys = array_keys($this->getHeaderTemplates());
 
         Log::info('--------------------------------------------------');
         Log::info('UserController@update: Process started.');
@@ -214,6 +264,9 @@ class UserController extends Controller
             ],
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'remove_profile_picture' => 'nullable|boolean',
+            'header_background_upload' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'header_background_template' => ['nullable', 'string', Rule::in($headerTemplateKeys)],
+            'remove_header_background' => 'nullable|boolean',
             'show_voted_posts_publicly' => 'required|boolean',
             'locale' => ['nullable', Rule::in($availableLocaleKeys)],
             'external_links' => 'nullable|array|max:3',
@@ -344,8 +397,37 @@ class UserController extends Controller
             'external_links' => $user->external_links,
         ];
 
+        // --- START HEADER BACKGROUND LOGIC ---
+        $headerData = [];
+        $oldHeader = $user->header_background;
+        $isOldHeaderCustom = $oldHeader && !Str::startsWith($oldHeader, 'template_');
+
+        if ($request->boolean('remove_header_background')) {
+            if ($isOldHeaderCustom && Storage::disk('public')->exists($oldHeader)) {
+                Storage::disk('public')->delete($oldHeader);
+            }
+            $headerData['header_background'] = null;
+        } elseif ($request->hasFile('header_background_upload')) {
+            if ($isOldHeaderCustom && Storage::disk('public')->exists($oldHeader)) {
+                Storage::disk('public')->delete($oldHeader);
+            }
+            $headerData['header_background'] = $this->processAndStoreHeaderImage(
+                $request->file('header_background_upload'), 'header_backgrounds', 'user_' . $user->id . '_' . time()
+            );
+        } elseif ($request->filled('header_background_template') && in_array($request->input('header_background_template'), $headerTemplateKeys)) {
+            if ($isOldHeaderCustom && Storage::disk('public')->exists($oldHeader)) {
+                Storage::disk('public')->delete($oldHeader);
+            }
+            $headerData['header_background'] = $request->input('header_background_template');
+        }
+
+
         $data = $request->only(['first_name', 'last_name', 'username']);
         $data['show_voted_posts_publicly'] = $request->boolean('show_voted_posts_publicly');
+
+        if (!empty($headerData) || $request->boolean('remove_header_background')) {
+            $data = array_merge($data, $headerData);
+        }
 
         if ($request->has('locale')) {
             $requestedLocale = $request->input('locale');
@@ -462,6 +544,15 @@ class UserController extends Controller
 
         Log::info('UserController@update: Process finished. Redirecting...');
         Log::info('--------------------------------------------------');
+
+        Log::info('Attempting to update user ' . $user->id . ' with data:', $data);
+
+        try {
+            $user->update($data);
+        } catch (Exception $e) {
+            Log::error('Error updating user profile: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'An error occurred while updating the profile.')->withInput();
+        }
 
         return redirect()->route('profile.edit')->with('success', __('messages.profile_updated_success'));
     }

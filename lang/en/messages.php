@@ -46,6 +46,14 @@ return [
     'profile.js.error_loading_posts' => 'Error loading posts. Please try again.',
     'profile.alt_profile_picture_js' => ":username's profile picture",
 
+    'profile.header_background_label' => 'Header Background',
+    'profile.header_background_description' => 'Personalize your profile by uploading a custom header or selecting a template from the gallery.',
+    'profile.select_template_label' => 'Select Template',
+    'profile.upload_custom_background_label' => 'Upload Custom Background',
+    'profile.remove_header_background_label' => 'Remove current header background',
+    'profile.alt_header_background' => ':username\'s profile header background',
+    // END: New translations
+
     'post_card.option_1_image_alt' => 'Image for option 1',
     'post_card.option_2_image_alt' => 'Image for option 2',
     'post_card.owner_voted_for_this_option' => ':username voted for this option',

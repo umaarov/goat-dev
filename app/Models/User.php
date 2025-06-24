@@ -20,6 +20,7 @@ class User extends Authenticatable
         'email',
         'password',
         'profile_picture',
+        'header_background',
         'google_id',
         'email_verified_at',
         'email_verification_token',
