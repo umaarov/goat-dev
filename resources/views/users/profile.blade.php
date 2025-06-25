@@ -208,7 +208,7 @@
 
     <div id="badge-enlarged-container" style="display: none; position: fixed; inset: 0; z-index: 50; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(10px); align-items: center; justify-content: center; flex-direction: column; cursor: pointer;">
         <h2 id="enlarged-badge-name" class="text-white text-3xl font-bold mb-4" style="pointer-events: none;"></h2>
-        <canvas id="enlarged-badge-canvas" style="max-width: 90vw; max-height: 80vh; display: block;"></canvas>
+        <canvas id="enlarged-badge-canvas"></canvas>
         <button id="close-enlarged-badge" class="absolute top-8 right-8 text-white text-4xl font-bold" style="cursor: pointer; background: none; border: none; line-height: 1;">&times;</button>
     </div>
 

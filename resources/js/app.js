@@ -75,10 +75,10 @@ class BadgeCanvasManager {
         }
 
         this.badgeDetails = {
-            'votes': 'The Gilded Horn',
-            'likes': 'Heart of the Community',
-            'posters': 'The Creator\'s Quill',
-            'commentators': 'The Dialogue Weaver'
+            'votes': {title: 'The Gilded Horn', glowClass: 'glow-yellow'},
+            'likes': {title: 'Heart of the Community', glowClass: 'glow-pink'},
+            'posters': {title: 'The Creator\'s Quill', glowClass: 'glow-silver'},
+            'commentators': {title: 'The Dialogue Weaver', glowClass: 'glow-purple'}
         };
 
         this.worker = new RendererWorker();
@@ -131,8 +131,12 @@ class BadgeCanvasManager {
 
             let newActiveBadgeIndex = -1;
             this.badgeLayouts.forEach((layout, index) => {
-                if (mouseX >= layout.x && mouseX <= layout.x + layout.width &&
-                    mouseY >= layout.y && mouseY <= layout.y + layout.height) {
+                const centerX = layout.x + layout.width / 2;
+                const centerY = layout.y + layout.height / 2;
+                const radius = (layout.badgeWidth || layout.width) * 0.45;
+                const distance = Math.sqrt(Math.pow(mouseX - centerX, 2) + Math.pow(mouseY - centerY, 2));
+
+                if (distance < radius) {
                     newActiveBadgeIndex = index;
                 }
             });
@@ -175,17 +179,20 @@ class BadgeCanvasManager {
     }
 
     showEnlargedBadge(badgeKey) {
-        console.log(`'showEnlargedBadge' called with key: '${badgeKey}'`);
-        if (!this.enlargedRenderer) {
-            console.error("❌ Cannot show badge because enlargedRenderer is not initialized.");
-            return;
+        if (!this.enlargedRenderer) return;
+
+        const details = this.badgeDetails[badgeKey] || {title: 'Badge', glowClass: ''};
+
+        this.enlargedBadgeName.textContent = details.title;
+        this.enlargedBadgeName.className = 'text-white text-3xl font-bold mb-4';
+        if (details.glowClass) {
+            this.enlargedBadgeName.classList.add(details.glowClass);
         }
-        this.enlargedBadgeName.textContent = this.badgeDetails[badgeKey] || 'Badge';
+
         this.enlargedRenderer.show(badgeKey);
         this.enlargedContainer.style.display = 'flex';
         setTimeout(() => {
             this.enlargedContainer.classList.add('visible');
-            console.log('✅ Enlarged modal is now visible.');
         }, 10);
     }
 
@@ -195,6 +202,7 @@ class BadgeCanvasManager {
         setTimeout(() => {
             this.enlargedContainer.style.display = 'none';
             this.enlargedRenderer.stop();
+            this.enlargedBadgeName.className = 'text-white text-3xl font-bold mb-4';
         }, 300);
     }
 

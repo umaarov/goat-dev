@@ -19,7 +19,12 @@ function createGlowSpriteMaterial(color) {
 
     const texture = new THREE.CanvasTexture(canvas);
     return new THREE.SpriteMaterial({
-        map: texture, color: color, transparent: true, blending: THREE.AdditiveBlending, depthTest: false, opacity: 0.75
+        map: texture,
+        color: color,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthTest: false,
+        opacity: 0.1
     });
 }
 
@@ -64,7 +69,8 @@ export class BadgeFactory {
         ring2.scale.set(0.8, 0.8, 0.8);
 
         const externalGlow = new THREE.Sprite(createGlowSpriteMaterial(0xffd700));
-        externalGlow.scale.set(6, 6, 1);
+
+        externalGlow.scale.set(11, 11, 1);
 
         group.add(externalGlow, horn1, horn2, ring1, ring2);
 
@@ -111,7 +117,7 @@ export class BadgeFactory {
         orbitRing.rotation.x = Math.PI / 2;
 
         const externalGlow = new THREE.Sprite(createGlowSpriteMaterial(0xaaaaff));
-        externalGlow.scale.set(7.5, 7.5, 1);
+        externalGlow.scale.set(9, 9, 1);
 
         group.add(externalGlow, quillGroup, inkBlot, orbitRing);
         group.rotation.z = Math.PI / 8;
@@ -150,7 +156,7 @@ export class BadgeFactory {
 
         const particles = createParticles('likes');
         const externalGlow = new THREE.Sprite(createGlowSpriteMaterial(0xff0055));
-        externalGlow.scale.set(7.5, 7.5, 1);
+        externalGlow.scale.set(9, 9, 1);
 
         group.add(externalGlow, heart, particles);
         group.update = (time, lightPosition) => {
@@ -192,7 +198,7 @@ export class BadgeFactory {
         const core = new THREE.Mesh(coreGeo, coreMat);
 
         const externalGlow = new THREE.Sprite(createGlowSpriteMaterial(0x6c5ce7));
-        externalGlow.scale.set(6, 6, 1);
+        externalGlow.scale.set(7, 7, 1);
 
         group.add(externalGlow, weaver, core);
         group.update = (time) => {

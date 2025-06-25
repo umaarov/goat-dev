@@ -43,7 +43,8 @@
 #badge-enlarged-container {
     display: flex;
     opacity: 0;
-    transition: opacity 0.3s ease-in-out;
+    transition: opacity 0.4s ease-in-out;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.9) 100%);
 }
 
 #badge-enlarged-container.visible {
@@ -51,6 +52,38 @@
 }
 
 #enlarged-badge-canvas {
-    width: 600px;
-    height: 600px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    outline: none;
+}
+
+#enlarged-badge-name {
+    font-weight: 700;
+    color: #ffffff;
+    transition: text-shadow 0.3s ease-in-out;
+}
+
+#enlarged-badge-name.glow-yellow {
+    text-shadow: 0 0 7px rgba(255, 255, 255, 0.8),
+    0 0 15px rgba(255, 215, 0, 0.7),
+    0 0 30px rgba(255, 215, 0, 0.7);
+}
+
+#enlarged-badge-name.glow-pink {
+    text-shadow: 0 0 7px rgba(255, 255, 255, 0.8),
+    0 0 15px rgba(255, 0, 85, 0.7),
+    0 0 30px rgba(255, 0, 85, 0.7);
+}
+
+#enlarged-badge-name.glow-silver {
+    text-shadow: 0 0 7px rgba(255, 255, 255, 0.8),
+    0 0 15px rgba(170, 170, 255, 0.7),
+    0 0 30px rgba(170, 170, 255, 0.7);
+}
+
+#enlarged-badge-name.glow-purple {
+    text-shadow: 0 0 7px rgba(255, 255, 255, 0.8),
+    0 0 15px rgba(108, 92, 231, 0.7),
+    0 0 30px rgba(108, 92, 231, 0.7);
 }
