@@ -8,6 +8,9 @@
         "build:wasm": "emcc cpp/geometry_optimizer.cpp -o public/assets/wasm/geometry_optimizer.js -O3 -s WASM=1 -s MODULARIZE=1 -s EXPORT_ES6=1 -s EXPORTED_FUNCTIONS=\"['_createComplexWeaverGeometry', '_malloc', '_free']\" -s EXPORTED_RUNTIME_METHODS=\"['cwrap', 'getValue', 'wasmMemory']\""
     },
     "dependencies": {
+        "@types/stats.js": "^0.17.4",
+        "lil-gui": "^0.20.0",
+        "stats.js": "^0.17.0",
         "three": "^0.165.0"
     },
     "devDependencies": {

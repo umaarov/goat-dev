@@ -15,7 +15,6 @@ export class EnlargedBadgeRenderer {
     constructor(canvas) {
         this.canvas = canvas;
 
-        // --- ADDED: Check URL for a `?debug=true` parameter ---
         this.isDebug = new URLSearchParams(window.location.search).has('debug');
 
         this.renderer = new THREE.WebGLRenderer({
@@ -57,7 +56,6 @@ export class EnlargedBadgeRenderer {
         await this._setupEnvironment();
         this._setupPostProcessing();
 
-        // --- MODIFIED: Only set up the debug UI if in debug mode ---
         if (this.isDebug) {
             this._setupDebugUI();
         }

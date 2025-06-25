@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Vote;
 use App\Services\AvatarService;
 use App\Services\ModerationService;
+use App\Services\RatingService;
 use Exception;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
@@ -28,70 +29,23 @@ use Intervention\Image\ImageManager;
 
 class UserController extends Controller
 {
-    protected AvatarService $avatarService;
-    protected ModerationService $moderationService;
     private const PROFILE_IMAGE_SIZE = 300;
     private const PROFILE_IMAGE_QUALITY = 75;
-
     private const HEADER_IMAGE_WIDTH = 1500;
     private const HEADER_IMAGE_QUALITY = 80;
+    protected AvatarService $avatarService;
+    protected ModerationService $moderationService;
+    protected RatingService $ratingService;
 
-    public function __construct(AvatarService $avatarService, ModerationService $moderationService)
+    public function __construct(
+        AvatarService     $avatarService,
+        ModerationService $moderationService,
+        RatingService     $ratingService
+    )
     {
         $this->avatarService = $avatarService;
         $this->moderationService = $moderationService;
-    }
-
-    private function getHeaderTemplates(): array
-    {
-        return [
-            'template_1.jpg' => asset('images/header-templates/template_1.jpg'),
-            'template_2.jpg' => asset('images/header-templates/template_2.jpg'),
-            'template_3.jpg' => asset('images/header-templates/template_3.jpg'),
-            'template_4.jpg' => asset('images/header-templates/template_4.jpg'),
-            'template_5.jpg' => asset('images/header-templates/template_5.jpg'),
-            'template_6.jpg' => asset('images/header-templates/template_6.jpg'),
-            'template_7.jpg' => asset('images/header-templates/template_7.jpg'),
-            'template_8.jpg' => asset('images/header-templates/template_8.jpg'),
-            'template_9.jpg' => asset('images/header-templates/template_9.jpg'),
-            'template_10.jpg' => asset('images/header-templates/template_10.jpg'),
-            'template_11.jpg' => asset('images/header-templates/template_11.jpg'),
-            'template_12.jpg' => asset('images/header-templates/template_12.jpg'),
-        ];
-    }
-
-    private function processAndStoreProfileImage(UploadedFile $uploadedFile, string $directory, string $baseFilename): string
-    {
-        $manager = new ImageManager(new GdDriver());
-        $image = $manager->read($uploadedFile->getRealPath());
-
-        $image->coverDown(self::PROFILE_IMAGE_SIZE, self::PROFILE_IMAGE_SIZE);
-
-        $newExtension = 'webp';
-        $filename = $baseFilename . '.' . $newExtension;
-        $path = $directory . '/' . $filename;
-
-        $encodedImage = $image->encode(new WebpEncoder(quality: self::PROFILE_IMAGE_QUALITY));
-
-        Storage::disk('public')->put($path, $encodedImage);
-        return $path;
-    }
-
-    private function processAndStoreHeaderImage(UploadedFile $uploadedFile, string $directory, string $baseFilename): string
-    {
-        $manager = new ImageManager(new GdDriver());
-        $image = $manager->read($uploadedFile->getRealPath());
-
-        $image->scaleDown(width: self::HEADER_IMAGE_WIDTH);
-
-        $newExtension = 'webp';
-        $filename = $baseFilename . '.' . $newExtension;
-        $path = $directory . '/' . $filename;
-
-        $encodedImage = $image->encode(new WebpEncoder(quality: self::HEADER_IMAGE_QUALITY));
-
-        Storage::disk('public')->put($path, $encodedImage);
-        return $path;
+        $this->ratingService = $ratingService;
     }
 
     final public function showProfile(string $username): View
@@ -111,7 +65,34 @@ class UserController extends Controller
 
         $isOwnProfile = Auth::check() && Auth::id() === $user->id;
         $totalVotesOnUserPosts = $user->posts()->sum('total_votes');
-        return view('users.profile', compact('user', 'isOwnProfile', 'totalVotesOnUserPosts', 'headerBackgroundUrl'));
+
+        $userBadges = $this->ratingService->getUserBadges($user);
+
+        return view('users.profile', compact(
+            'user',
+            'isOwnProfile',
+            'totalVotesOnUserPosts',
+            'headerBackgroundUrl',
+            'userBadges'
+        ));
+    }
+
+    private function getHeaderTemplates(): array
+    {
+        return [
+            'template_1.jpg' => asset('images/header-templates/template_1.jpg'),
+            'template_2.jpg' => asset('images/header-templates/template_2.jpg'),
+            'template_3.jpg' => asset('images/header-templates/template_3.jpg'),
+            'template_4.jpg' => asset('images/header-templates/template_4.jpg'),
+            'template_5.jpg' => asset('images/header-templates/template_5.jpg'),
+            'template_6.jpg' => asset('images/header-templates/template_6.jpg'),
+            'template_7.jpg' => asset('images/header-templates/template_7.jpg'),
+            'template_8.jpg' => asset('images/header-templates/template_8.jpg'),
+            'template_9.jpg' => asset('images/header-templates/template_9.jpg'),
+            'template_10.jpg' => asset('images/header-templates/template_10.jpg'),
+            'template_11.jpg' => asset('images/header-templates/template_11.jpg'),
+            'template_12.jpg' => asset('images/header-templates/template_12.jpg'),
+        ];
     }
 
     final public function getUserPosts(Request $request, string $username): JsonResponse
@@ -165,6 +146,26 @@ class UserController extends Controller
                 'hasMorePages' => false
             ], 500);
         }
+    }
+
+    private function attachUserVoteStatus(LengthAwarePaginator $posts): void
+    {
+        $userVoteMap = collect();
+        if (Auth::check()) {
+            $loggedInUserId = Auth::id();
+            $postIds = $posts->pluck('id')->all();
+
+            if (!empty($postIds)) {
+                $userVoteMap = Vote::where('user_id', $loggedInUserId)
+                    ->whereIn('post_id', $postIds)
+                    ->pluck('vote_option', 'post_id');
+            }
+        }
+
+        $posts->getCollection()->transform(function ($post) use ($userVoteMap) {
+            $post->user_vote = $userVoteMap->get($post->id);
+            return $post;
+        });
     }
 
     final public function getUserVotedPosts(Request $request, string $username): JsonResponse
@@ -226,7 +227,6 @@ class UserController extends Controller
         }
     }
 
-
     final public function edit(): View
     {
         $user = Auth::user();
@@ -235,6 +235,55 @@ class UserController extends Controller
         $headerTemplates = $this->getHeaderTemplates();
 
         return view('users.edit', compact('user', 'available_locales', 'current_locale', 'headerTemplates'));
+    }
+
+    final public function showChangePasswordForm(): View
+    {
+        $user = Auth::user();
+        if (!$user->password && $user->google_id) {
+            return redirect()->route('profile.edit')->with('info', __('messages.info_password_change_not_available_google'));
+        }
+        Log::channel('audit_trail')->info('User accessed change password form.', [
+            'user_id' => $user->id,
+            'username' => $user->username,
+            'ip_address' => request()->ip(),
+        ]);
+        return view('users.change-password');
+    }
+
+    final public function changePassword(Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+
+        if (!$user->password) {
+            return redirect()->back()->with('error', __('messages.error_password_change_not_set'));
+        }
+
+        $validator = Validator::make($request->all(), [
+            'current_password' => ['required', 'string', function ($attribute, $value, $fail) use ($user) {
+                if (!Hash::check($value, $user->password)) {
+                    $fail(__('validation.current_password'));
+                }
+            }],
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator);
+        }
+
+        $user->update([
+            'password' => Hash::make($request->new_password),
+        ]);
+
+        Log::channel('audit_trail')->info('User password changed successfully.', [
+            'user_id' => $user->id,
+            'username' => $user->username,
+            'ip_address' => request()->ip(),
+        ]);
+
+        return redirect()->route('password.change.form')->with('success', __('messages.password_changed_successfully'));
     }
 
     final public function update(Request $request): RedirectResponse
@@ -557,73 +606,38 @@ class UserController extends Controller
         return redirect()->route('profile.edit')->with('success', __('messages.profile_updated_success'));
     }
 
-    final public function showChangePasswordForm(): View
+    private function processAndStoreHeaderImage(UploadedFile $uploadedFile, string $directory, string $baseFilename): string
     {
-        $user = Auth::user();
-        if (!$user->password && $user->google_id) {
-            return redirect()->route('profile.edit')->with('info', __('messages.info_password_change_not_available_google'));
-        }
-        Log::channel('audit_trail')->info('User accessed change password form.', [
-            'user_id' => $user->id,
-            'username' => $user->username,
-            'ip_address' => request()->ip(),
-        ]);
-        return view('users.change-password');
+        $manager = new ImageManager(new GdDriver());
+        $image = $manager->read($uploadedFile->getRealPath());
+
+        $image->scaleDown(width: self::HEADER_IMAGE_WIDTH);
+
+        $newExtension = 'webp';
+        $filename = $baseFilename . '.' . $newExtension;
+        $path = $directory . '/' . $filename;
+
+        $encodedImage = $image->encode(new WebpEncoder(quality: self::HEADER_IMAGE_QUALITY));
+
+        Storage::disk('public')->put($path, $encodedImage);
+        return $path;
     }
 
-    final public function changePassword(Request $request): RedirectResponse
+    private function processAndStoreProfileImage(UploadedFile $uploadedFile, string $directory, string $baseFilename): string
     {
-        $user = Auth::user();
+        $manager = new ImageManager(new GdDriver());
+        $image = $manager->read($uploadedFile->getRealPath());
 
-        if (!$user->password) {
-            return redirect()->back()->with('error', __('messages.error_password_change_not_set'));
-        }
+        $image->coverDown(self::PROFILE_IMAGE_SIZE, self::PROFILE_IMAGE_SIZE);
 
-        $validator = Validator::make($request->all(), [
-            'current_password' => ['required', 'string', function ($attribute, $value, $fail) use ($user) {
-                if (!Hash::check($value, $user->password)) {
-                    $fail(__('validation.current_password'));
-                }
-            }],
-            'new_password' => 'required|string|min:8|confirmed',
-        ]);
+        $newExtension = 'webp';
+        $filename = $baseFilename . '.' . $newExtension;
+        $path = $directory . '/' . $filename;
 
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator);
-        }
+        $encodedImage = $image->encode(new WebpEncoder(quality: self::PROFILE_IMAGE_QUALITY));
 
-        $user->update([
-            'password' => Hash::make($request->new_password),
-        ]);
-
-        Log::channel('audit_trail')->info('User password changed successfully.', [
-            'user_id' => $user->id,
-            'username' => $user->username,
-            'ip_address' => request()->ip(),
-        ]);
-
-        return redirect()->route('password.change.form')->with('success', __('messages.password_changed_successfully'));
-    }
-
-    private function attachUserVoteStatus(LengthAwarePaginator $posts): void
-    {
-        $userVoteMap = collect();
-        if (Auth::check()) {
-            $loggedInUserId = Auth::id();
-            $postIds = $posts->pluck('id')->all();
-
-            if (!empty($postIds)) {
-                $userVoteMap = Vote::where('user_id', $loggedInUserId)
-                    ->whereIn('post_id', $postIds)
-                    ->pluck('vote_option', 'post_id');
-            }
-        }
-
-        $posts->getCollection()->transform(function ($post) use ($userVoteMap) {
-            $post->user_vote = $userVoteMap->get($post->id);
-            return $post;
-        });
+        Storage::disk('public')->put($path, $encodedImage);
+        return $path;
     }
 
     final public function checkUsername(Request $request): JsonResponse
