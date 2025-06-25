@@ -26,7 +26,7 @@
     justify-content: center;
     align-items: center;
     display: flex;
-    z-index: 10;
+    z-index: 40;
     width: 280px;
     height: 155px;
     opacity: 0;
@@ -38,4 +38,19 @@
     width: 100%;
     height: 100%;
     display: block;
+}
+
+#badge-enlarged-container {
+    display: flex;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+#badge-enlarged-container.visible {
+    opacity: 1;
+}
+
+#enlarged-badge-canvas {
+    width: 600px;
+    height: 600px;
 }
