@@ -41,14 +41,21 @@
 }
 
 #badge-enlarged-container {
-    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex; /* Changed from none */
+    justify-content: center;
+    align-items: center;
     opacity: 0;
-    transition: opacity 0.4s ease-in-out;
-    background: radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.9) 100%);
+    background: radial-gradient(ellipse at center, rgba(10, 20, 30, 0.6) 0%, rgba(5, 10, 15, 0.9) 100%);
+    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none; /* The container itself isn't interactive */
 }
 
 #badge-enlarged-container.visible {
     opacity: 1;
+    pointer-events: auto; /* Enable interaction when visible */
 }
 
 #enlarged-badge-canvas {
@@ -58,32 +65,102 @@
     outline: none;
 }
 
+#close-enlarged-badge {
+    position: absolute;
+    top: 30px;
+    right: 40px;
+    font-size: 2.5rem;
+    font-weight: 200;
+    color: rgba(255, 255, 255, 0.5);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+#close-enlarged-badge:hover {
+    color: rgba(255, 255, 255, 0.9);
+    transform: scale(1.1);
+}
+
+#enlarged-badge-info {
+    position: absolute;
+    left: 5vw;
+    width: 90vw;
+    max-width: 400px;
+    padding: 30px;
+    background: rgba(15, 25, 40, 0.4);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transform: translateX(-20px);
+    opacity: 0;
+    transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s, transform 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s;
+}
+
+#badge-enlarged-container.visible #enlarged-badge-info {
+    transform: translateX(0);
+    opacity: 1;
+}
+
 #enlarged-badge-name {
     font-weight: 700;
+    font-size: 2.2rem;
     color: #ffffff;
+    line-height: 1.2;
+    margin: 0;
     transition: text-shadow 0.3s ease-in-out;
 }
 
-#enlarged-badge-name.glow-yellow {
-    text-shadow: 0 0 7px rgba(255, 255, 255, 0.8),
-    0 0 15px rgba(255, 215, 0, 0.7),
-    0 0 30px rgba(255, 215, 0, 0.7);
+#enlarged-badge-context {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 4px 0 0 0;
+    font-style: italic;
 }
 
-#enlarged-badge-name.glow-pink {
-    text-shadow: 0 0 7px rgba(255, 255, 255, 0.8),
-    0 0 15px rgba(255, 0, 85, 0.7),
-    0 0 30px rgba(255, 0, 85, 0.7);
+.info-divider {
+    border: none;
+    height: 1px;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+    margin: 24px 0;
 }
 
-#enlarged-badge-name.glow-silver {
-    text-shadow: 0 0 7px rgba(255, 255, 255, 0.8),
-    0 0 15px rgba(170, 170, 255, 0.7),
-    0 0 30px rgba(170, 170, 255, 0.7);
+#enlarged-badge-description {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 24px;
 }
 
-#enlarged-badge-name.glow-purple {
-    text-shadow: 0 0 7px rgba(255, 255, 255, 0.8),
-    0 0 15px rgba(108, 92, 231, 0.7),
-    0 0 30px rgba(108, 92, 231, 0.7);
+#enlarged-badge-stats {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
 }
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+#enlarged-badge-name.glow-yellow { text-shadow: 0 0 7px #fff, 0 0 15px #ffd700, 0 0 30px #ffd700; }
+#enlarged-badge-name.glow-pink { text-shadow: 0 0 7px #fff, 0 0 15px #ff0055, 0 0 30px #ff0055; }
+#enlarged-badge-name.glow-silver { text-shadow: 0 0 7px #fff, 0 0 15px #aaaaff, 0 0 30px #aaaaff; }
+#enlarged-badge-name.glow-purple { text-shadow: 0 0 7px #fff, 0 0 15px #6c5ce7, 0 0 30px #6c5ce7; }

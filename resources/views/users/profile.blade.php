@@ -206,10 +206,31 @@
         @endfor
     </div>
 
-    <div id="badge-enlarged-container" style="display: none; position: fixed; inset: 0; z-index: 50; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(10px); align-items: center; justify-content: center; flex-direction: column; cursor: pointer;">
-        <h2 id="enlarged-badge-name" class="text-white text-3xl font-bold mb-4" style="pointer-events: none;"></h2>
+    <div id="badge-enlarged-container" style="display: none;">
         <canvas id="enlarged-badge-canvas"></canvas>
-        <button id="close-enlarged-badge" class="absolute top-8 right-8 text-white text-4xl font-bold" style="cursor: pointer; background: none; border: none; line-height: 1;">&times;</button>
+
+        <div id="enlarged-badge-info">
+            <h2 id="enlarged-badge-name"></h2>
+            <p id="enlarged-badge-context"></p>
+            <hr class="info-divider">
+            <p id="enlarged-badge-description"></p>
+            <div id="enlarged-badge-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Rarity</span>
+                    <span id="stat-rarity" class="stat-value"></span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Origin</span>
+                    <span id="stat-origin" class="stat-value"></span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Type</span>
+                    <span id="stat-type" class="stat-value"></span>
+                </div>
+            </div>
+        </div>
+
+        <button id="close-enlarged-badge">&times;</button>
     </div>
 
 @endsection

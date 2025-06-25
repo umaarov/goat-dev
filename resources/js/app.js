@@ -59,8 +59,14 @@ class BadgeCanvasManager {
         console.log('BadgeCanvasManager: Initializing...');
         this.enlargedContainer = document.getElementById('badge-enlarged-container');
         this.enlargedCanvas = document.getElementById('enlarged-badge-canvas');
-        this.enlargedBadgeName = document.getElementById('enlarged-badge-name');
         this.closeEnlargedButton = document.getElementById('close-enlarged-badge');
+
+        this.enlargedBadgeName = document.getElementById('enlarged-badge-name');
+        this.enlargedBadgeContext = document.getElementById('enlarged-badge-context');
+        this.enlargedBadgeDescription = document.getElementById('enlarged-badge-description');
+        this.statRarity = document.getElementById('stat-rarity');
+        this.statOrigin = document.getElementById('stat-origin');
+        this.statType = document.getElementById('stat-type');
 
         if (!this.enlargedContainer) {
             console.error('❌ CRITICAL: Enlarged container #badge-enlarged-container NOT FOUND. Check your HTML.');
@@ -75,10 +81,34 @@ class BadgeCanvasManager {
         }
 
         this.badgeDetails = {
-            'votes': {title: 'The Gilded Horn', glowClass: 'glow-yellow'},
-            'likes': {title: 'Heart of the Community', glowClass: 'glow-pink'},
-            'posters': {title: 'The Creator\'s Quill', glowClass: 'glow-silver'},
-            'commentators': {title: 'The Dialogue Weaver', glowClass: 'glow-purple'}
+            'votes': {
+                title: 'The Gilded Horn',
+                glowClass: 'glow-yellow',
+                context: "Awarded for exceptional community acclaim.",
+                description: "This emblem is granted to members whose posts have garnered the highest esteem, representing a voice that resonates powerfully within the community.",
+                stats: {rarity: "Legendary", origin: "Community Vote", type: "Recognition"}
+            },
+            'likes': {
+                title: 'Heart of the Community',
+                glowClass: 'glow-pink',
+                context: "Awarded for positive and impactful engagement.",
+                description: "Forged in the spirit of connection, this badge is granted to those whose comments consistently receive widespread appreciation and foster a positive environment.",
+                stats: {rarity: "Epic", origin: "Peer Appreciation", type: "Engagement"}
+            },
+            'posters': {
+                title: 'The Creator\'s Quill',
+                glowClass: 'glow-silver',
+                context: "Awarded for prolific and insightful contribution.",
+                description: "A symbol of dedicated creation, this badge recognizes the platform's most active and influential posters, whose contributions form the backbone of the community.",
+                stats: {rarity: "Epic", origin: "Activity Metric", type: "Contribution"}
+            },
+            'commentators': {
+                title: 'The Dialogue Weaver',
+                glowClass: 'glow-purple',
+                context: "Awarded for mastery of conversation.",
+                description: "This badge signifies a member's vital role in sparking and sustaining the most engaging discussions, skillfully weaving threads of dialogue throughout the platform.",
+                stats: {rarity: "Rare", origin: "Discourse Analysis", type: "Communication"}
+            }
         };
 
         this.worker = new RendererWorker();
@@ -128,7 +158,7 @@ class BadgeCanvasManager {
             const containerRect = this.container.getBoundingClientRect();
             const mouseX = event.clientX - containerRect.left;
             const mouseY = event.clientY - containerRect.top;
-            let closestBadge = { index: -1, distance: Infinity };
+            let closestBadge = {index: -1, distance: Infinity};
             this.badgeLayouts.forEach((layout, index) => {
                 const centerX = layout.x + layout.width / 2;
                 const centerY = layout.y + layout.height / 2;
@@ -136,7 +166,7 @@ class BadgeCanvasManager {
                 const distance = Math.sqrt(Math.pow(mouseX - centerX, 2) + Math.pow(mouseY - centerY, 2));
 
                 if (distance < radius && distance < closestBadge.distance) {
-                    closestBadge = { index: index, distance: distance };
+                    closestBadge = {index: index, distance: distance};
                 }
             });
             const newActiveBadgeIndex = closestBadge.index;
@@ -181,12 +211,21 @@ class BadgeCanvasManager {
     showEnlargedBadge(badgeKey) {
         if (!this.enlargedRenderer) return;
 
-        const details = this.badgeDetails[badgeKey] || {title: 'Badge', glowClass: ''};
+        const details = this.badgeDetails[badgeKey] || {};
 
-        this.enlargedBadgeName.textContent = details.title;
-        this.enlargedBadgeName.className = 'text-white text-3xl font-bold mb-4';
+        this.enlargedBadgeName.textContent = details.title || 'Badge';
+        this.enlargedBadgeName.className = '';
         if (details.glowClass) {
             this.enlargedBadgeName.classList.add(details.glowClass);
+        }
+
+        this.enlargedBadgeContext.textContent = details.context || '';
+        this.enlargedBadgeDescription.textContent = details.description || '';
+
+        if (details.stats) {
+            this.statRarity.textContent = details.stats.rarity;
+            this.statOrigin.textContent = details.stats.origin;
+            this.statType.textContent = details.stats.type;
         }
 
         this.enlargedRenderer.show(badgeKey);
@@ -196,14 +235,14 @@ class BadgeCanvasManager {
         }, 10);
     }
 
+
     hideEnlargedBadge() {
         if (!this.enlargedRenderer) return;
         this.enlargedContainer.classList.remove('visible');
         setTimeout(() => {
             this.enlargedContainer.style.display = 'none';
             this.enlargedRenderer.stop();
-            this.enlargedBadgeName.className = 'text-white text-3xl font-bold mb-4';
-        }, 300);
+        }, 500);
     }
 
 }
