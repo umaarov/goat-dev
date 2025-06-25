@@ -7,10 +7,13 @@ import {createParticles} from './particleEffects.js';
 
 let wasmModule;
 
-function createGlowSpriteMaterial(color) {
+function createGlowSpriteMaterial(color, opacity = 0.75) {
     const canvas = new OffscreenCanvas(128, 128);
     const context = canvas.getContext('2d');
-    const gradient = context.createRadialGradient(canvas.width / 2, canvas.height / 2, 0, canvas.width / 2, canvas.height / 2, canvas.width / 2);
+    const gradient = context.createRadialGradient(
+        canvas.width / 2, canvas.height / 2, 0,
+        canvas.width / 2, canvas.height / 2, canvas.width / 2
+    );
     gradient.addColorStop(0.2, 'rgba(255, 255, 255, 1.0)');
     gradient.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
 
@@ -24,7 +27,7 @@ function createGlowSpriteMaterial(color) {
         transparent: true,
         blending: THREE.AdditiveBlending,
         depthTest: false,
-        opacity: 0.1
+        opacity: opacity
     });
 }
 
@@ -33,22 +36,17 @@ export class BadgeFactory {
         wasmModule = module;
     }
 
-    static create(badgeName) {
+    static create(badgeName, options = {}) {
         switch (badgeName) {
-            case 'votes':
-                return this.createVotesBadge();
-            case 'posters':
-                return this.createPostersBadge();
-            case 'likes':
-                return this.createLikesBadge();
-            case 'commentators':
-                return this.createCommentatorsBadge();
-            default:
-                return null;
+            case 'votes': return this.createVotesBadge(options);
+            case 'posters': return this.createPostersBadge(options);
+            case 'likes': return this.createLikesBadge(options);
+            case 'commentators': return this.createCommentatorsBadge(options);
+            default: return null;
         }
     }
 
-    static createVotesBadge() {
+    static createVotesBadge(options) {
         const group = new THREE.Group();
         const hornMaterial = new THREE.MeshPhysicalMaterial({
             color: 0xffd700, metalness: 1.0, roughness: 0.1, sheen: 1, sheenColor: 0xffeec9
@@ -68,8 +66,7 @@ export class BadgeFactory {
         ring2.rotation.x = Math.PI / 1.8;
         ring2.scale.set(0.8, 0.8, 0.8);
 
-        const externalGlow = new THREE.Sprite(createGlowSpriteMaterial(0xffd700));
-
+        const externalGlow = new THREE.Sprite(createGlowSpriteMaterial(0xffd700, options.glowOpacity));
         externalGlow.scale.set(11, 11, 1);
 
         group.add(externalGlow, horn1, horn2, ring1, ring2);
@@ -84,7 +81,7 @@ export class BadgeFactory {
         return group;
     }
 
-    static createPostersBadge() {
+    static createPostersBadge(options) {
         const group = new THREE.Group();
         const quillMaterial = new THREE.MeshPhysicalMaterial({
             color: 0xdddddd,
@@ -116,7 +113,7 @@ export class BadgeFactory {
         const orbitRing = new THREE.Mesh(ringGeo, ringMat);
         orbitRing.rotation.x = Math.PI / 2;
 
-        const externalGlow = new THREE.Sprite(createGlowSpriteMaterial(0xaaaaff));
+        const externalGlow = new THREE.Sprite(createGlowSpriteMaterial(0xaaaaff, options.glowOpacity));
         externalGlow.scale.set(9, 9, 1);
 
         group.add(externalGlow, quillGroup, inkBlot, orbitRing);
@@ -131,7 +128,7 @@ export class BadgeFactory {
         return group;
     }
 
-    static createLikesBadge() {
+    static createLikesBadge(options) {
         const group = new THREE.Group();
         const heartShape = new THREE.Shape();
         heartShape.moveTo(2.5, 2.5);
@@ -155,7 +152,7 @@ export class BadgeFactory {
         heart.rotation.z = Math.PI;
 
         const particles = createParticles('likes');
-        const externalGlow = new THREE.Sprite(createGlowSpriteMaterial(0xff0055));
+        const externalGlow = new THREE.Sprite(createGlowSpriteMaterial(0xff0055, options.glowOpacity));
         externalGlow.scale.set(9, 9, 1);
 
         group.add(externalGlow, heart, particles);
@@ -172,7 +169,7 @@ export class BadgeFactory {
         return group;
     }
 
-    static createCommentatorsBadge() {
+    static createCommentatorsBadge(options) {
         if (!wasmModule) return new THREE.Group();
         const group = new THREE.Group();
         const weaverMat = new THREE.MeshPhysicalMaterial({
@@ -197,7 +194,7 @@ export class BadgeFactory {
         const coreMat = new THREE.MeshBasicMaterial({color: 0x9999ff, transparent: true, opacity: 0.8});
         const core = new THREE.Mesh(coreGeo, coreMat);
 
-        const externalGlow = new THREE.Sprite(createGlowSpriteMaterial(0x6c5ce7));
+        const externalGlow = new THREE.Sprite(createGlowSpriteMaterial(0x6c5ce7, options.glowOpacity));
         externalGlow.scale.set(7, 7, 1);
 
         group.add(externalGlow, weaver, core);

@@ -48,7 +48,7 @@ function init({canvas, width, height, pixelRatio, layouts}) {
     setupLighting();
 
     layouts.forEach(layout => {
-        const badgeModel = BadgeFactory.create(layout.key);
+        const badgeModel = BadgeFactory.create(layout.key, { glowOpacity: 0.75 });
         if (badgeModel) {
             const badgeCamera = new THREE.PerspectiveCamera(50, layout.width / layout.height, 0.1, 1000);
 

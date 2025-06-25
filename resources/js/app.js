@@ -128,18 +128,18 @@ class BadgeCanvasManager {
             const containerRect = this.container.getBoundingClientRect();
             const mouseX = event.clientX - containerRect.left;
             const mouseY = event.clientY - containerRect.top;
-
-            let newActiveBadgeIndex = -1;
+            let closestBadge = { index: -1, distance: Infinity };
             this.badgeLayouts.forEach((layout, index) => {
                 const centerX = layout.x + layout.width / 2;
                 const centerY = layout.y + layout.height / 2;
                 const radius = (layout.badgeWidth || layout.width) * 0.45;
                 const distance = Math.sqrt(Math.pow(mouseX - centerX, 2) + Math.pow(mouseY - centerY, 2));
 
-                if (distance < radius) {
-                    newActiveBadgeIndex = index;
+                if (distance < radius && distance < closestBadge.distance) {
+                    closestBadge = { index: index, distance: distance };
                 }
             });
+            const newActiveBadgeIndex = closestBadge.index;
 
             if (newActiveBadgeIndex !== this.activeBadgeIndex) {
                 this.activeBadgeIndex = newActiveBadgeIndex;

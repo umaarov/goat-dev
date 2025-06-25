@@ -109,7 +109,7 @@ export class EnlargedBadgeRenderer {
         this.onResize();
         window.addEventListener('resize', this.onResize);
 
-        this.currentBadge = BadgeFactory.create(badgeKey);
+        this.currentBadge = BadgeFactory.create(badgeKey, { glowOpacity: 0.1 });
         if (this.currentBadge) {
             this.scene.add(this.currentBadge);
         }
