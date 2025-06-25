@@ -11,8 +11,18 @@ export default defineConfig({
         tailwindcss(),
     ],
     server: {
+        // port: 5175,
         hmr: {
             overlay: false
-        }
+        },
+    },
+    worker : {
+        format: 'es',
+        plugins: [
+            laravel({
+                input: ['resources/js/workers/renderer.worker.js'],
+                refresh: true,
+            }),
+        ],
     }
 });

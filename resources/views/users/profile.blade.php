@@ -39,7 +39,10 @@
                         $showSubUsername = ($user->first_name || $user->last_name);
                     @endphp
                     <div class="relative flex-shrink-0">
-                        <div id="badge-container"><canvas id="badge-canvas"></canvas></div>
+                        <div id="badge-container">
+                            <canvas id="badge-canvas">
+                            </canvas>
+                        </div>
                         <img src="{{ $profilePic }}"
                              alt="{{ __('messages.profile.alt_profile_picture', ['username' => $user->username]) }}"
                              class="h-24 w-24 rounded-full object-cover border-2 {{ $hasBackground ? 'border-white/50' : 'border-gray-200' }} cursor-pointer zoomable-image"

@@ -1,6 +1,7 @@
 import './bootstrap';
 import RendererWorker from './workers/renderer.worker.js?worker';
 
+
 class BadgeCanvasManager {
     constructor() {
         this.container = document.getElementById('badge-container');
