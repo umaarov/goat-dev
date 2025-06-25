@@ -1,4 +1,5 @@
 // import './bootstrap';
+import { BadgeFactory } from './modules/BadgeFactory.js';
 import RendererWorker from './workers/renderer.worker.js?worker';
 import {EnlargedBadgeRenderer} from './EnlargedBadgeRenderer.js';
 
@@ -130,6 +131,22 @@ class BadgeCanvasManager {
             }
         };
 
+
+        // this.init();
+        this._initializeAndLoadAssets();
+    }
+
+    async _initializeAndLoadAssets() {
+        const wasmUrl = '/assets/wasm/geometry_optimizer.js';
+
+        try {
+            const wasmFactory = await import(/* @vite-ignore */ wasmUrl);
+            const wasmInstance = await wasmFactory.default();
+            BadgeFactory.setWasm(wasmInstance);
+            console.log('✅ WASM module for Dialogue Weaver is ready on the main thread.');
+        } catch (e) {
+            console.error('❌ Main thread failed to load WASM module:', e);
+        }
 
         this.init();
     }
