@@ -38,7 +38,11 @@
                         $showSubUsername = ($user->first_name || $user->last_name);
                     @endphp
                     <div class="relative flex-shrink-0">
-                        <div id="badge-container">
+                        @php
+                            $earnedBadgeKeys = !empty($userBadges) ? array_keys($userBadges) : [];
+                        @endphp
+
+                        <div id="badge-container" data-earned-badges="{{ json_encode($earnedBadgeKeys) }}">
                             <canvas id="badge-canvas">
                             </canvas>
                         </div>

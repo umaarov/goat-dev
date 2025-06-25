@@ -12,6 +12,17 @@ class BadgeCanvasManager {
             return;
         }
 
+        let earnedBadges = [];
+        try {
+            const earnedBadgesData = this.container.dataset.earnedBadges;
+            if (earnedBadgesData) {
+                earnedBadges = JSON.parse(earnedBadgesData);
+            }
+        } catch (e) {
+            console.error('Could not parse earned badges data:', e);
+            earnedBadges = [];
+        }
+
         console.log('BadgeCanvasManager: Initializing...');
 
         const badgeRenderArea = {width: 80, height: 80};
@@ -22,7 +33,9 @@ class BadgeCanvasManager {
             {key: 'commentators', x: 120, y: -12, width: 70, height: 70},
         ];
 
-        this.badgeLayouts = originalBadgeLayouts.map(layout => {
+        this.badgeLayouts = originalBadgeLayouts
+            .filter(layout => earnedBadges.includes(layout.key))
+            .map(layout => {
             const offsetX = (badgeRenderArea.width - layout.width) / 2;
             const offsetY = (badgeRenderArea.height - layout.height) / 2;
             return {
