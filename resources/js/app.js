@@ -1,5 +1,5 @@
 // import './bootstrap';
-import { BadgeFactory } from './modules/BadgeFactory.js';
+import {BadgeFactory} from './modules/BadgeFactory.js';
 import RendererWorker from './workers/renderer.worker.js?worker';
 import {EnlargedBadgeRenderer} from './EnlargedBadgeRenderer.js';
 
@@ -133,7 +133,11 @@ class BadgeCanvasManager {
 
 
         // this.init();
-        this._initializeAndLoadAssets();
+        this._initializeAndLoadAssets().then(r => {
+            console.log('BadgeCanvasManager: Assets initialized and loaded.');
+        }).catch(error => {
+            console.error('BadgeCanvasManager: Error during initialization:', error);
+        });
     }
 
     async _initializeAndLoadAssets() {
