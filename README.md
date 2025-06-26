@@ -1,66 +1,187 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# GOAT: Social Debate Platform
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+GOAT is a sophisticated social debate application engineered with the Laravel 12 framework. It is designed to provide a feature-rich, scalable, and secure environment for user-driven discussions. The platform's architecture leverages modern design patterns and integrates several advanced technologies, including artificial intelligence for content moderation and real-time 3D graphics for user engagement.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Core Architectural Features
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+The platform is built with a focus on performance, security, and a rich user experience.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+* **AI-Driven Content Moderation Pipeline**: Integrates **Google's Gemini Pro API** for real-time analysis and moderation of all user-generated content, including text (posts, comments), images, and external URLs, augmented by a local, configurable keyword-based filter.
 
-## Learning Laravel
+* **AI-Assisted Asset Generation**: Leverages **Cloudflare's Stable Diffusion AI** to empower users to generate unique profile picture assets directly from text-based prompts.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+* **Real-Time 3D Rendering Engine**: Utilizes a **Three.js/WebGL** engine running in a dedicated **Web Worker** to render complex, interactive 3D user achievement badges. This offloads heavy rendering from the main thread, ensuring a smooth and responsive UI.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+* **WebAssembly (WASM) Module Integration**: Employs C++ modules compiled to WebAssembly via Emscripten for performance-critical, computationally intensive geometry calculations used in the 3D rendering engine.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+* **Secure Authentication & Authorization**: Implements a robust authentication system supporting both local credentials and **Google OAuth2**. The application is hardened with a strict Content Security Policy (CSP), security headers, and follows best practices for user data protection.
 
-## Laravel Sponsors
+* **Advanced Search & Discovery**: Features a sophisticated search system powered by **Levenshtein distance** and **Soundex phonetic algorithms** to deliver accurate "fuzzy" search results for both content and users.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+* **System Administration & Maintenance Subsystem**: Includes a suite of powerful custom Artisan commands for database cleanup, sitemap generation, image optimization, and an advanced, filterable command-line log viewer.
 
-### Premium Partners
+* **Automated Image Processing Pipeline**: All user-uploaded image assets are automatically processed, optimized, and converted to the next-generation **WebP** format to reduce bandwidth and improve load times.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+* **Search Engine Optimization & Internationalization (i18n)**: Features automated sitemap generation with ping submissions to Google and Bing to ensure optimal indexing. The platform is fully internationalized with support for multiple locales.
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Technology Stack
 
-## Code of Conduct
+The project is implemented using a curated selection of modern and powerful technologies.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+* **Backend**: PHP 8.3+, Laravel 12, MySQL
+* **Frontend**: JavaScript (ESM), Three.js (WebGL), GLSL, Tailwind CSS, Vite
+* **High-Performance Computing**: C++ compiled to WebAssembly (WASM) via Emscripten
+* **Core APIs**: Google Gemini API, Stable Diffusion, Google OAuth 2.0
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Local Development Environment Setup
+
+### Prerequisites
+
+* PHP >= 8.3
+* Composer
+* Node.js & npm
+* MySQL (or a compatible database)
+* **Emscripten SDK**: Required for compiling the C++ to WASM module. See the [official documentation](https://emscripten.org/docs/getting_started/downloads.html) for installation.
+
+### Installation Steps
+
+1.  **Clone the repository:**
+    ```sh
+    git clone [https://github.com/umaarov/goat-dev.git](https://github.com/umaarov/goat-dev.git)
+    cd goat-dev
+    ```
+
+2.  **Install backend dependencies:**
+    ```sh
+    composer install
+    ```
+
+3.  **Install frontend dependencies:**
+    ```sh
+    npm install
+    ```
+
+4.  **Configure the Environment:**
+    * Create the environment configuration file:
+        ```sh
+        cp .env.example .env
+        ```
+    * Generate a unique application key:
+        ```sh
+        php artisan key:generate
+        ```
+    * Populate the `.env` file with your database credentials, API keys, and other required values. Refer to the table below.
+
+5.  **Database Migration:**
+    ```sh
+    php artisan migrate
+    ```
+
+6.  **Compile the WebAssembly Module:**
+    * Ensure the Emscripten SDK environment is active in your terminal.
+    * Execute the compilation script:
+        ```sh
+        bash build.sh
+        ```
+    * This generates `geometry_optimizer.js` and `geometry_optimizer.wasm` in `public/assets/wasm/`.
+
+7.  **Build Frontend Assets:**
+    ```sh
+    npm run build
+    ```
+
+8.  **Run Local Servers:**
+    * Start the PHP development server:
+        ```sh
+        php artisan serve
+        ```
+    * In a separate terminal, start the Vite HMR server:
+        ```sh
+        npm run dev
+        ```
+
+9.  **Configure Task Scheduler:**
+    * For scheduled tasks to function correctly in a production environment, add the following Cron entry to your server:
+        ```sh
+        * * * * * cd /goat-dev && php artisan schedule:run >> /dev/null 2>&1
+        ```
+
+---
+
+## Environment Configuration
+
+The following `.env` variables are critical for full application functionality.
+
+| Variable                | Description                                                   |
+|-------------------------|---------------------------------------------------------------|
+| `DB_CONNECTION`         | The database driver (e.g., `mysql`).                          |
+| `DB_HOST`               | The database host.                                            |
+| `DB_PORT`               | The database port.                                            |
+| `DB_DATABASE`           | The database schema name.                                     |
+| `DB_USERNAME`           | The database user.                                            |
+| `DB_PASSWORD`           | The database user's password.                                 |
+| `GOOGLE_CLIENT_ID`      | The OAuth Client ID from your Google Cloud project.           |
+| `GOOGLE_CLIENT_SECRET`  | The OAuth Client Secret from your Google Cloud project.       |
+| `GOOGLE_REDIRECT_URI`   | The configured OAuth redirect URI.                            |
+| `GEMINI_API_KEY`        | Your API key for the Google Gemini AI service.                |
+| `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare Account ID for AI services.                   |
+| `CLOUDFLARE_API_TOKEN`  | A Cloudflare API Token with AI permissions.                   |
+| `CLOUDFLARE_AI_MODEL`   | The specific Cloudflare AI model to use for image generation. |
+| `MAIL_MAILER`           | The mail driver (e.g., `smtp`).                               |
+| `MAIL_HOST`             | The SMTP server host.                                         |
+| `MAIL_USERNAME`         | The SMTP username for authentication.                         |
+| `MAIL_PASSWORD`         | The SMTP password for authentication.                         |
+
+---
+
+## Command-Line Interface (CLI)
+
+The application provides a set of custom Artisan commands for system maintenance and administration.
+
+* `users:cleanup-unverified`
+    * **Description**: Deletes user accounts that have not been verified via email within the configured timeframe (default: 1 hour).
+    * **Usage**: `php artisan users:cleanup-unverified`
+    * **Schedule**: Executes every ten minutes.
+
+* `sitemap:generate`
+    * **Description**: Generates a new `sitemap.xml` file containing all application routes accessible to search engines.
+    * **Usage**: `php artisan sitemap:generate`
+    * **Schedule**: Executes daily at 02:00.
+
+* `images:optimize`
+    * **Description**: A batch-processing command that finds and converts all existing JPEG/PNG images for posts and profiles to the high-efficiency WebP format.
+    * **Usage**: `php artisan images:optimize`
+
+* `app:show-logs`
+    * **Description**: An advanced, interactive log viewer for the terminal.
+    * **Usage**: `php artisan app:show-logs [options]`
+    * **Options**:
+        * `--lines`: Number of lines to show.
+        * `--channel`: Specify the log channel (e.g., `laravel`, `audit_trail`).
+        * `--date`: View logs for a specific date (YYYY-MM-DD).
+        * `--grep`: Filter lines containing a specific string (case-insensitive).
+        * `--tail`: Continuously tail the log file for real-time monitoring.
+
+---
+
+## Contribution
+
+We welcome contributions to enhance the platform. Please adhere to the following process for submitting changes.
+
+1.  Fork the repository.
+2.  Create a new feature branch (`git checkout -b feature/YourFeature`).
+3.  Commit your changes with clear, descriptive messages (`git commit -m 'feat: Implement YourFeature'`).
+4.  Push the branch to your fork (`git push origin feature/YourFeature`).
+5.  Open a pull request for review.
+
+---
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is open-source software licensed under the [MIT License](https://opensource.org/licenses/MIT).
