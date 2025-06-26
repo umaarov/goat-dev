@@ -217,20 +217,25 @@
     @endif
 
     @yield('content')
-    <footer class="mb-8 text-center text-gray-700 text-xs leading-relaxed px-4">
-        <div class="space-y-4">
-            <div class="flex flex-wrap justify-center gap-4 text-sm text-blue-800">
-                <a href="{{ route('about') }}" class="hover:underline">{{ __('messages.about_us_nav') }}</a>
-                <a href="{{ route('terms') }}" class="hover:underline">{{ __('messages.terms_of_use_nav') }}</a>
-                <a href="{{ route('sponsorship') }}" class="hover:underline">{{ __('messages.sponsorship_nav') }}</a>
-                <a href="{{ route('ads') }}" class="hover:underline">{{ __('messages.ads_nav') }}</a>
-                <a href="{{ route('contribution') }}"
-                   class="hover:underline">{{ __('messages.contribution.title_nav') }}</a>
-            </div>
+        <footer class="mb-8 text-center text-gray-700 text-xs leading-relaxed px-4">
+            <div class="space-y-4">
+                <div class="flex flex-wrap justify-center gap-4 text-sm text-blue-800">
+                    <a href="{{ route('about') }}" class="hover:underline">{{ __('messages.about_us_nav') }}</a>
+                    <a href="{{ route('terms') }}" class="hover:underline">{{ __('messages.terms_of_use_nav') }}</a>
+                    <a href="{{ route('sponsorship') }}" class="hover:underline">{{ __('messages.sponsorship_nav') }}</a>
+                    <a href="{{ route('ads') }}" class="hover:underline">{{ __('messages.ads_nav') }}</a>
+                    <a href="{{ route('contribution') }}"
+                       class="hover:underline">{{ __('messages.contribution.title_nav') }}</a>
+                </div>
 
-            <p class="font-semibold">{{ __('messages.copyright_text') }}</p>
-        </div>
-    </footer>
+                <div class="flex items-center justify-center gap-x-2 mb-1">
+                    <p class="font-semibold">{{ __('messages.copyright_text') }}</p>
+                    <a href="https://buymeacoffee.com/umarov" target="_blank" rel="noopener noreferrer" title="Support this project with a coffee" class="inline-block transition-transform duration-200 hover:scale-105">
+                        <img src="{{ asset('images/bmc-logo-no-background.png') }}" alt="Buy Me A Coffee" class="h-4 w-auto">
+                    </a>
+                </div>
+            </div>
+        </footer>
 
 </main>
 
