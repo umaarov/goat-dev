@@ -109,7 +109,7 @@ The project is implemented using a curated selection of modern and powerful tech
 9.  **Configure Task Scheduler:**
     * For scheduled tasks to function correctly in a production environment, add the following Cron entry to your server:
         ```sh
-        * * * * * cd /goat-dev && php artisan schedule:run >> /dev/null 2>&1
+        * * * * * cd /your-project-folder && php artisan schedule:run >> /dev/null 2>&1
         ```
 
 ---
