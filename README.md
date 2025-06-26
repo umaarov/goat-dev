@@ -53,7 +53,7 @@ The project is implemented using a curated selection of modern and powerful tech
 
 1.  **Clone the repository:**
     ```sh
-    git clone [https://github.com/umaarov/goat-dev.git](https://github.com/umaarov/goat-dev.git)
+    git clone https://github.com/umaarov/goat-dev.git
     cd goat-dev
     ```
 
