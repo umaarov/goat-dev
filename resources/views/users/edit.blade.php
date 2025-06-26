@@ -1,4 +1,4 @@
-@php use Illuminate\Support\Facades\Storage;use Illuminate\Support\Str; @endphp
+@php use Illuminate\Support\Carbon;use Illuminate\Support\Facades\Storage;use Illuminate\Support\Str; @endphp
 @extends('layouts.app')
 
 @section('title', __('messages.edit_profile_title'))
@@ -105,6 +105,54 @@
                                    class="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
                             <span>{{ __('messages.revert_to_initials_pfp_label') }}</span>
                         </label>
+                    </div>
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <h4 class="text-sm font-semibold text-gray-600 mb-2">... or generate with AI</h4>
+                        @php
+                            $today = Carbon::today();
+                            $lastGenDate = $user->last_ai_generation_date ? Carbon::parse($user->last_ai_generation_date) : null;
+                            $monthlyLimit = 5;
+                            $dailyLimit = 2;
+                            $monthlyCount = ($lastGenDate && $lastGenDate->isSameMonth($today)) ? $user->ai_generations_monthly_count : 0;
+                            $dailyCount = ($lastGenDate && $lastGenDate->isSameDay($today)) ? $user->ai_generations_daily_count : 0;
+                            $monthlyRemaining = $monthlyLimit - $monthlyCount;
+                            $dailyRemaining = $dailyLimit - $dailyCount;
+                        @endphp
+                        <div class="mt-4">
+                            <label for="ai-prompt" class="block text-sm font-medium text-gray-700">Prompt</label>
+                            <div class="mt-1">
+                                <textarea id="ai-prompt" name="ai_prompt" rows="3"
+                                          class="block w-full rounded-md border-gray-300 shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] focus:border-blue-500 p-2 focus:ring-blue-500 sm:text-sm"
+                                          placeholder="A majestic lion wearing a crown, studio lighting, hyperrealistic..."></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <button type="button" id="generate-ai-image-btn"
+                                    class="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-800 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    @if($monthlyRemaining <= 0 || $dailyRemaining <= 0) disabled @endif>
+                                <svg id="generate-icon" class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg"
+                                     viewBox="0 0 20 20" fill="currentColor">
+                                    <path
+                                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                </svg>
+                                <svg id="loading-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden"
+                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span id="generate-text">Generate</span>
+                            </button>
+                            <div class="text-sm text-gray-600">
+                                <p>Limits:
+                                    <span id="daily-remaining" class="font-medium">{{ $dailyRemaining }}</span> Today,
+                                    <span id="monthly-remaining" class="font-medium">{{ $monthlyRemaining }}</span> This
+                                    Month
+                                </p>
+                            </div>
+                        </div>
+                        <div id="ai-error-message" class="mt-2 text-sm font-medium text-red-600"></div>
                     </div>
                 </div>
                 {{-- Header Background Section --}}
@@ -289,23 +337,39 @@
 
         </div>
     </div>
-{{--    @section('scripts')--}}
-        <script>
-            const usernameTranslations = {
-                checking: @json(__('messages.username_availability_checking')),
-                available: @json(__('messages.username_available')),
-                taken: @json(__('messages.username_taken')),
-                couldNotVerify: @json(__('messages.username_could_not_verify')),
-                minLength: @json(__('messages.username_min_length')),
-                maxLength: @json(__('messages.username_max_length')),
-                startsWithLetter: @json(__('messages.username_startsWithLetter')),
-                onlyValidChars: @json(__('messages.username_onlyValidChars')),
-                notOnlyNumbers: @json(__('messages.username_notOnlyNumbers')),
-                noConsecutiveChars: @json(__('messages.username_noConsecutiveChars'))
-            };
+    <div id="ai-image-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="bg-white rounded-lg shadow-xl p-4 sm:p-6 w-full max-w-md mx-4 sm:mx-auto">
+            <div class="text-center">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4" id="modal-title">Your Generated Image</h3>
+                <div class="mb-4 bg-gray-100 rounded-md overflow-hidden aspect-square">
+                    <img id="generated-image-preview" src="" alt="AI Generated Preview" class="w-full h-full object-contain">
+                </div>
+                <div class="flex justify-center gap-4">
+                    <button id="close-ai-modal-btn" type="button" class="px-5 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 font-semibold">Regenerate</button>
+                    <button id="accept-ai-image-btn" type="button" class="px-5 py-2 bg-blue-800 text-white rounded-md hover:bg-blue-900 font-semibold">Accept & Use</button>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+    {{--    @section('scripts')--}}
+    @push('scripts')
+    <script>
+        const usernameTranslations = {
+            checking: @json(__('messages.username_availability_checking')),
+            available: @json(__('messages.username_available')),
+            taken: @json(__('messages.username_taken')),
+            couldNotVerify: @json(__('messages.username_could_not_verify')),
+            minLength: @json(__('messages.username_min_length')),
+            maxLength: @json(__('messages.username_max_length')),
+            startsWithLetter: @json(__('messages.username_startsWithLetter')),
+            onlyValidChars: @json(__('messages.username_onlyValidChars')),
+            notOnlyNumbers: @json(__('messages.username_notOnlyNumbers')),
+            noConsecutiveChars: @json(__('messages.username_noConsecutiveChars'))
+        };
 
-            // Default SVG for image placeholder (no text to translate here)
-            const defaultPreviewIconSVG = `
+        // Default SVG for image placeholder (no text to translate here)
+        const defaultPreviewIconSVG = `
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none"
              viewBox="0 0 24 24" stroke="currentColor">
                                                      <path
@@ -318,261 +382,379 @@
 
             </svg>`;
 
-            // DOM element references
-            const removeProfilePictureCheckbox = document.getElementById('remove_profile_picture');
-            const profilePictureFinalInput = document.getElementById('profile_picture_final');
-            const profilePictureImgPreview = document.getElementById('profile_picture_img_preview');
-            const profilePicturePlaceholderIcon = document.getElementById('profile_picture_placeholder_icon');
+        // DOM element references
+        const removeProfilePictureCheckbox = document.getElementById('remove_profile_picture');
+        const profilePictureFinalInput = document.getElementById('profile_picture_final');
+        const profilePictureImgPreview = document.getElementById('profile_picture_img_preview');
+        const profilePicturePlaceholderIcon = document.getElementById('profile_picture_placeholder_icon');
 
-            if (removeProfilePictureCheckbox && profilePictureFinalInput) {
-                removeProfilePictureCheckbox.addEventListener('change', function () {
-                    if (this.checked) {
-                        profilePictureFinalInput.value = '';
-                        const triggerInput = document.getElementById('profile_picture_trigger');
-                        if (triggerInput) triggerInput.value = '';
+        if (removeProfilePictureCheckbox && profilePictureFinalInput) {
+            removeProfilePictureCheckbox.addEventListener('change', function () {
+                if (this.checked) {
+                    profilePictureFinalInput.value = '';
+                    const triggerInput = document.getElementById('profile_picture_trigger');
+                    if (triggerInput) triggerInput.value = '';
 
-                        if (profilePictureImgPreview) {
-                            profilePictureImgPreview.classList.add('hidden');
-                            profilePictureImgPreview.src = '#';
+                    if (profilePictureImgPreview) {
+                        profilePictureImgPreview.classList.add('hidden');
+                        profilePictureImgPreview.src = '#';
+                    }
+                    if (profilePicturePlaceholderIcon) profilePicturePlaceholderIcon.classList.remove('hidden');
+
+                    if (window.currentCropperInstance && window.lastTriggeredImageInputId === 'profile_picture_trigger') {
+                        window.currentCropperInstance.destroy();
+                        window.currentCropperInstance = null;
+                        document.getElementById('imageCropModalGlobal').classList.add('hidden');
+                    }
+                }
+            });
+        }
+
+        // START: External Link Icon Logic
+        const SvgIconCollection = {
+            telegram: '<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.2,4.4L2.9,10.7c-1.1,0.4-1.1,1.1-0.2,1.3l4.1,1.3l1.6,4.8c0.2,0.5,0.1,0.7,0.6,0.7c0.4,0,0.6-0.2,0.8-0.4c0.1-0.1,1-1,2-2l4.2,3.1c0.8,0.4,1.3,0.2,1.5-0.7l2.8-13.1C20.6,4.6,19.9,4,19.2,4.4z M17.1,7.4l-7.8,7.1L9,17.8L7.4,13l9.2-5.8C17,6.9,17.4,7.1,17.1,7.4z"/></svg>',
+            twitter: '<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
+            instagram: '<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.316.011 7.053.069 2.59.284.287 2.59.07 7.053.011 8.316 0 8.741 0 12c0 3.259.011 3.684.069 4.947.217 4.46 2.522 6.769 7.053 6.984 1.267.058 1.692.069 4.947.069 3.259 0 3.684-.011 4.947-.069 4.46-.217 6.769-2.522 6.984-7.053.058-1.267.069-1.692.069-4.947 0-3.259-.011-3.684-.069-4.947-.217-4.46-2.522-6.769-7.053-6.984C15.684.011 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>',
+            facebook: '<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12c6.627 0 12-5.373 12-12S18.627 0 12 0zm3.055 8.181h-1.717c-.594 0-.708.282-.708.695v.978h2.399l-.311 2.445h-2.088V20.5h-2.523v-8.199H8.222V9.854h1.887V8.69c0-1.871 1.142-2.89 2.813-2.89a15.868 15.868 0 011.67.087v2.204h-.986c-.908 0-1.084.432-1.084 1.065v.025z"/></svg>',
+            linkedin: '<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg>',
+            github: '<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.026 2.747-1.026.546 1.379.201 2.398.098 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.922.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.001 10.001 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/></svg>',
+            default: '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24"><path d="M13.0601 10.9399C15.3101 13.1899 15.3101 16.8299 13.0601 19.0699C10.8101 21.3099 7.17009 21.3199 4.93009 19.0699C2.69009 16.8199 2.68009 13.1799 4.93009 10.9399" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>  <path d="M10.59 13.4099C8.24996 11.0699 8.24996 7.26988 10.59 4.91988C12.93 2.56988 16.73 2.57988 19.08 4.91988C21.43 7.25988 21.42 11.0599 19.08 13.4099" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        };
+
+        function getDomainIconSvg(url) {
+            try {
+                const rawHostname = new URL(url).hostname;
+
+                if (!rawHostname || typeof rawHostname !== 'string') {
+                    return SvgIconCollection.default;
+                }
+                const hostname = rawHostname.toLowerCase();
+
+                const checkDomain = (targetDomain) => {
+                    if (hostname === targetDomain) {
+                        return true;
+                    }
+                    return hostname.endsWith('.' + targetDomain);
+
+                };
+
+                if (checkDomain('t.me') || checkDomain('telegram.me')) {
+                    return SvgIconCollection.telegram;
+                }
+                if (checkDomain('twitter.com') || checkDomain('x.com')) {
+                    return SvgIconCollection.twitter;
+                }
+                if (checkDomain('instagram.com')) {
+                    return SvgIconCollection.instagram;
+                }
+                if (checkDomain('facebook.com')) {
+                    return SvgIconCollection.facebook;
+                }
+                if (checkDomain('linkedin.com')) {
+                    return SvgIconCollection.linkedin;
+                }
+                if (checkDomain('github.com')) {
+                    return SvgIconCollection.github;
+                }
+
+                return SvgIconCollection.default;
+            } catch (e) {
+                return SvgIconCollection.default;
+            }
+        }
+
+        function updateDynamicLinkIcon(inputElement, iconContainerId) {
+            const iconContainer = document.getElementById(iconContainerId);
+            if (iconContainer) {
+                iconContainer.innerHTML = getDomainIconSvg(inputElement.value);
+            }
+        }
+
+        // END: External Link Icon Logic
+
+        document.addEventListener('DOMContentLoaded', function () {
+            initUsernameChecker();
+
+            const profilePictureTriggerInput = document.getElementById('profile_picture_trigger');
+
+            // Event listener for profile picture trigger input
+            if (profilePictureTriggerInput && removeProfilePictureCheckbox) {
+                profilePictureTriggerInput.addEventListener('change', function () {
+                    // When a new file is selected, uncheck "revert to initials"
+                    if (this.files && this.files.length > 0) {
+                        removeProfilePictureCheckbox.checked = false;
+                    }
+                });
+            }
+
+            for (let i = 0; i < 3; i++) {
+                const inputElement = document.getElementById(`external_link_${i}`);
+                if (inputElement && inputElement.value) {
+                    updateDynamicLinkIcon(inputElement, `icon_container_external_link_${i}`);
+                }
+            }
+
+
+            // Function to initialize username availability checker
+            function initUsernameChecker() {
+                const usernameInput = document.getElementById('username');
+                const debounceTimeout = 500;
+                let typingTimer;
+                let lastCheckedUsername = usernameInput.value.trim();
+
+                const statusElement = document.getElementById('username-status');
+
+                function checkUsername() {
+                    const username = usernameInput.value.trim();
+
+                    if (username === '') {
+                        statusElement.textContent = '';
+                        usernameInput.classList.remove('border-red-500', 'border-green-500');
+                        lastCheckedUsername = '';
+                        return;
+                    }
+
+                    if (username === lastCheckedUsername && !usernameInput.classList.contains('border-red-500')) {
+                        if (statusElement.classList.contains('text-red-600') && usernameInput.classList.contains('border-red-500')) {
+                        } else {
+                            return;
                         }
-                        if (profilePicturePlaceholderIcon) profilePicturePlaceholderIcon.classList.remove('hidden');
+                    }
 
-                        if (window.currentCropperInstance && window.lastTriggeredImageInputId === 'profile_picture_trigger') {
-                            window.currentCropperInstance.destroy();
-                            window.currentCropperInstance = null;
-                            document.getElementById('imageCropModalGlobal').classList.add('hidden');
+                    const minLength = 5;
+                    const maxLength = 24;
+                    const startsWithLetter = /^[a-zA-Z]/.test(username);
+                    const onlyValidChars = /^[a-zA-Z0-9_-]+$/.test(username);
+                    const notOnlyNumbers = !/^\d+$/.test(username);
+                    const noConsecutiveChars = !/(.)\1{3,}/.test(username);
+                    let errorMessage = null;
+
+                    if (username.length < minLength) errorMessage = usernameTranslations.minLength;
+                    else if (username.length > maxLength) errorMessage = usernameTranslations.maxLength;
+                    else if (!startsWithLetter) errorMessage = usernameTranslations.startsWithLetter;
+                    else if (!onlyValidChars) errorMessage = usernameTranslations.onlyValidChars;
+                    else if (!notOnlyNumbers) errorMessage = usernameTranslations.notOnlyNumbers;
+                    else if (!noConsecutiveChars) errorMessage = usernameTranslations.noConsecutiveChars;
+
+                    if (errorMessage) {
+                        statusElement.className = 'mt-1 text-sm text-red-600';
+                        statusElement.textContent = errorMessage;
+                        usernameInput.classList.remove('border-green-500');
+                        usernameInput.classList.add('border-red-500');
+                        return;
+                    }
+
+                    statusElement.className = 'mt-1 text-sm text-gray-500';
+                    statusElement.textContent = usernameTranslations.checking;
+
+                    fetch('{{ route("check.username") }}?username=' + encodeURIComponent(username), {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                        },
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.available) {
+                                statusElement.className = 'mt-1 text-sm text-green-600';
+                                statusElement.textContent = data.message || usernameTranslations.available;
+                                usernameInput.classList.remove('border-red-500');
+                                usernameInput.classList.add('border-green-500');
+                                lastCheckedUsername = username;
+                            } else {
+                                statusElement.className = 'mt-1 text-sm text-red-600';
+                                statusElement.textContent = data.message || usernameTranslations.taken;
+                                usernameInput.classList.remove('border-green-500');
+                                usernameInput.classList.add('border-red-500');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error checking username:', error);
+                            statusElement.className = 'mt-1 text-sm text-gray-500';
+                            statusElement.textContent = usernameTranslations.couldNotVerify;
+                            usernameInput.classList.remove('border-green-500', 'border-red-500');
+                        });
+                }
+
+                usernameInput.addEventListener('input', function () {
+                    clearTimeout(typingTimer);
+                    statusElement.textContent = '';
+                    usernameInput.classList.remove('border-red-500', 'border-green-500');
+                    typingTimer = setTimeout(checkUsername, debounceTimeout);
+                });
+                usernameInput.addEventListener('blur', checkUsername);
+            }
+
+            const templateContainer = document.getElementById('template-selector-container');
+            const templateInput = document.getElementById('header_background_template_input');
+            const fileInput = document.getElementById('header_background_upload_input');
+            const removeCheckbox = document.getElementById('remove_header_background');
+
+            if (templateContainer && templateInput && fileInput && removeCheckbox) {
+                const templates = templateContainer.querySelectorAll('.group');
+                const currentTemplateKey = "{{ $user->header_background ?? '' }}";
+
+                // Set initial selected state for templates
+                templates.forEach(t => {
+                    if (t.dataset.templateKey === currentTemplateKey) {
+                        t.classList.add('is-selected');
+                        templateInput.value = currentTemplateKey;
+                    }
+                });
+
+                // Add click listeners to templates
+                templates.forEach(template => {
+                    template.addEventListener('click', function () {
+                        fileInput.value = ''; // Clear file input
+                        removeCheckbox.checked = false;
+
+                        const selectedKey = this.dataset.templateKey;
+                        templateInput.value = selectedKey;
+
+                        // Update visual selection
+                        templates.forEach(t => t.classList.remove('is-selected'));
+                        this.classList.add('is-selected');
+                    });
+                });
+
+                // Add listener to file input
+                fileInput.addEventListener('change', function () {
+                    if (this.files && this.files.length > 0) {
+                        templateInput.value = '';
+                        removeCheckbox.checked = false;
+                        templates.forEach(t => t.classList.remove('is-selected'));
+                    }
+                });
+
+                // Add listener to remove checkbox
+                removeCheckbox.addEventListener('change', function () {
+                    if (this.checked) {
+                        templateInput.value = '';
+                        fileInput.value = '';
+                        templates.forEach(t => t.classList.remove('is-selected'));
+                    }
+                });
+            }
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const generateBtn = document.getElementById('generate-ai-image-btn');
+            const promptInput = document.getElementById('ai-prompt');
+            const errorMessageContainer = document.getElementById('ai-error-message');
+            const dailyRemainingEl = document.getElementById('daily-remaining');
+            const monthlyRemainingEl = document.getElementById('monthly-remaining');
+            const generateIcon = document.getElementById('generate-icon');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const generateText = document.getElementById('generate-text');
+
+            const modal = document.getElementById('ai-image-modal');
+            const modalImage = document.getElementById('generated-image-preview');
+            const acceptBtn = document.getElementById('accept-ai-image-btn');
+            const closeModalBtn = document.getElementById('close-ai-modal-btn');
+
+            const currentProfilePic = document.getElementById('current_profile_picture_img_display');
+            const removeProfilePictureCheckbox = document.getElementById('remove_profile_picture');
+
+
+            function toggleModal(show) {
+                if (show) {
+                    modal.classList.remove('hidden');
+                } else {
+                    modal.classList.add('hidden');
+                }
+            }
+
+            if(generateBtn) {
+                generateBtn.addEventListener('click', async function () {
+                    const prompt = promptInput.value.trim();
+                    if (prompt.length < 10) {
+                        errorMessageContainer.textContent = 'Prompt must be at least 10 characters.';
+                        return;
+                    }
+
+                    errorMessageContainer.textContent = '';
+                    generateBtn.disabled = true;
+                    generateIcon.classList.add('hidden');
+                    loadingSpinner.classList.remove('hidden');
+                    generateText.textContent = 'Generating...';
+
+                    try {
+                        const response = await fetch('{{ route("profile.picture.generate") }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({prompt: prompt})
+                        });
+
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                            throw new Error(data.error || 'An unknown error occurred.');
+                        }
+
+                        if (data.success) {
+                            modalImage.src = data.new_image_url + '?t=' + new Date().getTime();
+                            toggleModal(true);
+
+                            dailyRemainingEl.textContent = data.daily_remaining;
+                            monthlyRemainingEl.textContent = data.monthly_remaining;
+
+                            if (data.daily_remaining <= 0 || data.monthly_remaining <= 0) {
+                                generateBtn.disabled = true;
+                            }
+                        }
+                    } catch (error) {
+                        errorMessageContainer.textContent = error.message;
+                    } finally {
+                        generateIcon.classList.remove('hidden');
+                        loadingSpinner.classList.add('hidden');
+                        generateText.textContent = 'Generate';
+                        if (parseInt(dailyRemainingEl.textContent) > 0 && parseInt(monthlyRemainingEl.textContent) > 0) {
+                            generateBtn.disabled = false;
                         }
                     }
                 });
             }
 
-            // START: External Link Icon Logic
-            const SvgIconCollection = {
-                telegram: '<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.2,4.4L2.9,10.7c-1.1,0.4-1.1,1.1-0.2,1.3l4.1,1.3l1.6,4.8c0.2,0.5,0.1,0.7,0.6,0.7c0.4,0,0.6-0.2,0.8-0.4c0.1-0.1,1-1,2-2l4.2,3.1c0.8,0.4,1.3,0.2,1.5-0.7l2.8-13.1C20.6,4.6,19.9,4,19.2,4.4z M17.1,7.4l-7.8,7.1L9,17.8L7.4,13l9.2-5.8C17,6.9,17.4,7.1,17.1,7.4z"/></svg>',
-                twitter: '<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
-                instagram: '<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.316.011 7.053.069 2.59.284.287 2.59.07 7.053.011 8.316 0 8.741 0 12c0 3.259.011 3.684.069 4.947.217 4.46 2.522 6.769 7.053 6.984 1.267.058 1.692.069 4.947.069 3.259 0 3.684-.011 4.947-.069 4.46-.217 6.769-2.522 6.984-7.053.058-1.267.069-1.692.069-4.947 0-3.259-.011-3.684-.069-4.947-.217-4.46-2.522-6.769-7.053-6.984C15.684.011 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>',
-                facebook: '<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12c6.627 0 12-5.373 12-12S18.627 0 12 0zm3.055 8.181h-1.717c-.594 0-.708.282-.708.695v.978h2.399l-.311 2.445h-2.088V20.5h-2.523v-8.199H8.222V9.854h1.887V8.69c0-1.871 1.142-2.89 2.813-2.89a15.868 15.868 0 011.67.087v2.204h-.986c-.908 0-1.084.432-1.084 1.065v.025z"/></svg>',
-                linkedin: '<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg>',
-                github: '<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.026 2.747-1.026.546 1.379.201 2.398.098 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.922.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.001 10.001 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/></svg>',
-                default: '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24"><path d="M13.0601 10.9399C15.3101 13.1899 15.3101 16.8299 13.0601 19.0699C10.8101 21.3099 7.17009 21.3199 4.93009 19.0699C2.69009 16.8199 2.68009 13.1799 4.93009 10.9399" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>  <path d="M10.59 13.4099C8.24996 11.0699 8.24996 7.26988 10.59 4.91988C12.93 2.56988 16.73 2.57988 19.08 4.91988C21.43 7.25988 21.42 11.0599 19.08 13.4099" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-            };
+            if(acceptBtn) {
+                acceptBtn.addEventListener('click', function() {
+                    const newImageUrl = modalImage.src;
+                    if (newImageUrl) {
+                        currentProfilePic.src = newImageUrl;
 
-            function getDomainIconSvg(url) {
-                try {
-                    const rawHostname = new URL(url).hostname;
-
-                    if (!rawHostname || typeof rawHostname !== 'string') {
-                        return SvgIconCollection.default;
-                    }
-                    const hostname = rawHostname.toLowerCase();
-
-                    const checkDomain = (targetDomain) => {
-                        if (hostname === targetDomain) {
-                            return true;
-                        }
-                        return hostname.endsWith('.' + targetDomain);
-
-                    };
-
-                    if (checkDomain('t.me') || checkDomain('telegram.me')) {
-                        return SvgIconCollection.telegram;
-                    }
-                    if (checkDomain('twitter.com') || checkDomain('x.com')) {
-                        return SvgIconCollection.twitter;
-                    }
-                    if (checkDomain('instagram.com')) {
-                        return SvgIconCollection.instagram;
-                    }
-                    if (checkDomain('facebook.com')) {
-                        return SvgIconCollection.facebook;
-                    }
-                    if (checkDomain('linkedin.com')) {
-                        return SvgIconCollection.linkedin;
-                    }
-                    if (checkDomain('github.com')) {
-                        return SvgIconCollection.github;
-                    }
-
-                    return SvgIconCollection.default;
-                } catch (e) {
-                    return SvgIconCollection.default;
-                }
-            }
-
-            function updateDynamicLinkIcon(inputElement, iconContainerId) {
-                const iconContainer = document.getElementById(iconContainerId);
-                if (iconContainer) {
-                    iconContainer.innerHTML = getDomainIconSvg(inputElement.value);
-                }
-            }
-
-            // END: External Link Icon Logic
-
-            document.addEventListener('DOMContentLoaded', function () {
-                initUsernameChecker();
-
-                const profilePictureTriggerInput = document.getElementById('profile_picture_trigger');
-
-                // Event listener for profile picture trigger input
-                if (profilePictureTriggerInput && removeProfilePictureCheckbox) {
-                    profilePictureTriggerInput.addEventListener('change', function () {
-                        // When a new file is selected, uncheck "revert to initials"
-                        if (this.files && this.files.length > 0) {
+                        if(removeProfilePictureCheckbox) {
                             removeProfilePictureCheckbox.checked = false;
                         }
-                    });
-                }
+                        // Also clear any manually uploaded file to avoid conflicts
+                        document.getElementById('profile_picture_trigger').value = '';
+                        document.getElementById('profile_picture_final').value = '';
 
-                for (let i = 0; i < 3; i++) {
-                    const inputElement = document.getElementById(`external_link_${i}`);
-                    if (inputElement && inputElement.value) {
-                        updateDynamicLinkIcon(inputElement, `icon_container_external_link_${i}`);
                     }
-                }
+                    toggleModal(false);
+                });
+            }
 
+            if(closeModalBtn) {
+                closeModalBtn.addEventListener('click', function() {
+                    toggleModal(false);
+                });
+            }
 
-                // Function to initialize username availability checker
-                function initUsernameChecker() {
-                    const usernameInput = document.getElementById('username');
-                    const debounceTimeout = 500;
-                    let typingTimer;
-                    let lastCheckedUsername = usernameInput.value.trim();
-
-                    const statusElement = document.getElementById('username-status');
-
-                    function checkUsername() {
-                        const username = usernameInput.value.trim();
-
-                        if (username === '') {
-                            statusElement.textContent = '';
-                            usernameInput.classList.remove('border-red-500', 'border-green-500');
-                            lastCheckedUsername = '';
-                            return;
-                        }
-
-                        if (username === lastCheckedUsername && !usernameInput.classList.contains('border-red-500')) {
-                            if (statusElement.classList.contains('text-red-600') && usernameInput.classList.contains('border-red-500')) {
-                            } else {
-                                return;
-                            }
-                        }
-
-                        const minLength = 5;
-                        const maxLength = 24;
-                        const startsWithLetter = /^[a-zA-Z]/.test(username);
-                        const onlyValidChars = /^[a-zA-Z0-9_-]+$/.test(username);
-                        const notOnlyNumbers = !/^\d+$/.test(username);
-                        const noConsecutiveChars = !/(.)\1{3,}/.test(username);
-                        let errorMessage = null;
-
-                        if (username.length < minLength) errorMessage = usernameTranslations.minLength;
-                        else if (username.length > maxLength) errorMessage = usernameTranslations.maxLength;
-                        else if (!startsWithLetter) errorMessage = usernameTranslations.startsWithLetter;
-                        else if (!onlyValidChars) errorMessage = usernameTranslations.onlyValidChars;
-                        else if (!notOnlyNumbers) errorMessage = usernameTranslations.notOnlyNumbers;
-                        else if (!noConsecutiveChars) errorMessage = usernameTranslations.noConsecutiveChars;
-
-                        if (errorMessage) {
-                            statusElement.className = 'mt-1 text-sm text-red-600';
-                            statusElement.textContent = errorMessage;
-                            usernameInput.classList.remove('border-green-500');
-                            usernameInput.classList.add('border-red-500');
-                            return;
-                        }
-
-                        statusElement.className = 'mt-1 text-sm text-gray-500';
-                        statusElement.textContent = usernameTranslations.checking;
-
-                        fetch('{{ route("check.username") }}?username=' + encodeURIComponent(username), {
-                            method: 'GET',
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'Accept': 'application/json',
-                            },
-                        })
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.available) {
-                                    statusElement.className = 'mt-1 text-sm text-green-600';
-                                    statusElement.textContent = data.message || usernameTranslations.available;
-                                    usernameInput.classList.remove('border-red-500');
-                                    usernameInput.classList.add('border-green-500');
-                                    lastCheckedUsername = username;
-                                } else {
-                                    statusElement.className = 'mt-1 text-sm text-red-600';
-                                    statusElement.textContent = data.message || usernameTranslations.taken;
-                                    usernameInput.classList.remove('border-green-500');
-                                    usernameInput.classList.add('border-red-500');
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error checking username:', error);
-                                statusElement.className = 'mt-1 text-sm text-gray-500';
-                                statusElement.textContent = usernameTranslations.couldNotVerify;
-                                usernameInput.classList.remove('border-green-500', 'border-red-500');
-                            });
+            if (modal) {
+                modal.addEventListener('click', function(event) {
+                    if (event.target === modal) {
+                        toggleModal(false);
                     }
+                });
+            }
+        });
+    </script>
 
-                    usernameInput.addEventListener('input', function () {
-                        clearTimeout(typingTimer);
-                        statusElement.textContent = '';
-                        usernameInput.classList.remove('border-red-500', 'border-green-500');
-                        typingTimer = setTimeout(checkUsername, debounceTimeout);
-                    });
-                    usernameInput.addEventListener('blur', checkUsername);
-                }
-
-                const templateContainer = document.getElementById('template-selector-container');
-                const templateInput = document.getElementById('header_background_template_input');
-                const fileInput = document.getElementById('header_background_upload_input');
-                const removeCheckbox = document.getElementById('remove_header_background');
-
-                if (templateContainer && templateInput && fileInput && removeCheckbox) {
-                    const templates = templateContainer.querySelectorAll('.group');
-                    const currentTemplateKey = "{{ $user->header_background ?? '' }}";
-
-                    // Set initial selected state for templates
-                    templates.forEach(t => {
-                        if (t.dataset.templateKey === currentTemplateKey) {
-                            t.classList.add('is-selected');
-                            templateInput.value = currentTemplateKey;
-                        }
-                    });
-
-                    // Add click listeners to templates
-                    templates.forEach(template => {
-                        template.addEventListener('click', function () {
-                            fileInput.value = ''; // Clear file input
-                            removeCheckbox.checked = false;
-
-                            const selectedKey = this.dataset.templateKey;
-                            templateInput.value = selectedKey;
-
-                            // Update visual selection
-                            templates.forEach(t => t.classList.remove('is-selected'));
-                            this.classList.add('is-selected');
-                        });
-                    });
-
-                    // Add listener to file input
-                    fileInput.addEventListener('change', function () {
-                        if (this.files && this.files.length > 0) {
-                            templateInput.value = '';
-                            removeCheckbox.checked = false;
-                            templates.forEach(t => t.classList.remove('is-selected'));
-                        }
-                    });
-
-                    // Add listener to remove checkbox
-                    removeCheckbox.addEventListener('change', function () {
-                        if (this.checked) {
-                            templateInput.value = '';
-                            fileInput.value = '';
-                            templates.forEach(t => t.classList.remove('is-selected'));
-                        }
-                    });
-                }
-            });
-        </script>
-    @endsection
+    @endpush
 

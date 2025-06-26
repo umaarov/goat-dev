@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Vote;
 use App\Services\AvatarService;
+use App\Services\ImageGenerationService;
 use App\Services\ModerationService;
 use App\Services\RatingService;
 use Exception;
@@ -14,6 +15,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
@@ -37,15 +40,19 @@ class UserController extends Controller
     protected ModerationService $moderationService;
     protected RatingService $ratingService;
 
+    protected ImageGenerationService $imageGenerationService;
+
     public function __construct(
         AvatarService     $avatarService,
         ModerationService $moderationService,
-        RatingService     $ratingService
+        RatingService     $ratingService,
+        ImageGenerationService $imageGenerationService
     )
     {
         $this->avatarService = $avatarService;
         $this->moderationService = $moderationService;
         $this->ratingService = $ratingService;
+        $this->imageGenerationService = $imageGenerationService;
     }
 
     final public function showProfile(string $username): View
@@ -682,4 +689,85 @@ class UserController extends Controller
             ]);
         }
     }
+
+    final public function generateProfilePicture(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'prompt' => 'required|string|min:10|max:350',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()->first()], 422);
+        }
+
+        $user = Auth::user();
+        $today = Carbon::today();
+        $lastGenerationDate = $user->last_ai_generation_date ? Carbon::parse($user->last_ai_generation_date) : null;
+
+        if ($lastGenerationDate) {
+            if (!$lastGenerationDate->isSameMonth($today)) {
+                $user->ai_generations_monthly_count = 0;
+            }
+            if (!$lastGenerationDate->isSameDay($today)) {
+                $user->ai_generations_daily_count = 0;
+            }
+        }
+
+        $monthlyLimit = 5;
+        $dailyLimit = 2;
+
+        if ($user->ai_generations_monthly_count >= $monthlyLimit) {
+            return response()->json(['error' => 'You have reached your monthly generation limit of 5.'], 429);
+        }
+        if ($user->ai_generations_daily_count >= $dailyLimit) {
+            return response()->json(['error' => 'You have reached your daily generation limit of 2.'], 429);
+        }
+
+        try {
+            $moderationLanguageCode = $user->locale ?? Config::get('app.locale');
+            $promptModeration = $this->moderationService->moderateText($request->input('prompt'), $moderationLanguageCode);
+            if (!$promptModeration['is_appropriate']) {
+                $reason = $promptModeration['reason'] ?? 'The provided prompt is inappropriate.';
+                return response()->json(['error' => $reason], 400);
+            }
+
+            $imageContent = $this->imageGenerationService->generateImageFromPrompt($request->input('prompt'));
+
+            if ($user->profile_picture && !filter_var($user->profile_picture, FILTER_VALIDATE_URL) && Storage::disk('public')->exists($user->profile_picture)) {
+                Storage::disk('public')->delete($user->profile_picture);
+            }
+
+            $path = $this->processAndStoreProfileImageFromData($imageContent, 'profile_pictures', Str::slug($user->username) . '_aigen_' . time());
+
+            $user->profile_picture = $path;
+            $user->ai_generations_monthly_count += 1;
+            $user->ai_generations_daily_count += 1;
+            $user->last_ai_generation_date = $today->toDateString();
+            $user->save();
+
+            return response()->json([
+                'success' => true,
+                'new_image_url' => Storage::url($path),
+                'monthly_remaining' => $monthlyLimit - $user->ai_generations_monthly_count,
+                'daily_remaining' => $dailyLimit - $user->ai_generations_daily_count,
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('AI Profile Picture Generation failed: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    private function processAndStoreProfileImageFromData(string $imageData, string $directory, string $baseFilename): string
+    {
+        $manager = new ImageManager(new GdDriver());
+        $image = $manager->read($imageData);
+        $image->coverDown(self::PROFILE_IMAGE_SIZE, self::PROFILE_IMAGE_SIZE);
+        $filename = $baseFilename . '.webp';
+        $path = $directory . '/' . $filename;
+        $encodedImage = $image->encode(new WebpEncoder(quality: self::PROFILE_IMAGE_QUALITY));
+        Storage::disk('public')->put($path, $encodedImage);
+        return $path;
+    }
+
 }

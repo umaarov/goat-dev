@@ -45,6 +45,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/profile/change-password', 'changePassword')->name('password.change');
         Route::get('/@{username}/posts-data', 'getUserPosts')->name('profile.posts.data');
         Route::get('/@{username}/voted-data', 'getUserVotedPosts')->name('profile.voted.data');
+        Route::post('/profile/generate-picture', 'generateProfilePicture')->name('profile.picture.generate');
     });
 
     Route::get('/rating', [RatingController::class, 'index'])->name('rating.index');
@@ -70,9 +71,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/posts/{post}/comments/context/{comment}', 'showCommentContext')->name('comments.showContext');
     })->whereNumber(['post', 'comment']);
 
-    Route::post('/comments/{comment}/toggle-like', [CommentLikeController::class, 'toggleLike'])
-        ->name('comments.toggle-like')
-        ->middleware('throttle:30,1');
+    Route::post('/comments/{comment}/toggle-like', [CommentLikeController::class, 'toggleLike'])->name('comments.toggle-like')->middleware('throttle:30,1');
 
     Route::controller(NotificationController::class)->group(function () {
         Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
@@ -87,8 +86,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
 
-Route::get('/email/verify/{id}/{token}', [AuthController::class, 'verifyEmail'])
-    ->name('verification.verify');
+Route::get('/email/verify/{id}/{token}', [AuthController::class, 'verifyEmail'])->name('verification.verify');
 
 
 Route::get('/sitemap.xml', [SitemapController::class, 'index']);
