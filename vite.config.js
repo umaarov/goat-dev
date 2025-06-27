@@ -24,5 +24,10 @@ export default defineConfig({
                 refresh: true,
             }),
         ],
-    }
+    },
+
+    build: {
+        sourcemap: true,
+    },
+
 });
