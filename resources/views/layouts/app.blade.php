@@ -49,8 +49,8 @@
     @if(isset($defaultHreflangUrl))
         <link rel="alternate" hreflang="x-default" href="{{ $defaultHreflangUrl }}"/>
     @endif
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
-            crossorigin="anonymous"></script>
+{{--    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"--}}
+{{--            crossorigin="anonymous"></script>--}}
     {{--    <script src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false"></script>--}}
     {{--    <script src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false"></script>--}}
     {{--    <script async src="//www.ezojs.com/ezoic/sa.min.js"></script>--}}
@@ -154,7 +154,7 @@
         <div class="w-6"></div>
         <a href="{{route('home')}}">
             <img src="{{ asset('images/main_logo.png') }}" alt="{{ __('messages.app.logo_alt') }}"
-                 class="h-23 w-23 cursor-pointer">
+                 class="h-23 w-23 cursor-pointer" loading="lazy">
         </a>
         <div>
             @auth
@@ -231,7 +231,7 @@
                 <div class="flex items-center justify-center gap-x-2 mb-1">
                     <p class="font-semibold">{{ __('messages.copyright_text') }}</p>
                     <a href="https://buymeacoffee.com/umarov" target="_blank" rel="noopener noreferrer" title="Support this project with a coffee" class="inline-block transition-transform duration-200 hover:scale-105">
-                        <img src="{{ asset('images/bmc-logo-no-background.png') }}" alt="Buy Me A Coffee" class="h-4 w-auto">
+                        <img src="{{ asset('images/bmc-logo-no-background.png') }}" alt="Buy Me A Coffee" class="h-4 w-auto" loading="lazy">
                     </a>
                 </div>
             </div>
@@ -315,7 +315,7 @@
                 <div class="bg-white p-4 sm:p-6 rounded-lg shadow-xl w-11/12 max-w-lg">
                     <h3 class="text-xl font-semibold mb-3 text-gray-800">${window.translations.cropperModalTitle}</h3>
                     <div class="mb-4" style="max-height: 60vh; overflow: hidden;">
-                        <img id="imageToCropGlobal" src="#" alt="Image to crop" style="max-width: 100%;">
+                        <img id="imageToCropGlobal" src="#" alt="Image to crop" style="max-width: 100%;" loading="lazy">
                     </div>
                     <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
                         <button type="button" id="cancelCropGlobal" class="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">${window.translations.cancelButton}</button>
@@ -467,7 +467,7 @@
     <div
         class="relative bg-transparent p-0 rounded-lg shadow-xl max-w-full max-h-full flex items-center justify-center">
         <img id="imageViewerModalImage" src="" alt="${window.translations.imageViewerAltText}"
-             class="max-w-[90vw] max-h-[90vh] object-contain rounded-md">
+             class="max-w-[90vw] max-h-[90vh] object-contain rounded-md" loading="lazy">
         <button id="imageViewerModalClose" title="${window.translations.imageViewerCloseTitle}"
                 class="absolute top-[-15px] right-[-15px] md:top-2 md:right-2 bg-gray-700 bg-opacity-60 text-white rounded-full p-2 leading-none hover:bg-opacity-90 focus:outline-none z-10">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24"
@@ -784,6 +784,18 @@
         });
     </script>
 @endauth
+
+<script>
+    function loadGoogleAds() {
+        const adScript = document.createElement('script');
+        adScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667';
+        adScript.async = true;
+        adScript.crossOrigin = 'anonymous';
+        document.body.appendChild(adScript);
+    }
+
+    window.addEventListener('load', loadGoogleAds);
+</script>
 
 </body>
 </html>
