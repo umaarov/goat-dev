@@ -2,7 +2,7 @@
 
 return [
 
-    'profile.title' => ':username\'s Polls & Profile | GOAT.uz',
+    'profile.title' => ':username\'s Polls & Profile - GOAT.uz',
     'profile.meta_description' => "View the profile, created polls, and activity of :username on GOAT. Join the discussion!",
     'profile.alt_profile_picture' => "Profile picture of :username on GOAT.uz",
     'profile.verified_account' => 'Verified Account',
@@ -166,13 +166,13 @@ return [
     'confirm_delete_post_text' => 'Are you sure you want to delete this post? This action cannot be undone.',
     'confirm_delete_comment_title' => 'Confirm Deletion',
     'confirm_delete_comment_text' => 'Are you sure you want to delete this comment?',
-    'about_us' => 'About Us | GOAT.uz',
+    'about_us' => 'About Us - GOAT.uz',
     'about_us_nav' => 'About Us',
-    'terms_of_use' => 'Terms of Use | GOAT.uz',
+    'terms_of_use' => 'Terms of Use - GOAT.uz',
     'terms_of_use_nav' => 'Terms of Use',
-    'sponsorship' => 'Sponsorship | GOAT.uz',
+    'sponsorship' => 'Sponsorship - GOAT.uz',
     'sponsorship_nav' => 'Sponsorship',
-    'ads' => 'Advertising | GOAT.uz',
+    'ads' => 'Advertising - GOAT.uz',
     'ads_nav' => 'Ads',
     'copyright_text' => 'GOAT © 2025',
 
@@ -237,8 +237,8 @@ return [
     'mail.verify_email.no_action_required' => 'If you did not create an account, no further action is required.',
     'mail.verify_email.if_copy_paste' => 'If you\'re having trouble clicking the button, copy and paste the URL below into your web browser:',
 
-    'error.404.page_title' => '404 - Page Not Found | GOAT.uz',
-    'error.404.user_not_found_title' => '404 - User Not Found | GOAT.uz',
+    'error.404.page_title' => '404 - Page Not Found - GOAT.uz',
+    'error.404.user_not_found_title' => '404 - User Not Found - GOAT.uz',
     'error.404.heading' => '404',
     'error.404.user_not_found_message' => 'Even the GOAT gets lost sometimes. The user you\'re looking for might not exist.',
     'error.404.page_not_found_message' => 'Even the GOAT gets lost sometimes. The page you\'re looking for might not exist.',
@@ -258,7 +258,7 @@ return [
     'app.js.image_viewer_alt' => 'Full screen image',
     'app.js.image_viewer_close_title' => 'Close image viewer',
 
-    'create_post.title' => 'Create New Post | GOAT.uz',
+    'create_post.title' => 'Create New Post - GOAT.uz',
     'create_post.ask_unique_question' => 'Ask a unique question!',
     'create_post.choose_titles_images_categories' => 'Choose titles, images and categories to fit your subjects for the world to vote on.',
     'create_post.question_placeholder' => 'Question...',
@@ -270,7 +270,7 @@ return [
     'create_post.submit_button' => 'Submit',
     'create_post.js.fill_all_fields_warning' => 'Please fill all required fields, including images.',
 
-    'edit_post.title' => 'Edit Post | GOAT.uz',
+    'edit_post.title' => 'Edit Post - GOAT.uz',
     'edit_post.heading' => 'Edit Post',
     'edit_post.cannot_edit_voted_post_message' => 'This post cannot be edited because it has already received votes.',
     'edit_post.your_question_label' => 'Your Question',
@@ -297,8 +297,8 @@ return [
 //    'search_results.enter_term_prompt' => 'Enter a term above to search for posts.',
 
     'search_results' => [
-        'title_with_query' => 'Search Results for ":queryTerm" | GOAT.uz',
-        'title_default' => 'Search for Polls and Users | GOAT.uz',
+        'title_with_query' => 'Search Results for ":queryTerm" - GOAT.uz',
+        'title_default' => 'Search for Polls and Users - GOAT.uz',
         'placeholder' => 'Search for posts or users...',
         'users' => 'Users',
         'posts' => 'Posts',
@@ -329,7 +329,7 @@ return [
     'ads.reach_out_get_started' => 'to get started.',
 
 //    'home.page_title_posts' => 'Home - Posts',
-    'home.page_title_posts' => 'Trending Polls & Questions | GOAT.uz',
+    'home.page_title_posts' => 'Trending Polls & Questions - GOAT.uz',
     'home.meta_description' => 'Discover the latest and trending community polls on GOAT. Vote, comment, and share your opinions on a variety of "this or that" questions.',
 
     'sponsorship.opportunities_heading' => 'Sponsorship Opportunities',

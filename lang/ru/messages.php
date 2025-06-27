@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'profile.title' => "Опросы и профиль :username | GOAT.uz",
+    'profile.title' => "Опросы и профиль :username - GOAT.uz",
     'profile.meta_description' => "Просмотр профиля, созданных опросов и активности :username на GOAT. Присоединяйтесь к обсуждению!",
     'profile.alt_profile_picture' => "Фото профиля :username на GOAT.uz",
     'profile.verified_account' => 'Подтвержденный аккаунт',
@@ -157,13 +157,13 @@ return [
     'confirm_delete_post_text' => 'Вы уверены, что хотите удалить этот пост? Это действие нельзя будет отменить.',
     'confirm_delete_comment_title' => 'Подтвердить удаление',
     'confirm_delete_comment_text' => 'Вы уверены, что хотите удалить этот комментарий?',
-    'about_us' => 'О нас | GOAT.uz',
+    'about_us' => 'О нас - GOAT.uz',
     'about_us_nav' => 'О нас',
-    'terms_of_use' => 'Условия использования | GOAT.uz',
+    'terms_of_use' => 'Условия использования - GOAT.uz',
     'terms_of_use_nav' => 'Условия использования',
-    'sponsorship' => 'Спонсорство | GOAT.uz',
+    'sponsorship' => 'Спонсорство - GOAT.uz',
     'sponsorship_nav' => 'Спонсорство',
-    'ads' => 'Реклама | GOAT.uz',
+    'ads' => 'Реклама - GOAT.uz',
     'ads_nav' => 'Реклама',
     'copyright_text' => 'GOAT © 2025',
 
@@ -228,8 +228,8 @@ return [
     'mail.verify_email.no_action_required' => 'Если вы не создавали учетную запись, никаких дальнейших действий не требуется.',
     'mail.verify_email.if_copy_paste' => 'Если у вас возникли проблемы с нажатием кнопки, скопируйте и вставьте URL-адрес ниже в свой веб-браузер:',
 
-    'error.404.page_title' => '404 - Страница не найдена | GOAT.uz',
-    'error.404.user_not_found_title' => '404 - Пользователь не найден | GOAT.uz',
+    'error.404.page_title' => '404 - Страница не найдена - GOAT.uz',
+    'error.404.user_not_found_title' => '404 - Пользователь не найден - GOAT.uz',
     'error.404.heading' => '404',
     'error.404.user_not_found_message' => 'Даже GOAT иногда теряется. Пользователь, которого вы ищете, может не существовать.',
     'error.404.page_not_found_message' => 'Даже GOAT иногда теряется. Страница, которую вы ищете, может не существовать.',
@@ -249,7 +249,7 @@ return [
     'app.js.image_viewer_alt' => 'Изображение в полноэкранном режиме',
     'app.js.image_viewer_close_title' => 'Закрыть просмотрщик изображений',
 
-    'create_post.title' => 'Создать новый пост | GOAT.uz',
+    'create_post.title' => 'Создать новый пост - GOAT.uz',
     'create_post.ask_unique_question' => 'Задайте уникальный вопрос!',
     'create_post.choose_titles_images_categories' => 'Выберите заголовки, изображения и категории, соответствующие вашим темам, чтобы мир мог проголосовать.',
     'create_post.question_placeholder' => 'Вопрос...',
@@ -261,7 +261,7 @@ return [
     'create_post.submit_button' => 'Отправить',
     'create_post.js.fill_all_fields_warning' => 'Пожалуйста, заполните все обязательные поля, включая изображения.',
 
-    'edit_post.title' => 'Редактировать пост | GOAT.uz',
+    'edit_post.title' => 'Редактировать пост - GOAT.uz',
     'edit_post.heading' => 'Редактировать пост',
     'edit_post.cannot_edit_voted_post_message' => 'Этот пост нельзя редактировать, так как за него уже проголосовали.',
     'edit_post.your_question_label' => 'Ваш вопрос',
@@ -288,8 +288,8 @@ return [
 //    'search_results.enter_term_prompt' => 'Введите поисковый запрос выше для поиска постов.',
 
     'search_results' => [
-        'title_with_query' => 'Результаты поиска по запросу ":queryTerm" | GOAT.uz',
-        'title_default' => 'Поиск опросов и пользователей | GOAT.uz',
+        'title_with_query' => 'Результаты поиска по запросу ":queryTerm" - GOAT.uz',
+        'title_default' => 'Поиск опросов и пользователей - GOAT.uz',
         'placeholder' => 'Поиск постов или пользователей...',
         'users' => 'Пользователи',
         'posts' => 'Посты',
@@ -340,7 +340,7 @@ return [
     'terms.section5_text' => 'Мы предоставляем эту платформу "как есть" без каких-либо гарантий. Мы не несем ответственности за любые убытки, ущерб или проблемы, которые могут возникнуть в результате использования нашего сервиса.',
 
     'contribution' => [
-        'title' => 'Руководство по вкладу | GOAT.uz',
+        'title' => 'Руководство по вкладу - GOAT.uz',
         'title_nav' => 'Руководство по вкладу',
         'main_heading' => 'Сотрудничество с GOAT.UZ',
         'intro_p1' => 'Благодарим вас за интерес к участию в развитии GOAT! Мы создаём платформу, основанную на сообществе, и каждый вклад, даже самый небольшой, ценен и вызывает искреннюю признательность.',
