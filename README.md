@@ -1,6 +1,6 @@
 # GOAT: Social Debate Platform
 
-GOAT is a sophisticated social debate application engineered with the Laravel 12 framework. It is designed to provide a feature-rich, scalable, and secure environment for user-driven discussions. The platform's architecture leverages modern design patterns and integrates several advanced technologies, including artificial intelligence for content moderation and real-time 3D graphics for user engagement.
+[GOAT](https://www.goat.uz) is a sophisticated social debate application engineered with the Laravel 12 framework. It is designed to provide a feature-rich, scalable, and secure environment for user-driven discussions. The platform's architecture leverages modern design patterns and integrates several advanced technologies, including artificial intelligence for content moderation and real-time 3D graphics for user engagement.
 
 ---
 
