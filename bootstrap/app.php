@@ -8,7 +8,6 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\HandleCors;
-use Spatie\Csp\AddCspHeaders;
 use Spatie\ResponseCache\Middlewares\CacheResponse;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -34,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })->withCommands(
         (array)CleanupUnverifiedUsers::class,
+        \App\Console\Commands\SendPostNotifications::class,
         GenerateSitemap::class
     )->withSchedule(
         function ($schedule) {
@@ -41,6 +41,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->everyTenMinutes();
             $schedule->command('sitemap:generate')
                 ->dailyAt('02:00');
+            $schedule->command('app:send-post-notifications')
+                ->hourly();
         }
     )
     ->withProviders([

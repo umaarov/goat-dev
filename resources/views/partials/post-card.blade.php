@@ -591,9 +591,17 @@
     }
 
     function sharePost(postId) {
+        console.log(`[DEBUG] Attempting to share post #${postId}`);
         const postElement = document.getElementById(`post-${postId}`);
         if (!postElement) return;
-        const question = postElement.querySelector('.pt-4.px-4.font-semibold.text-center p').textContent;
+
+        const questionElement = postElement.querySelector('.pt-4.px-4.font-semibold.text-center h2');
+        if (!questionElement) {
+            console.error('Could not find the question element for sharing.');
+            return;
+        }
+        const question = questionElement.textContent;
+
         const slug = question.toLowerCase()
             .replace(/[^\w\s-]/g, '')
             .replace(/\s+/g, '-')

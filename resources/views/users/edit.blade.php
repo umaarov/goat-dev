@@ -216,8 +216,7 @@
 
                 {{-- Privacy Settings Section --}}
                 <div class="mb-6 pt-4 border-t border-gray-200">
-                    <label
-                        class="block text-sm font-medium text-gray-700 mb-2">{{ __('messages.privacy_settings_label') }}</label>
+                    <h3 class="text-md font-semibold text-gray-700 mb-2">{{ __('messages.privacy_settings_label') }}</h3>
                     <div class="flex items-center">
                         <input type="hidden" name="show_voted_posts_publicly"
                                value="0">
@@ -231,6 +230,22 @@
                     <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
                     @enderror
                     <p class="text-xs text-gray-500 mt-1">{{ __('messages.show_voted_publicly_note') }}</p>
+                </div>
+
+                {{-- Notification Settings Section --}}
+                <div class="mb-6 pt-4 border-t border-gray-200">
+                    <h3 class="text-md font-semibold text-gray-700 mb-2">Notification Settings</h3>
+                    <div class="flex items-center">
+                        <input type="hidden" name="receives_notifications" value="0">
+                        <input type="checkbox" id="receives_notifications" name="receives_notifications" value="1"
+                               class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                               @if(old('receives_notifications', $user->receives_notifications ?? true)) checked @endif>
+                        <label for="receives_notifications"
+                               class="ml-2 text-sm text-gray-700">Receive email notifications for new posts.</label>
+                    </div>
+                    @error('receives_notifications')
+                    <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 {{-- Language Settings Section --}}
@@ -352,8 +367,8 @@
         </div>
     </div>
 @endsection
-    {{--    @section('scripts')--}}
-    @push('scripts')
+{{--    @section('scripts')--}}
+@push('scripts')
     <script>
         const usernameTranslations = {
             checking: @json(__('messages.username_availability_checking')),
@@ -410,7 +425,7 @@
             });
         }
 
-        // START: External Link Icon Logic
+        // External Link Icon Logic
         const SvgIconCollection = {
             telegram: '<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.2,4.4L2.9,10.7c-1.1,0.4-1.1,1.1-0.2,1.3l4.1,1.3l1.6,4.8c0.2,0.5,0.1,0.7,0.6,0.7c0.4,0,0.6-0.2,0.8-0.4c0.1-0.1,1-1,2-2l4.2,3.1c0.8,0.4,1.3,0.2,1.5-0.7l2.8-13.1C20.6,4.6,19.9,4,19.2,4.4z M17.1,7.4l-7.8,7.1L9,17.8L7.4,13l9.2-5.8C17,6.9,17.4,7.1,17.1,7.4z"/></svg>',
             twitter: '<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
@@ -469,8 +484,6 @@
                 iconContainer.innerHTML = getDomainIconSvg(inputElement.value);
             }
         }
-
-        // END: External Link Icon Logic
 
         document.addEventListener('DOMContentLoaded', function () {
             initUsernameChecker();
@@ -756,5 +769,4 @@
         });
     </script>
 
-    @endpush
-
+@endpush

@@ -15,7 +15,8 @@
         "laravel/tinker": "^2.10.1",
         "spatie/laravel-csp": "^3.13",
         "spatie/laravel-responsecache": "^7.7",
-        "spatie/laravel-sitemap": "^7.3"
+        "spatie/laravel-sitemap": "^7.3",
+        "ext-fileinfo": "*"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.15",

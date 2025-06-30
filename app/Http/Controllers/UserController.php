@@ -324,6 +324,7 @@ class UserController extends Controller
             'header_background_template' => ['nullable', 'string', Rule::in($headerTemplateKeys)],
             'remove_header_background' => 'nullable|boolean',
             'show_voted_posts_publicly' => 'required|boolean',
+            'receives_notifications' => 'required|boolean',
             'locale' => ['nullable', Rule::in($availableLocaleKeys)],
             'external_links' => 'nullable|array|max:3',
             'external_links.*' => ['nullable', 'url', 'max:255', function ($attribute, $value, $fail) {
@@ -480,6 +481,7 @@ class UserController extends Controller
 
         $data = $request->only(['first_name', 'last_name', 'username']);
         $data['show_voted_posts_publicly'] = $request->boolean('show_voted_posts_publicly');
+        $data['receives_notifications'] = $request->boolean('receives_notifications'); // <-- ADDED DATA
 
         if (!empty($headerData) || $request->boolean('remove_header_background')) {
             $data = array_merge($data, $headerData);

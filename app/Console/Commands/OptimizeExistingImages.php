@@ -12,8 +12,6 @@ use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\ImageManager;
 
-// --- IMPORTANT: ADD THIS NEW IMPORT ---
-
 class OptimizeExistingImages extends Command
 {
     protected $signature = 'images:optimize';

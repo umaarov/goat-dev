@@ -706,13 +706,7 @@
 
 @if (session('scrollToPost'))
     <script>
-        if (typeof window.currentlyOpenCommentsId === 'undefined') {
-            window.currentlyOpenCommentsId = null;
-        }
-
         document.addEventListener('DOMContentLoaded', function () {
-            @if (session('scrollToPost'))
-            console.log('[DEBUG] Session data found. Starting notification scroll process.');
             const postId = @json(session('scrollToPost'));
             const commentId = @json(session('scrollToComment'));
 
@@ -720,23 +714,23 @@
                 return;
             }
 
-            const postElement = document.getElementById(`post-${postId}`);
+            setTimeout(function() {
+                const postElement = document.getElementById(`post-${postId}`);
 
-            if (postElement) {
-                postElement.scrollIntoView({behavior: 'smooth', block: 'center'});
-                postElement.classList.add('highlight-flash');
+                if (postElement) {
+                    postElement.scrollIntoView({behavior: 'smooth', block: 'center'});
+                    postElement.classList.add('highlight-flash');
 
-                if (commentId) {
-                    setTimeout(() => {
-                        fetchAndShowComment(postId, commentId);
-                    }, 400);
+                    if (commentId && typeof fetchAndShowComment === 'function') {
+                        setTimeout(() => {
+                            fetchAndShowComment(postId, commentId);
+                        }, 400);
+                    }
+                } else {
+                    console.warn(`[DEBUG] Could not find post element with ID: post-${postId} after a delay.`);
                 }
-            } else {
-                console.warn(`[DEBUG] Could not find post element with ID: post-${postId} on this page.`);
-            }
-            @endif
+            }, 300);
         });
-
     </script>
 @endif
 
