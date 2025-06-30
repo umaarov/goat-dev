@@ -88,6 +88,7 @@
             display: inline-block;
             padding: 12px 24px;
             background-color: #4f46e5;
+            --text-color:  #ffffff;
             color: #ffffff;
             text-decoration: none;
             border-radius: 6px;
@@ -156,13 +157,13 @@
                             <tr>
                                 <td width="50%" valign="top" style="padding-right: 5px;">
                                     <a href="{{ $mainPostUrl }}"><img
-                                            src="{{ Storage::url($mainPost->option_one_image) }}"
+                                            src="{{ asset('storage/' . $mainPost->option_one_image) }}"
                                             alt="{{ $mainPost->option_one_title }}" width="100%"
                                             style="border-radius: 8px; display: block; border: 1px solid #e2e8f0;"></a>
                                 </td>
                                 <td width="50%" valign="top" style="padding-left: 5px;">
                                     <a href="{{ $mainPostUrl }}"><img
-                                            src="{{ Storage::url($mainPost->option_two_image) }}"
+                                            src="{{ asset('storage/' . $mainPost->option_two_image) }}"
                                             alt="{{ $mainPost->option_two_title }}" width="100%"
                                             style="border-radius: 8px; display: block; border: 1px solid #e2e8f0;"></a>
                                 </td>
@@ -174,7 +175,7 @@
             <div class="post-caption">
                 <p style="text-align:center;">{{ $mainPost->option_one_title }} vs {{ $mainPost->option_two_title }}</p>
                 <div style="text-align: center;">
-                    <a href="{{ $mainPostUrl }}" class="button">See More & Vote</a>
+                    <a href="{{ $mainPostUrl }}" class="button" style="color: #ffffff !important; text-decoration: none;">See More & Vote</a>
                 </div>
                 <p class="sub-text">See the results now on GOAT.uz</p>
             </div>
@@ -200,13 +201,13 @@
                                                 <tr>
                                                     <td width="50%" valign="top" style="padding-right: 4px;">
                                                         <a href="{{ $postUrl }}"><img
-                                                                src="{{ Storage::url($post->option_one_image) }}"
+                                                                src="{{ asset('storage/' . $post->option_one_image) }}"
                                                                 alt="{{ $post->option_one_title }}" width="100%"
                                                                 style="border-radius: 4px; display: block;"></a>
                                                     </td>
                                                     <td width="50%" valign="top" style="padding-left: 4px;">
                                                         <a href="{{ $postUrl }}"><img
-                                                                src="{{ Storage::url($post->option_two_image) }}"
+                                                                src="{{ asset('storage/' . $post->option_two_image) }}"
                                                                 alt="{{ $post->option_two_title }}" width="100%"
                                                                 style="border-radius: 4px; display: block;"></a>
                                                     </td>

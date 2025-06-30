@@ -226,7 +226,7 @@ class PostController extends Controller
                 break;
             case 'latest':
             default:
-                $query->latest();
+                $query->orderByDesc('created_at')->orderByDesc('id');
                 break;
         }
 
@@ -640,16 +640,18 @@ class PostController extends Controller
     {
         $post = Post::findOrFail($id);
 
-        $newerOrSamePostsCount = Post::query()
-            ->where('created_at', '>', $post->created_at)
-            ->orWhere(function ($query) use ($post) {
-                $query->where('created_at', $post->created_at)
-                    ->where('id', '>=', $post->id);
-            })
-            ->count();
+        $position = Post::query()
+                ->where(function ($query) use ($post) {
+                    $query->where('created_at', '>', $post->created_at)
+                        ->orWhere(function ($subQuery) use ($post) {
+                            $subQuery->where('created_at', $post->created_at)
+                                ->where('id', '>', $post->id);
+                        });
+                })
+                ->count() + 1;
 
         $perPage = 15;
-        $page = ceil($newerOrSamePostsCount / $perPage);
+        $page = ceil($position / $perPage);
         if ($page < 1) $page = 1;
 
         $redirect = redirect()->route('home', ['page' => $page])
