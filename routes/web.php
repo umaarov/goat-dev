@@ -29,6 +29,7 @@ Route::get('/search', [PostController::class, 'search'])->name('search');
 Route::get('/p/{id}/{slug?}', [PostController::class, 'showBySlug'])->name('posts.showSlug')->middleware('cache.response:60');
 Route::get('/@{username}', [UserController::class, 'showProfile'])->name('profile.show');
 Route::get('/check-username', [UserController::class, 'checkUsername'])->name('check.username');
+Route::get('/load-posts', [PostController::class, 'loadPosts'])->name('posts.load');
 
 Route::view('about', 'about')->name('about')->middleware('cache.response:1440');
 Route::view('terms', 'terms')->name('terms')->middleware('cache.response:1440');
@@ -60,7 +61,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/posts/{post}/vote', 'vote')->name('posts.vote')->middleware('throttle:30,1');
         Route::post('/posts/{post}/share', 'incrementShareCount')->name('posts.share')->middleware('throttle:30,1');
-        Route::get('/load-posts', 'loadPosts')->name('posts.load');
     })->whereNumber('post');
 
     Route::controller(CommentController::class)->group(function () {
