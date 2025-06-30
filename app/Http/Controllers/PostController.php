@@ -216,23 +216,63 @@ class PostController extends Controller
 
     final public function index(Request $request): View
     {
-        $query = Post::query()->withPostData();
+        return view('home');
+    }
 
-        switch ($request->input('filter')) {
-            case 'trending':
-                $query->where('created_at', '>=', now()->subDays(7))
-                    ->orderByDesc('total_votes')
-                    ->orderByDesc('created_at');
-                break;
-            case 'latest':
-            default:
-                $query->orderByDesc('created_at')->orderByDesc('id');
-                break;
+
+    final public function loadPosts(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'page' => 'required|integer|min:1',
+            'filter' => 'sometimes|string|in:trending,latest',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => 'Invalid request.'], 400);
         }
 
-        $posts = $query->paginate(15)->withQueryString();
-        $this->attachUserVoteStatus($posts);
-        return view('home', compact('posts'));
+        try {
+            $query = Post::query()->withPostData();
+            $filter = $request->input('filter', 'latest');
+
+            switch ($filter) {
+                case 'trending':
+                    $query->where('created_at', '>=', now()->subDays(7))
+                        ->orderByDesc('total_votes')
+                        ->orderByDesc('created_at');
+                    break;
+                case 'latest':
+                default:
+                    $query->orderByDesc('created_at')->orderByDesc('id');
+                    break;
+            }
+
+            $posts = $query->paginate(15);
+
+            $this->attachUserVoteStatus($posts);
+
+            $html = '';
+            foreach ($posts as $post) {
+                $html .= view('partials.post-card', [
+                    'post' => $post,
+                    'isFirst' => false,
+                    'showManagementOptions' => false,
+                    'profileOwnerToDisplay' => null,
+                ])->render();
+            }
+
+            return response()->json([
+                'html' => $html,
+                'hasMorePages' => $posts->hasMorePages(),
+            ]);
+
+        } catch (\Throwable $e) {
+            Log::error('Failed to load posts for infinite scroll: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json(['error' => 'Could not load posts due to a server error.'], 500);
+        }
     }
 
     final public function create(): View
@@ -757,7 +797,7 @@ class PostController extends Controller
         ]);
     }
 
-    private function attachUserVoteStatus(LengthAwarePaginator $posts): void
+    private function attachUserVoteStatus(\Illuminate\Contracts\Pagination\LengthAwarePaginator $posts): void
     {
         $userVoteMap = collect();
         if (Auth::check()) {

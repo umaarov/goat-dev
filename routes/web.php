@@ -60,6 +60,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/posts/{post}/vote', 'vote')->name('posts.vote')->middleware('throttle:30,1');
         Route::post('/posts/{post}/share', 'incrementShareCount')->name('posts.share')->middleware('throttle:30,1');
+        Route::get('/load-posts', 'loadPosts')->name('posts.load');
     })->whereNumber('post');
 
     Route::controller(CommentController::class)->group(function () {
