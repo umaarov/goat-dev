@@ -201,6 +201,12 @@
         @endfor
     </div>
 
+    <div id="profile-infinite-scroll-trigger" class="h-1"></div>
+
+    <div id="profile-loading-indicator" class="hidden">
+        @include('partials.post-card-shimmer')
+    </div>
+
     <div id="badge-enlarged-container" style="display: none;">
         <canvas id="enlarged-badge-canvas"></canvas>
 
@@ -1872,6 +1878,9 @@ ${canDeleteComment(commentData) ? `
             const myPostsIndicator = document.getElementById('my-posts-indicator');
             const votedPostsButton = document.getElementById('load-voted-posts');
             const votedPostsIndicator = votedPostsButton ? document.getElementById('voted-posts-indicator') : null;
+            const scrollTrigger = document.getElementById('profile-infinite-scroll-trigger');
+            const loadingIndicator = document.getElementById('profile-loading-indicator');
+
 
             const shimmerHTML = `
                 @for ($i = 0; $i < 3; $i++)
@@ -1885,7 +1894,8 @@ ${canDeleteComment(commentData) ? `
             let currentPage = {};
             let isLoading = {};
             let hasMorePages = {};
-
+            let activeTabData = { url: null, type: null };
+            let observer;
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
             // initializeZoomableImages();
@@ -1916,49 +1926,32 @@ ${canDeleteComment(commentData) ? `
             }
 
             async function loadPosts(url, type, loadMore = false) {
-                if (isLoading[type] && loadMore) return;
+                if (isLoading[type]) return;
+                if (loadMore && (activeTabData.type !== type || !hasMorePages[type])) return;
+
+                isLoading[type] = true;
 
                 if (!loadMore) {
                     currentPage[type] = 1;
                     hasMorePages[type] = true;
                     postsContainer.innerHTML = shimmerHTML;
-                    Object.keys(isLoading).forEach(key => {
-                        if (key !== type) isLoading[key] = false;
-                    });
+                    Object.keys(isLoading).forEach(key => { if (key !== type) isLoading[key] = false; });
+                    activeTabData = { url, type };
+                    observer.unobserve(scrollTrigger);
                 } else {
-                    if (!hasMorePages[type]) {
-                        const existingLoadMoreButton = postsContainer.querySelector(`.load-more-button[data-type="${type}"]`);
-                        if (existingLoadMoreButton) existingLoadMoreButton.remove();
-                        return;
-                    }
                     currentPage[type]++;
+                    loadingIndicator.classList.remove('hidden');
+                    observer.unobserve(scrollTrigger);
                 }
 
-                isLoading[type] = true;
                 const fetchUrl = `${url}?page=${currentPage[type]}`;
-
-                if (loadMore) {
-                    const existingLoadMoreButton = postsContainer.querySelector(`.load-more-button[data-type="${type}"]`);
-                    if (existingLoadMoreButton) existingLoadMoreButton.remove();
-                }
-
 
                 try {
                     const response = await fetch(fetchUrl, {
-                        method: 'GET',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json',
-                            // 'Content-Type': 'application/json',
-                            // 'X-CSRF-TOKEN': csrfToken
-                        },
-                        // credentials: 'same-origin'
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
                     });
 
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-
+                    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                     const data = await response.json();
 
                     if (!loadMore) {
@@ -1972,45 +1965,34 @@ ${canDeleteComment(commentData) ? `
                     hasMorePages[type] = data.hasMorePages;
 
                     if (hasMorePages[type]) {
-                        const oldButton = postsContainer.querySelector(`.load-more-button[data-type="${type}"]`);
-                        if (oldButton) oldButton.remove();
-
-                        const loadMoreButton = document.createElement('button');
-                        loadMoreButton.textContent = window.i18n.profile.js.load_more;
-                        loadMoreButton.classList.add('load-more-button', 'w-full', 'mt-6', 'py-3', 'bg-gray-100', 'text-gray-700', 'rounded-md', 'hover:bg-gray-200', 'focus:outline-none', 'focus:ring-2', 'focus:ring-blue-500');
-                        loadMoreButton.dataset.url = url;
-                        loadMoreButton.dataset.type = type;
-                        loadMoreButton.onclick = () => loadPosts(url, type, true);
-                        postsContainer.appendChild(loadMoreButton);
-                    } else {
-                        const oldButton = postsContainer.querySelector(`.load-more-button[data-type="${type}"]`);
-                        if (oldButton) oldButton.remove();
-                        if (loadMore && postsContainer.querySelectorAll('.post-card-class').length > 0) {
-                        }
+                        observer.observe(scrollTrigger);
                     }
 
-                    if (postsContainer.querySelectorAll('.post-card-class').length === 0 && !isLoading[type]) {
+                    if (postsContainer.children.length === 0 || (postsContainer.children.length === 1 && postsContainer.children[0].tagName === 'P')) {
                         postsContainer.innerHTML = `<p class="text-gray-500 text-center py-8">${window.i18n.profile.js.no_posts_found}</p>`;
+                        observer.unobserve(scrollTrigger);
                     }
-
 
                 } catch (error) {
                     console.error('Error loading posts:', error);
-                    const usernameForMessage = "{{ $user->username }}";
-                    if (!window.isLoggedIn) {
-                        postsContainer.innerHTML = `
-                            <div class="text-center py-4">
-                                <p class="text-sm text-gray-500">
-                                    ${window.i18n.profile.js.login_to_see_posts.replace(':username', usernameForMessage)}
-                                </p>
-                            </div>`;
-                    } else {
-                        postsContainer.innerHTML = `<p class="text-red-500 text-center py-8">${window.i18n.profile.js.error_loading_posts}</p>`;
-                    }
+                    postsContainer.innerHTML = `<p class="text-red-500 text-center py-8">${window.i18n.profile.js.error_loading_posts}</p>`;
                 } finally {
                     isLoading[type] = false;
+                    if (loadMore) {
+                        loadingIndicator.classList.add('hidden');
+                    }
                 }
             }
+
+            observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting && !isLoading[activeTabData.type]) {
+                    if (activeTabData.url && activeTabData.type) {
+                        loadPosts(activeTabData.url, activeTabData.type, true);
+                    }
+                }
+            }, {
+                rootMargin: '400px',
+            });
 
             if (myPostsButton) {
                 myPostsButton.addEventListener('click', () => {
