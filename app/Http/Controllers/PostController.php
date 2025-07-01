@@ -35,8 +35,8 @@ class PostController extends Controller
     private const MAX_POST_IMAGE_WIDTH = 1024;
     private const MAX_POST_IMAGE_HEIGHT = 1024;
     private const POST_IMAGE_QUALITY = 75;
-    private const LQIP_QUALITY = 20;
-    private const LQIP_WIDTH = 48;
+    private const LQIP_QUALITY = 30;
+    private const LQIP_WIDTH = 24;
 
     private const MAX_POST_IMAGE_SIZE_KB = 2048;
     private const MAX_POST_IMAGE_SIZE_MB = self::MAX_POST_IMAGE_SIZE_KB / 1024;
@@ -211,15 +211,14 @@ class PostController extends Controller
         $encodedMainImage = $image->encode(new WebpEncoder(quality: self::POST_IMAGE_QUALITY));
         Storage::disk('public')->put($mainImagePath, $encodedMainImage);
 
-        $image->scaleDown(width: self::LQIP_WIDTH)->blur(5);
-        $placeholderFilename = $baseFilename . '_placeholder.jpg';
-        $placeholderPath = $directory . '/' . $placeholderFilename;
-        $encodedPlaceholder = $image->encode(new JpegEncoder(quality: self::LQIP_QUALITY));
-        Storage::disk('public')->put($placeholderPath, $encodedPlaceholder);
+        $lqip = (string) $image->scale(width: self::LQIP_WIDTH)
+            ->blur(5)
+            ->encode(new JpegEncoder(quality: self::LQIP_QUALITY))
+            ->toDataUri();
 
         return [
             'main' => $mainImagePath,
-            'placeholder' => $placeholderPath,
+            'lqip' => $lqip,
         ];
     }
 
@@ -358,31 +357,23 @@ class PostController extends Controller
 
         $optionOneImagePaths = null;
         if ($request->hasFile('option_one_image')) {
-            $optionOneImagePaths = $this->processAndStoreImage(
-                $request->file('option_one_image'),
-                'post_images',
-                uniqid('post_opt1_')
-            );
-        }
-        $optionTwoImagePaths = null;
-        if ($request->hasFile('option_two_image')) {
-            $optionTwoImagePaths = $this->processAndStoreImage(
-                $request->file('option_two_image'),
-                'post_images',
-                uniqid('post_opt2_')
-            );
+            $optionOneImagePaths = $this->processAndStoreImage($request->file('option_one_image'), 'post_images', uniqid('post_opt1_'));
         }
 
+        $optionTwoImagePaths = null;
+        if ($request->hasFile('option_two_image')) {
+            $optionTwoImagePaths = $this->processAndStoreImage($request->file('option_two_image'), 'post_images', uniqid('post_opt2_'));
+        }
 
         $post = Post::create([
             'user_id' => Auth::id(),
             'question' => $request->question,
             'option_one_title' => $request->option_one_title,
             'option_one_image' => $optionOneImagePaths['main'] ?? null,
-            'option_one_image_placeholder' => $optionOneImagePaths['placeholder'] ?? null,
+            'option_one_image_lqip' => $optionOneImagePaths['lqip'] ?? null,
             'option_two_title' => $request->option_two_title,
             'option_two_image' => $optionTwoImagePaths['main'] ?? null,
-            'option_two_image_placeholder' => $optionTwoImagePaths['placeholder'] ?? null,
+            'option_two_image_lqip' => $optionTwoImagePaths['lqip'] ?? null,
         ]);
 
         Log::channel('audit_trail')->info('Post created and passed all moderation.', array_merge($logContextBase, [
@@ -538,29 +529,25 @@ class PostController extends Controller
         // --- End Moderation Stage for Update ---
 
         if ($request->boolean('remove_option_one_image') && $post->option_one_image) {
-            Storage::disk('public')->delete([$post->option_one_image, $post->option_one_image_placeholder]);
+            Storage::disk('public')->delete($post->option_one_image);
             $data['option_one_image'] = null;
-            $data['option_one_image_placeholder'] = null;
+            $data['option_one_image_lqip'] = null;
         } elseif ($request->hasFile('option_one_image')) {
-            if ($post->option_one_image) {
-                Storage::disk('public')->delete([$post->option_one_image, $post->option_one_image_placeholder]);
-            }
+            if ($post->option_one_image) Storage::disk('public')->delete($post->option_one_image);
             $paths = $this->processAndStoreImage($request->file('option_one_image'), 'post_images', uniqid('post_opt1_'));
             $data['option_one_image'] = $paths['main'];
-            $data['option_one_image_placeholder'] = $paths['placeholder'];
+            $data['option_one_image_lqip'] = $paths['lqip'];
         }
 
         if ($request->boolean('remove_option_two_image') && $post->option_two_image) {
-            Storage::disk('public')->delete([$post->option_two_image, $post->option_two_image_placeholder]);
+            Storage::disk('public')->delete($post->option_two_image);
             $data['option_two_image'] = null;
-            $data['option_two_image_placeholder'] = null;
+            $data['option_two_image_lqip'] = null;
         } elseif ($request->hasFile('option_two_image')) {
-            if ($post->option_two_image) {
-                Storage::disk('public')->delete([$post->option_two_image, $post->option_two_image_placeholder]);
-            }
+            if ($post->option_two_image) Storage::disk('public')->delete($post->option_two_image);
             $paths = $this->processAndStoreImage($request->file('option_two_image'), 'post_images', uniqid('post_opt2_'));
             $data['option_two_image'] = $paths['main'];
-            $data['option_two_image_placeholder'] = $paths['placeholder'];
+            $data['option_two_image_lqip'] = $paths['lqip'];
         }
 
         $post->update($data);

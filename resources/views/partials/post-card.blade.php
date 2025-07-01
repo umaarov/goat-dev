@@ -64,6 +64,7 @@
 @endpush
 <article class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4"
          id="post-{{ $post->id }}"
+         style="content-visibility: auto; contain-intrinsic-size: 500px;"
          data-option-one-title="{{ $post->option_one_title }}"
          data-option-two-title="{{ $post->option_two_title }}"
          data-option-one-votes="{{ $post->option_one_votes }}"
@@ -137,45 +138,44 @@
 
     <div class="grid grid-cols-2 gap-4 p-4 h-52">
         {{-- OPTION ONE IMAGE --}}
-        <div class="progressive-image-container rounded-md overflow-hidden bg-gray-100 bg-cover bg-center"
-             @if($post->option_one_image_placeholder)
-                 style="background-image: url('{{ asset('storage/' . $post->option_one_image_placeholder) }}');"
-            @endif>
+        <div class="image-loader-container rounded-md overflow-hidden bg-gray-100 bg-cover bg-center"
+             @if($post->option_one_image_lqip)
+                 style="background-image: url('{{ $post->option_one_image_lqip }}');"
+            @endif
+        >
             @if($post->option_one_image)
-                <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" {{-- Transparent 1x1 pixel --}}
-                data-src="{{ asset('storage/' . $post->option_one_image) }}"
+                <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                     data-src="{{ asset('storage/' . $post->option_one_image) }}"
                      alt="{{ $post->question }} - {{ $post->option_one_title }}"
                      class="progressive-image h-full w-full object-cover object-center cursor-pointer zoomable-image"
-                     @if(!$isFirst) loading="lazy" @endif decoding="async">
+                     decoding="async">
             @else
-                <div class="h-full flex items-center justify-center">
-                    <div class="bg-gray-200 rounded-full p-2">
-                        <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                    </div>
+                <div class="bg-gray-200 rounded-full p-2">
+                    <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 </div>
             @endif
         </div>
 
         {{-- OPTION TWO IMAGE --}}
-        <div class="progressive-image-container rounded-md overflow-hidden bg-gray-100 bg-cover bg-center"
-             @if($post->option_two_image_placeholder)
-                 style="background-image: url('{{ asset('storage/' . $post->option_two_image_placeholder) }}');"
-            @endif>
+        <div class="image-loader-container rounded-md overflow-hidden bg-gray-100 bg-cover bg-center"
+             @if($post->option_two_image_lqip)
+                 style="background-image: url('{{ $post->option_two_image_lqip }}');"
+            @endif
+        >
             @if($post->option_two_image)
-                <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" {{-- Transparent 1x1 pixel --}}
-                data-src="{{ asset('storage/' . $post->option_two_image) }}"
+                <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                     data-src="{{ asset('storage/' . $post->option_two_image) }}"
                      alt="{{ $post->question }} - {{ $post->option_two_title }}"
                      class="progressive-image h-full w-full object-cover object-center cursor-pointer zoomable-image"
-                     @if(!$isFirst) loading="lazy" @endif decoding="async">
+                     decoding="async">
             @else
-                <div class="h-full flex items-center justify-center">
-                    <div class="bg-gray-200 rounded-full p-2">
-                        <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                    </div>
+                <div class="bg-gray-200 rounded-full p-2">
+                    <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 </div>
             @endif
         </div>
     </div>
+
 
     <div class="grid grid-cols-2 gap-4 px-4 pb-4">
         @php
@@ -325,12 +325,23 @@
 </template>
 
 <style>
-    .progressive-image-container {
-        filter: blur(8px);
-        transition: filter 0.4s ease-in-out;
+    .image-loader-container {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .image-loader-container::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: inherit;
+        filter: blur(12px);
+        transform: scale(1.1);
+        transition: opacity 0.4s ease-in-out;
     }
 
     .progressive-image {
+        position: relative;
         opacity: 0;
         transition: opacity 0.4s ease-in-out;
     }
@@ -339,8 +350,9 @@
         opacity: 1;
     }
 
-    .progressive-image-container.unblurred {
-        filter: blur(0);
+    .progressive-image.loaded + .image-loader-container::before,
+    .image-loader-container .progressive-image.loaded::before {
+        opacity: 0;
     }
     .comments-section {
         max-height: 0;
