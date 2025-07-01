@@ -214,7 +214,7 @@ class PostController extends Controller
         return $path;
     }
 
-    final public function index(Request $request): View
+    final public function index(Request $request): View|JsonResponse
     {
         $query = Post::query()->withPostData();
 
@@ -232,6 +232,16 @@ class PostController extends Controller
 
         $posts = $query->paginate(15)->withQueryString();
         $this->attachUserVoteStatus($posts);
+
+        if ($request->ajax()) {
+            $html = view('partials.posts-list', ['posts' => $posts])->render();
+
+            return response()->json([
+                'html' => $html,
+                'hasMorePages' => $posts->hasMorePages()
+            ]);
+        }
+
         return view('home', compact('posts'));
     }
 

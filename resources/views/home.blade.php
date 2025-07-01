@@ -26,18 +26,28 @@
             @endfor
         </div>
 
+
         <div id="posts-container" class="hidden">
-            @forelse ($posts as $post)
-                @include('partials.post-card', ['post' => $post, 'isFirst' => $loop->first])
-            @empty
+            @if ($posts->count() > 0)
+                @foreach($posts as $post)
+                    @include('partials.post-card', [
+                        'post' => $post,
+                        'isFirst' => $loop->first,
+                        'showManagementOptions' => $showManagementOptions ?? false,
+                        'profileOwnerToDisplay' => $profileOwnerToDisplay ?? null,
+                    ])
+                @endforeach
+            @else
                 <div class="text-center p-8 bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)]">
                     <p>{{ __('messages.app.no_posts_found') }}</p>
                 </div>
-            @endforelse
+            @endif
+        </div>
 
-            <div class="pagination">
-                {{ $posts->links() }}
-            </div>
+        <div id="infinite-scroll-trigger" class="h-20"></div>
+
+        <div id="loading-indicator" class="hidden text-center py-4">
+            @include('partials.post-card-shimmer')
         </div>
     </div>
 @endsection
@@ -47,10 +57,10 @@
         document.addEventListener('DOMContentLoaded', function () {
             const shimmer = document.getElementById('posts-loading-shimmer');
             const container = document.getElementById('posts-container');
-            const noPostsMessage = container.querySelector('.text-center p');
+            const noPostsMessage = '{{ $posts->isEmpty() }}';
 
             if (shimmer && container) {
-                if (noPostsMessage && '{{ $posts->isEmpty() }}') {
+                if (noPostsMessage) {
                     shimmer.style.display = 'none';
                     container.classList.remove('hidden');
                 } else {
@@ -59,6 +69,75 @@
                         container.classList.remove('hidden');
                     }, 250);
                 }
+            }
+
+            const postContainer = document.getElementById('posts-container');
+            const trigger = document.getElementById('infinite-scroll-trigger');
+            const loadingIndicator = document.getElementById('loading-indicator');
+
+            let nextPage = 2;
+            let isLoading = false;
+            let hasMorePages = {{ $posts->hasMorePages() ? 'true' : 'false' }};
+
+            if (!hasMorePages) {
+                trigger.style.display = 'none';
+            }
+
+            const loadMorePosts = async () => {
+                if (isLoading || !hasMorePages) {
+                    return;
+                }
+
+                isLoading = true;
+                loadingIndicator.classList.remove('hidden');
+
+                const filter = new URLSearchParams(window.location.search).get('filter') || '';
+                const url = `{{ route('home') }}?page=${nextPage}${filter ? '&filter=' + filter : ''}`;
+
+                try {
+                    const response = await fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    if (data.html.trim().length > 0) {
+                        postContainer.insertAdjacentHTML('beforeend', data.html);
+                        nextPage++;
+                        hasMorePages = data.hasMorePages;
+
+                        if (!hasMorePages) {
+                            trigger.style.display = 'none';
+                        }
+                    } else {
+                        hasMorePages = false;
+                        trigger.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Error loading more posts:', error);
+                    trigger.style.display = 'none';
+                } finally {
+                    isLoading = false;
+                    loadingIndicator.classList.add('hidden');
+                }
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    loadMorePosts();
+                }
+            }, {
+                rootMargin: '200px',
+            });
+
+            if (hasMorePages) {
+                observer.observe(trigger);
             }
         });
     </script>
