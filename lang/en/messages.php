@@ -248,6 +248,11 @@ return [
     'app.meta_description_default' => 'What is the GOAT? Create and vote on "this or that" polls. Join the community, share your opinion, and see what\'s trending.',
     'app.logo_alt' => 'GOAT.uz - Community Polls Logo',
 
+    'app.all_caught_up' => "You're all caught up",
+    'app.you_have_seen_all_posts' => 'You have seen all the posts for now.',
+    'app.create_new_post' => 'Create a New Post',
+    'app.back_to_top' => 'Back to Top ↑',
+
     'app.js.cropper_modal_title' => 'Crop Image (1x1)',
     'app.js.apply_crop_button' => 'Apply Crop',
     'app.js.cropper_error_processing' => 'Error processing image crop.',
@@ -257,6 +262,7 @@ return [
     'app.js.tooltip_owner_voted_for_template' => '@:username voted for :optionTitle',
     'app.js.image_viewer_alt' => 'Full screen image',
     'app.js.image_viewer_close_title' => 'Close image viewer',
+
 
     'create_post.title' => 'Create New Post - GOAT.uz',
     'create_post.ask_unique_question' => 'Ask a unique question!',

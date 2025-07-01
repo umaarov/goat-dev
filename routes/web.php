@@ -29,6 +29,7 @@ Route::get('/search', [PostController::class, 'search'])->name('search');
 Route::get('/p/{id}/{slug?}', [PostController::class, 'showBySlug'])->name('posts.showSlug')->middleware('cache.response:60');
 Route::get('/@{username}', [UserController::class, 'showProfile'])->name('profile.show');
 Route::get('/check-username', [UserController::class, 'checkUsername'])->name('check.username');
+Route::get('/load-posts', [PostController::class, 'loadPosts'])->name('posts.load');
 
 Route::view('about', 'about')->name('about')->middleware('cache.response:1440');
 Route::view('terms', 'terms')->name('terms')->middleware('cache.response:1440');
