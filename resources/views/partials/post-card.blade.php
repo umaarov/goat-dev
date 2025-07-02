@@ -64,6 +64,7 @@
 @endpush
 <article class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4"
          id="post-{{ $post->id }}"
+         style="content-visibility: auto; contain-intrinsic-size: 500px;"
          data-option-one-title="{{ $post->option_one_title }}"
          data-option-two-title="{{ $post->option_two_title }}"
          data-option-one-votes="{{ $post->option_one_votes }}"
@@ -136,43 +137,45 @@
     </div>
 
     <div class="grid grid-cols-2 gap-4 p-4 h-52">
-        <div class="rounded-md overflow-hidden">
+        {{-- OPTION ONE IMAGE --}}
+        <div class="image-loader-container rounded-md overflow-hidden bg-gray-100 bg-cover bg-center"
+             @if($post->option_one_image_lqip)
+                 style="background-image: url('{{ $post->option_one_image_lqip }}');"
+            @endif
+        >
             @if($post->option_one_image)
-                @php $optionOneImageUrl = asset('storage/' . $post->option_one_image); @endphp
-                <img src="{{ $optionOneImageUrl }}" alt="{{ $post->question }} - {{ $post->option_one_title }}"
-                     class="h-full w-full object-cover object-center cursor-pointer zoomable-image"
-                     data-full-src="{{ $optionOneImageUrl }}" @if(!$isFirst) loading="lazy" @endif decoding="async">
+                <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                     data-src="{{ asset('storage/' . $post->option_one_image) }}"
+                     alt="{{ $post->question }} - {{ $post->option_one_title }}"
+                     class="progressive-image h-full w-full object-cover object-center cursor-pointer zoomable-image"
+                     decoding="async">
             @else
-                <div class="bg-gray-100 h-full flex items-center justify-center">
-                    <div class="bg-gray-200 rounded-full p-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
-                    </div>
+                <div class="bg-gray-200 rounded-full p-2">
+                    <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 </div>
             @endif
         </div>
 
-        <div class="rounded-md overflow-hidden">
+        {{-- OPTION TWO IMAGE --}}
+        <div class="image-loader-container rounded-md overflow-hidden bg-gray-100 bg-cover bg-center"
+             @if($post->option_two_image_lqip)
+                 style="background-image: url('{{ $post->option_two_image_lqip }}');"
+            @endif
+        >
             @if($post->option_two_image)
-                @php $optionTwoImageUrl = asset('storage/' . $post->option_two_image); @endphp
-                <img src="{{ asset('storage/' . $post->option_two_image) }}"
+                <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                     data-src="{{ asset('storage/' . $post->option_two_image) }}"
                      alt="{{ $post->question }} - {{ $post->option_two_title }}"
-                     class="h-full w-full object-cover object-center cursor-pointer zoomable-image"
-                     data-full-src="{{ $optionTwoImageUrl }}" @if(!$isFirst)  loading="lazy" @endif decoding="async">
+                     class="progressive-image h-full w-full object-cover object-center cursor-pointer zoomable-image"
+                     decoding="async">
             @else
-                <div class="bg-gray-100 h-full flex items-center justify-center">
-                    <div class="bg-gray-200 rounded-full p-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
-                    </div>
+                <div class="bg-gray-200 rounded-full p-2">
+                    <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 </div>
             @endif
         </div>
     </div>
+
 
     <div class="grid grid-cols-2 gap-4 px-4 pb-4">
         @php
@@ -322,6 +325,35 @@
 </template>
 
 <style>
+    .image-loader-container {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .image-loader-container::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: inherit;
+        filter: blur(12px);
+        transform: scale(1.1);
+        transition: opacity 0.4s ease-in-out;
+    }
+
+    .progressive-image {
+        position: relative;
+        opacity: 0;
+        transition: opacity 0.4s ease-in-out;
+    }
+
+    .progressive-image.loaded {
+        opacity: 1;
+    }
+
+    .progressive-image.loaded + .image-loader-container::before,
+    .image-loader-container .progressive-image.loaded::before {
+        opacity: 0;
+    }
     .comments-section {
         max-height: 0;
         overflow: hidden;
@@ -577,7 +609,67 @@
     }
 </style>
 
+
+
 <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!('IntersectionObserver' in window)) {
+            console.warn('IntersectionObserver not supported. Falling back to loading all images.');
+            document.querySelectorAll('.progressive-image').forEach(img => loadImage(img));
+            return;
+        }
+
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const image = entry.target;
+                    loadImage(image);
+                    observer.unobserve(image);
+                }
+            });
+        }, {
+            rootMargin: '0px 0px 100px 0px'
+        });
+        function initializeImageLoading() {
+            const imagesToLoad = document.querySelectorAll('.progressive-image[data-src]');
+            imagesToLoad.forEach(img => {
+                imageObserver.observe(img);
+            });
+        }
+
+        function loadImage(imageElement) {
+            const highResSrc = imageElement.dataset.src;
+            if (!highResSrc) return;
+
+            const tempImage = new Image();
+            tempImage.src = highResSrc;
+
+            tempImage.onload = () => {
+                const container = imageElement.parentElement;
+
+                imageElement.src = highResSrc;
+
+                imageElement.classList.add('loaded');
+
+                if (container && container.classList.contains('progressive-image-container')) {
+                    container.classList.add('unblurred');
+                }
+            };
+
+            tempImage.onerror = () => {
+                console.error(`Failed to load image: ${highResSrc}`);
+                const container = imageElement.parentElement;
+                if (container && container.classList.contains('progressive-image-container')) {
+                    container.classList.add('unblurred');
+                }
+            }
+        }
+
+        initializeImageLoading();
+
+        // document.addEventListener('posts-loaded', initializeImageLoading);
+    });
+
     function scrollToPost(postId) {
         const postElement = document.getElementById(`post-${postId}`);
         if (!postElement) return;
