@@ -24,3 +24,5 @@ yarn-error.log
 /storage/app/service-account.json
 supervisord.log
 supervisord.pid
+/caddy_data
+/caddy_config

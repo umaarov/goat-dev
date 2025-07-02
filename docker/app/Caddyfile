@@ -17,12 +17,14 @@ goat.local {
 
     file_server
 
-    php_server {
-       root /app
-       transport frankenphp {
-          num_threads 4
-          app_root /app
-          command /app/vendor/bin/frankenphp-worker
-       }
+    route {
+        php_server {
+            root /app
+            transport frankenphp {
+                num_threads 4
+                app_root /app
+                command /app/vendor/bin/frankenphp-worker
+             }
+        }
     }
 }
