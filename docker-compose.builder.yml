@@ -1,0 +1,12 @@
+services:
+  frontend-base:
+    image: goat-frontend-base:latest
+    build:
+      context: .
+      dockerfile: docker/base/frontend/Dockerfile
+
+  php-base:
+    image: goat-php-base:latest
+    build:
+      context: .
+      dockerfile: docker/base/php/Dockerfile

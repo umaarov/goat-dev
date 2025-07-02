@@ -1,0 +1,5 @@
+2025-07-02 10:02:29,835 INFO supervisord started with pid 1
+2025-07-02 10:02:30,838 INFO spawned: 'laravel-worker_00' with pid 7
+2025-07-02 10:02:30,843 INFO spawned: 'laravel-worker_01' with pid 8
+2025-07-02 10:02:31,846 INFO success: laravel-worker_00 entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2025-07-02 10:02:31,847 INFO success: laravel-worker_01 entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
