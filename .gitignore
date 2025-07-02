@@ -22,3 +22,5 @@ yarn-error.log
 /.vscode
 /.zed
 /storage/app/service-account.json
+supervisord.log
+supervisord.pid
