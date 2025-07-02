@@ -1,13 +1,13 @@
 {
-    auto_https disable_redirects
+    local_certs
 }
 
-goat.local {
+goat.test {
     root * /app/public
     encode zstd br gzip
 
     header {
-       Strict-Transport-Security "max-age=31536000;"
+       # Strict-Transport-Security "max-age=31536000;"
        X-Frame-Options "SAMEORIGIN"
        X-Content-Type-Options "nosniff"
        Referrer-Policy "origin-when-cross-origin"

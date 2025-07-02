@@ -41,6 +41,8 @@ WORKDIR /app
 RUN addgroup -g ${PGID} goat && \
     adduser -u ${PUID} -G goat -s /bin/sh -D goat
 
+RUN apk add --no-cache nss-tools
+
 RUN install-php-extensions \
     pdo_mysql \
     redis \
@@ -60,7 +62,7 @@ RUN cp /usr/local/bin/frankenphp /app/vendor/bin/frankenphp-worker \
     && php artisan package:discover --ansi \
     && php artisan octane:install --server=frankenphp
 
-RUN chown -R goat:goat /app
+RUN chown -R goat:goat /app /data /config
 USER goat
 
 EXPOSE 80 443 443/udp

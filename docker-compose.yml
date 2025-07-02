@@ -15,7 +15,8 @@ services:
         volumes:
             - ./:/app
             - ./docker/app/Caddyfile:/etc/caddy/Caddyfile
-            - ./caddy_data:/data
+#            - ./caddy_data:/data
+            - caddy_data:/data
             - caddy_config:/config
         ports:
             - "80:80"
@@ -80,5 +81,5 @@ networks:
 volumes:
     db_data:
     redis_data:
-#    caddy_data:
+    caddy_data:
     caddy_config:
