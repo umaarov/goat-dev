@@ -1,0 +1,84 @@
+services:
+    # 1. The Application
+    app:
+        build:
+            context: .
+            dockerfile: docker/app/Dockerfile
+            args:
+                PUID: ${PUID:-1000}
+                PGID: ${PGID:-1000}
+        container_name: goat-app
+        restart: unless-stopped
+        environment:
+            SERVER_NAME: ${APP_URL}
+            OCTANE_SERVER: frankenphp
+        volumes:
+            - ./:/app
+            - ./docker/app/Caddyfile:/etc/caddy/Caddyfile
+            - caddy_data:/data
+            - caddy_config:/config
+        ports:
+            - "80:80"
+            - "443:443"
+            - "443:443/udp"
+        networks:
+            - goat-network
+        depends_on:
+            - db
+            - redis
+
+    # 2. The Database
+    db:
+        image: mariadb:10.8
+        container_name: goat-db
+        restart: unless-stopped
+        command: --default-authentication-plugin=mysql_native_password
+        environment:
+            MARIADB_DATABASE: ${DB_DATABASE}
+            MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
+            MARIADB_USER: ${DB_USERNAME}
+            MARIADB_PASSWORD: ${DB_PASSWORD}
+        volumes:
+            - db_data:/var/lib/mysql
+        networks:
+            - goat-network
+
+    # 3. Redis
+    redis:
+        image: redis:7-alpine
+        container_name: goat-redis
+        restart: unless-stopped
+        volumes:
+            - redis_data:/data
+        networks:
+            - goat-network
+
+    # 4. The Queue Worker with Supervisor
+    queue:
+        build:
+            context: .
+            dockerfile: docker/queue/Dockerfile
+            args:
+                PUID: ${PUID:-1000}
+                PGID: ${PGID:-1000}
+        container_name: goat-queue
+        restart: unless-stopped
+        command: supervisord -c /etc/supervisor/conf.d/supervisor.conf
+        volumes:
+            - ./:/app
+        networks:
+            - goat-network
+        depends_on:
+            - app
+            - redis
+
+# Networks and Volumes
+networks:
+    goat-network:
+        driver: bridge
+
+volumes:
+    db_data:
+    redis_data:
+    caddy_data:
+    caddy_config:
