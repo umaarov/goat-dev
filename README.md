@@ -8,15 +8,17 @@
 
 The platform is built with a focus on performance, security, and a rich user experience.
 
-* **AI-Driven Content Moderation Pipeline**: Integrates **Google's Gemini Pro API** for real-time analysis and moderation of all user-generated content, including text (posts, comments), images, and external URLs, augmented by a local, configurable keyword-based filter.
+* **Content Moderation Pipeline**: Integrates **Google's Gemini Pro API** for real-time analysis and moderation of all user-generated content, including text (posts, comments), images, and external URLs, augmented by a local, configurable keyword-based filter.
 
-* **AI-Assisted Asset Generation**: Leverages **Cloudflare's Stable Diffusion AI** to empower users to generate unique profile picture assets directly from text-based prompts.
+* **Asset Generation**: Leverages **Stable Diffusion AI** to empower users to generate unique profile picture assets directly from text-based prompts.
 
 * **Real-Time 3D Rendering Engine**: Utilizes a **Three.js/WebGL** engine running in a dedicated **Web Worker** to render complex, interactive 3D user achievement badges. This offloads heavy rendering from the main thread, ensuring a smooth and responsive UI.
 
 * **WebAssembly (WASM) Module Integration**: Employs C++ modules compiled to WebAssembly via Emscripten for performance-critical, computationally intensive geometry calculations used in the 3D rendering engine.
 
 * **Secure Authentication & Authorization**: Implements a robust authentication system supporting both local credentials and **Google OAuth2**. The application is hardened with a strict Content Security Policy (CSP), security headers, and follows best practices for user data protection.
+
+* **Automated Email Notifications**: A scheduled, queue-based system that notifies users of new posts. The system is intelligent, only sending digests when there is sufficient new content since the user's last notification, and respects user-configurable preferences to opt-in or opt-out.
 
 * **Advanced Search & Discovery**: Features a sophisticated search system powered by **Levenshtein distance** and **Soundex phonetic algorithms** to deliver accurate "fuzzy" search results for both content and users.
 
