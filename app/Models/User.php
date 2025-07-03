@@ -42,6 +42,11 @@ class User extends Authenticatable
         'external_links' => 'array',
     ];
 
+    public function isAdmin(): bool
+    {
+        return $this->id == config('app.admin_user_id');
+    }
+
     final function posts(): HasMany
     {
         return $this->hasMany(Post::class);

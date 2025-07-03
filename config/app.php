@@ -30,4 +30,5 @@ return [
         App\Providers\RouteServiceProvider::class,
         App\Providers\ViewServiceProvider::class,
     ],
+    'admin_user_id' => env('ADMIN_USER_ID'),
 ];

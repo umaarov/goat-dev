@@ -38,8 +38,8 @@ class AppServiceProvider extends ServiceProvider
 
             $view->with('alternateUrls', $alternateUrls)->with('defaultHreflangUrl', $defaultUrl);
         });
-//        Gate::define('viewPulse', function (User $user) {
-//            return $user->isAdmin();
-//        });
+        Gate::define('viewPulse', function (User $user) {
+            return $user->isAdmin();
+        });
     }
 }
