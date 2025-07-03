@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\User;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -36,5 +38,8 @@ class AppServiceProvider extends ServiceProvider
 
             $view->with('alternateUrls', $alternateUrls)->with('defaultHreflangUrl', $defaultUrl);
         });
+//        Gate::define('viewPulse', function (User $user) {
+//            return $user->isAdmin();
+//        });
     }
 }
