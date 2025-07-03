@@ -1,0 +1,6 @@
+#services:
+#  app:
+#    image: nginx:latest
+#    volumes: []
+#    command: []
+#    entrypoint: []
