@@ -631,7 +631,7 @@
             rootMargin: '0px 0px 100px 0px'
         });
         function initializeImageLoading() {
-            const imagesToLoad = document.querySelectorAll('.progressive-image[data-src]');
+            const imagesToLoad = document.querySelectorAll('.progressive-image[data-src]:not(.loaded)');
             imagesToLoad.forEach(img => {
                 imageObserver.observe(img);
             });
@@ -667,7 +667,7 @@
 
         initializeImageLoading();
 
-        // document.addEventListener('posts-loaded', initializeImageLoading);
+        document.addEventListener('posts-loaded', initializeImageLoading);
     });
 
     function scrollToPost(postId) {

@@ -44,9 +44,9 @@
             @endif
         </div>
 
-        <div id="infinite-scroll-trigger" class="h-20"></div>
+        <div id="infinite-scroll-trigger" class=""></div>
 
-        <div id="loading-indicator" class="hidden text-center py-4">
+        <div id="loading-indicator" class="hidden text-center">
             @include('partials.post-card-shimmer')
         </div>
     </div>
@@ -109,6 +109,9 @@
 
                     if (data.html.trim().length > 0) {
                         postContainer.insertAdjacentHTML('beforeend', data.html);
+
+                        document.dispatchEvent(new Event('posts-loaded'));
+
                         nextPage++;
                         hasMorePages = data.hasMorePages;
 
