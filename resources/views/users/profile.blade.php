@@ -919,64 +919,48 @@
         }
 
         async function voteForOption(postId, option) {
-            if (!window.isLoggedIn) {
-                if (window.showToast) window.showToast(window.i18n.profile.js.login_to_vote, 'warning');
+            if (!{{ Auth::check() ? 'true' : 'false' }}) {
+                if (window.showToast) window.showToast(window.translations.js_login_to_vote, 'warning');
                 return;
             }
 
             const postElement = document.getElementById(`post-${postId}`);
-            if (!postElement) {
-                console.error(`Post element with ID post-${postId} not found.`);
-                return;
-            }
+            if (!postElement) return;
 
             const clickedButton = postElement.querySelector(`button.vote-button[data-option="${option}"]`);
             const otherButtonOption = option === 'option_one' ? 'option_two' : 'option_one';
             const otherButton = postElement.querySelector(`button.vote-button[data-option="${otherButtonOption}"]`);
-
-            if (!clickedButton || !otherButton) {
-                console.error('Vote buttons not found for post-' + postId);
+            if (clickedButton.disabled || otherButton.disabled) {
+                console.log('Vote already in progress. Ignoring click.');
                 return;
             }
-
-            if (clickedButton.disabled || clickedButton.classList.contains('voting-in-progress')) {
-                return;
-            }
+            if (!clickedButton || !otherButton || clickedButton.disabled) return;
 
             const knownUserVote = postElement.dataset.userVote;
             if (knownUserVote && (knownUserVote === 'option_one' || knownUserVote === 'option_two')) {
-                if (knownUserVote === option) {
-                    if (window.showToast) window.showToast(window.i18n.profile.js.already_voted, 'info');
-                    const currentVoteData = {
-                        user_vote: knownUserVote,
-                        option_one_votes: parseInt(postElement.dataset.optionOneVotes, 10),
-                        option_two_votes: parseInt(postElement.dataset.optionTwoVotes, 10),
-                        total_votes: parseInt(postElement.dataset.optionOneVotes, 10) + parseInt(postElement.dataset.optionTwoVotes, 10),
-                        message: window.i18n.profile.js.already_voted
-                    };
-                    updateVoteUI(postId, currentVoteData.user_vote, currentVoteData);
-                    return;
-                }
+                const currentVoteData = {
+                    user_vote: knownUserVote,
+                    option_one_votes: parseInt(postElement.dataset.optionOneVotes, 10),
+                    option_two_votes: parseInt(postElement.dataset.optionTwoVotes, 10),
+                    total_votes: parseInt(postElement.dataset.optionOneVotes, 10) + parseInt(postElement.dataset.optionTwoVotes, 10),
+                };
+                updateVoteUI(postId, currentVoteData.user_vote, currentVoteData);
+                if (window.showToast) window.showToast(window.translations.js_error_already_voted, 'info');
+                return;
             }
-
-
-            const originalOptionOneVotes = parseInt(postElement.dataset.optionOneVotes, 10) || 0;
-            const originalOptionTwoVotes = parseInt(postElement.dataset.optionTwoVotes, 10) || 0;
-            const originalUserVoteState = postElement.dataset.userVote || '';
 
             const originalClickedButtonClasses = Array.from(clickedButton.classList);
             const originalOtherButtonClasses = Array.from(otherButton.classList);
-
-            const totalVotesDisplayElement = postElement.querySelector('.total-votes-display');
-            const originalTotalVotesText = totalVotesDisplayElement ? totalVotesDisplayElement.textContent : (originalOptionOneVotes + originalOptionTwoVotes).toString();
+            const totalVotesDisplayElement = postElement.querySelector('.flex.justify-between.items-center .flex.flex-col.items-center.gap-1 span.text-lg.font-semibold');
+            const originalTotalVotesText = totalVotesDisplayElement ? totalVotesDisplayElement.textContent : (parseInt(postElement.dataset.optionOneVotes, 10) + parseInt(postElement.dataset.optionTwoVotes, 10)).toString();
 
 
             clickedButton.classList.add('voting-in-progress');
             clickedButton.disabled = true;
             otherButton.disabled = true;
 
+
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            let responseOk = false;
 
             try {
                 const response = await fetch(`/posts/${postId}/vote`, {
@@ -988,46 +972,34 @@
                     },
                     body: JSON.stringify({option: option})
                 });
-
                 const responseData = await response.json();
-                responseOk = response.ok;
 
-                if (responseOk) { // HTTP 200-299
+                if (response.ok) {
                     updateVoteUI(postId, responseData.user_vote, responseData);
-                    if (window.showToast && responseData.message && !responseData.message.toLowerCase().includes('already voted')) {
+                    if (window.showToast && responseData.message && responseData.message.toLowerCase().includes('successfully')) {
                         window.showToast(responseData.message, 'success');
-                    } else if (window.showToast && responseData.message && responseData.message.toLowerCase().includes('already voted')) {
-                        window.showToast(responseData.message, 'info');
                     }
-                } else { // HTTP errors (409, 422, 500, etc.)
-                    const errorMessage = responseData.message || responseData.error || (responseData.errors ? Object.values(responseData.errors).join(', ') : `${window.i18n.profile.js.vote_failed_http} (HTTP ${response.status})`);
+                } else {
+                    const errorMessage = responseData.message || responseData.error || (responseData.errors ? Object.values(responseData.errors).join(', ') : `Vote failed (HTTP ${response.status})`);
                     if (window.showToast) {
                         window.showToast(errorMessage, response.status === 409 ? 'info' : 'error');
                     }
-
                     if (response.status === 409 && responseData.user_vote && typeof responseData.option_one_votes !== 'undefined') {
                         updateVoteUI(postId, responseData.user_vote, responseData);
                     } else {
                         clickedButton.className = originalClickedButtonClasses.join(' ');
                         otherButton.className = originalOtherButtonClasses.join(' ');
-                        postElement.dataset.userVote = originalUserVoteState;
-                        postElement.dataset.optionOneVotes = originalOptionOneVotes.toString();
-                        postElement.dataset.optionTwoVotes = originalOptionTwoVotes.toString();
                         if (totalVotesDisplayElement) totalVotesDisplayElement.textContent = originalTotalVotesText;
                     }
                 }
             } catch (error) {
                 console.error('Error voting (catch):', error);
                 if (window.showToast) {
-                    window.showToast(window.i18n.profile.js.vote_failed_connection, 'error');
+                    window.showToast(window.translations.js_vote_failed_connection, 'error');
                 }
                 clickedButton.className = originalClickedButtonClasses.join(' ');
                 otherButton.className = originalOtherButtonClasses.join(' ');
-                postElement.dataset.userVote = originalUserVoteState;
-                postElement.dataset.optionOneVotes = originalOptionOneVotes.toString();
-                postElement.dataset.optionTwoVotes = originalOptionTwoVotes.toString();
                 if (totalVotesDisplayElement) totalVotesDisplayElement.textContent = originalTotalVotesText;
-
             } finally {
                 clickedButton.classList.remove('voting-in-progress');
                 clickedButton.disabled = false;
@@ -1038,15 +1010,15 @@
         function updateVoteUI(postId, userVotedOption, voteData) {
             const postElement = document.getElementById(`post-${postId}`);
             if (!postElement) {
-                console.error(`Post element with ID post-${postId} not found.`);
+                console.error(`updateVoteUI: Post element with ID 'post-${postId}' not found.`);
                 return;
             }
 
-            postElement.dataset.userVote = userVotedOption || '';
+            postElement.dataset.userVote = userVotedOption;
             postElement.dataset.optionOneVotes = voteData.option_one_votes;
             postElement.dataset.optionTwoVotes = voteData.option_two_votes;
 
-            const totalVotesDisplayElement = postElement.querySelector('.total-votes-display');
+            const totalVotesDisplayElement = postElement.querySelector('.flex.justify-between.items-center .flex.flex-col.items-center.gap-1 span.text-lg.font-semibold');
             if (totalVotesDisplayElement) {
                 totalVotesDisplayElement.textContent = voteData.total_votes;
             }
@@ -1055,57 +1027,51 @@
             const optionTwoButton = postElement.querySelector('button.vote-button[data-option="option_two"]');
 
             if (optionOneButton && optionTwoButton) {
-                const optionOneTitle = postElement.dataset.optionOneTitle || 'Option 1';
-                const optionTwoTitle = postElement.dataset.optionTwoTitle || 'Option 2';
+                const optionOneTitleText = postElement.dataset.optionOneTitle || 'Option 1';
+                const optionTwoTitleText = postElement.dataset.optionTwoTitle || 'Option 2';
 
-                const totalVotes = parseInt(voteData.total_votes, 10);
-                const optionOneVotes = parseInt(voteData.option_one_votes, 10);
-                const optionTwoVotes = parseInt(voteData.option_two_votes, 10);
+                const numOptionOneVotes = parseInt(voteData.option_one_votes, 10) || 0;
+                const numOptionTwoVotes = parseInt(voteData.option_two_votes, 10) || 0;
+                const numTotalVotes = numOptionOneVotes + numOptionTwoVotes;
 
-                const percentOne = totalVotes > 0 ? Math.round((optionOneVotes / totalVotes) * 100) : 0;
-                const percentTwo = totalVotes > 0 ? Math.round((optionTwoVotes / totalVotes) * 100) : 0;
+                const percentOne = numTotalVotes > 0 ? Math.round((numOptionOneVotes / numTotalVotes) * 100) : 0;
+                const percentTwo = numTotalVotes > 0 ? Math.round((numOptionTwoVotes / numTotalVotes) * 100) : 0;
 
-                const optionOneTextElement = optionOneButton.querySelector('.button-text-truncate');
-                if (optionOneTextElement) {
-                    optionOneTextElement.textContent = `${optionOneTitle} (${percentOne}%)`;
-                } else {
-                    optionOneButton.textContent = `${optionOneTitle} (${percentOne}%)`;
-                }
+                optionOneButton.querySelector('.button-text-truncate').textContent = `${optionOneTitleText} (${percentOne}%)`;
+                optionTwoButton.querySelector('.button-text-truncate').textContent = `${optionTwoTitleText} (${percentTwo}%)`;
 
-                const optionTwoTextElement = optionTwoButton.querySelector('.button-text-truncate');
-                if (optionTwoTextElement) {
-                    optionTwoTextElement.textContent = `${optionTwoTitle} (${percentTwo}%)`;
-                } else {
-                    optionTwoButton.textContent = `${optionTwoTitle} (${percentTwo}%)`;
-                }
-
-
-                const highlightClasses = ['bg-blue-800', 'text-white', 'border-blue-800'];
-                const defaultClasses = ['bg-white', 'text-gray-700', 'border', 'border-gray-300', 'hover:bg-gray-50'];
-                const nonVotedPeerClasses = ['bg-gray-100', 'text-gray-600', 'border', 'border-gray-300'];
+                const highlightClasses = ['bg-blue-800', 'text-white'];
+                const defaultClasses = ['bg-white', 'border', 'border-gray-300', 'hover:bg-gray-50'];
+                const noHoverDefaultClasses = ['bg-white', 'border', 'border-gray-300'];
 
                 [optionOneButton, optionTwoButton].forEach(button => {
-                    button.classList.remove(...highlightClasses, ...defaultClasses, ...nonVotedPeerClasses);
-                    button.classList.remove('hover:bg-gray-50', 'hover:bg-blue-700');
+                    button.classList.remove(...highlightClasses, ...defaultClasses, ...noHoverDefaultClasses);
                 });
 
-
-                if (userVotedOption) {
-                    if (userVotedOption === 'option_one') {
-                        optionOneButton.classList.add(...highlightClasses);
-                        optionTwoButton.classList.add(...nonVotedPeerClasses);
-                    } else if (userVotedOption === 'option_two') {
-                        optionTwoButton.classList.add(...highlightClasses);
-                        optionOneButton.classList.add(...nonVotedPeerClasses);
-                    }
-                    optionOneButton.dataset.tooltipShowCount = "true";
-                    optionTwoButton.dataset.tooltipShowCount = "true";
-
+                if (userVotedOption === 'option_one') {
+                    optionOneButton.classList.add(...highlightClasses);
+                    optionTwoButton.classList.add(...noHoverDefaultClasses);
+                } else if (userVotedOption === 'option_two') {
+                    optionTwoButton.classList.add(...highlightClasses);
+                    optionOneButton.classList.add(...noHoverDefaultClasses);
                 } else {
                     optionOneButton.classList.add(...defaultClasses);
                     optionTwoButton.classList.add(...defaultClasses);
-                    optionOneButton.dataset.tooltipShowCount = "false";
-                    optionTwoButton.dataset.tooltipShowCount = "false";
+                }
+
+                const showPercentagesBasedOnCurrentState = userVotedOption || postElement.dataset.profileOwnerVoteOption;
+                // const votesLabelToUse = window.translations?.js_votes_label || 'votes';
+
+                if (showPercentagesBasedOnCurrentState) {
+                    optionOneButton.dataset.tooltipShowCount = "true";
+                    optionTwoButton.dataset.tooltipShowCount = "true";
+                    // optionOneButton.title = `${numOptionOneVotes} ${votesLabelToUse}`;
+                    // optionTwoButton.title = `${numOptionTwoVotes} ${votesLabelToUse}`;
+                } else {
+                    optionOneButton.removeAttribute('data-tooltip-show-count');
+                    optionTwoButton.removeAttribute('data-tooltip-show-count');
+                    // optionOneButton.removeAttribute('title');
+                    // optionTwoButton.removeAttribute('title');
                 }
             }
         }
@@ -1200,110 +1166,96 @@
                 });
         }
 
+        function updateParentUIAfterReply(rootCommentId) {
+            const rootCommentEl = document.getElementById(`comment-${rootCommentId}`);
+            if (!rootCommentEl) return;
+
+            const repliesContainer = rootCommentEl.querySelector('.replies-container');
+            let toggleButton = rootCommentEl.querySelector('.view-replies-button');
+            const actionsContainer = rootCommentEl.querySelector('.mt-1\\.5.flex');
+
+            if (!toggleButton && actionsContainer) {
+                toggleButton = document.createElement('button');
+                toggleButton.className = 'view-replies-button font-semibold hover:underline text-xs text-gray-500';
+                toggleButton.onclick = () => toggleRepliesContainer(toggleButton, `comment-${rootCommentId}`);
+                actionsContainer.appendChild(toggleButton);
+            }
+
+            if (toggleButton) {
+                const replyCount = repliesContainer.children.length;
+                toggleButton.textContent = window.translations.hide_replies_text || 'Hide replies';
+
+                if(repliesContainer.classList.contains('hidden')) {
+                    repliesContainer.classList.remove('hidden');
+                }
+            }
+        }
+
         function submitComment(postId, event) {
             event.preventDefault();
             const form = event.target;
             const submitButton = form.querySelector('button[type="submit"]');
-            const contentInput = form.elements.content;
-            const content = contentInput.value.trim();
+            const content = form.elements.content.value;
+            const parentId = form.elements.parent_id.value;
 
-            if (!content) {
-                if (window.showToast) window.showToast(window.i18n.profile.js.comment_empty, 'warning');
-                contentInput.focus();
+            if (!content.trim()) {
+                if(window.showToast) showToast(window.translations.js_comment_empty);
                 return;
             }
 
-            const originalButtonText = submitButton.innerHTML;
             submitButton.disabled = true;
-            submitButton.innerHTML = `<div class="inline-block animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div> ${window.i18n.profile.js.comment_button_submitting}`;
+            submitButton.innerHTML = `<div class="inline-block animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>`;
 
-            const url = `/posts/${postId}/comments`;
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-            fetch(url, {
+            fetch(`/posts/${postId}/comments`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({content: content})
+                headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json'},
+                body: JSON.stringify({content: content, parent_id: parentId || null})
             })
                 .then(response => {
-                    if (!response.ok) {
-                        console.log('Response not OK. Status:', response.status);
-                        return response.json()
-                            .catch(jsonParseError => {
-                                console.error('Failed to parse JSON from non-OK response:', jsonParseError);
-                                throw new Error(`Server error: ${response.status}. Response body not valid JSON.`);
-                            })
-                            .then(errData => {
-                                console.log('Parsed error data from server (errData):', errData);
-                                let specificMessage = `Failed to submit comment (Server error: ${response.status}).`;
-
-                                if (errData && errData.errors && errData.errors.content && Array.isArray(errData.errors.content) && errData.errors.content.length > 0) {
-                                    specificMessage = errData.errors.content.join(' ');
-                                } else if (errData && errData.message) {
-                                    specificMessage = errData.message;
-                                }
-                                console.log('Throwing error with specific message:', specificMessage);
-                                throw new Error(specificMessage);
-                            });
-                    }
+                    if (!response.ok) return response.json().then(err => Promise.reject(err));
                     return response.json();
                 })
                 .then(data => {
-                    if (data.comment) {
-                        contentInput.value = '';
-
-                        const commentsSection = document.getElementById(`comments-section-${postId}`);
-                        const commentsContainer = commentsSection?.querySelector('.comments-list');
-
-                        if (commentsContainer) {
-                            const noCommentsMessage = commentsContainer.querySelector('p.text-center');
-                            if (noCommentsMessage && (noCommentsMessage.textContent.includes(window.i18n.profile.js.no_comments_alt) || noCommentsMessage.textContent.includes("No comments yet"))) {
-                                commentsContainer.innerHTML = '';
-                            }
-
-                            const commentElement = createCommentElement(data.comment, postId);
-                            commentsContainer.insertBefore(commentElement, commentsContainer.firstChild);
-
-                            setTimeout(() => commentElement.classList.add('visible'), 10);
-
-                            const commentCountElement = document.querySelector(`#post-${postId} .comment-count-display`);
-                            if (commentCountElement) {
-                                const currentCount = parseInt(commentCountElement.textContent) || 0;
-                                commentCountElement.textContent = currentCount + 1;
-                            }
-                            // initializeZoomableImages(commentElement);
-                        }
-
-                        if (window.showToast && data.message) {
-                            window.showToast(data.message, 'success');
-                        } else if (window.showToast) {
-                            window.showToast('Comment posted!', 'success');
-                        }
-
-                    } else {
-                        if (data.errors) {
-                            const errorMessages = Object.values(data.errors).flat().join(' ');
-                            if (window.showToast) window.showToast(`${window.i18n.profile.js.error_prefix} ${errorMessages}`, 'error');
-                        } else {
-                            if (window.showToast) window.showToast(data.message || 'Failed to add comment. Unexpected response format after success.', 'error');
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Caught in final .catch for submitComment:', error);
-                    if (window.showToast) {
-                        window.showToast(error.message || 'Failed to add comment. Please try again.', 'error');
-                    } else {
-                        alert(error.message || 'Failed to add comment. Please try again.');
-                    }
-                })
-                .finally(() => {
                     submitButton.disabled = false;
-                    submitButton.innerHTML = originalButtonText;
+                    submitButton.innerHTML = window.translations.js_submit_comment_button || 'Submit';
+                    cancelReply(postId);
+                    form.elements.content.value = '';
+
+                    const newComment = data.comment;
+                    const isReply = !!newComment.parent_id;
+
+                    const commentElement = createCommentElement(newComment, postId, isReply);
+
+                    if (isReply) {
+                        const rootCommentId = newComment.root_comment_id;
+                        const repliesContainer = document.querySelector(`#comment-${rootCommentId} .replies-container`);
+                        if (repliesContainer) {
+                            repliesContainer.appendChild(commentElement);
+                            updateParentUIAfterReply(rootCommentId);
+                        } else {
+                            loadComments(postId, 1);
+                        }
+                    } else {
+                        const commentsContainer = document.querySelector(`#comments-section-${postId} .comments-list`);
+                        const noCommentsMessage = commentsContainer.querySelector('p.text-center');
+                        if (noCommentsMessage) noCommentsMessage.remove();
+                        commentsContainer.insertBefore(commentElement, commentsContainer.firstChild);
+                    }
+
+                    setTimeout(() => { commentElement.classList.add('visible'); }, 10);
+
+                    const commentCountElement = document.querySelector(`#post-${postId} button[onclick^="toggleComments"] span`);
+                    if (commentCountElement) {
+                        commentCountElement.textContent = parseInt(commentCountElement.textContent) + 1;
+                    }
+                    if (window.showToast) showToast(data.message || 'Comment posted!', 'success');
+                })
+                .catch(errorData => {
+                    console.error('Error:', errorData);
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = window.translations.js_submit_comment_button || 'Submit';
+                    const errorMessage = errorData?.errors ? Object.values(errorData.errors).join(' ') : (window.translations.js_failed_add_comment || 'Failed to add comment.');
+                    if (window.showToast) showToast(errorMessage, 'error');
                 });
         }
 
@@ -1713,6 +1665,12 @@ ${canDeleteComment(commentData) ? `
                 return;
             }
 
+            if (buttonElement.disabled) {
+                return;
+            }
+            buttonElement.disabled = true;
+            buttonElement.classList.add('processing-like');
+
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             const url = `/comments/${commentId}/toggle-like`;
 
@@ -1721,7 +1679,6 @@ ${canDeleteComment(commentData) ? `
 
             const originallyLiked = buttonElement.classList.contains('text-red-500');
             const originalLikesCount = parseInt(likesCountSpan.textContent.trim());
-
             const filledHeartSVG = '<path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />';
             const outlineHeartSVG = '<path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656zM10 15.93l5.828-5.828a2 2 0 10-2.828-2.828L10 10.274l-2.828-2.829a2 2 0 00-2.828 2.828L10 15.93z" clip-rule="evenodd" />';
 
@@ -1753,54 +1710,44 @@ ${canDeleteComment(commentData) ? `
                     }
                 });
 
-                const data = await response.json();
+                if (response.status === 404) {
+                    if (window.showToast) window.showToast('This comment has been deleted.', 'error');
+                    const commentElement = document.getElementById(`comment-${commentId}`);
+                    if (commentElement) {
+                        commentElement.style.transition = 'opacity 0.3s ease';
+                        commentElement.style.opacity = '0';
+                        setTimeout(() => commentElement.remove(), 300);
+                    }
+                    return;
+                }
 
                 if (!response.ok) {
-                    throw new Error(data.message || data.error_dev || 'Failed to toggle like.');
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to toggle like.');
                 }
+
+                const data = await response.json();
 
                 buttonElement.classList.toggle('text-red-500', data.is_liked);
-                buttonElement.classList.toggle('hover:bg-red-100', data.is_liked);
                 buttonElement.classList.toggle('text-gray-400', !data.is_liked);
-                buttonElement.classList.toggle('hover:text-red-500', !data.is_liked);
-                buttonElement.classList.toggle('hover:bg-red-50', !data.is_liked);
-
-
-                if (data.is_liked) {
-                    heartIcon.innerHTML = filledHeartSVG;
-                    buttonElement.title = window.translations.unlike_comment_title || 'Unlike';
-                } else {
-                    heartIcon.innerHTML = outlineHeartSVG;
-                    buttonElement.title = window.translations.like_comment_title || 'Like';
-                }
+                heartIcon.innerHTML = data.is_liked ? filledHeartSVG : outlineHeartSVG;
+                buttonElement.title = data.is_liked ? (window.translations.unlike_comment_title || 'Unlike') : (window.translations.like_comment_title || 'Like');
                 likesCountSpan.textContent = data.likes_count;
                 likesCountSpan.className = `ml-1.5 comment-likes-count font-medium tabular-nums ${parseInt(data.likes_count) === 0 ? 'text-gray-400' : 'text-gray-700'}`;
-
-
-                if (window.showToast && data.message_user) {
-                    // window.showToast(data.message_user, 'success');
-                }
 
             } catch (error) {
                 console.error('Error toggling comment like:', error);
                 if (window.showToast) window.showToast(error.message || (window.translations.js_error_liking_comment || 'Could not update like.'), 'error');
 
                 buttonElement.classList.toggle('text-red-500', originallyLiked);
-                buttonElement.classList.toggle('hover:bg-red-100', originallyLiked);
                 buttonElement.classList.toggle('text-gray-400', !originallyLiked);
-                buttonElement.classList.toggle('hover:text-red-500', !originallyLiked);
-                buttonElement.classList.toggle('hover:bg-red-50', !originallyLiked);
-
-
-                if (originallyLiked) {
-                    heartIcon.innerHTML = filledHeartSVG;
-                    buttonElement.title = window.translations.unlike_comment_title || 'Unlike';
-                } else {
-                    heartIcon.innerHTML = outlineHeartSVG;
-                    buttonElement.title = window.translations.like_comment_title || 'Like';
-                }
+                heartIcon.innerHTML = originallyLiked ? filledHeartSVG : outlineHeartSVG;
+                buttonElement.title = originallyLiked ? (window.translations.unlike_comment_title || 'Unlike') : (window.translations.like_comment_title || 'Like');
                 likesCountSpan.textContent = originalLikesCount;
                 likesCountSpan.className = `ml-1.5 comment-likes-count font-medium tabular-nums ${originalLikesCount === 0 ? 'text-gray-400' : 'text-gray-700'}`;
+            } finally {
+                buttonElement.disabled = false;
+                buttonElement.classList.remove('processing-like');
             }
         }
 
