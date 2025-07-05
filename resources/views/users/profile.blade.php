@@ -1,5 +1,6 @@
 @php
     use Illuminate\Support\Str;
+    use Illuminate\Support\Facades\Storage;
 @endphp
 @extends('layouts.app')
 
@@ -30,7 +31,7 @@
                         $profilePic = $user->profile_picture
                             ? (Str::startsWith($user->profile_picture, ['http', 'https'])
                                 ? $user->profile_picture
-                                : asset('storage/' . $user->profile_picture))
+                                : Storage::url($user->profile_picture))
                             : asset('images/default-pfp.png');
 
                         $isVerified = in_array($user->username, ['goat', 'umarov']);
@@ -497,6 +498,7 @@
         const currentUserId = window._currentUserId;
 
         window.isLoggedIn = {{ Auth::check() ? 'true' : 'false' }};
+        window.profileUsername = '{{ $user->username }}';
 
         window.i18n = {
             profile: {
@@ -549,6 +551,7 @@
             @if(session('scrollToPost'))
             scrollToPost({{ session('scrollToPost') }});
             @endif
+            initializeZoomableImages();
             const commentsSections = document.querySelectorAll('[id^="comments-section-"]');
             commentsSections.forEach(section => {
                 if (!section.classList.contains('comments-section')) {
@@ -1951,6 +1954,13 @@ ${canDeleteComment(commentData) ? `
                         headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
                     });
 
+                    if (response.status === 401) {
+                        const message = window.i18n.profile.js.login_to_see_posts.replace(':username', window.profileUsername);
+                        postsContainer.innerHTML = `<p class="text-gray-500 text-center py-8">${message}</p>`;
+                        hasMorePages[type] = false;
+                        return;
+                    }
+
                     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                     const data = await response.json();
 
@@ -1959,7 +1969,7 @@ ${canDeleteComment(commentData) ? `
                     } else {
                         postsContainer.insertAdjacentHTML('beforeend', data.html || '');
                     }
-
+                    initializeZoomableImages(postsContainer);
                     initializePostInteractions();
 
                     hasMorePages[type] = data.hasMorePages;
@@ -1975,7 +1985,9 @@ ${canDeleteComment(commentData) ? `
 
                 } catch (error) {
                     console.error('Error loading posts:', error);
-                    postsContainer.innerHTML = `<p class="text-red-500 text-center py-8">${window.i18n.profile.js.error_loading_posts}</p>`;
+                    if (!loadMore) {
+                        postsContainer.innerHTML = `<p class="text-red-500 text-center py-8">${window.i18n.profile.js.error_loading_posts}</p>`;
+                    }
                 } finally {
                     isLoading[type] = false;
                     if (loadMore) {
