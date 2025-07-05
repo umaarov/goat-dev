@@ -15,7 +15,7 @@ class SendPostNotifications extends Command
 {
     private const MIN_HOURS_BETWEEN_NOTIFICATIONS = 12;
 
-    private const MIN_POSTS_TO_TRIGGER = 2;
+    private const MIN_POSTS_TO_TRIGGER = 1;
 
     protected $signature = 'app:send-post-notifications {--test : Send a test email immediately to hs.umarov21@gmail.com}';
 
@@ -28,7 +28,7 @@ class SendPostNotifications extends Command
             return;
         }
 
-        if (rand(1, 8) !== 1) {
+        if (rand(1, 3) !== 1) {
             $this->info('Skipping this run to ensure random timing. No emails sent.');
             return;
         }

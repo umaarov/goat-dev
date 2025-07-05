@@ -27,3 +27,4 @@ supervisord.pid
 /caddy_data
 /caddy_config
 root.crt
+public/build.zip
