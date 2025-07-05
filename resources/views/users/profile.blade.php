@@ -551,7 +551,6 @@
             @if(session('scrollToPost'))
             scrollToPost({{ session('scrollToPost') }});
             @endif
-            initializeZoomableImages();
             const commentsSections = document.querySelectorAll('[id^="comments-section-"]');
             commentsSections.forEach(section => {
                 if (!section.classList.contains('comments-section')) {
@@ -1969,7 +1968,6 @@ ${canDeleteComment(commentData) ? `
                     } else {
                         postsContainer.insertAdjacentHTML('beforeend', data.html || '');
                     }
-                    initializeZoomableImages(postsContainer);
                     initializePostInteractions();
 
                     hasMorePages[type] = data.hasMorePages;
