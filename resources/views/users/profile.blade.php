@@ -1927,6 +1927,31 @@ ${canDeleteComment(commentData) ? `
                 }
             }
 
+            function initializeProgressiveImages(container = document) {
+                const imagesToLoad = container.querySelectorAll('.progressive-image[data-src]');
+                if (imagesToLoad.length === 0) return;
+
+                const imageObserver = new IntersectionObserver((entries, observer) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const image = entry.target;
+                            const highResSrc = image.dataset.src;
+
+                            if (highResSrc) {
+                                image.src = highResSrc;
+                                image.addEventListener('load', () => {
+                                    image.classList.add('loaded');
+                                });
+                                image.removeAttribute('data-src');
+                            }
+                            observer.unobserve(image);
+                        }
+                    });
+                }, { rootMargin: '0px 0px 200px 0px' });
+
+                imagesToLoad.forEach(img => imageObserver.observe(img));
+            }
+
             async function loadPosts(url, type, loadMore = false) {
                 if (isLoading[type]) return;
                 if (loadMore && (activeTabData.type !== type || !hasMorePages[type])) return;
@@ -1939,11 +1964,11 @@ ${canDeleteComment(commentData) ? `
                     postsContainer.innerHTML = shimmerHTML;
                     Object.keys(isLoading).forEach(key => { if (key !== type) isLoading[key] = false; });
                     activeTabData = { url, type };
-                    observer.unobserve(scrollTrigger);
+                    if(observer) observer.unobserve(scrollTrigger);
                 } else {
                     currentPage[type]++;
                     loadingIndicator.classList.remove('hidden');
-                    observer.unobserve(scrollTrigger);
+                    if(observer) observer.unobserve(scrollTrigger);
                 }
 
                 const fetchUrl = `${url}?page=${currentPage[type]}`;
@@ -1961,6 +1986,7 @@ ${canDeleteComment(commentData) ? `
                     }
 
                     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
                     const data = await response.json();
 
                     if (!loadMore) {
@@ -1968,7 +1994,10 @@ ${canDeleteComment(commentData) ? `
                     } else {
                         postsContainer.insertAdjacentHTML('beforeend', data.html || '');
                     }
+
+                    initializeProgressiveImages(postsContainer);
                     initializePostInteractions();
+                    // initializeZoomableImages(postsContainer);
 
                     hasMorePages[type] = data.hasMorePages;
 
@@ -1978,7 +2007,7 @@ ${canDeleteComment(commentData) ? `
 
                     if (postsContainer.children.length === 0 || (postsContainer.children.length === 1 && postsContainer.children[0].tagName === 'P')) {
                         postsContainer.innerHTML = `<p class="text-gray-500 text-center py-8">${window.i18n.profile.js.no_posts_found}</p>`;
-                        observer.unobserve(scrollTrigger);
+                        if(observer) observer.unobserve(scrollTrigger);
                     }
 
                 } catch (error) {
