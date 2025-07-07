@@ -11,6 +11,7 @@ return [
     'available_locales' => [
         'en' => 'English',
         'ru' => 'Русский',
+        'uz' => 'O\'zbekcha',
     ],
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
     'cipher' => 'AES-256-CBC',
