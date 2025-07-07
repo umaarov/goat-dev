@@ -78,12 +78,11 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 1rem;
         padding: 1rem;
-        height: 13rem;
     }
 
     .shimmer-image-placeholder {
+        aspect-ratio: 1 / 1;
         border-radius: 0.375rem;
-        height: 100%;
         width: 100%;
     }
 

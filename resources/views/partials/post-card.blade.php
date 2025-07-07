@@ -136,9 +136,9 @@
         <h2 class="text-lg text-gray-800" style="font-size: inherit; font-weight: inherit; margin: 0; padding: 0;">{{ $post->question }}</h2>
     </div>
 
-    <div class="grid grid-cols-2 gap-4 p-4 h-52">
+    <div class="grid grid-cols-2 gap-4 p-4">
         {{-- OPTION ONE IMAGE --}}
-        <div class="image-loader-container rounded-md overflow-hidden bg-gray-100 bg-cover bg-center"
+        <div class="image-loader-container aspect-square rounded-md overflow-hidden bg-gray-100 bg-cover bg-center"
              @if($post->option_one_image_lqip)
                  style="background-image: url('{{ $post->option_one_image_lqip }}');"
             @endif
@@ -157,7 +157,7 @@
         </div>
 
         {{-- OPTION TWO IMAGE --}}
-        <div class="image-loader-container rounded-md overflow-hidden bg-gray-100 bg-cover bg-center"
+        <div class="image-loader-container aspect-square rounded-md overflow-hidden bg-gray-100 bg-cover bg-center"
              @if($post->option_two_image_lqip)
                  style="background-image: url('{{ $post->option_two_image_lqip }}');"
             @endif
