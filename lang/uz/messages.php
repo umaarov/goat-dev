@@ -11,7 +11,7 @@ return [
     'profile.edit_profile_button' => 'Profilni tahrirlash',
     'profile.my_posts_tab' => 'Mening postlarim',
     'profile.users_posts_tab' => ":username postlari",
-    'profile.voted_posts_tab' => 'Ovoz berilgan postlar',
+    'profile.voted_posts_tab' => 'Mening ovozlarim',
     'profile.loading_posts' => 'Postlar yuklanmoqda...',
     'profile.schema_description' => ":username'ning profilini, so'rovnomalarini va ovoz berish faolligini GOAT.uz'da ko'ring.",
 
@@ -421,7 +421,7 @@ return [
     ],
 
     'ratings' => [
-        'nav_title' => 'Reytinglar',
+        'nav_title' => 'Reyting',
         'title' => 'Foydalanuvchilar reytingi va peshqadamlar jadvali',
         'meta_description' => 'Platformamizdagi eng yaxshi foydalanuvchilarni ko‘rib chiqing. Kimda eng ko‘p ovozlar, postlar, izohlar va izohlarga layklar borligini ko‘ring.',
         'main_title' => 'Jamiyat peshqadamlar jadvali',
