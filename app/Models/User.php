@@ -37,6 +37,7 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'last_notified_at' => 'datetime',
         'password' => 'hashed',
         'show_voted_posts_publicly' => 'boolean',
         'external_links' => 'array',
