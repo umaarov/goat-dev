@@ -268,7 +268,7 @@
         </button>
     </div>
 
-    <div id="comments-section-{{ $post->id }}" class="hidden">
+    <div id="comments-section-{{ $post->id }}" class="comments-section hidden">
         <div class="border-b border-gray-200"></div>
 
         @if (Auth::check())
@@ -1953,18 +1953,4 @@ ${canDeleteComment(commentData) ? `
             console.warn(`updateVoteUI: Vote buttons not found for post ${postId}.`);
         }
     }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        const commentsSections = document.querySelectorAll('[id^="comments-section-"]');
-        commentsSections.forEach(section => {
-            section.classList.add('comments-section');
-            if (!section.classList.contains('hidden')) {
-                section.classList.add('hidden');
-            }
-            const formContainer = section.querySelector('form')?.closest('div');
-            if (formContainer && !formContainer.classList.contains('comment-form-container')) {
-                formContainer.classList.add('comment-form-container');
-            }
-        });
-    });
 </script>
