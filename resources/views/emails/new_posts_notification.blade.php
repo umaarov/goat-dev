@@ -222,7 +222,7 @@
     </div>
 
     <div class="bottom-footer">
-        <p>GOAT uz, Sergeli, Tashkent, 100022, Uzbekistan, 33-532-2517</p>
+        <p>GOAT uz, Sergeli, Tashkent, 100022, Uzbekistan, 33-500-2517</p>
         <p><a href="#">Unsubscribe</a> &nbsp;|&nbsp; <a href="#">Manage preferences</a></p>
     </div>
 </div>
