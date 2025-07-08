@@ -11,7 +11,7 @@ return [
     'profile.votes_collected_stat_label' => 'Vote Collected|Votes Collected',
     'profile.edit_profile_button' => 'Edit Profile',
     'profile.my_posts_tab' => 'My Posts',
-    'profile.users_posts_tab' => ":username's Posts",
+    'profile.users_posts_tab' => "Posts",
     'profile.voted_posts_tab' => 'Voted Posts',
     'profile.loading_posts' => 'Loading posts...',
     'profile.schema_description' => "View :username's profile, polls, and voting activity on GOAT.uz.",

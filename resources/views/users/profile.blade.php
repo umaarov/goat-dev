@@ -167,10 +167,11 @@
     </div>
 
     <div class="mb-4 border-b border-gray-200">
-        <div class="flex">
+        <div class="flex mx-auto items-center justify-between">
             <button id="load-my-posts" data-url="{{ route('profile.posts.data', $user->username) }}"
                     class="px-6 py-3 font-medium text-gray-700 hover:text-blue-800 focus:outline-none relative">
                 {{ $isOwnProfile ? __('messages.profile.my_posts_tab') : __('messages.profile.users_posts_tab', ['username' => $user->username]) }}
+{{--                {{ __('messages.profile.my_posts_tab') }}--}}
                 <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-800 transition-all duration-300"
                       id="my-posts-indicator"></span>
             </button>

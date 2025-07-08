@@ -10,7 +10,7 @@ return [
     'profile.votes_collected_stat_label' => 'To‘plangan ovoz|To‘plangan ovozlar',
     'profile.edit_profile_button' => 'Profilni tahrirlash',
     'profile.my_posts_tab' => 'Postlar',
-    'profile.users_posts_tab' => ":username postlari",
+    'profile.users_posts_tab' => "Postlar",
     'profile.voted_posts_tab' => 'Ovozlar',
     'profile.loading_posts' => 'Postlar yuklanmoqda...',
     'profile.schema_description' => ":username'ning profilini, so'rovnomalarini va ovoz berish faolligini GOAT.uz'da ko'ring.",

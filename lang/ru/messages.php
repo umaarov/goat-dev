@@ -10,7 +10,7 @@ return [
     'profile.votes_collected_stat_label' => 'Собранный голос|Собранных голоса|Собранных голосов',
     'profile.edit_profile_button' => 'Редактировать профиль',
     'profile.my_posts_tab' => 'Мои посты',
-    'profile.users_posts_tab' => "Посты :username",
+    'profile.users_posts_tab' => "Посты",
     'profile.voted_posts_tab' => 'Оцененные посты',
     'profile.loading_posts' => 'Загрузка постов...',
     'profile.schema_description' => "Просмотреть профиль, опросы и активность голосования :username на GOAT.uz.",
