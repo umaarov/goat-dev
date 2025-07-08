@@ -39,7 +39,9 @@
                                     </svg>
                                     <p class="mt-1 text-xs">{{ __('messages.create_post.click_to_upload_image') }}</p>
                                 </div>
-                                <img id="option_one_img" class="h-full w-full object-cover object-center hidden rounded-md" src="#" alt="{{ __('messages.create_post.option_1_preview_alt') }}">
+                                <img id="option_one_img"
+                                     class="h-full w-full object-cover object-center hidden rounded-md" src="#"
+                                     alt="{{ __('messages.create_post.option_1_preview_alt') }}">
                             </div>
                         </label>
                         <input type="file" id="option_one_image_trigger" class="hidden"
@@ -75,7 +77,9 @@
                                     </svg>
                                     <p class="mt-1 text-xs">{{ __('messages.create_post.click_to_upload_image') }}</p>
                                 </div>
-                                <img id="option_two_img" class="h-full w-full object-cover object-center hidden rounded-md" src="#" alt="{{ __('messages.create_post.option_2_preview_alt') }}">
+                                <img id="option_two_img"
+                                     class="h-full w-full object-cover object-center hidden rounded-md" src="#"
+                                     alt="{{ __('messages.create_post.option_2_preview_alt') }}">
                             </div>
                         </label>
                         <input type="file" id="option_two_image_trigger" class="hidden"
@@ -101,10 +105,21 @@
 
                 {{-- Submit Button --}}
                 <div class="mt-6">
-                    <button type="submit"
-                            class="w-full bg-blue-800 text-white py-3 rounded-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-150">
-                        {{ __('messages.create_post.submit_button') }}
+                    <button type="submit" id="createPostSubmitButton"
+                            class="w-full bg-blue-800 text-white py-3 rounded-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-150 flex items-center justify-center">
+
+                        <svg id="buttonSpinner" class="animate-spin h-5 w-5 text-white mr-3 hidden"
+                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span id="buttonText">{{ __('messages.create_post.submit_button') }}</span>
                     </button>
+                    <p id="moderationMessage" class="text-center text-gray-500 text-sm mt-2 hidden">
+                        {{ __('messages.create_post.js.moderation_in_progress', ['default' => 'Please wait a moment. We are checking your post to ensure it meets our community guidelines.']) }}
+                    </p>
                 </div>
             </form>
         </div>
@@ -120,27 +135,26 @@
 
             if (triggerInput.files && triggerInput.files[0]) {
                 const file = triggerInput.files[0];
-
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     previewImg.src = e.target.result;
                     previewImg.classList.remove('hidden');
                     placeholder.classList.add('hidden');
                 };
                 reader.readAsDataURL(file);
-
                 const dataTransfer = new DataTransfer();
                 dataTransfer.items.add(file);
                 finalInput.files = dataTransfer.files;
-
                 previewContainer?.classList.remove('border-red-500');
             }
         }
 
         document.addEventListener('DOMContentLoaded', function () {
             const createPostForm = document.getElementById('createPostForm');
+            const submitButton = document.getElementById('createPostSubmitButton');
+            const submissionOverlay = document.getElementById('submissionOverlay');
 
-            if (createPostForm) {
+            if (createPostForm && submitButton && submissionOverlay) {
                 createPostForm.addEventListener('submit', function (event) {
                     const questionInput = document.getElementById('question');
                     const optionOneTitleInput = document.getElementById('option_one_title');
@@ -153,14 +167,12 @@
                     if (questionInput.value.trim() === '') allFieldsValid = false;
                     if (optionOneTitleInput.value.trim() === '') allFieldsValid = false;
                     if (optionTwoTitleInput.value.trim() === '') allFieldsValid = false;
-
                     if (!optionOneImageInput || optionOneImageInput.files.length === 0) {
                         allFieldsValid = false;
                         document.getElementById('option_one_preview')?.classList.add('border-red-500');
                     } else {
                         document.getElementById('option_one_preview')?.classList.remove('border-red-500');
                     }
-
                     if (!optionTwoImageInput || optionTwoImageInput.files.length === 0) {
                         allFieldsValid = false;
                         document.getElementById('option_two_preview')?.classList.add('border-red-500');
@@ -175,9 +187,32 @@
                         } else {
                             alert("{{ __('messages.create_post.js.fill_all_fields_warning') }}");
                         }
+                    } else {
+                        submitButton.disabled = true;
+                        submissionOverlay.classList.remove('hidden');
                     }
                 });
             }
         });
     </script>
+    <div id="submissionOverlay"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-75 hidden"
+         style="backdrop-filter: blur(4px);">
+        <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4 text-center">
+            <div class="mb-4">
+                <svg class="animate-spin h-12 w-12 text-blue-800 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none"
+                     viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">
+                {{ __('messages.create_post.js.overlay.title', ['default' => 'Finalizing Your Post...']) }}
+            </h3>
+            <p class="text-gray-600">
+                {{ __('messages.create_post.js.overlay.message', ['default' => 'We\'re running a quick automated check to ensure everything meets our community standards. This usually takes just a few seconds. Thanks for your patience!']) }}
+            </p>
+        </div>
+    </div>
 @endsection

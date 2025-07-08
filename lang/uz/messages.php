@@ -270,6 +270,10 @@ return [
     'create_post.subject_2_placeholder' => '2-mavzu',
     'create_post.submit_button' => 'Yuborish',
     'create_post.js.fill_all_fields_warning' => 'Iltimos, barcha kerakli maydonlarni, shu jumladan rasmlarni to‘ldiring.',
+    'create_post.js.moderation_in_progress'=> 'Postingiz jamiyat qoidalariga muvofiqligi tekshirilmoqda. Bu jarayon bir necha soniya davom etishi mumkin.',
+    'create_post.js.overlay.title' => 'Postingiz yaratilmoqda...',
+    'create_post.js.overlay.message' => 'Biz jamiyat qoidalariga muvofiqlikni tezkor tekshirishni amalga oshirmoqdamiz. Bu jarayon odatda bir necha soniya davom etadi.',
+
 
     'edit_post.title' => 'Postni tahrirlash - GOAT.uz',
     'edit_post.heading' => 'Postni tahrirlash',

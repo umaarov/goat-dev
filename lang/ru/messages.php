@@ -270,6 +270,9 @@ return [
     'create_post.subject_2_placeholder' => 'Тема 2',
     'create_post.submit_button' => 'Отправить',
     'create_post.js.fill_all_fields_warning' => 'Пожалуйста, заполните все обязательные поля, включая изображения.',
+    'create_post.js.moderation_in_progress'=> 'Проверка модерацией в процессе. Пожалуйста, подождите.',
+    'create_post.js.overlay.title' => 'Проверка вашего поста...',
+    'create_post.js.overlay.message' => 'Мы проводим быструю автоматическую проверку, чтобы убедиться, что все соответствует нашим стандартам сообщества. Обычно это занимает всего несколько секунд. Спасибо за ваше терпение!',
 
     'edit_post.title' => 'Редактировать пост - GOAT.uz',
     'edit_post.heading' => 'Редактировать пост',

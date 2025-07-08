@@ -275,6 +275,9 @@ return [
     'create_post.subject_2_placeholder' => 'Subject 2',
     'create_post.submit_button' => 'Submit',
     'create_post.js.fill_all_fields_warning' => 'Please fill all required fields, including images.',
+    'create_post.js.moderation_in_progress'=> 'Please wait a moment. We are checking your post to ensure it meets our community guidelines.',
+    'create_post.js.overlay.title' => 'Finalizing Your Post...',
+    'create_post.js.overlay.message' => 'We\'re running a quick automated check to ensure everything meets our community standards. This usually takes just a few seconds. Thanks for your patience!',
 
     'edit_post.title' => 'Edit Post - GOAT.uz',
     'edit_post.heading' => 'Edit Post',
