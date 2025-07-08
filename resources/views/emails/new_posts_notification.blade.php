@@ -1,28 +1,7 @@
 @php
-    use Illuminate\Support\Facades\Storage;
-    use Illuminate\Support\Facades\Log;use Illuminate\Support\Str;
-
-    function getEmbeddedImageSource($imagePath) {
-        if (!$imagePath) {
-            return '';
-        }
-
-        try {
-            $fullPath = Storage::disk('public')->path($imagePath);
-
-            if (Storage::disk('public')->exists($imagePath)) {
-                $fileContents = Storage::disk('public')->get($imagePath);
-                $mimeType = Storage::disk('public')->mimeType($imagePath);
-                return 'data:' . $mimeType . ';base64,' . base64_encode($fileContents);
-            }
-        } catch (Exception $e) {
-            Log::error('Email Image Embedding Failed: ' . $e->getMessage(), ['path' => $imagePath]);
-            return '';
-        }
-
-        return '';
-    }
+    use Illuminate\Support\Str;
 @endphp
+
     <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -88,7 +67,7 @@
             display: inline-block;
             padding: 12px 24px;
             background-color: #4f46e5;
-            --text-color:  #ffffff;
+            --text-color: #ffffff;
             color: #ffffff;
             text-decoration: none;
             border-radius: 6px;
@@ -175,7 +154,8 @@
             <div class="post-caption">
                 <p style="text-align:center;">{{ $mainPost->option_one_title }} vs {{ $mainPost->option_two_title }}</p>
                 <div style="text-align: center;">
-                    <a href="{{ $mainPostUrl }}" class="button" style="color: #ffffff !important; text-decoration: none;">See More & Vote</a>
+                    <a href="{{ $mainPostUrl }}" class="button"
+                       style="color: #ffffff !important; text-decoration: none;">See More & Vote</a>
                 </div>
                 <p class="sub-text">See the results now on GOAT.uz</p>
             </div>
