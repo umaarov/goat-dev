@@ -43,7 +43,7 @@ Route::view('sponsorship', 'sponsorship')->name('sponsorship')->middleware('cach
 Route::view('ads', 'ads')->name('ads')->middleware('cache.response:1440');
 Route::view('contribution', 'contribution')->name('contribution')->middleware('cache.response:1440');
 
-Route::get('/sss', SssController::class)->name('sss.show');
+//Route::get('/sss', SssController::class)->name('sss.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
