@@ -2,6 +2,7 @@
 import {BadgeFactory} from './modules/BadgeFactory.js';
 import RendererWorker from './workers/renderer.worker.js?worker';
 import {EnlargedBadgeRenderer} from './EnlargedBadgeRenderer.js';
+import SssBadgeRenderer from "./SssBadgeRenderer.js";
 
 class BadgeCanvasManager {
     constructor() {
@@ -26,28 +27,35 @@ class BadgeCanvasManager {
         console.log('BadgeCanvasManager: Initializing...');
 
         const badgeRenderArea = {width: 80, height: 80};
-        const originalBadgeLayouts = [
-            {key: 'votes', x: 15, y: -30, width: 110, height: 110},
-            {key: 'likes', x: 55, y: 10, width: 80, height: 80},
-            {key: 'posters', x: 95, y: 12, width: 70, height: 70},
-            {key: 'commentators', x: 120, y: -12, width: 70, height: 70},
-        ];
+        const originalBadgeLayouts = [{key: 'votes', x: 15, y: -30, width: 110, height: 110}, {
+            key: 'likes',
+            x: 55,
+            y: 10,
+            width: 80,
+            height: 80
+        }, {key: 'posters', x: 95, y: 12, width: 70, height: 70}, {
+            key: 'commentators',
+            x: 120,
+            y: -12,
+            width: 70,
+            height: 70
+        },];
 
         this.badgeLayouts = originalBadgeLayouts
             .filter(layout => earnedBadges.includes(layout.key))
             .map(layout => {
-            const offsetX = (badgeRenderArea.width - layout.width) / 2;
-            const offsetY = (badgeRenderArea.height - layout.height) / 2;
-            return {
-                key: layout.key,
-                x: layout.x - offsetX,
-                y: layout.y - offsetY,
-                width: badgeRenderArea.width,
-                height: badgeRenderArea.height,
-                badgeWidth: layout.width,
-                badgeHeight: layout.height
-            };
-        });
+                const offsetX = (badgeRenderArea.width - layout.width) / 2;
+                const offsetY = (badgeRenderArea.height - layout.height) / 2;
+                return {
+                    key: layout.key,
+                    x: layout.x - offsetX,
+                    y: layout.y - offsetY,
+                    width: badgeRenderArea.width,
+                    height: badgeRenderArea.height,
+                    badgeWidth: layout.width,
+                    badgeHeight: layout.height
+                };
+            });
 
         const containerSize = {width: 280, height: 155};
 
@@ -101,22 +109,19 @@ class BadgeCanvasManager {
                 context: "Awarded for exceptional community acclaim.",
                 description: "This emblem is granted to members whose posts have garnered the highest esteem, representing a voice that resonates powerfully within the community.",
                 stats: {rarity: "Legendary", origin: "Community Vote", type: "Recognition"}
-            },
-            'likes': {
+            }, 'likes': {
                 title: 'Heart of the Community',
                 glowClass: 'glow-pink',
                 context: "Awarded for positive and impactful engagement.",
                 description: "Forged in the spirit of connection, this badge is granted to those whose comments consistently receive widespread appreciation and foster a positive environment.",
                 stats: {rarity: "Epic", origin: "Peer Appreciation", type: "Engagement"}
-            },
-            'posters': {
+            }, 'posters': {
                 title: 'The Creator\'s Quill',
                 glowClass: 'glow-silver',
                 context: "Awarded for prolific and insightful contribution.",
                 description: "A symbol of dedicated creation, this badge recognizes the platform's most active and influential posters, whose contributions form the backbone of the community.",
                 stats: {rarity: "Epic", origin: "Activity Metric", type: "Contribution"}
-            },
-            'commentators': {
+            }, 'commentators': {
                 title: 'The Dialogue Weaver',
                 glowClass: 'glow-purple',
                 context: "Awarded for mastery of conversation.",
@@ -173,8 +178,7 @@ class BadgeCanvasManager {
         const rect = this.container.getBoundingClientRect();
 
         this.worker.postMessage({
-            type: 'init',
-            payload: {
+            type: 'init', payload: {
                 canvas: offscreen,
                 width: rect.width,
                 height: rect.height,
@@ -208,14 +212,12 @@ class BadgeCanvasManager {
             if (newActiveBadgeIndex !== this.activeBadgeIndex) {
                 this.activeBadgeIndex = newActiveBadgeIndex;
                 this.worker.postMessage({
-                    type: 'setActiveBadge',
-                    payload: {activeBadgeIndex: this.activeBadgeIndex}
+                    type: 'setActiveBadge', payload: {activeBadgeIndex: this.activeBadgeIndex}
                 });
             }
 
             this.worker.postMessage({
-                type: 'mouseMove',
-                payload: {
+                type: 'mouseMove', payload: {
                     mouseX: (event.clientX / window.innerWidth) * 2 - 1,
                     mouseY: -(event.clientY / window.innerHeight) * 2 + 1,
                 }
@@ -283,4 +285,10 @@ class BadgeCanvasManager {
 
 window.addEventListener('DOMContentLoaded', () => {
     new BadgeCanvasManager();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.querySelector('.badge-showcase-canvas')) {
+        new SssBadgeRenderer();
+    }
 });
