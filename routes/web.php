@@ -30,6 +30,12 @@ Route::get('/p/{id}/{slug?}', [PostController::class, 'showBySlug'])->name('post
 Route::get('/@{username}', [UserController::class, 'showProfile'])->name('profile.show');
 Route::get('/check-username', [UserController::class, 'checkUsername'])->name('check.username');
 
+Route::get('forgot-password', [AuthController::class, 'showLinkRequestForm'])->name('password.request');
+Route::post('forgot-password', [AuthController::class, 'sendResetLinkEmail'])->name('password.email');
+Route::get('reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+Route::post('reset-password', [AuthController::class, 'reset'])->name('password.update');
+
+
 Route::view('about', 'about')->name('about')->middleware('cache.response:1440');
 Route::view('terms', 'terms')->name('terms')->middleware('cache.response:1440');
 Route::view('sponsorship', 'sponsorship')->name('sponsorship')->middleware('cache.response:1440');
@@ -85,15 +91,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+    Route::get('password/set', [UserController::class, 'showSetPasswordForm'])->name('password.set.form');
+    Route::put('password/set', [UserController::class, 'setPassword'])->name('password.set');
+
     Route::get('confirm-password', [AuthController::class, 'showConfirmForm'])->name('password.confirm');
     Route::post('confirm-password', [AuthController::class, 'confirm']);
 
-    Route::delete('/profile/sessions/{session_id}', [UserController::class, 'terminateSession'])
-        ->name('profile.sessions.terminate');
+    Route::delete('/profile/sessions/{session_id}', [UserController::class, 'terminateSession'])->name('profile.sessions.terminate')->middleware(['password.is_set', 'password.confirm']);
 
-    Route::post('/profile/sessions/terminate-all', [UserController::class, 'terminateAllOtherSessions'])
-        ->name('profile.sessions.terminate_all')
-        ->middleware('password.confirm');
+    Route::post('/profile/sessions/terminate-all', [UserController::class, 'terminateAllOtherSessions'])->name('profile.sessions.terminate_all')->middleware(['password.is_set', 'password.confirm']);
+
 
 });
 

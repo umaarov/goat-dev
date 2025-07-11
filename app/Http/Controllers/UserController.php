@@ -847,4 +847,38 @@ class UserController extends Controller
         return $path;
     }
 
+    final public function showSetPasswordForm(): View
+    {
+        return view('users.set-password');
+    }
+
+    final public function setPassword(Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+
+        if ($user->password) {
+            return redirect()->route('profile.edit')->with('error', 'You already have a password.');
+        }
+
+        $request->validate([
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user->update([
+            'password' => Hash::make($request->password),
+        ]);
+
+        Auth::logoutOtherDevices($request->password);
+
+        $request->session()->put('auth.password_confirmed_at', time());
+
+        Log::channel('audit_trail')->info('User set their password for the first time.', [
+            'user_id' => $user->id,
+            'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->intended(route('profile.edit'))
+            ->with('success', __('messages.password_set_successfully'));
+    }
+
 }

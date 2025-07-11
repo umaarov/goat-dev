@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Events\UserRegistered;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\AvatarService;
@@ -15,11 +16,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\InvalidStateException;
-use App\Events\UserRegistered;
 
 class AuthController extends Controller
 {
@@ -76,6 +77,57 @@ class AuthController extends Controller
                 ->withErrors(['error' => __('messages.error_registration_failed')])
                 ->withInput($request->except('password', 'password_confirmation'));
         }
+    }
+
+    private function getRegistrationRules(): array
+    {
+        return [
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'username' => [
+                'required',
+                'string',
+                'min:5',
+                'max:24',
+                'unique:users',
+                'regex:/^[a-zA-Z][a-zA-Z0-9_-]*$/',
+                'not_regex:/^\d+$/',
+                'not_regex:/(.)\1{3,}/',
+            ],
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'terms' => 'accepted',
+        ];
+    }
+
+    private function createUser(Request $request): User
+    {
+        return User::create([
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'username' => $request->username,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'profile_picture' => null,
+            'email_verification_token' => $this->emailVerificationService->generateToken(),
+        ]);
+    }
+
+    private function setProfilePicture(User $user, Request $request): void
+    {
+        if ($request->hasFile('profile_picture')) {
+            $profilePicturePath = $request->file('profile_picture')->store('profile_pictures', 'public');
+        } else {
+            $profilePicturePath = $this->avatarService->generateInitialsAvatar(
+                $user->first_name,
+                $user->last_name ?? '',
+                $user->id
+            );
+        }
+
+        $user->profile_picture = $profilePicturePath;
+        $user->save();
     }
 
     public function verifyEmail(Request $request): RedirectResponse
@@ -138,83 +190,6 @@ class AuthController extends Controller
     public function showLoginForm(): View
     {
         return view('auth.login');
-    }
-
-    public function login(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'login_identifier' => 'required|string',
-            'password' => 'required|string',
-        ]);
-
-        $loginInput = $request->input('login_identifier');
-        $password = $request->input('password');
-//        $remember = $request->filled('remember');
-        $remember = true;
-
-        $fieldType = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
-
-        $credentials = [
-            $fieldType => $loginInput,
-            'password' => $password,
-        ];
-
-        if (Auth::attempt($credentials, $remember)) {
-            $user = Auth::user();
-
-            if (!$user->email_verified_at) {
-                Auth::logout();
-                Log::channel('audit_trail')->warning('Login attempt failed: Email not verified.', [
-                    'login_identifier' => $loginInput,
-                    'user_id' => $user->id,
-                    'ip_address' => $request->ip(),
-                ]);
-                return redirect()->route('login')
-                    ->withErrors(['login_identifier' => __('messages.error_email_not_verified_login')])
-                    ->withInput($request->only('login_identifier'));
-            }
-
-            $request->session()->regenerate();
-            Log::debug('DEBUG LOGIN: User ' . $user->username . ' successfully authenticated. About to log to audit_trail.');
-            Log::channel('audit_trail')->info('User authenticated successfully.', [
-                'user_id' => $user->id,
-                'username' => $user->username,
-                'ip_address' => $request->ip(),
-            ]);
-            return redirect()->intended(route('home'))->with('success', __('messages.logged_in_successfully'));
-        }
-
-        Log::channel('audit_trail')->warning('Failed login attempt: Invalid credentials.', [
-            'login_identifier' => $loginInput,
-            'ip_address' => $request->ip(),
-        ]);
-        Log::warning('Failed login attempt', ['login_identifier' => $loginInput, 'ip' => $request->ip()]);
-
-        return redirect()->back()
-            ->withErrors(['login_identifier' => __('messages.error_invalid_login_credentials')])
-            ->withInput($request->only('login_identifier'));
-    }
-
-    public function logout(Request $request): RedirectResponse
-    {
-        $user = Auth::user();
-        if ($user) {
-            Log::channel('audit_trail')->info('User logged out.', [
-                'user_id' => $user->id,
-                'username' => $user->username,
-                'ip_address' => $request->ip(),
-            ]);
-        } else {
-            Log::channel('audit_trail')->info('Logout attempt by unauthenticated session.', [
-                'ip_address' => $request->ip(),
-            ]);
-        }
-
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect()->route('home')->with('success', __('messages.logged_out_successfully'));
     }
 
     public function googleRedirect()
@@ -379,57 +354,6 @@ class AuthController extends Controller
             return redirect()->route('login')
                 ->with('error', __('messages.error_google_login_failed'));
         }
-    }
-
-    private function getRegistrationRules(): array
-    {
-        return [
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'nullable|string|max:255',
-            'username' => [
-                'required',
-                'string',
-                'min:5',
-                'max:24',
-                'unique:users',
-                'regex:/^[a-zA-Z][a-zA-Z0-9_-]*$/',
-                'not_regex:/^\d+$/',
-                'not_regex:/(.)\1{3,}/',
-            ],
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'terms' => 'accepted',
-        ];
-    }
-
-    private function createUser(Request $request): User
-    {
-        return User::create([
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'username' => $request->username,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'profile_picture' => null,
-            'email_verification_token' => $this->emailVerificationService->generateToken(),
-        ]);
-    }
-
-    private function setProfilePicture(User $user, Request $request): void
-    {
-        if ($request->hasFile('profile_picture')) {
-            $profilePicturePath = $request->file('profile_picture')->store('profile_pictures', 'public');
-        } else {
-            $profilePicturePath = $this->avatarService->generateInitialsAvatar(
-                $user->first_name,
-                $user->last_name ?? '',
-                $user->id
-            );
-        }
-
-        $user->profile_picture = $profilePicturePath;
-        $user->save();
     }
 
     private function handleGoogleUser($googleUser): User
@@ -611,6 +535,83 @@ class AuthController extends Controller
         return $username;
     }
 
+    public function login(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'login_identifier' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        $loginInput = $request->input('login_identifier');
+        $password = $request->input('password');
+//        $remember = $request->filled('remember');
+        $remember = true;
+
+        $fieldType = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+
+        $credentials = [
+            $fieldType => $loginInput,
+            'password' => $password,
+        ];
+
+        if (Auth::attempt($credentials, $remember)) {
+            $user = Auth::user();
+
+            if (!$user->email_verified_at) {
+                Auth::logout();
+                Log::channel('audit_trail')->warning('Login attempt failed: Email not verified.', [
+                    'login_identifier' => $loginInput,
+                    'user_id' => $user->id,
+                    'ip_address' => $request->ip(),
+                ]);
+                return redirect()->route('login')
+                    ->withErrors(['login_identifier' => __('messages.error_email_not_verified_login')])
+                    ->withInput($request->only('login_identifier'));
+            }
+
+            $request->session()->regenerate();
+            Log::debug('DEBUG LOGIN: User ' . $user->username . ' successfully authenticated. About to log to audit_trail.');
+            Log::channel('audit_trail')->info('User authenticated successfully.', [
+                'user_id' => $user->id,
+                'username' => $user->username,
+                'ip_address' => $request->ip(),
+            ]);
+            return redirect()->intended(route('home'))->with('success', __('messages.logged_in_successfully'));
+        }
+
+        Log::channel('audit_trail')->warning('Failed login attempt: Invalid credentials.', [
+            'login_identifier' => $loginInput,
+            'ip_address' => $request->ip(),
+        ]);
+        Log::warning('Failed login attempt', ['login_identifier' => $loginInput, 'ip' => $request->ip()]);
+
+        return redirect()->back()
+            ->withErrors(['login_identifier' => __('messages.error_invalid_login_credentials')])
+            ->withInput($request->only('login_identifier'));
+    }
+
+    public function logout(Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+        if ($user) {
+            Log::channel('audit_trail')->info('User logged out.', [
+                'user_id' => $user->id,
+                'username' => $user->username,
+                'ip_address' => $request->ip(),
+            ]);
+        } else {
+            Log::channel('audit_trail')->info('Logout attempt by unauthenticated session.', [
+                'ip_address' => $request->ip(),
+            ]);
+        }
+
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('home')->with('success', __('messages.logged_out_successfully'));
+    }
+
     public function showConfirmForm(): View
     {
         return view('auth.confirm-password');
@@ -629,6 +630,71 @@ class AuthController extends Controller
         $request->session()->put('auth.password_confirmed_at', time());
 
         return redirect()->intended(route('profile.sessions.terminate_all'));
+    }
+
+    public function showLinkRequestForm(): View
+    {
+        return view('auth.passwords.email');
+    }
+
+    public function sendResetLinkEmail(Request $request): RedirectResponse
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $status = Password::sendResetLink($request->only('email'));
+
+        if ($status === Password::RESET_LINK_SENT) {
+            Log::channel('audit_trail')->info('Password reset link sent.', [
+                'email' => $request->email,
+                'ip_address' => $request->ip(),
+            ]);
+            return back()->with('success', __($status));
+        }
+
+        Log::channel('audit_trail')->warning('Password reset link failed to send.', [
+            'email' => $request->email,
+            'ip_address' => $request->ip(),
+            'status' => $status,
+        ]);
+        return back()->withErrors(['email' => __($status)]);
+    }
+
+    public function showResetForm(Request $request, string $token): View
+    {
+        return view('auth.passwords.reset')->with([
+            'token' => $token,
+            'email' => $request->email,
+        ]);
+    }
+
+    public function reset(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|confirmed|min:8',
+        ]);
+
+        $status = Password::reset($request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ])->save();
+
+                Auth::logoutOtherDevices($password);
+            }
+        );
+
+        if ($status === Password::PASSWORD_RESET) {
+            Log::channel('audit_trail')->info('User password has been reset.', [
+                'email' => $request->email,
+                'ip_address' => $request->ip(),
+            ]);
+            return redirect()->route('login')->with('success', __($status));
+        }
+
+        return back()->withInput($request->only('email'))
+            ->withErrors(['email' => __($status)]);
     }
 
 }

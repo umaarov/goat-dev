@@ -2,8 +2,10 @@
 
 use App\Console\Commands\CleanupUnverifiedUsers;
 use App\Console\Commands\GenerateSitemap;
+use App\Http\Middleware\EnsurePasswordIsSet;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
+use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,7 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'cache.response' => CacheResponse::class
+            'cache.response' => CacheResponse::class,
+            'password.confirm' => RequirePassword::class,
+            'password.is_set' => EnsurePasswordIsSet::class,
         ]);
         $middleware->append(HandleCors::class);
 //        $middleware->prepend(EnsureEmailIsVerified::class);
