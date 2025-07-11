@@ -320,8 +320,8 @@
                 {{-- Sessions Section START --}}
                 @if(config('session.driver') === 'database' && isset($sessions))
                     <div class="mt-6 pt-6 border-t border-gray-200">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-1">{{ __('messages.sessions_title') }}</h3>
-                        <p class="text-sm text-gray-500 mb-4">{{ __('messages.sessions_description') }}</p>
+                        <h3 class="text-md font-semibold text-gray-800 mb-1">{{ __('messages.sessions_title') }}</h3>
+                        <p class="text-xs text-gray-500 mb-4">{{ __('messages.sessions_description') }}</p>
 
                         <div class="space-y-4">
                             @forelse($sessions as $session)
@@ -337,16 +337,16 @@
                                         </div>
                                         {{-- Session Details --}}
                                         <div>
-                                            <p class="font-semibold text-gray-700">
+                                            <p class="font-semibold text-md text-gray-700">
                                                 {{ $session->agent->browser }} {{ __('messages.on_device') }} {{ $session->agent->platform }}
                                             </p>
-                                            <p class="text-sm text-gray-600">
+                                            <p class="text-[13px] text-gray-600">
                                                 {{ $session->location }}
                                                 @if($session->is_current_device)
                                                     <span class="font-bold text-green-600"> &bull; {{ __('messages.this_device') }}</span>
                                                 @endif
                                             </p>
-                                            <p class="text-xs text-gray-500 mt-1">{{ __('messages.last_active') }}: {{ $session->last_active }}</p>
+                                            <p class="text-xs text-gray-500">{{ __('messages.last_active') }}: {{ $session->last_active }}</p>
                                         </div>
                                     </div>
 
