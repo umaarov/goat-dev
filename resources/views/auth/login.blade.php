@@ -53,17 +53,19 @@
                     @enderror
                 </div>
 
-                <div class="mb-6">
+                <div class="flex items-center justify-between mb-6">
+                    {{-- Remember Me Checkbox --}}
                     <label for="remember" class="flex items-center">
                         <input type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}
                         class="rounded border-gray-300 text-blue-800 focus:ring-blue-500">
-                        <span class="ml-2 text-gray-700">{{ __('messages.auth.remember_me') }}</span>
+                        <span class="ml-2 text-sm text-gray-700">{{ __('messages.auth.remember_me') }}</span>
                     </label>
-                </div>
 
-                <a href="{{ route('password.request') }}" class="text-sm text-blue-800 hover:underline">
-                    {{ __('messages.auth.forgot_password') }}
-                </a>
+                    {{-- Forgot Password Link --}}
+                    <a href="{{ route('password.request') }}" class="text-sm text-blue-800 hover:underline">
+                        {{ __('messages.auth.forgot_password') }}
+                    </a>
+                </div>
 
                 <div class="mb-4">
                     <button type="submit"

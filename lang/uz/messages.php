@@ -270,7 +270,7 @@ return [
     'create_post.subject_2_placeholder' => '2-mavzu',
     'create_post.submit_button' => 'Yuborish',
     'create_post.js.fill_all_fields_warning' => 'Iltimos, barcha kerakli maydonlarni, shu jumladan rasmlarni to‘ldiring.',
-    'create_post.js.moderation_in_progress'=> 'Postingiz jamiyat qoidalariga muvofiqligi tekshirilmoqda. Bu jarayon bir necha soniya davom etishi mumkin.',
+    'create_post.js.moderation_in_progress' => 'Postingiz jamiyat qoidalariga muvofiqligi tekshirilmoqda. Bu jarayon bir necha soniya davom etishi mumkin.',
     'create_post.js.overlay.title' => 'Postingiz yaratilmoqda...',
     'create_post.js.overlay.message' => 'Biz jamiyat qoidalariga muvofiqlikni tezkor tekshirishni amalga oshirmoqdamiz. Bu jarayon odatda bir necha soniya davom etadi.',
 
@@ -484,4 +484,10 @@ return [
     'terminate_all_other_sessions' => 'Boshqa barcha sessiyalarni tugatish',
     'all_other_sessions_terminated' => 'Barcha boshqa sessiyalar muvaffaqiyatli tugatildi.',
     'password_confirm_notice_sessions' => 'Parolni tasdiqlashingiz so‘ralishi mumkin, bu sizning xavfsizligingiz uchun zarurdir.',
+
+    'password_set_required_info' => 'Xavfsizlik maqsadida, ushbu funksiyadan foydalanish uchun parol o‘rnatishingiz shart.',
+    'password_set_successfully' => 'Parolingiz muvaffaqiyatli o‘rnatildi. Endi davom etishingiz mumkin.',
+    'auth' => [
+        'forgot_password' => 'Parolingizni unutdingizmi?',
+    ],
 ];

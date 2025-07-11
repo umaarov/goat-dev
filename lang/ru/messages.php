@@ -483,4 +483,11 @@ return [
     'terminate_all_other_sessions' => 'Завершить все другие сессии',
     'all_other_sessions_terminated' => 'Все другие сессии успешно завершены.',
     'password_confirm_notice_sessions' => 'Для завершения сессий требуется подтверждение пароля.',
+
+    'password_set_required_info' => 'Для обеспечения безопасности вам необходимо установить пароль для доступа к этой функции.',
+    'password_set_successfully' => 'Ваш пароль успешно установлен. Теперь вы можете продолжить.',
+    'auth' => [
+        'forgot_password' => 'Забыли пароль?',
+    ],
+
 ];

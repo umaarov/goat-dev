@@ -503,5 +503,11 @@ return [
     'all_other_sessions_terminated' => 'All other sessions have been terminated.',
     'password_confirm_notice_sessions' => 'For your security, you may be asked to confirm your password to complete this action.',
 
+    'password_set_required_info' => 'For your security, you must set a password to access this feature.',
+    'password_set_successfully' => 'Your password has been successfully set. You can now proceed.',
+    'auth' => [
+        'forgot_password' => 'Forgot Your Password?',
+    ],
+
 
 ];
