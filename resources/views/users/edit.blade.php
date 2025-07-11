@@ -340,7 +340,7 @@
                                             <p class="font-semibold text-md text-gray-700">
                                                 {{ $session->agent->browser }} {{ __('messages.on_device') }} {{ $session->agent->platform }}
                                             </p>
-                                            <p class="text-[13px] text-gray-600">
+                                            <p class="text-xs text-gray-600">
                                                 {{ $session->location }}
                                                 @if($session->is_current_device)
                                                     <span class="font-bold text-green-600"> &bull; {{ __('messages.this_device') }}</span>
