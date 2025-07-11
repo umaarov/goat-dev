@@ -10,6 +10,7 @@ use App\Http\Controllers\RatingController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SssController;
 
 Route::get('/language/{locale}', [LocaleController::class, 'setLocale'])->name('language.set');
 
@@ -41,6 +42,8 @@ Route::view('terms', 'terms')->name('terms')->middleware('cache.response:1440');
 Route::view('sponsorship', 'sponsorship')->name('sponsorship')->middleware('cache.response:1440');
 Route::view('ads', 'ads')->name('ads')->middleware('cache.response:1440');
 Route::view('contribution', 'contribution')->name('contribution')->middleware('cache.response:1440');
+
+Route::get('/sss', SssController::class)->name('sss.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
