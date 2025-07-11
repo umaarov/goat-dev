@@ -84,6 +84,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/email/resend', 'resendVerificationEmail')->name('verification.resend')->middleware('throttle:2,1');
     });
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    Route::get('confirm-password', [AuthController::class, 'showConfirmForm'])->name('password.confirm');
+    Route::post('confirm-password', [AuthController::class, 'confirm']);
+
+    Route::delete('/profile/sessions/{session_id}', [UserController::class, 'terminateSession'])
+        ->name('profile.sessions.terminate');
+
+    Route::post('/profile/sessions/terminate-all', [UserController::class, 'terminateAllOtherSessions'])
+        ->name('profile.sessions.terminate_all')
+        ->middleware('password.confirm');
+
 });
 
 Route::get('/email/verify/{id}/{token}', [AuthController::class, 'verifyEmail'])->name('verification.verify');

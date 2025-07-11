@@ -485,6 +485,23 @@ return [
     'error_generic_server_error' => 'An unexpected error occurred. Please try again later.',
 
     'error_parent_comment_invalid' => 'The parent comment is invalid or does not belong to this post.',
-    'error_parent_comment_deleted' => 'The comment you are replying to has been deleted.', // Also good to have this one
+    'error_parent_comment_deleted' => 'The comment you are replying to has been deleted.',
+
+    'sessions_title' => 'Active Sessions',
+    'sessions_description' => 'This is a list of devices that have logged into your account. Revoke any sessions that you do not recognize.',
+    'on_device' => 'on',
+    'this_device' => 'This device',
+    'last_active' => 'Last active',
+    'unknown_location' => 'Location unavailable',
+    'unknown_browser' => 'Unknown Browser',
+    'unknown_platform' => 'Unknown Platform',
+    'terminate_session' => 'Terminate',
+    'session_terminate_confirm' => 'Are you sure you want to terminate this session?',
+    'session_terminated_successfully' => 'Session terminated successfully.',
+    'no_other_sessions' => 'There are no other active sessions.',
+    'terminate_all_other_sessions' => 'Terminate All Other Sessions',
+    'all_other_sessions_terminated' => 'All other sessions have been terminated.',
+    'password_confirm_notice_sessions' => 'For your security, you may be asked to confirm your password to complete this action.',
+
 
 ];

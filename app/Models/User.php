@@ -27,6 +27,10 @@ class User extends Authenticatable
         'show_voted_posts_publicly',
         'locale',
         'external_links',
+        'receives_notifications',
+        'ai_generations_monthly_count',
+        'ai_generations_daily_count',
+        'last_ai_generation_date',
     ];
 
     protected $hidden = [

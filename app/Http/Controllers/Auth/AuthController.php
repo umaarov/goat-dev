@@ -610,5 +610,26 @@ class AuthController extends Controller
         ]);
         return $username;
     }
+
+    public function showConfirmForm(): View
+    {
+        return view('auth.confirm-password');
+    }
+
+    public function confirm(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        if (!Auth::guard('web')->validate(['email' => Auth::user()->email, 'password' => $request->password])) {
+            return back()->withErrors(['password' => __('auth.password')]);
+        }
+
+        $request->session()->put('auth.password_confirmed_at', time());
+
+        return redirect()->intended(route('profile.sessions.terminate_all'));
+    }
+
 }
 

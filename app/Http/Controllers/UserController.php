@@ -16,6 +16,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Request as FacadeRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
@@ -29,6 +31,7 @@ use Illuminate\Validation\Rule;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\ImageManager;
+use Jenssegers\Agent\Agent;
 
 class UserController extends Controller
 {
@@ -234,6 +237,40 @@ class UserController extends Controller
         }
     }
 
+    final public function terminateSession(string $sessionId): RedirectResponse
+    {
+        DB::table('sessions')
+            ->where('user_id', Auth::id())
+            ->where('id', $sessionId)
+            ->delete();
+
+        Log::channel('audit_trail')->info('User terminated a session.', [
+            'user_id' => Auth::id(),
+            'username' => Auth::user()->username,
+            'terminated_session_id' => $sessionId,
+            'ip_address' => FacadeRequest::ip(),
+        ]);
+
+        return redirect()->route('profile.edit')->with('success', __('messages.session_terminated_successfully'));
+    }
+
+    final public function terminateAllOtherSessions(): RedirectResponse
+    {
+        DB::table('sessions')
+            ->where('user_id', Auth::id())
+            ->where('id', '!=', Session::getId())
+            ->delete();
+
+        Log::channel('audit_trail')->info('User terminated all other sessions.', [
+            'user_id' => Auth::id(),
+            'username' => Auth::user()->username,
+            'current_session_id' => Session::getId(),
+            'ip_address' => FacadeRequest::ip(),
+        ]);
+
+        return redirect()->route('profile.edit')->with('success', __('messages.all_other_sessions_terminated'));
+    }
+
     final public function edit(): View
     {
         $user = Auth::user();
@@ -241,7 +278,45 @@ class UserController extends Controller
         $current_locale = Session::get('locale', Config::get('app.locale'));
         $headerTemplates = $this->getHeaderTemplates();
 
-        return view('users.edit', compact('user', 'available_locales', 'current_locale', 'headerTemplates'));
+        $sessions = collect();
+        if (config('session.driver') === 'database') {
+            $sessionsCollection = DB::table(config('session.table', 'sessions'))
+                ->where('user_id', $user->id)
+                ->orderBy('last_activity', 'desc')
+                ->get();
+
+            $agent = new Agent();
+            $currentSessionId = Session::getId();
+
+            $sessions = $sessionsCollection->map(function ($session) use ($agent, $currentSessionId) {
+                if (empty($session->user_agent)) {
+                    return null;
+                }
+                $agent->setUserAgent($session->user_agent);
+
+                $location = $session->ip_address ? 'IP: ' . $session->ip_address : __('messages.unknown_location');
+
+                return (object)[
+                    'id' => $session->id,
+                    'agent' => (object)[
+                        'browser' => $agent->browser() ?: __('messages.unknown_browser'),
+                        'platform' => $agent->platform() ?: __('messages.unknown_platform'),
+                    ],
+                    'ip_address' => $session->ip_address,
+                    'location' => $location,
+                    'is_current_device' => $session->id === $currentSessionId,
+                    'last_active' => Carbon::createFromTimestamp($session->last_activity)->diffForHumans(),
+                ];
+            })->filter();
+        }
+
+        return view('users.edit', compact(
+            'user',
+            'available_locales',
+            'current_locale',
+            'headerTemplates',
+            'sessions'
+        ));
     }
 
     final public function showChangePasswordForm(): View

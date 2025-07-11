@@ -317,6 +317,72 @@
                 </div>
                 {{-- External Links Section END --}}
 
+                {{-- Sessions Section START --}}
+                @if(config('session.driver') === 'database' && isset($sessions))
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-1">{{ __('messages.sessions_title') }}</h3>
+                        <p class="text-sm text-gray-500 mb-4">{{ __('messages.sessions_description') }}</p>
+
+                        <div class="space-y-4">
+                            @forelse($sessions as $session)
+                                <div class="flex items-start justify-between p-3 rounded-lg @if($session->is_current_device) bg-blue-50 border border-blue-200 @else bg-gray-50 @endif">
+                                    <div class="flex items-center gap-4">
+                                        {{-- Device Icon --}}
+                                        <div class="flex-shrink-0">
+                                            @if(Str::is('*mobile*', strtolower($session->agent->platform)) || Str::is('*phone*', strtolower($session->agent->platform)) || Str::is('*android*', strtolower($session->agent->platform)) || Str::is('*ios*', strtolower($session->agent->platform)))
+                                                <svg class="h-8 w-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" /></svg>
+                                            @else
+                                                <svg class="h-8 w-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25A2.25 2.25 0 015.25 3h13.5A2.25 2.25 0 0121 5.25z" /></svg>
+                                            @endif
+                                        </div>
+                                        {{-- Session Details --}}
+                                        <div>
+                                            <p class="font-semibold text-gray-700">
+                                                {{ $session->agent->browser }} {{ __('messages.on_device') }} {{ $session->agent->platform }}
+                                            </p>
+                                            <p class="text-sm text-gray-600">
+                                                {{ $session->location }}
+                                                @if($session->is_current_device)
+                                                    <span class="font-bold text-green-600"> &bull; {{ __('messages.this_device') }}</span>
+                                                @endif
+                                            </p>
+                                            <p class="text-xs text-gray-500 mt-1">{{ __('messages.last_active') }}: {{ $session->last_active }}</p>
+                                        </div>
+                                    </div>
+
+                                    {{-- Terminate Button --}}
+                                    @if(!$session->is_current_device)
+                                        <form method="POST" action="{{ route('profile.sessions.terminate', $session->id) }}" onsubmit="return confirm('{{ __('messages.session_terminate_confirm') }}');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-sm font-medium text-red-600 hover:text-red-800 hover:underline flex-shrink-0 ml-4">
+                                                {{ __('messages.terminate_session') }}
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
+                            @empty
+                                <p class="text-center text-gray-500 py-4">{{ __('messages.no_other_sessions') }}</p>
+                            @endforelse
+                        </div>
+
+                        {{-- Terminate All Other Sessions Button --}}
+                        @if($sessions->where('is_current_device', false)->count() > 0)
+                            <div class="mt-6">
+                                <form method="POST" action="{{ route('profile.sessions.terminate_all') }}">
+                                    @csrf
+                                    <button type="submit" class="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                                        {{ __('messages.terminate_all_other_sessions') }}
+                                    </button>
+                                </form>
+                                <p class="text-xs text-center text-gray-500 mt-2">{{ __('messages.password_confirm_notice_sessions') }}</p>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+                {{-- Sessions Section END --}}
+
+
                 <div class="flex items-center justify-between mt-6">
                     <button type="submit"
                             class="px-6 py-2 bg-blue-800 text-white rounded-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -490,10 +556,8 @@
 
             const profilePictureTriggerInput = document.getElementById('profile_picture_trigger');
 
-            // Event listener for profile picture trigger input
             if (profilePictureTriggerInput && removeProfilePictureCheckbox) {
                 profilePictureTriggerInput.addEventListener('change', function () {
-                    // When a new file is selected, uncheck "revert to initials"
                     if (this.files && this.files.length > 0) {
                         removeProfilePictureCheckbox.checked = false;
                     }
@@ -608,7 +672,6 @@
                 const templates = templateContainer.querySelectorAll('.group');
                 const currentTemplateKey = "{{ $user->header_background ?? '' }}";
 
-                // Set initial selected state for templates
                 templates.forEach(t => {
                     if (t.dataset.templateKey === currentTemplateKey) {
                         t.classList.add('is-selected');
@@ -616,22 +679,19 @@
                     }
                 });
 
-                // Add click listeners to templates
                 templates.forEach(template => {
                     template.addEventListener('click', function () {
-                        fileInput.value = ''; // Clear file input
+                        fileInput.value = '';
                         removeCheckbox.checked = false;
 
                         const selectedKey = this.dataset.templateKey;
                         templateInput.value = selectedKey;
 
-                        // Update visual selection
                         templates.forEach(t => t.classList.remove('is-selected'));
                         this.classList.add('is-selected');
                     });
                 });
 
-                // Add listener to file input
                 fileInput.addEventListener('change', function () {
                     if (this.files && this.files.length > 0) {
                         templateInput.value = '';
@@ -640,7 +700,6 @@
                     }
                 });
 
-                // Add listener to remove checkbox
                 removeCheckbox.addEventListener('change', function () {
                     if (this.checked) {
                         templateInput.value = '';
@@ -744,7 +803,6 @@
                         if(removeProfilePictureCheckbox) {
                             removeProfilePictureCheckbox.checked = false;
                         }
-                        // Also clear any manually uploaded file to avoid conflicts
                         document.getElementById('profile_picture_trigger').value = '';
                         document.getElementById('profile_picture_final').value = '';
 
