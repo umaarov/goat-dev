@@ -260,7 +260,7 @@
                                 @foreach($available_locales as $localeKey => $localeName)
                                     <option
                                         value="{{ $localeKey }}" {{ (old('locale', $user->locale ?? $current_locale) == $localeKey) ? 'selected' : '' }}>
-                                        {{ $localeName }} {{-- Assuming $localeName is already localized or is the native name --}}
+                                        {{ $localeName }}
                                     </option>
                                 @endforeach
                             @else
@@ -274,9 +274,47 @@
                     </div>
                 </div>
 
+                {{-- AI Insight Display Preferences --}}
+                <div class="mb-6 border-t border-gray-200">
+                    <div class="mt-4">
+                        <h3 class="text-base font-semibold text-gray-700">{{ __('messages.settings.ai_insight_label') }}</h3>
+                        <p class="text-sm leading-5 text-gray-700">{{ __('messages.settings.ai_insight_description') }}</p>
+                        <fieldset class="mt-4">
+                            <legend class="sr-only">{{ __('messages.settings.ai_insight_label') }}</legend>
+                            <div class="space-y-4">
+                                @php
+                                    $options = [
+                                        'expanded' => __('messages.settings.ai_insight_expanded'),
+                                        'less' => __('messages.settings.ai_insight_less'),
+                                        'hidden' => __('messages.settings.ai_insight_hidden'),
+                                    ];
+                                    $descriptions = [
+                                        'expanded' => __('messages.settings.ai_insight_expanded_desc'),
+                                        'less' => __('messages.settings.ai_insight_less_desc'),
+                                        'hidden' => __('messages.settings.ai_insight_hidden_desc'),
+                                    ];
+                                @endphp
+
+                                @foreach ($options as $value => $label)
+                                    <div class="flex items-center">
+                                        <input id="ai_insight_{{ $value }}" name="ai_insight_preference" type="radio"
+                                               value="{{ $value }}"
+                                               @if(old('ai_insight_preference', $user->ai_insight_preference) === $value) checked @endif
+                                               class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500">
+                                        <label for="ai_insight_{{ $value }}" class="ml-3 block text-sm font-medium leading-6 text-gray-900">
+                                            {{ $label }}
+                                            <p class="text-xs text-gray-500">{{ $descriptions[$value] }}</p>
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </fieldset>
+                    </div>
+                </div>
+
                 {{-- External Links Section START --}}
                 <div class="mb-6 pt-4 border-t border-gray-200">
-                    <h3 class="text-md font-semibold text-gray-700 mb-2">{{ __('messages.external_links_label') }}</h3>
+                    <h3 class="text-md font-medium text-gray-900 mb-2">{{ __('messages.external_links_label') }}</h3>
                     <p class="text-xs text-gray-500 mb-3">{{ __('messages.external_links_description') }}</p>
 
                     @for ($i = 0; $i < 3; $i++)

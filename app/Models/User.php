@@ -28,6 +28,7 @@ class User extends Authenticatable
         'locale',
         'external_links',
         'receives_notifications',
+        'ai_insight_preference',
         'ai_generations_monthly_count',
         'ai_generations_daily_count',
         'last_ai_generation_date',

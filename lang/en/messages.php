@@ -509,5 +509,15 @@ return [
         'forgot_password' => 'Forgot Your Password?',
     ],
 
-
+    'settings' => [
+        'display_preferences_title' => 'Display Preferences',
+        'ai_insight_label' => 'AI Insight Display',
+        'ai_insight_description' => 'Choose how AI-generated context appears on posts.',
+        'ai_insight_expanded' => 'Always Expanded',
+        'ai_insight_expanded_desc' => 'Show the full AI context by default. Best for those who love details.',
+        'ai_insight_less' => 'Show Less',
+        'ai_insight_less_desc' => 'Show a short preview by default, with a "Show More" button.',
+        'ai_insight_hidden' => 'Hidden by Default',
+        'ai_insight_hidden_desc' => 'Hide the panel completely. You can open it by clicking the icon next to the question.',
+    ],
 ];

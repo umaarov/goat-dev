@@ -490,4 +490,16 @@ return [
     'auth' => [
         'forgot_password' => 'Parolingizni unutdingizmi?',
     ],
+
+    'settings' => [
+        'display_preferences_title' => 'Ko‘rish sozlamalari',
+        'ai_insight_label' => 'AI kontekstini ko‘rsatish',
+        'ai_insight_description' => 'AI tomonidan yaratilgan kontekst postlarda qanday ko‘rinishini tanlang.',
+        'ai_insight_expanded' => 'Har doim kengaytirilgan',
+        'ai_insight_expanded_desc' => 'Har doim to‘liq AI kontekstini ko‘rsatish. Tafsilotlarni yaxshi ko‘radiganlar uchun eng yaxshisi.',
+        'ai_insight_less' => 'Kamroq ko‘rsatish',
+        'ai_insight_less_desc' => 'Har doim qisqa oldindan ko‘rish bilan boshlash, "Ko‘proq ko‘rsatish" tugmasi bilan kengaytirilishi mumkin.',
+        'ai_insight_hidden' => 'Yashirilgan',
+        'ai_insight_hidden_desc' => 'Panelni to‘liq yashirish. Siz savol yonidagi belgi orqali uni ochishingiz mumkin.',
+    ],
 ];

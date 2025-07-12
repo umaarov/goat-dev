@@ -15,6 +15,7 @@
     $showVotedByOwnerIcon = $profileOwnerToDisplay && !$showManagementOptions && $voteByProfileOwner;
     $postSlug = Str::slug($post->question, '-', 'en');
     $postUrl = route('posts.show', ['post' => $post, 'slug' => $postSlug]);
+    $insightPreference = Auth::user()->ai_insight_preference ?? 'expanded';
 @endphp
 @push('schema')
     <script type="application/ld+json">
@@ -138,13 +139,23 @@
 
     <div class="border-b w-full border-gray-200"></div>
 
-    <div x-data="{ open: false }" class="pt-4 px-4 font-semibold text-center">
+    <div x-data="{ isPanelVisible: false, isExpanded: false }"
+         x-init="
+        const preference = '{{ $insightPreference }}';
+        if (preference !== 'hidden') { isPanelVisible = true; }
+        if (preference === 'expanded') { isExpanded = true; }
+     "
+         class="pt-4 px-4 font-semibold text-center">
+
+        {{-- Main Question --}}
         <div class="flex items-center justify-center gap-2">
             <h2 class="text-lg text-gray-800" style="font-size: inherit; font-weight: inherit; margin: 0; padding: 0;">{{ $post->question }}</h2>
+
             @if($post->ai_generated_context)
-                <button @click="open = !open"
-                        class="text-gray-400 hover:text-blue-600 transition-colors duration-200 focus:outline-none"
-                        :title="open ? 'Hide AI context' : 'Show AI-generated context'">
+                <button @click="isPanelVisible = !isPanelVisible"
+                        class="transition-colors duration-200 focus:outline-none"
+                        :class="{ 'text-blue-600': isPanelVisible, 'text-gray-400 hover:text-blue-600': !isPanelVisible }"
+                        :title="isPanelVisible ? 'Hide AI context' : 'Show AI context'">
                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM9.25 12.75a.75.75 0 001.5 0v-2.5a.75.75 0 00-1.5 0v2.5zM10 6a.75.75 0 01.75.75v.008a.75.75 0 01-1.5 0V6.75A.75.75 0 0110 6z" clip-rule="evenodd" />
                     </svg>
@@ -154,7 +165,7 @@
 
         {{-- AI Context Panel --}}
         @if($post->ai_generated_context)
-            <div x-data="{ isExpanded: true }" class="text-sm font-normal text-left mt-4">
+            <div x-show="isPanelVisible" x-transition class="text-sm font-normal text-left mt-4">
                 <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
                     <h3 class="flex items-center gap-2 text-xs font-bold text-blue-800 uppercase tracking-wider mb-2">
                         <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.573L16.5 21.75l-.398-1.177a3.375 3.375 0 00-2.496-2.496L12.25 18l1.177-.398a3.375 3.375 0 002.496-2.496L16.5 14.25l.398 1.177a3.375 3.375 0 002.496 2.496l1.177.398-1.177.398a3.375 3.375 0 00-2.496 2.496z" /></svg>
@@ -170,10 +181,9 @@
                         </div>
                     </div>
 
-                    {{-- The "Show More" / "Show Less" button --}}
                     <button @click="isExpanded = !isExpanded"
                             class="text-blue-700 hover:underline text-xs font-bold mt-2">
-                        <span x-text="isExpanded ? 'Show less' : 'Show more'">Show less</span>
+                        <span x-text="isExpanded ? 'Show less' : 'Show more'"></span>
                     </button>
                 </div>
             </div>

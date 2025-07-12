@@ -400,6 +400,7 @@ class UserController extends Controller
             'remove_header_background' => 'nullable|boolean',
             'show_voted_posts_publicly' => 'required|boolean',
             'receives_notifications' => 'required|boolean',
+            'ai_insight_preference' => ['required', 'string', Rule::in(['expanded', 'less', 'hidden'])],
             'locale' => ['nullable', Rule::in($availableLocaleKeys)],
             'external_links' => 'nullable|array|max:3',
             'external_links.*' => ['nullable', 'url', 'max:255', function ($attribute, $value, $fail) {
@@ -556,7 +557,8 @@ class UserController extends Controller
 
         $data = $request->only(['first_name', 'last_name', 'username']);
         $data['show_voted_posts_publicly'] = $request->boolean('show_voted_posts_publicly');
-        $data['receives_notifications'] = $request->boolean('receives_notifications'); // <-- ADDED DATA
+        $data['receives_notifications'] = $request->boolean('receives_notifications');
+        $data['ai_insight_preference'] = $request->input('ai_insight_preference');
 
         if (!empty($headerData) || $request->boolean('remove_header_background')) {
             $data = array_merge($data, $headerData);
