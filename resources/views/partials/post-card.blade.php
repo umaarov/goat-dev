@@ -139,11 +139,24 @@
 
     <div class="border-b w-full border-gray-200"></div>
 
-    <div x-data="{ isPanelVisible: false, isExpanded: false }"
+    <div x-data="{
+        isPanelVisible: false,
+        isExpanded: false,
+        showFeatureHint: false
+     }"
          x-init="
         const preference = '{{ $insightPreference }}';
         if (preference !== 'hidden') { isPanelVisible = true; }
         if (preference === 'expanded') { isExpanded = true; }
+
+        @if(Auth::check())
+            if (!localStorage.getItem('seenAiInsightHint')) {
+                // We show the hint only if the panel is visible on load
+                if (preference !== 'hidden') {
+                    setTimeout(() => { showFeatureHint = true }, 1500);
+                }
+            }
+        @endif
      "
          class="pt-4 px-4 font-semibold text-center">
 
@@ -153,9 +166,9 @@
 
                 @if($post->ai_generated_context)
                     <button @click="isPanelVisible = !isPanelVisible"
-                            class="transition-colors duration-200 focus:outline-none inline-block align-text-top"
+                            class="transition-colors duration-200 focus:outline-none inline-block align-middle ml-1.5"
                             :class="{ 'text-blue-600': isPanelVisible, 'text-gray-400 hover:text-blue-600': !isPanelVisible }"
-                            :title="isPanelVisible ? 'Hide AI context' : 'Show AI context'">
+                            :title="isPanelVisible ? 'Hide AI context' : 'Show AI context. You can change the default in Settings.'">
                         <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM9.25 12.75a.75.75 0 001.5 0v-2.5a.75.75 0 00-1.5 0v2.5zM10 6a.75.75 0 01.75.75v.008a.75.75 0 01-1.5 0V6.75A.75.75 0 0110 6z" clip-rule="evenodd" />
                         </svg>
@@ -168,6 +181,33 @@
         @if($post->ai_generated_context)
             <div x-show="isPanelVisible" x-transition class="text-sm font-normal text-left mt-4">
                 <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
+
+                    @if(Auth::check())
+                        <div x-show="showFeatureHint"
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:leave="transition ease-in duration-200"
+                             x-transition:leave-start="opacity-100"
+                             x-transition:leave-end="opacity-0"
+                             class="bg-blue-100 border border-blue-200 rounded-md p-2.5 mb-4 text-sm"
+                             style="display: none;">
+
+                            <div class="flex items-center justify-between">
+                                <p class="text-blue-800">
+                                    <span class="font-bold">New!</span> You can now set the default view for these insights in
+                                    <a href="{{ route('profile.edit') }}" class="font-bold underline hover:text-blue-900">Settings</a>.
+                                </p>
+                                <button @click="showFeatureHint = false; localStorage.setItem('seenAiInsightHint', 'true')"
+                                        title="Dismiss"
+                                        class="text-blue-600 hover:text-blue-800 ml-3">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </button>
+                            </div>
+
+                        </div>
+                    @endif
+
                     <h3 class="flex items-center gap-2 text-xs font-bold text-blue-800 uppercase tracking-wider mb-2">
                         <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.573L16.5 21.75l-.398-1.177a3.375 3.375 0 00-2.496-2.496L12.25 18l1.177-.398a3.375 3.375 0 002.496-2.496L16.5 14.25l.398 1.177a3.375 3.375 0 002.496 2.496l1.177.398-1.177.398a3.375 3.375 0 00-2.496 2.496z" /></svg>
                         AI Insight
