@@ -30,7 +30,7 @@
                     <div>
                         <label for="option_one_image_trigger" class="block mb-2 cursor-pointer">
                             <div id="option_one_preview"
-                                 class="bg-gray-100 h-40 rounded-md flex items-center justify-center border-2 border-dashed @error('option_one_image') border-red-500 @else border-gray-300 @enderror hover:border-blue-500">
+                                 class="aspect-square bg-gray-100 rounded-md flex items-center justify-center border-2 border-dashed @error('option_one_image') border-red-500 @else border-gray-300 @enderror hover:border-blue-500">
                                 <div id="option_one_placeholder" class="text-center text-gray-500 p-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400"
                                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -67,8 +67,9 @@
                     {{-- Option 2 --}}
                     <div>
                         <label for="option_two_image_trigger" class="block mb-2 cursor-pointer">
+                            {{-- MODIFIED LINE BELOW --}}
                             <div id="option_two_preview"
-                                 class="bg-gray-100 h-40 rounded-md flex items-center justify-center border-2 border-dashed @error('option_two_image') border-red-500 @else border-gray-300 @enderror hover:border-blue-500">
+                                 class="aspect-square bg-gray-100 rounded-md flex items-center justify-center border-2 border-dashed @error('option_two_image') border-red-500 @else border-gray-300 @enderror hover:border-blue-500">
                                 <div id="option_two_placeholder" class="text-center text-gray-500 p-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400"
                                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
