@@ -147,20 +147,21 @@
      "
          class="pt-4 px-4 font-semibold text-center">
 
-        {{-- Main Question --}}
-        <div class="flex items-center justify-center gap-2">
-            <h2 class="text-lg text-gray-800" style="font-size: inherit; font-weight: inherit; margin: 0; padding: 0;">{{ $post->question }}</h2>
+        <div>
+            <h2 class="text-lg text-gray-800" style="font-size: inherit; font-weight: inherit; margin: 0; padding: 0;">
+                {{ $post->question }}
 
-            @if($post->ai_generated_context)
-                <button @click="isPanelVisible = !isPanelVisible"
-                        class="transition-colors duration-200 focus:outline-none"
-                        :class="{ 'text-blue-600': isPanelVisible, 'text-gray-400 hover:text-blue-600': !isPanelVisible }"
-                        :title="isPanelVisible ? 'Hide AI context' : 'Show AI context'">
-                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM9.25 12.75a.75.75 0 001.5 0v-2.5a.75.75 0 00-1.5 0v2.5zM10 6a.75.75 0 01.75.75v.008a.75.75 0 01-1.5 0V6.75A.75.75 0 0110 6z" clip-rule="evenodd" />
-                    </svg>
-                </button>
-            @endif
+                @if($post->ai_generated_context)
+                    <button @click="isPanelVisible = !isPanelVisible"
+                            class="transition-colors duration-200 focus:outline-none inline-block align-middle relative bottom-px"
+                            :class="{ 'text-blue-600': isPanelVisible, 'text-gray-400 hover:text-blue-600': !isPanelVisible }"
+                            :title="isPanelVisible ? 'Hide AI context' : 'Show AI context'">
+                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM9.25 12.75a.75.75 0 001.5 0v-2.5a.75.75 0 00-1.5 0v2.5zM10 6a.75.75 0 01.75.75v.008a.75.75 0 01-1.5 0V6.75A.75.75 0 0110 6z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                @endif
+            </h2>
         </div>
 
         {{-- AI Context Panel --}}
