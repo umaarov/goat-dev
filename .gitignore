@@ -28,3 +28,4 @@ supervisord.pid
 /caddy_config
 root.crt
 public/build.zip
+/search_engine/build/
