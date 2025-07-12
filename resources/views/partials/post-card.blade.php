@@ -153,7 +153,7 @@
 
                 @if($post->ai_generated_context)
                     <button @click="isPanelVisible = !isPanelVisible"
-                            class="transition-colors duration-200 focus:outline-none inline-block align-middle relative bottom-px"
+                            class="transition-colors duration-200 focus:outline-none inline-block align-text-bottom"
                             :class="{ 'text-blue-600': isPanelVisible, 'text-gray-400 hover:text-blue-600': !isPanelVisible }"
                             :title="isPanelVisible ? 'Hide AI context' : 'Show AI context'">
                         <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
