@@ -17,6 +17,7 @@ class Post extends Model
         'user_id',
         'question',
         'ai_generated_context',
+        'ai_generated_tags',
         'option_one_title',
         'option_one_image',
 //        'option_one_image_lqip',

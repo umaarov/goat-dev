@@ -12,4 +12,5 @@ return [
     'url_prompt_template' => env('GEMINI_URL_MODERATION_PROMPT', ''),
     'use_json_mode' => env('GEMINI_USE_JSON_MODE', true),
     'context_generation_prompt' => env('GEMINI_CONTEXT_GENERATION_PROMPT', ''),
+    'tag_generation_prompt' => env('GEMINI_TAG_GENERATION_PROMPT', ''),
 ];

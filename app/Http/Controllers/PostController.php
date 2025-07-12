@@ -376,14 +376,19 @@ class PostController extends Controller
             'option_two_image_lqip' => $optionTwoImagePaths['lqip'] ?? null,
         ]);
 
-        $generatedContext = $this->generateContextWithGemini(
+        $post->ai_generated_context = $this->generateContextWithGemini(
             $post->question,
             $post->option_one_title,
             $post->option_two_title
         );
 
-        if ($generatedContext) {
-            $post->ai_generated_context = $generatedContext;
+        $post->ai_generated_tags = $this->generateTagsWithGemini(
+            $post->question,
+            $post->option_one_title,
+            $post->option_two_title
+        );
+
+        if ($post->isDirty('ai_generated_context') || $post->isDirty('ai_generated_tags')) {
             $post->save();
         }
 
@@ -847,6 +852,41 @@ class PostController extends Controller
             return $responseData['candidates'][0]['content']['parts'][0]['text'] ?? null;
         } catch (Exception $e) {
             Log::error('Gemini context generation exception.', ['message' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    private function generateTagsWithGemini(string $question, string $optionOne, string $optionTwo): ?string
+    {
+        $apiKey = Config::get('gemini.api_key');
+        $promptTemplate = Config::get('gemini.tag_generation_prompt');
+
+        if (!$apiKey) {
+            Log::error('Gemini API key is missing for tag generation.');
+            return null;
+        }
+
+        $prompt = str_replace(
+            ['{QUESTION}', '{OPTION_ONE}', '{OPTION_TWO}'],
+            [addslashes($question), addslashes($optionOne), addslashes($optionTwo)],
+            $promptTemplate
+        );
+
+        $model = Config::get('gemini.model', 'gemini-1.5-flash');
+        $apiUrl = rtrim(Config::get('gemini.api_url'), '/') . '/' . $model . ':generateContent?key=' . $apiKey;
+        $payload = ['contents' => [['parts' => [['text' => $prompt]]]]];
+
+        try {
+            $response = Http::timeout(20)->post($apiUrl, $payload);
+            if (!$response->successful()) {
+                Log::error('Gemini tags API request failed.', ['status' => $response->status(), 'body' => $response->body()]);
+                return null;
+            }
+            $responseData = $response->json();
+            $tags = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? null;
+            return $tags ? str_replace(['#', '.', '"'], '', trim($tags)) : null;
+        } catch (Exception $e) {
+            Log::error('Gemini tags generation exception.', ['message' => $e->getMessage()]);
             return null;
         }
     }
