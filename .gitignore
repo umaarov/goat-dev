@@ -29,3 +29,4 @@ supervisord.pid
 root.crt
 public/build.zip
 /search_engine/build/
+/search_engine/src/json.hpp
