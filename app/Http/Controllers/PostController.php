@@ -740,11 +740,12 @@ class PostController extends Controller
         $candidatePosts = Post::query()->withPostData()
             ->where(function (Builder $subQuery) use ($queryTerm, $soundexCode) {
                 $subQuery->where('question', 'LIKE', "%{$queryTerm}%")
-                    ->orWhereRaw('SOUNDEX(question) = ?', [$soundexCode]) // Check phonetic match
+                    ->orWhereRaw('SOUNDEX(question) = ?', [$soundexCode])
                     ->orWhere('option_one_title', 'LIKE', "%{$queryTerm}%")
                     ->orWhereRaw('SOUNDEX(option_one_title) = ?', [$soundexCode])
                     ->orWhere('option_two_title', 'LIKE', "%{$queryTerm}%")
                     ->orWhereRaw('SOUNDEX(option_two_title) = ?', [$soundexCode])
+                    ->orWhere('ai_generated_tags', 'LIKE', "%{$queryTerm}%")
                     ->orWhereHas('user', fn(Builder $q) => $q->where('username', 'LIKE', "%{$queryTerm}%"));
             })
             ->latest()
@@ -765,7 +766,7 @@ class PostController extends Controller
         $sortedPosts = $this->levenshteinService->findBestMatches(
             $queryTerm,
             $candidatePosts,
-            ['question', 'option_one_title', 'option_two_title', 'user.username']
+            ['question', 'option_one_title', 'option_two_title', 'ai_generated_tags', 'user.username']
         );
 
         $sortedUsers = $this->levenshteinService->findBestMatches(
