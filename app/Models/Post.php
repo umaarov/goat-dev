@@ -16,10 +16,13 @@ class Post extends Model
     protected $fillable = [
         'user_id',
         'question',
+        'ai_generated_context',
         'option_one_title',
         'option_one_image',
+//        'option_one_image_lqip',
         'option_two_title',
         'option_two_image',
+//        'option_two_image_lqip',
         'option_one_votes',
         'option_two_votes',
         'total_votes',

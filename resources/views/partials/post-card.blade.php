@@ -22,6 +22,9 @@
           "@context": "https://schema.org",
           "@type": "SocialMediaPosting",
           "headline": "{{ addslashes($post->question) }}",
+            @if($post->ai_generated_context)
+            "description": "{{ addslashes(Str::limit($post->ai_generated_context, 160)) }}",
+           @endif
           "url": "{{ $postUrl }}",
           "datePublished": "{{ $post->created_at->toIso8601String() }}",
           "author": {
@@ -132,8 +135,19 @@
     <div class="border-b w-full border-gray-200"></div>
 
     <div class="pt-4 px-4 font-semibold text-center">
-{{--        <p class="text-lg text-gray-800">{{ $post->question }}</p>--}}
         <h2 class="text-lg text-gray-800" style="font-size: inherit; font-weight: inherit; margin: 0; padding: 0;">{{ $post->question }}</h2>
+
+        @if($post->ai_generated_context)
+            <div x-data="{ open: false }" class="text-sm font-normal text-left mt-3">
+                <button @click="open = !open" class="text-xs text-gray-500 hover:text-gray-800 hover:underline focus:outline-none">
+                    <span x-show="!open">Read context...</span>
+                    <span x-show="open">Hide context</span>
+                </button>
+                <div x-show="open" x-transition class="mt-2 text-gray-700 bg-gray-50 p-3 rounded-md border border-gray-200" style="display: none;">
+                    {!! nl2br(e($post->ai_generated_context)) !!}
+                </div>
+            </div>
+        @endif
     </div>
 
     <div class="grid grid-cols-2 gap-4 p-4">

@@ -376,6 +376,17 @@ class PostController extends Controller
             'option_two_image_lqip' => $optionTwoImagePaths['lqip'] ?? null,
         ]);
 
+        $generatedContext = $this->generateContextWithGemini(
+            $post->question,
+            $post->option_one_title,
+            $post->option_two_title
+        );
+
+        if ($generatedContext) {
+            $post->ai_generated_context = $generatedContext;
+            $post->save();
+        }
+
         Log::channel('audit_trail')->info('Post created and passed all moderation.', array_merge($logContextBase, [
             'post_id' => $post->id,
             'question' => Str::limit($post->question, 100),
@@ -805,5 +816,38 @@ class PostController extends Controller
             $post->user_vote = $userVoteMap->get($post->id);
             return $post;
         });
+    }
+    private function generateContextWithGemini(string $question, string $optionOne, string $optionTwo): ?string
+    {
+        $apiKey = Config::get('gemini.api_key');
+        $promptTemplate = Config::get('gemini.context_generation_prompt');
+
+        if (!$apiKey || !$promptTemplate) {
+            Log::error('Gemini context generation config missing.');
+            return null;
+        }
+
+        $prompt = str_replace(
+            ['{QUESTION}', '{OPTION_ONE}', '{OPTION_TWO}'],
+            [addslashes($question), addslashes($optionOne), addslashes($optionTwo)],
+            $promptTemplate
+        );
+
+        $model = Config::get('gemini.model', 'gemini-1.5-flash');
+        $apiUrl = rtrim(Config::get('gemini.api_url'), '/') . '/' . $model . ':generateContent?key=' . $apiKey;
+        $payload = ['contents' => [['parts' => [['text' => $prompt]]]]];
+
+        try {
+            $response = Http::timeout(25)->post($apiUrl, $payload);
+            if (!$response->successful()) {
+                Log::error('Gemini context API request failed.', ['status' => $response->status(), 'body' => $response->body()]);
+                return null;
+            }
+            $responseData = $response->json();
+            return $responseData['candidates'][0]['content']['parts'][0]['text'] ?? null;
+        } catch (Exception $e) {
+            Log::error('Gemini context generation exception.', ['message' => $e->getMessage()]);
+            return null;
+        }
     }
 }
