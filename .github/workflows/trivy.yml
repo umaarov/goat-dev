@@ -2,6 +2,9 @@
 # Scans Docker images for OS package and application dependency vulnerabilities.
 
 name: Trivy Container Scan
+permissions:
+  contents: read
+  security-events: write
 
 on:
   push:
