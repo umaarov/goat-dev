@@ -1,0 +1,40 @@
+# SonarCloud Scan for PHP/Laravel
+# Provides in-depth static analysis for code quality and security, with framework-aware rules.
+
+name: SonarCloud PHP Analysis
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+jobs:
+  sonar-scan:
+    name: Analyze PHP Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=your_project_key
+            -Dsonar.organization=your_organization_key
+            -Dsonar.sources=app,config,routes
+            -Dsonar.tests=tests
+            -Dsonar.php.exclusions=**/vendor/**,**/public/**,**/database/**
+            -Dsonar.cpd.exclusions=**/vendor/**,**/public/**,**/database/**
