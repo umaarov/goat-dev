@@ -62,42 +62,43 @@
     <meta name="theme-color" content="#1f2937">
     <script type="application/ld+json">
         {
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          "name": "GOAT.uz",
-          "url": "https://goat.uz",
-          "alternateName": "GOAT",
-          "@id": "{{ config('app.url', 'https://goat.uz') }}#website",
-          "potentialAction": {
-            "@type": "SearchAction",
-            "target": {
-            "@type": "EntryPoint",
-            "urlTemplate": "https://goat.uz/search?q={search_term_string}"
-          },
-          "query-input": "required name=search_term_string"
-        },
-        "publisher": {
-            "@type": "Organization",
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "@id": "{{ config('app.url', 'https://goat.uz') }}#website",
             "name": "GOAT.uz",
             "url": "https://goat.uz",
-            "logo": {
-                "@type": "ImageObject",
-                "url": "https://goat.uz/images/icons/icon-512x512.png",
+            "alternateName": "GOAT",
+            "potentialAction": {
+                "@type": "SearchAction",
+                "target": {
+                    "@type": "EntryPoint",
+                    "urlTemplate": "https://goat.uz/search?q={search_term_string}"
+                },
+                "query-input": "required name=search_term_string"
+            },
+            "publisher": {
+                "@type": "Organization",
+                "name": "GOAT.uz",
+                "url": "https://goat.uz",
+                "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://goat.uz/images/icons/icon-512x512.png"
+                }
+            },
+            "logo": "https://goat.uz/images/icons/icon-512x512.png",
+            "founder": {
+                "@type": "Person",
+                "name": "Ismoiljon Umarov"
+            },
+            "contactPoint": {
+                "@type": "ContactPoint",
+                "contactType": "customer support",
+                "email": "info@goat.uz",
+                "telephone": "+998-33-500-25-17"
             }
-          },
-          "logo": "https://goat.uz/images/icons/icon-512x512.png",
-          "founder": {
-            "@type": "Person",
-            "name": "Ismoiljon Umarov"
-          },
-          "contactPoint": {
-            "@type": "ContactPoint",
-            "contactType": "customer support",
-            "email": "info@goat.uz",
-            "telephone": "+998-33-500-25-17"
-          }
         }
     </script>
+
     @stack('schema')
     <script>
         window.translations = {

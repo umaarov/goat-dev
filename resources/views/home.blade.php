@@ -6,15 +6,15 @@
 @push('schema')
     <script type="application/ld+json">
         {
-          "@context": "https://schema.org",
-          "@type": "WebPage",
-          "url": "{{ route('home') }}",
-          "name": "{{ __('messages.home.page_title_posts') }}",
-          "description": "{{ __('messages.home.meta_description') }}",
-          "isPartOf": {
-            "@id": "{{ config('app.url', 'https://goat.uz') }}#website"
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "url": "{{ route('home') }}",
+            "name": "{{ __('messages.home.page_title_posts') }}",
+            "description": "{{ __('messages.home.meta_description') }}",
+            "isPartOf": {
+                "@id": "{{ config('app.url', 'https://goat.uz') }}#website"
+            }
         }
-    }
     </script>
 @endpush
 
