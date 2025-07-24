@@ -38,14 +38,13 @@ jobs:
         languages: ${{ matrix.language }}
         # queries: +security-and-quality
 
-    # Autobuild attempts to build any compiled languages (C/C++, C#, Go, or Java).
-    - name: Autobuild
+      # Autobuild attempts to build any compiled languages (C/C++, C#, Go, or Java).
+    - name: Build C++ Code
       # Run the C++ matrix entry.
       if: matrix.language == 'cpp'
-      uses: github/codeql-action/autobuild@v3
-      # run: |
-      #   npm install
-      #   npm run build:wasm
+      run: |
+        npm install
+        npm run build:wasm
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
