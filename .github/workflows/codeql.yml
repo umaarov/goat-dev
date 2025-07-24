@@ -1,0 +1,53 @@
+# GitHub Action for CodeQL Analysis
+# Scans C/C++, C#, Go, Java, JavaScript, Python, Ruby, TypeScript, Swift, and Kotlin.
+# This configuration is tailored for C++, JavaScript, and PHP.
+
+name: CodeQL Security Analysis
+
+on:
+  push:
+    branches: ["master", "develop"]
+  pull_request:
+    branches: ["master", "develop"]
+  schedule:
+    # Run a full scan weekly at 04:00 UTC on Sunday
+    - cron: '0 4 * * 0'
+
+jobs:
+  analyze:
+    name: Analyze Codebase
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['cpp', 'javascript', 'php']
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # Initializes the CodeQL tools for scanning.
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        # queries: +security-and-quality
+
+    # Autobuild attempts to build any compiled languages (C/C++, C#, Go, or Java).
+    - name: Autobuild
+      # Run the C++ matrix entry.
+      if: matrix.language == 'cpp'
+      uses: github/codeql-action/autobuild@v3
+      # run: |
+      #   npm install
+      #   npm run build:wasm
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"

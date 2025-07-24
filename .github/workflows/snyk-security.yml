@@ -1,0 +1,78 @@
+# Snyk Security Workflow
+# Scans for vulnerabilities in open-source dependencies (SCA) and in your own code (SAST).
+# This configuration runs separate jobs for PHP and JavaScript to ensure clean environments.
+
+name: Snyk Security Scan
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+    branches: ["main", "develop"]
+  schedule:
+    - cron: '15 5 * * 1'
+
+jobs:
+  snyk-node:
+    name: Snyk Scan (Node.js)
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Install npm dependencies
+      run: npm install
+
+    - name: Run Snyk to check for vulnerabilities
+      uses: snyk/actions/node@master
+      continue-on-error: true
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --all-projects --sarif-file-output=snyk-node.sarif
+
+    - name: Upload result to GitHub Code Scanning
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: snyk-node.sarif
+
+  snyk-php:
+    name: Snyk Scan (PHP)
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up PHP with extensions
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+        extensions: fileinfo, mbstring, dom, curl
+        tools: composer
+
+    - name: Validate composer.json and composer.lock
+      run: composer validate --strict
+
+    - name: Install Composer dependencies
+      run: composer install --prefer-dist --no-progress
+
+    - name: Run Snyk to check for vulnerabilities
+      uses: snyk/actions/php@master
+      continue-on-error: true
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --all-projects --sarif-file-output=snyk-php.sarif
+
+    - name: Upload result to GitHub Code Scanning
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: snyk-php.sarif

@@ -48,6 +48,197 @@ class PostController extends Controller
         $this->levenshteinService = $levenshteinService;
     }
 
+    final public function index(Request $request): View|JsonResponse
+    {
+        $query = Post::query()->withPostData();
+
+        switch ($request->input('filter')) {
+            case 'trending':
+                $query->where('created_at', '>=', now()->subDays(7))
+                    ->orderByDesc('total_votes')
+                    ->orderByDesc('created_at');
+                break;
+            case 'latest':
+            default:
+                $query->orderByDesc('created_at')->orderByDesc('id');
+                break;
+        }
+
+        $posts = $query->paginate(15)->withQueryString();
+        $this->attachUserVoteStatus($posts);
+
+        if ($request->ajax()) {
+            $html = view('partials.posts-list', ['posts' => $posts])->render();
+
+            return response()->json([
+                'html' => $html,
+                'hasMorePages' => $posts->hasMorePages()
+            ]);
+        }
+
+        return view('home', compact('posts'));
+    }
+
+    private function attachUserVoteStatus(LengthAwarePaginator $posts): void
+    {
+        $userVoteMap = collect();
+        if (Auth::check()) {
+            $loggedInUserId = Auth::id();
+            $postIds = $posts->pluck('id')->all();
+
+            if (!empty($postIds)) {
+                $userVoteMap = Vote::where('user_id', $loggedInUserId)
+                    ->whereIn('post_id', $postIds)
+                    ->pluck('vote_option', 'post_id');
+            }
+        }
+
+        $posts->getCollection()->transform(function ($post) use ($userVoteMap) {
+            $post->user_vote = $userVoteMap->get($post->id);
+            return $post;
+        });
+    }
+
+    final public function store(Request $request): RedirectResponse
+    {
+        $rules = [
+            'question' => 'required|string|max:255',
+            'option_one_title' => 'required|string|max:40',
+            'option_one_image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:' . self::MAX_POST_IMAGE_SIZE_KB,
+            'option_two_title' => 'required|string|max:40',
+            'option_two_image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:' . self::MAX_POST_IMAGE_SIZE_KB,
+        ];
+
+        $messages = [
+            'option_one_image.max' => __('messages.validation_option_one_image_max', ['maxMB' => self::MAX_POST_IMAGE_SIZE_MB]),
+            'option_two_image.max' => __('messages.validation_option_two_image_max', ['maxMB' => self::MAX_POST_IMAGE_SIZE_MB]),
+            'option_one_image.uploaded' => __('messages.validation_option_one_image_uploaded', ['maxMB' => self::MAX_POST_IMAGE_SIZE_MB]),
+            'option_two_image.uploaded' => __('messages.validation_option_two_image_uploaded', ['maxMB' => self::MAX_POST_IMAGE_SIZE_MB]),
+        ];
+
+        $validator = Validator::make($request->all(), $rules, $messages);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $user = Auth::user();
+        $moderationErrorField = null;
+        $defaultModerationErrorMessage = __('messages.error_post_moderation_violation');
+        $logContextBase = [
+            'user_id' => $user->id,
+            'username' => $user->username,
+            'ip_address' => $request->ip(),
+        ];
+
+        // --- Moderation Stage ---
+        $fieldsToModerate = [
+            'question' => $request->input('question'),
+            'option_one_title' => $request->input('option_one_title'),
+            'option_two_title' => $request->input('option_two_title'),
+        ];
+
+        foreach ($fieldsToModerate as $field => $content) {
+            // 1. Banned Words Check
+            $bannedWordCheck = $this->checkForBannedWords($content, $field);
+            if ($bannedWordCheck && !$bannedWordCheck['is_appropriate']) {
+                $moderationErrorField = $field;
+                $moderationErrorMessage = __($bannedWordCheck['translation_key'], $bannedWordCheck['translation_params']);
+                Log::channel('audit_trail')->info('Post creation rejected by local blacklist.', array_merge($logContextBase, ['field' => $field, 'reason_key' => $bannedWordCheck['translation_key'], 'category' => $bannedWordCheck['category'], 'content_snippet' => Str::limit($content, 50)]));
+                return redirect()->back()->withErrors([$moderationErrorField => $moderationErrorMessage])->withInput();
+            }
+
+            // 2. Gemini Text Check
+            $geminiTextCheck = $this->moderateTextWithGemini($content, $field); // $field is 'question', 'option_one_title', etc.
+            if (!$geminiTextCheck['is_appropriate']) {
+                $moderationErrorField = $field;
+                $categoryKey = 'messages.gemini_category_' . $geminiTextCheck['category'];
+                $translatedCategoryDisplay = trans()->has($categoryKey) ? __($categoryKey) : Str::ucfirst(strtolower(str_replace('_', ' ', $geminiTextCheck['category'])));
+                $reasonText = $geminiTextCheck['reason'] ?? $translatedCategoryDisplay;
+
+                if (str_starts_with($geminiTextCheck['category'], 'ERROR_') || str_starts_with($geminiTextCheck['category'], 'UNCHECKED_')) {
+                    $moderationErrorMessage = __('messages.error_post_moderation_system_issue', ['field' => __("messages.field_name_$field", [], App::getLocale())]);
+                    Log::warning('Gemini Text Moderation Service Error during post creation.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiTextCheck]));
+                } else {
+                    $actualReasonForMessage = $geminiTextCheck['reason'] ? $geminiTextCheck['reason'] : $translatedCategoryDisplay;
+                    $moderationErrorMessage = __('messages.error_post_content_inappropriate', [
+                        'field' => __("messages.field_name_$field", [], App::getLocale()), // e.g. "Question", "Option 1 Title"
+                        'reason' => $actualReasonForMessage
+                    ]);
+                    Log::channel('audit_trail')->info('Post creation rejected by Gemini text moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $geminiTextCheck['reason'], 'category' => $geminiTextCheck['category'], 'content_snippet' => Str::limit($content, 50)]));
+                }
+                return redirect()->back()->withErrors([$moderationErrorField => $moderationErrorMessage])->withInput();
+            }
+        }
+
+        // 3. Gemini Image Checks
+        $imagesToModerate = [];
+        if ($request->hasFile('option_one_image')) $imagesToModerate['option_one_image'] = $request->file('option_one_image');
+        if ($request->hasFile('option_two_image')) $imagesToModerate['option_two_image'] = $request->file('option_two_image');
+
+        foreach ($imagesToModerate as $field => $imageFile) {
+            $geminiImageCheck = $this->moderateImageWithGemini($imageFile, $field);
+            if (!$geminiImageCheck['is_appropriate']) {
+                $moderationErrorField = $field;
+                $reasonText = $geminiImageCheck['reason'] ?? $geminiImageCheck['category'];
+                if (str_starts_with($geminiImageCheck['category'], 'ERROR_') || str_starts_with($geminiImageCheck['category'], 'UNCHECKED_')) {
+                    $moderationErrorMessage = __('messages.error_post_image_moderation_system_issue', ['field' => $field]);
+                    Log::warning('Gemini Image Moderation Service Error during post creation.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiImageCheck]));
+                } else {
+                    $moderationErrorMessage = __('messages.error_post_image_inappropriate', ['field' => $field, 'reason' => $reasonText]);
+                    Log::channel('audit_trail')->info('Post creation rejected by Gemini image moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $geminiImageCheck['category']]));
+                }
+                return redirect()->back()->withErrors([$moderationErrorField => $moderationErrorMessage])->withInput();
+            }
+        }
+        // --- End Moderation Stage ---
+
+        $optionOneImagePaths = null;
+        if ($request->hasFile('option_one_image')) {
+            $optionOneImagePaths = $this->processAndStoreImage($request->file('option_one_image'), 'post_images', uniqid('post_opt1_'));
+        }
+
+        $optionTwoImagePaths = null;
+        if ($request->hasFile('option_two_image')) {
+            $optionTwoImagePaths = $this->processAndStoreImage($request->file('option_two_image'), 'post_images', uniqid('post_opt2_'));
+        }
+
+        $post = Post::create([
+            'user_id' => Auth::id(),
+            'question' => $request->question,
+            'option_one_title' => $request->option_one_title,
+            'option_one_image' => $optionOneImagePaths['main'] ?? null,
+            'option_one_image_lqip' => $optionOneImagePaths['lqip'] ?? null,
+            'option_two_title' => $request->option_two_title,
+            'option_two_image' => $optionTwoImagePaths['main'] ?? null,
+            'option_two_image_lqip' => $optionTwoImagePaths['lqip'] ?? null,
+        ]);
+
+        $post->ai_generated_context = $this->generateContextWithGemini(
+            $post->question,
+            $post->option_one_title,
+            $post->option_two_title
+        );
+
+        $post->ai_generated_tags = $this->generateTagsWithGemini(
+            $post->question,
+            $post->option_one_title,
+            $post->option_two_title
+        );
+
+        if ($post->isDirty('ai_generated_context') || $post->isDirty('ai_generated_tags')) {
+            $post->save();
+        }
+
+        Log::channel('audit_trail')->info('Post created and passed all moderation.', array_merge($logContextBase, [
+            'post_id' => $post->id,
+            'question' => Str::limit($post->question, 100),
+        ]));
+
+        PingSearchEngines::dispatch();
+        GoogleIndexingService::submitSitemap();
+        return redirect()->route('home')->with('success', __('messages.post_created_successfully'));
+    }
 
     private function checkForBannedWords(string $textContent, string $contextLabel): ?array
     {
@@ -211,7 +402,7 @@ class PostController extends Controller
         $encodedMainImage = $image->encode(new WebpEncoder(quality: self::POST_IMAGE_QUALITY));
         Storage::disk('public')->put($mainImagePath, $encodedMainImage);
 
-        $lqip = (string) $image->scale(width: self::LQIP_WIDTH)
+        $lqip = (string)$image->scale(width: self::LQIP_WIDTH)
             ->blur(5)
             ->encode(new JpegEncoder(quality: self::LQIP_QUALITY))
             ->toDataUri();
@@ -222,37 +413,6 @@ class PostController extends Controller
         ];
     }
 
-    final public function index(Request $request): View|JsonResponse
-    {
-        $query = Post::query()->withPostData();
-
-        switch ($request->input('filter')) {
-            case 'trending':
-                $query->where('created_at', '>=', now()->subDays(7))
-                    ->orderByDesc('total_votes')
-                    ->orderByDesc('created_at');
-                break;
-            case 'latest':
-            default:
-                $query->orderByDesc('created_at')->orderByDesc('id');
-                break;
-        }
-
-        $posts = $query->paginate(15)->withQueryString();
-        $this->attachUserVoteStatus($posts);
-
-        if ($request->ajax()) {
-            $html = view('partials.posts-list', ['posts' => $posts])->render();
-
-            return response()->json([
-                'html' => $html,
-                'hasMorePages' => $posts->hasMorePages()
-            ]);
-        }
-
-        return view('home', compact('posts'));
-    }
-
     final public function create(): View
     {
         return view('posts.create', [
@@ -261,145 +421,73 @@ class PostController extends Controller
         ]);
     }
 
-    final public function store(Request $request): RedirectResponse
+    private function generateContextWithGemini(string $question, string $optionOne, string $optionTwo): ?string
     {
-        $rules = [
-            'question' => 'required|string|max:255',
-            'option_one_title' => 'required|string|max:40',
-            'option_one_image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:' . self::MAX_POST_IMAGE_SIZE_KB,
-            'option_two_title' => 'required|string|max:40',
-            'option_two_image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:' . self::MAX_POST_IMAGE_SIZE_KB,
-        ];
+        $apiKey = Config::get('gemini.api_key');
+        $promptTemplate = Config::get('gemini.context_generation_prompt');
 
-        $messages = [
-            'option_one_image.max' => __('messages.validation_option_one_image_max', ['maxMB' => self::MAX_POST_IMAGE_SIZE_MB]),
-            'option_two_image.max' => __('messages.validation_option_two_image_max', ['maxMB' => self::MAX_POST_IMAGE_SIZE_MB]),
-            'option_one_image.uploaded' => __('messages.validation_option_one_image_uploaded', ['maxMB' => self::MAX_POST_IMAGE_SIZE_MB]),
-            'option_two_image.uploaded' => __('messages.validation_option_two_image_uploaded', ['maxMB' => self::MAX_POST_IMAGE_SIZE_MB]),
-        ];
-
-        $validator = Validator::make($request->all(), $rules, $messages);
-
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
+        if (!$apiKey || !$promptTemplate) {
+            Log::error('Gemini context generation config missing.');
+            return null;
         }
 
-        $user = Auth::user();
-        $moderationErrorField = null;
-        $defaultModerationErrorMessage = __('messages.error_post_moderation_violation');
-        $logContextBase = [
-            'user_id' => $user->id,
-            'username' => $user->username,
-            'ip_address' => $request->ip(),
-        ];
-
-        // --- Moderation Stage ---
-        $fieldsToModerate = [
-            'question' => $request->input('question'),
-            'option_one_title' => $request->input('option_one_title'),
-            'option_two_title' => $request->input('option_two_title'),
-        ];
-
-        foreach ($fieldsToModerate as $field => $content) {
-            // 1. Banned Words Check
-            $bannedWordCheck = $this->checkForBannedWords($content, $field);
-            if ($bannedWordCheck && !$bannedWordCheck['is_appropriate']) {
-                $moderationErrorField = $field;
-                $moderationErrorMessage = __($bannedWordCheck['translation_key'], $bannedWordCheck['translation_params']);
-                Log::channel('audit_trail')->info('Post creation rejected by local blacklist.', array_merge($logContextBase, ['field' => $field, 'reason_key' => $bannedWordCheck['translation_key'], 'category' => $bannedWordCheck['category'], 'content_snippet' => Str::limit($content, 50)]));
-                return redirect()->back()->withErrors([$moderationErrorField => $moderationErrorMessage])->withInput();
-            }
-
-            // 2. Gemini Text Check
-            $geminiTextCheck = $this->moderateTextWithGemini($content, $field); // $field is 'question', 'option_one_title', etc.
-            if (!$geminiTextCheck['is_appropriate']) {
-                $moderationErrorField = $field;
-                $categoryKey = 'messages.gemini_category_' . $geminiTextCheck['category'];
-                $translatedCategoryDisplay = trans()->has($categoryKey) ? __($categoryKey) : Str::ucfirst(strtolower(str_replace('_', ' ', $geminiTextCheck['category'])));
-                $reasonText = $geminiTextCheck['reason'] ?? $translatedCategoryDisplay;
-
-                if (str_starts_with($geminiTextCheck['category'], 'ERROR_') || str_starts_with($geminiTextCheck['category'], 'UNCHECKED_')) {
-                    $moderationErrorMessage = __('messages.error_post_moderation_system_issue', ['field' => __("messages.field_name_$field", [], App::getLocale())]);
-                    Log::warning('Gemini Text Moderation Service Error during post creation.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiTextCheck]));
-                } else {
-                    $actualReasonForMessage = $geminiTextCheck['reason'] ? $geminiTextCheck['reason'] : $translatedCategoryDisplay;
-                    $moderationErrorMessage = __('messages.error_post_content_inappropriate', [
-                        'field' => __("messages.field_name_$field", [], App::getLocale()), // e.g. "Question", "Option 1 Title"
-                        'reason' => $actualReasonForMessage
-                    ]);
-                    Log::channel('audit_trail')->info('Post creation rejected by Gemini text moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $geminiTextCheck['reason'], 'category' => $geminiTextCheck['category'], 'content_snippet' => Str::limit($content, 50)]));
-                }
-                return redirect()->back()->withErrors([$moderationErrorField => $moderationErrorMessage])->withInput();
-            }
-        }
-
-        // 3. Gemini Image Checks
-        $imagesToModerate = [];
-        if ($request->hasFile('option_one_image')) $imagesToModerate['option_one_image'] = $request->file('option_one_image');
-        if ($request->hasFile('option_two_image')) $imagesToModerate['option_two_image'] = $request->file('option_two_image');
-
-        foreach ($imagesToModerate as $field => $imageFile) {
-            $geminiImageCheck = $this->moderateImageWithGemini($imageFile, $field);
-            if (!$geminiImageCheck['is_appropriate']) {
-                $moderationErrorField = $field;
-                $reasonText = $geminiImageCheck['reason'] ?? $geminiImageCheck['category'];
-                if (str_starts_with($geminiImageCheck['category'], 'ERROR_') || str_starts_with($geminiImageCheck['category'], 'UNCHECKED_')) {
-                    $moderationErrorMessage = __('messages.error_post_image_moderation_system_issue', ['field' => $field]);
-                    Log::warning('Gemini Image Moderation Service Error during post creation.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiImageCheck]));
-                } else {
-                    $moderationErrorMessage = __('messages.error_post_image_inappropriate', ['field' => $field, 'reason' => $reasonText]);
-                    Log::channel('audit_trail')->info('Post creation rejected by Gemini image moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $geminiImageCheck['category']]));
-                }
-                return redirect()->back()->withErrors([$moderationErrorField => $moderationErrorMessage])->withInput();
-            }
-        }
-        // --- End Moderation Stage ---
-
-        $optionOneImagePaths = null;
-        if ($request->hasFile('option_one_image')) {
-            $optionOneImagePaths = $this->processAndStoreImage($request->file('option_one_image'), 'post_images', uniqid('post_opt1_'));
-        }
-
-        $optionTwoImagePaths = null;
-        if ($request->hasFile('option_two_image')) {
-            $optionTwoImagePaths = $this->processAndStoreImage($request->file('option_two_image'), 'post_images', uniqid('post_opt2_'));
-        }
-
-        $post = Post::create([
-            'user_id' => Auth::id(),
-            'question' => $request->question,
-            'option_one_title' => $request->option_one_title,
-            'option_one_image' => $optionOneImagePaths['main'] ?? null,
-            'option_one_image_lqip' => $optionOneImagePaths['lqip'] ?? null,
-            'option_two_title' => $request->option_two_title,
-            'option_two_image' => $optionTwoImagePaths['main'] ?? null,
-            'option_two_image_lqip' => $optionTwoImagePaths['lqip'] ?? null,
-        ]);
-
-        $post->ai_generated_context = $this->generateContextWithGemini(
-            $post->question,
-            $post->option_one_title,
-            $post->option_two_title
+        $prompt = str_replace(
+            ['{QUESTION}', '{OPTION_ONE}', '{OPTION_TWO}'],
+            [addslashes($question), addslashes($optionOne), addslashes($optionTwo)],
+            $promptTemplate
         );
 
-        $post->ai_generated_tags = $this->generateTagsWithGemini(
-            $post->question,
-            $post->option_one_title,
-            $post->option_two_title
-        );
+        $model = Config::get('gemini.model', 'gemini-1.5-flash');
+        $apiUrl = rtrim(Config::get('gemini.api_url'), '/') . '/' . $model . ':generateContent?key=' . $apiKey;
+        $payload = ['contents' => [['parts' => [['text' => $prompt]]]]];
 
-        if ($post->isDirty('ai_generated_context') || $post->isDirty('ai_generated_tags')) {
-            $post->save();
+        try {
+            $response = Http::timeout(25)->post($apiUrl, $payload);
+            if (!$response->successful()) {
+                Log::error('Gemini context API request failed.', ['status' => $response->status(), 'body' => $response->body()]);
+                return null;
+            }
+            $responseData = $response->json();
+            return $responseData['candidates'][0]['content']['parts'][0]['text'] ?? null;
+        } catch (Exception $e) {
+            Log::error('Gemini context generation exception.', ['message' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    private function generateTagsWithGemini(string $question, string $optionOne, string $optionTwo): ?string
+    {
+        $apiKey = Config::get('gemini.api_key');
+        $promptTemplate = Config::get('gemini.tag_generation_prompt');
+
+        if (!$apiKey) {
+            Log::error('Gemini API key is missing for tag generation.');
+            return null;
         }
 
-        Log::channel('audit_trail')->info('Post created and passed all moderation.', array_merge($logContextBase, [
-            'post_id' => $post->id,
-            'question' => Str::limit($post->question, 100),
-        ]));
+        $prompt = str_replace(
+            ['{QUESTION}', '{OPTION_ONE}', '{OPTION_TWO}'],
+            [addslashes($question), addslashes($optionOne), addslashes($optionTwo)],
+            $promptTemplate
+        );
 
-        PingSearchEngines::dispatch();
-        GoogleIndexingService::submitSitemap();
-        return redirect()->route('home')->with('success', __('messages.post_created_successfully'));
+        $model = Config::get('gemini.model', 'gemini-1.5-flash');
+        $apiUrl = rtrim(Config::get('gemini.api_url'), '/') . '/' . $model . ':generateContent?key=' . $apiKey;
+        $payload = ['contents' => [['parts' => [['text' => $prompt]]]]];
+
+        try {
+            $response = Http::timeout(20)->post($apiUrl, $payload);
+            if (!$response->successful()) {
+                Log::error('Gemini tags API request failed.', ['status' => $response->status(), 'body' => $response->body()]);
+                return null;
+            }
+            $responseData = $response->json();
+            $tags = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? null;
+            return $tags ? str_replace(['#', '.', '"'], '', trim($tags)) : null;
+        } catch (Exception $e) {
+            Log::error('Gemini tags generation exception.', ['message' => $e->getMessage()]);
+            return null;
+        }
     }
 
     final public function show(Post $post): View
@@ -589,12 +677,28 @@ class PostController extends Controller
         $postOwnerId = (int)$post->user_id;
         $postOwnerUsername = $post->user->username;
 
+        $filesToDelete = [];
         if ($post->option_one_image) {
-            Storage::disk('public')->delete([$post->option_one_image, $post->option_one_image_placeholder]);
+            $filesToDelete[] = $post->option_one_image;
         }
+        if ($post->option_one_image_placeholder) {
+            $filesToDelete[] = $post->option_one_image_placeholder;
+        }
+        if (!empty($filesToDelete)) {
+            Storage::disk('public')->delete($filesToDelete);
+        }
+
+        $filesToDelete = [];
         if ($post->option_two_image) {
-            Storage::disk('public')->delete([$post->option_two_image, $post->option_two_image_placeholder]);
+            $filesToDelete[] = $post->option_two_image;
         }
+        if ($post->option_two_image_placeholder) {
+            $filesToDelete[] = $post->option_two_image_placeholder;
+        }
+        if (!empty($filesToDelete)) {
+            Storage::disk('public')->delete($filesToDelete);
+        }
+
         Vote::where('post_id', $post->id)->delete();
         $post->delete();
 
@@ -710,7 +814,6 @@ class PostController extends Controller
         return $redirect;
     }
 
-
     public function incrementShareCount(Request $request, Post $post)
     {
         $post->increment('shares_count');
@@ -802,93 +905,5 @@ class PostController extends Controller
             'users' => $sortedUsers->take(10),
             'queryTerm' => $queryTerm
         ]);
-    }
-
-    private function attachUserVoteStatus(LengthAwarePaginator $posts): void
-    {
-        $userVoteMap = collect();
-        if (Auth::check()) {
-            $loggedInUserId = Auth::id();
-            $postIds = $posts->pluck('id')->all();
-
-            if (!empty($postIds)) {
-                $userVoteMap = Vote::where('user_id', $loggedInUserId)
-                    ->whereIn('post_id', $postIds)
-                    ->pluck('vote_option', 'post_id');
-            }
-        }
-
-        $posts->getCollection()->transform(function ($post) use ($userVoteMap) {
-            $post->user_vote = $userVoteMap->get($post->id);
-            return $post;
-        });
-    }
-    private function generateContextWithGemini(string $question, string $optionOne, string $optionTwo): ?string
-    {
-        $apiKey = Config::get('gemini.api_key');
-        $promptTemplate = Config::get('gemini.context_generation_prompt');
-
-        if (!$apiKey || !$promptTemplate) {
-            Log::error('Gemini context generation config missing.');
-            return null;
-        }
-
-        $prompt = str_replace(
-            ['{QUESTION}', '{OPTION_ONE}', '{OPTION_TWO}'],
-            [addslashes($question), addslashes($optionOne), addslashes($optionTwo)],
-            $promptTemplate
-        );
-
-        $model = Config::get('gemini.model', 'gemini-1.5-flash');
-        $apiUrl = rtrim(Config::get('gemini.api_url'), '/') . '/' . $model . ':generateContent?key=' . $apiKey;
-        $payload = ['contents' => [['parts' => [['text' => $prompt]]]]];
-
-        try {
-            $response = Http::timeout(25)->post($apiUrl, $payload);
-            if (!$response->successful()) {
-                Log::error('Gemini context API request failed.', ['status' => $response->status(), 'body' => $response->body()]);
-                return null;
-            }
-            $responseData = $response->json();
-            return $responseData['candidates'][0]['content']['parts'][0]['text'] ?? null;
-        } catch (Exception $e) {
-            Log::error('Gemini context generation exception.', ['message' => $e->getMessage()]);
-            return null;
-        }
-    }
-
-    private function generateTagsWithGemini(string $question, string $optionOne, string $optionTwo): ?string
-    {
-        $apiKey = Config::get('gemini.api_key');
-        $promptTemplate = Config::get('gemini.tag_generation_prompt');
-
-        if (!$apiKey) {
-            Log::error('Gemini API key is missing for tag generation.');
-            return null;
-        }
-
-        $prompt = str_replace(
-            ['{QUESTION}', '{OPTION_ONE}', '{OPTION_TWO}'],
-            [addslashes($question), addslashes($optionOne), addslashes($optionTwo)],
-            $promptTemplate
-        );
-
-        $model = Config::get('gemini.model', 'gemini-1.5-flash');
-        $apiUrl = rtrim(Config::get('gemini.api_url'), '/') . '/' . $model . ':generateContent?key=' . $apiKey;
-        $payload = ['contents' => [['parts' => [['text' => $prompt]]]]];
-
-        try {
-            $response = Http::timeout(20)->post($apiUrl, $payload);
-            if (!$response->successful()) {
-                Log::error('Gemini tags API request failed.', ['status' => $response->status(), 'body' => $response->body()]);
-                return null;
-            }
-            $responseData = $response->json();
-            $tags = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? null;
-            return $tags ? str_replace(['#', '.', '"'], '', trim($tags)) : null;
-        } catch (Exception $e) {
-            Log::error('Gemini tags generation exception.', ['message' => $e->getMessage()]);
-            return null;
-        }
     }
 }
