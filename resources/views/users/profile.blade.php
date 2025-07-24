@@ -2005,7 +2005,7 @@ ${canDeleteComment(commentData) ? `
 @section('structured_data')
     <script type="application/ld+json">
         {
-            "@context": "https://schema.org",
+            "@@context": "https://schema.org",
             "@type": "Person",
             "name": "{{ addslashes($displayName) }}",
     "alternateName": "{{ '@' . $user->username }}",
