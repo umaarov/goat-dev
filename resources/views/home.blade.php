@@ -6,7 +6,7 @@
 @push('schema')
     <script type="application/ld+json">
         {
-          "@context": "https://schema.org",
+            "@@context": "https://schema.org",
           "@type": "WebPage",
           "url": "{{ route('home') }}",
           "name": "{{ __('messages.home.page_title_posts') }}",
