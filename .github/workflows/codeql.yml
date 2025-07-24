@@ -1,6 +1,6 @@
 # GitHub Action for CodeQL Analysis
 # Scans C/C++, C#, Go, Java, JavaScript, Python, Ruby, TypeScript, Swift, and Kotlin.
-# This configuration is tailored for C++, JavaScript, and PHP.
+# This configuration is tailored for C++ (compiled to Wasm) and JavaScript.
 
 name: CodeQL Security Analysis
 
@@ -16,37 +16,54 @@ on:
 jobs:
   analyze:
     name: Analyze Codebase
+    # Run on the latest version of Ubuntu
     runs-on: ubuntu-latest
+
+    # Permissions are required for CodeQL to report security events
     permissions:
       actions: read
       contents: read
       security-events: write
 
+    # A strategy matrix is used to run the job for each specified language.
     strategy:
       fail-fast: false
       matrix:
-        language: ['cpp', 'javascript', 'php']
+        # Define the languages to scan. PHP was removed as it's not supported by CodeQL.
+        language: ['cpp', 'javascript']
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      # Step 1: Check out the repository's code so the workflow can access it.
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    # Initializes the CodeQL tools for scanning.
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
-        languages: ${{ matrix.language }}
-        # queries: +security-and-quality
+      # Step 2: Initialize the CodeQL tools for the specified language.
+      # This step configures the CodeQL tracer to monitor the build process.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          # You can uncomment the following line to run a more comprehensive suite of queries.
+          # queries: +security-and-quality
 
-      # Autobuild attempts to build any compiled languages (C/C++, C#, Go, or Java).
-    - name: Build C++ Code
-      # Run the C++ matrix entry.
-      if: matrix.language == 'cpp'
-      run: |
-        npm install
-        npm run build:wasm
+      # Step 3: Build the C++ code. This step only runs for the 'cpp' matrix entry.
+      # It uses a dedicated action to install the Emscripten SDK first.
+      - name: Build C++ with Emscripten
+        if: matrix.language == 'cpp'
+        uses: emscripten-core/setup-emscripten@v4
+        with:
+          # Specify the version of Emscripten to use. 'latest' is usually fine.
+          emscripten-version: 'latest'
+          # After setting up Emscripten, run the build commands.
+          # The CodeQL tracer, initialized in the previous step, will monitor this process.
+          run: |
+            npm install
+            npm run build:wasm
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
-      with:
-        category: "/language:${{matrix.language}}"
+      # Step 4: Run the CodeQL analysis.
+      # This step takes the database created during the build and runs queries against it.
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{matrix.language}}"
+
