@@ -49,8 +49,8 @@
     @if(isset($defaultHreflangUrl))
         <link rel="alternate" hreflang="x-default" href="{{ $defaultHreflangUrl }}"/>
     @endif
-{{--    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"--}}
-{{--            crossorigin="anonymous"></script>--}}
+    {{--    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"--}}
+    {{--            crossorigin="anonymous"></script>--}}
     {{--    <script src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false"></script>--}}
     {{--    <script src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false"></script>--}}
     {{--    <script async src="//www.ezojs.com/ezoic/sa.min.js"></script>--}}
@@ -60,92 +60,6 @@
     </script>
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <meta name="theme-color" content="#1f2937">
-    <script type="application/ld+json">
-        {
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          "name": "GOAT.uz",
-          "url": "https://goat.uz",
-          "alternateName": "GOAT",
-          "@id": "{{ config('app.url', 'https://goat.uz') }}#website",
-          "potentialAction": {
-            "@type": "SearchAction",
-            "target": {
-            "@type": "EntryPoint",
-            "urlTemplate": "https://goat.uz/search?q={search_term_string}"
-          },
-          "query-input": "required name=search_term_string"
-        },
-        "publisher": {
-            "@type": "Organization",
-            "name": "GOAT.uz",
-            "url": "https://goat.uz",
-            "logo": {
-                "@type": "ImageObject",
-                "url": "https://goat.uz/images/icons/icon-512x512.png",
-            }
-          },
-          "logo": "https://goat.uz/images/icons/icon-512x512.png",
-          "founder": {
-            "@type": "Person",
-            "name": "Ismoiljon Umarov"
-          },
-          "contactPoint": {
-            "@type": "ContactPoint",
-            "contactType": "customer support",
-            "email": "info@goat.uz",
-            "telephone": "+998-33-500-25-17"
-          }
-        }
-    </script>
-    @stack('schema')
-    <script>
-        window.translations = {
-            cropperModalTitle: "{{ __('messages.app.js.cropper_modal_title') }}",
-            cancelButton: "{{ __('messages.cancel_button') }}",
-            applyCropButton: "{{ __('messages.app.js.apply_crop_button') }}",
-            errorProcessingCrop: "{{ __('messages.app.js.cropper_error_processing') }}",
-            errorInitTool: "{{ __('messages.app.js.cropper_error_init') }}",
-            tooltipVoteSingular: "{{ __('messages.app.js.tooltip_vote_singular') }}",
-            tooltipVotePlural: "{{ __('messages.app.js.tooltip_vote_plural') }}",
-            tooltipOwnerVotedForTemplate: "{{ __('messages.app.js.tooltip_owner_voted_for_template') }}",
-            imageViewerAltText: "{{ __('messages.app.js.image_viewer_alt') }}",
-            imageViewerCloseTitle: "{{ __('messages.app.js.image_viewer_close_title') }}",
-
-            profile_alt_picture: "{{ __('messages.profile.alt_profile_picture_js', ['username' => ':username']) }}",
-            verified_account: "{{ __('messages.profile.verified_account') }}",
-            delete_comment_title: "{{ __('messages.profile.js.delete_comment_title') }}",
-            time_just_now: "{{ __('messages.profile.js.time.just_now') }}",
-            time_minute: "{{ __('messages.profile.js.time.minute') }}",
-            time_minutes: "{{ __('messages.profile.js.time.minutes') }}",
-            time_minutes_alt: "{{ __('messages.profile.js.time.minutes_alt') }}",
-            time_hour: "{{ __('messages.profile.js.time.hour') }}",
-            time_hours: "{{ __('messages.profile.js.time.hours') }}",
-            time_hours_alt: "{{ __('messages.profile.js.time.hours_alt') }}",
-            time_day: "{{ __('messages.profile.js.time.day') }}",
-            time_days: "{{ __('messages.profile.js.time.days') }}",
-            time_days_alt: "{{ __('messages.profile.js.time.days_alt') }}",
-            time_ago: "{{ __('messages.profile.js.time.ago') }}",
-            js_votes_label: "{{ __('messages.post_card.votes_label') }}",
-            js_link_copied: "{{ __('messages.profile.js.link_copied') }}",
-            js_login_to_comment: `{!! __('messages.post_card.js.login_to_comment', ['login_link' => route('login')]) !!}`,
-            js_no_comments_be_first: "{{ __('messages.post_card.js.no_comments_be_first') }}",
-            js_failed_load_comments: "{{ __('messages.profile.js.failed_load_comments') }}",
-            js_comment_empty: "{{ __('messages.profile.js.comment_empty') }}",
-            js_submit_comment_button: "{{ __('messages.submit_comment_button') }}",
-            js_comment_button_submitting: "{{ __('messages.profile.js.comment_button_submitting') }}",
-            js_error_prefix: "{{ __('messages.profile.js.error_prefix') }}",
-            js_failed_add_comment: "{{ __('messages.post_card.js.failed_add_comment') }}",
-            js_confirm_delete_comment_text: "{{ __('messages.confirm_delete_comment_text') }}",
-            js_failed_delete_comment: "{{ __('messages.post_card.js.failed_delete_comment') }}",
-            js_login_to_vote: "{{ __('messages.profile.js.login_to_vote') }}",
-            js_vote_failed_connection: "{{ __('messages.profile.js.vote_failed_connection') }}",
-            js_option_1_default_title: "{{ __('messages.post_card.js.option_1_default_title') }}",
-            js_option_2_default_title: "{{ __('messages.post_card.js.option_2_default_title') }}",
-            js_error_already_voted: "{{ __('messages.error_already_voted') }}",
-            js_vote_registered_successfully: "{{ __('messages.vote_registered_successfully') }}",
-        };
-    </script>
 </head>
 <body class="flex flex-col min-h-screen bg-gray-100">
 <nav
@@ -217,25 +131,25 @@
     @endif
 
     @yield('content')
-        <footer class="mb-8 text-center text-gray-700 text-xs leading-relaxed px-4">
-            <div class="space-y-4">
-                <div class="flex flex-wrap justify-center gap-4 text-sm text-blue-800">
-                    <a href="{{ route('about') }}" class="hover:underline">{{ __('messages.about_us_nav') }}</a>
-                    <a href="{{ route('terms') }}" class="hover:underline">{{ __('messages.terms_of_use_nav') }}</a>
-                    <a href="{{ route('sponsorship') }}" class="hover:underline">{{ __('messages.sponsorship_nav') }}</a>
-                    <a href="{{ route('ads') }}" class="hover:underline">{{ __('messages.ads_nav') }}</a>
-                    <a href="{{ route('contribution') }}"
-                       class="hover:underline">{{ __('messages.contribution.title_nav') }}</a>
-                </div>
-
-                <div class="flex items-center justify-center gap-x-2 mb-1">
-                    <p class="font-semibold">{{ __('messages.copyright_text') }}</p>
-                    <a href="https://buymeacoffee.com/umarov" target="_blank" rel="noopener noreferrer" title="Support this project with a coffee" class="inline-block transition-transform duration-200 hover:scale-105">
-                        <img src="{{ asset('images/bmc-logo-no-background.png') }}" alt="Buy Me A Coffee" class="h-4 w-auto" loading="lazy">
-                    </a>
-                </div>
+    <footer class="mb-8 text-center text-gray-700 text-xs leading-relaxed px-4">
+        <div class="space-y-4">
+            <div class="flex flex-wrap justify-center gap-4 text-sm text-blue-800">
+                <a href="{{ route('about') }}" class="hover:underline">{{ __('messages.about_us_nav') }}</a>
+                <a href="{{ route('terms') }}" class="hover:underline">{{ __('messages.terms_of_use_nav') }}</a>
+                <a href="{{ route('sponsorship') }}" class="hover:underline">{{ __('messages.sponsorship_nav') }}</a>
+                <a href="{{ route('ads') }}" class="hover:underline">{{ __('messages.ads_nav') }}</a>
+                <a href="{{ route('contribution') }}"
+                   class="hover:underline">{{ __('messages.contribution.title_nav') }}</a>
             </div>
-        </footer>
+
+            <div class="flex items-center justify-center gap-x-2 mb-1">
+                <p class="font-semibold">{{ __('messages.copyright_text') }}</p>
+                <a href="https://buymeacoffee.com/umarov" target="_blank" rel="noopener noreferrer" title="Support this project with a coffee" class="inline-block transition-transform duration-200 hover:scale-105">
+                    <img src="{{ asset('images/bmc-logo-no-background.png') }}" alt="Buy Me A Coffee" class="h-4 w-auto" loading="lazy">
+                </a>
+            </div>
+        </div>
+    </footer>
 
 </main>
 

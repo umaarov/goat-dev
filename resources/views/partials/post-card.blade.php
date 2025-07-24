@@ -65,7 +65,7 @@
           "logo": {
               "@type": "ImageObject",
               "url": "{{ asset('images/icons/icon-512x512.png') }}"
-        }
+          }
       }
     }
     </script>

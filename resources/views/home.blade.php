@@ -13,8 +13,8 @@
           "description": "{{ __('messages.home.meta_description') }}",
           "isPartOf": {
             "@id": "{{ config('app.url', 'https://goat.uz') }}#website"
+          }
         }
-    }
     </script>
 @endpush
 
