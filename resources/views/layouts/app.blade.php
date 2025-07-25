@@ -3,6 +3,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
     <title>@yield('title', __('messages.app.default_title', ['default_app_name' => config('app.name', 'GOAT')]))</title>
     <link rel="icon" href="{{ asset('images/favicon-96x96.png') }}" type="image/png" sizes="96x96">
     <link rel="icon" href="{{ asset('images/favicon.svg') }}" type="image/svg+xml">
