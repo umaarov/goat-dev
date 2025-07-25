@@ -20,6 +20,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @stack('styles')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}"></noscript>
+    @vite(['resources/js/app.js'])
     {{--    @include('partials.critical-css')--}}
     {{--    <link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}" media="print" onload="this.media='all'">--}}
     {{--    <noscript><link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}"></noscript>--}}
@@ -158,7 +161,7 @@
         <div class="w-6"></div>
         <a href="{{route('home')}}">
             <img src="{{ asset('images/main_logo.png') }}" alt="{{ __('messages.app.logo_alt') }}"
-                 class="h-23 w-23 cursor-pointer" loading="lazy">
+                 class="h-23 w-23 cursor-pointer" width="92" height="92">
         </a>
         <div>
             @auth
