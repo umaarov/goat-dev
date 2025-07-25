@@ -16,7 +16,7 @@ export default defineConfig({
             overlay: false
         },
     },
-    worker : {
+    worker: {
         format: 'es',
         plugins: [
             laravel({
@@ -28,6 +28,17 @@ export default defineConfig({
 
     build: {
         sourcemap: true,
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (id.includes('node_modules')) {
+                        if (id.includes('three')) {
+                            return 'vendor-three';
+                        }
+                        return 'vendor';
+                    }
+                }
+            }
+        }
     },
-
 });
