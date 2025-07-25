@@ -99,7 +99,8 @@
             <img src="{{ $profilePic }}"
                  alt="{{ __('messages.profile.alt_profile_picture', ['username' => $post->user->username]) }}"
                  class="w-10 h-10 rounded-full border border-gray-300 cursor-pointer zoomable-image"
-                 data-full-src="{{ $profilePic }}" loading="lazy" decoding="async">
+                 data-full-src="{{ $profilePic }}" loading="lazy" decoding="async"
+                 width="40" height="40">
             <div class="ml-3">
                 <div class="flex items-center">
                     <a href="{{ route('profile.show', $post->user->username) }}"

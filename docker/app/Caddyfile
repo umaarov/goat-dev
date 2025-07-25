@@ -6,15 +6,6 @@ goat.test {
     root * /app/public
     encode zstd br gzip
 
-    header {
-       # Strict-Transport-Security "max-age=31536000;"
-       X-Frame-Options "SAMEORIGIN"
-       X-Content-Type-Options "nosniff"
-       Referrer-Policy "origin-when-cross-origin"
-       Permissions-Policy "camera=(), microphone=(), geolocation=()"
-       Content-Security-Policy "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://static.cloudflareinsights.com https://pagead2.googlesyndication.com https://fundingchoicesmessages.google.com https://www.google.com https://www.googletagservices.com https://adservice.google.com https://ep2.adtrafficquality.google 'unsafe-inline' 'unsafe-eval'; style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://stats.g.doubleclick.net https://pagead2.googlesyndication.com https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://www.google.com; frame-src 'self' https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://fundingchoicesmessages.google.com https://ep2.adtrafficquality.google https://www.google.com; fenced-frame-src 'self' https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://fundingchoicesmessages.google.com https://ep2.adtrafficquality.google https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; manifest-src 'self';"
-    }
-
     file_server
 
     route {

@@ -16,6 +16,4 @@ Disallow: /*/posts-data$
 Disallow: /*/voted-data$
 Disallow: /check-username
 
-Allow: /
-
 Sitemap: https://goat.uz/sitemap.xml
