@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\PingSearchEngines;
+use App\Jobs\SharePostToSocialMedia;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\Vote;
@@ -131,7 +132,7 @@ class PostController extends Controller
             'ip_address' => $request->ip(),
         ];
 
-        // --- Moderation Stage ---
+        // --- Moderation Stage (keeping your existing moderation code) ---
         $fieldsToModerate = [
             'question' => $request->input('question'),
             'option_one_title' => $request->input('option_one_title'),
@@ -149,7 +150,7 @@ class PostController extends Controller
             }
 
             // 2. Gemini Text Check
-            $geminiTextCheck = $this->moderateTextWithGemini($content, $field); // $field is 'question', 'option_one_title', etc.
+            $geminiTextCheck = $this->moderateTextWithGemini($content, $field);
             if (!$geminiTextCheck['is_appropriate']) {
                 $moderationErrorField = $field;
                 $categoryKey = 'messages.gemini_category_' . $geminiTextCheck['category'];
@@ -162,7 +163,7 @@ class PostController extends Controller
                 } else {
                     $actualReasonForMessage = $geminiTextCheck['reason'] ? $geminiTextCheck['reason'] : $translatedCategoryDisplay;
                     $moderationErrorMessage = __('messages.error_post_content_inappropriate', [
-                        'field' => __("messages.field_name_$field", [], App::getLocale()), // e.g. "Question", "Option 1 Title"
+                        'field' => __("messages.field_name_$field", [], App::getLocale()),
                         'reason' => $actualReasonForMessage
                     ]);
                     Log::channel('audit_trail')->info('Post creation rejected by Gemini text moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $geminiTextCheck['reason'], 'category' => $geminiTextCheck['category'], 'content_snippet' => Str::limit($content, 50)]));
@@ -199,6 +200,7 @@ class PostController extends Controller
         }
         // --- End Moderation Stage ---
 
+        // Process and store images
         $optionOneImagePaths = null;
         if ($request->hasFile('option_one_image')) {
             $optionOneImagePaths = $this->processAndStoreImage($request->file('option_one_image'), 'post_images', uniqid('post_opt1_'));
@@ -209,15 +211,35 @@ class PostController extends Controller
             $optionTwoImagePaths = $this->processAndStoreImage($request->file('option_two_image'), 'post_images', uniqid('post_opt2_'));
         }
 
+        if (!$optionOneImagePaths || !$optionTwoImagePaths) {
+            Log::error('Failed to process required images during post creation', [
+                'user_id' => $user->id,
+                'option_one_processed' => !is_null($optionOneImagePaths),
+                'option_two_processed' => !is_null($optionTwoImagePaths)
+            ]);
+            return redirect()->back()->withErrors(['general' => 'Failed to process uploaded images. Please try again.'])->withInput();
+        }
+
         $post = Post::create([
             'user_id' => Auth::id(),
             'question' => $request->question,
             'option_one_title' => $request->option_one_title,
-            'option_one_image' => $optionOneImagePaths['main'] ?? null,
-            'option_one_image_lqip' => $optionOneImagePaths['lqip'] ?? null,
+            'option_one_image' => $optionOneImagePaths['main'],
+            'option_one_image_lqip' => $optionOneImagePaths['lqip'],
             'option_two_title' => $request->option_two_title,
-            'option_two_image' => $optionTwoImagePaths['main'] ?? null,
-            'option_two_image_lqip' => $optionTwoImagePaths['lqip'] ?? null,
+            'option_two_image' => $optionTwoImagePaths['main'],
+            'option_two_image_lqip' => $optionTwoImagePaths['lqip'],
+        ]);
+
+        Log::info('Post created, preparing for AI generation and social sharing', [
+            'post_id' => $post->id,
+            'user_id' => $user->id,
+            'option_one_image' => $post->option_one_image,
+            'option_two_image' => $post->option_two_image,
+            'images_exist_in_storage' => [
+                'option_one' => Storage::disk('public')->exists($post->option_one_image),
+                'option_two' => Storage::disk('public')->exists($post->option_two_image)
+            ]
         ]);
 
         $post->ai_generated_context = $this->generateContextWithGemini(
@@ -234,6 +256,24 @@ class PostController extends Controller
 
         if ($post->isDirty('ai_generated_context') || $post->isDirty('ai_generated_tags')) {
             $post->save();
+        }
+
+        $post->refresh();
+
+        if (!Storage::disk('public')->exists($post->option_one_image) ||
+            !Storage::disk('public')->exists($post->option_two_image)) {
+            Log::error('Images missing after post creation, skipping social media sharing', [
+                'post_id' => $post->id,
+                'option_one_exists' => Storage::disk('public')->exists($post->option_one_image),
+                'option_two_exists' => Storage::disk('public')->exists($post->option_two_image)
+            ]);
+        } else {
+            SharePostToSocialMedia::dispatch($post)->delay(now()->addSeconds(5));
+
+            Log::info('Social media sharing job dispatched', [
+                'post_id' => $post->id,
+                'delay_seconds' => 5
+            ]);
         }
 
         Log::channel('audit_trail')->info('Post created and passed all moderation.', array_merge($logContextBase, [
