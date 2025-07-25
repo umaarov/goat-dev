@@ -1,14 +1,16 @@
-{
-    local_certs
-}
-
 goat.test {
     root * /app/public
-    encode zstd br gzip
 
-    file_server
+    route /robots.txt {
+        file_server
+        encode off
+    }
 
     route {
+        encode zstd br gzip
+
+        file_server
+
         php_server {
             root /app
             transport frankenphp {
