@@ -176,8 +176,14 @@ class PostController extends Controller
         if ($request->hasFile('option_one_image')) $imagesToModerate['option_one_image'] = $request->file('option_one_image');
         if ($request->hasFile('option_two_image')) $imagesToModerate['option_two_image'] = $request->file('option_two_image');
 
+        $postContext = [
+            'question' => $request->input('question'),
+            'option_one_title' => $request->input('option_one_title'),
+            'option_two_title' => $request->input('option_two_title'),
+        ];
+
         foreach ($imagesToModerate as $field => $imageFile) {
-            $geminiImageCheck = $this->moderateImageWithGemini($imageFile, $field);
+            $geminiImageCheck = $this->moderateImageWithGemini($imageFile, $field, $postContext);
             if (!$geminiImageCheck['is_appropriate']) {
                 $moderationErrorField = $field;
                 $reasonText = $geminiImageCheck['reason'] ?? $geminiImageCheck['category'];
@@ -318,7 +324,7 @@ class PostController extends Controller
         }
     }
 
-    private function moderateImageWithGemini(UploadedFile $imageFile, string $contextLabel): array
+    private function moderateImageWithGemini(UploadedFile $imageFile, string $contextLabel, array $postContext): array
     {
         $apiKey = Config::get('gemini.api_key');
         $promptTemplate = Config::get('gemini.image_prompt_template');
@@ -334,7 +340,17 @@ class PostController extends Controller
         ];
         $languageName = $languageNames[$currentLocale] ?? 'English';
 
-        $finalPromptForImage = str_replace("{LANGUAGE_NAME}", $languageName, $promptTemplate);
+        $optionTitleForContext = ($contextLabel === 'option_one_image')
+            ? $postContext['option_one_title']
+            : $postContext['option_two_title'];
+
+        $intermediatePrompt = str_replace(
+            ['{LANGUAGE_NAME}', '{QUESTION_TEXT}', '{OPTION_TITLE_TEXT}'],
+            [$languageName, addslashes($postContext['question']), addslashes($optionTitleForContext)],
+            $promptTemplate
+        );
+
+        $finalPromptForImage = $intermediatePrompt;
 
         $model = Config::get('gemini.model', 'gemini-1.5-flash');
         $apiUrl = rtrim(Config::get('gemini.api_url'), '/') . '/' . $model . ':generateContent?key=' . $apiKey;
