@@ -1024,56 +1024,58 @@
                 totalVotesDisplayElement.textContent = voteData.total_votes;
             }
 
+            const totalVotes = parseInt(voteData.total_votes, 10) || 0;
+            const optionOneVotes = parseInt(voteData.option_one_votes, 10) || 0;
+            const optionTwoVotes = parseInt(voteData.option_two_votes, 10) || 0;
+            const percentOne = totalVotes > 0 ? Math.round((optionOneVotes / totalVotes) * 100) : 0;
+            const percentTwo = totalVotes > 0 ? Math.round((optionTwoVotes / totalVotes) * 100) : 0;
+
+            const imageContainers = postElement.querySelectorAll('.image-loader-container[data-image-option]');
+            imageContainers.forEach(container => {
+                const option = container.dataset.imageOption;
+                const overlay = container.querySelector('.vote-result-overlay');
+                const waterFill = container.querySelector('.water-fill');
+                const percentageText = container.querySelector('.vote-percentage-text');
+
+                if (!overlay || !waterFill || !percentageText) return;
+
+                const isVotedOption = (option === userVotedOption);
+                const percentage = (option === 'option_one') ? percentOne : percentTwo;
+
+                overlay.classList.remove('opacity-0');
+                overlay.classList.add('opacity-100');
+                percentageText.textContent = `${percentage}%`;
+                waterFill.style.height = `${percentage}%`;
+
+                if (isVotedOption) {
+                    container.classList.remove('is-monochrome');
+                } else {
+                    container.classList.add('is-monochrome');
+                }
+            });
+
             const optionOneButton = postElement.querySelector('button.vote-button[data-option="option_one"]');
             const optionTwoButton = postElement.querySelector('button.vote-button[data-option="option_two"]');
 
             if (optionOneButton && optionTwoButton) {
-                const optionOneTitleText = postElement.dataset.optionOneTitle || 'Option 1';
-                const optionTwoTitleText = postElement.dataset.optionTwoTitle || 'Option 2';
-
-                const numOptionOneVotes = parseInt(voteData.option_one_votes, 10) || 0;
-                const numOptionTwoVotes = parseInt(voteData.option_two_votes, 10) || 0;
-                const numTotalVotes = numOptionOneVotes + numOptionTwoVotes;
-
-                const percentOne = numTotalVotes > 0 ? Math.round((numOptionOneVotes / numTotalVotes) * 100) : 0;
-                const percentTwo = numTotalVotes > 0 ? Math.round((numOptionTwoVotes / numTotalVotes) * 100) : 0;
-
-                optionOneButton.querySelector('.button-text-truncate').textContent = `${optionOneTitleText} (${percentOne}%)`;
-                optionTwoButton.querySelector('.button-text-truncate').textContent = `${optionTwoTitleText} (${percentTwo}%)`;
-
                 const highlightClasses = ['bg-blue-800', 'text-white'];
-                const defaultClasses = ['bg-white', 'border', 'border-gray-300', 'hover:bg-gray-50'];
-                const noHoverDefaultClasses = ['bg-white', 'border', 'border-gray-300'];
+                const defaultClasses = ['bg-white', 'border', 'border-gray-300'];
 
                 [optionOneButton, optionTwoButton].forEach(button => {
-                    button.classList.remove(...highlightClasses, ...defaultClasses, ...noHoverDefaultClasses);
+                    button.classList.remove(...highlightClasses, ...defaultClasses, 'hover:bg-gray-50');
                 });
 
                 if (userVotedOption === 'option_one') {
                     optionOneButton.classList.add(...highlightClasses);
-                    optionTwoButton.classList.add(...noHoverDefaultClasses);
+                    optionTwoButton.classList.add(...defaultClasses);
                 } else if (userVotedOption === 'option_two') {
                     optionTwoButton.classList.add(...highlightClasses);
-                    optionOneButton.classList.add(...noHoverDefaultClasses);
-                } else {
                     optionOneButton.classList.add(...defaultClasses);
-                    optionTwoButton.classList.add(...defaultClasses);
                 }
 
-                const showPercentagesBasedOnCurrentState = userVotedOption || postElement.dataset.profileOwnerVoteOption;
-                // const votesLabelToUse = window.translations?.js_votes_label || 'votes';
-
-                if (showPercentagesBasedOnCurrentState) {
-                    optionOneButton.dataset.tooltipShowCount = "true";
-                    optionTwoButton.dataset.tooltipShowCount = "true";
-                    // optionOneButton.title = `${numOptionOneVotes} ${votesLabelToUse}`;
-                    // optionTwoButton.title = `${numOptionTwoVotes} ${votesLabelToUse}`;
-                } else {
-                    optionOneButton.removeAttribute('data-tooltip-show-count');
-                    optionTwoButton.removeAttribute('data-tooltip-show-count');
-                    // optionOneButton.removeAttribute('title');
-                    // optionTwoButton.removeAttribute('title');
-                }
+                // const votesLabel = window.translations.js_votes_label || 'votes';
+                // optionOneButton.title = `${optionOneVotes} ${votesLabel}`;
+                // optionTwoButton.title = `${optionTwoVotes} ${votesLabel}`;
             }
         }
 
