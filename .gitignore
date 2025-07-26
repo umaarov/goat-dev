@@ -30,3 +30,4 @@ root.crt
 public/build.zip
 /search_engine/build/
 /search_engine/src/json.hpp
+/image_processor_dev/libwebp

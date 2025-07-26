@@ -449,12 +449,49 @@ class PostController extends Controller
 
     private function processAndStoreImage(UploadedFile $uploadedFile, string $directory, string $baseFilename): array
     {
-        $manager = new ImageManager(new GdDriver());
-        $image = $manager->read($uploadedFile->getRealPath());
-
-        $image->scaleDown(width: self::MAX_POST_IMAGE_WIDTH);
         $mainImageFilename = $baseFilename . '.webp';
         $mainImagePath = $directory . '/' . $mainImageFilename;
+
+        $tempPath = $uploadedFile->getRealPath();
+        $finalStoragePath = Storage::disk('public')->path($mainImagePath);
+
+        $binaryPath = base_path('image_processor');
+
+        if (is_executable($binaryPath)) {
+            try {
+                $command = sprintf(
+                    '%s %s %s %d %d %d %d %d',
+                    escapeshellcmd($binaryPath),
+                    escapeshellarg($tempPath),            // <input>
+                    escapeshellarg($finalStoragePath),       // <output_webp>
+                    self::MAX_POST_IMAGE_WIDTH,          // <width>
+                    self::MAX_POST_IMAGE_WIDTH,          // <height>
+                    self::POST_IMAGE_QUALITY,            // <quality>
+                    self::LQIP_WIDTH,                    // <lqip_width>
+                    self::LQIP_QUALITY                   // <lqip_quality>
+                );
+
+                $lqipBase64 = exec($command, $output, $returnCode);
+
+                if ($returnCode !== 0) {
+                    throw new Exception('Custom C binary failed with code ' . $returnCode . '. Output: ' . implode("\n", $output));
+                }
+
+                $lqip = 'data:image/jpeg;base64,' . $lqipBase64;
+                Log::info('Image processed with custom high-performance C binary.');
+
+                return ['main' => $mainImagePath, 'lqip' => $lqip];
+
+            } catch (Exception $e) {
+                Log::error('Custom C binary processing failed. Falling back to PHP GD.', ['error' => $e->getMessage()]);
+            }
+        }
+
+        Log::warning('Custom C binary not found or failed. Using standard PHP GD library.');
+        $manager = new ImageManager(new GdDriver());
+        $image = $manager->read($tempPath);
+
+        $image->scaleDown(width: self::MAX_POST_IMAGE_WIDTH);
         $encodedMainImage = $image->encode(new WebpEncoder(quality: self::POST_IMAGE_QUALITY));
         Storage::disk('public')->put($mainImagePath, $encodedMainImage);
 
@@ -463,10 +500,7 @@ class PostController extends Controller
             ->encode(new JpegEncoder(quality: self::LQIP_QUALITY))
             ->toDataUri();
 
-        return [
-            'main' => $mainImagePath,
-            'lqip' => $lqip,
-        ];
+        return ['main' => $mainImagePath, 'lqip' => $lqip];
     }
 
     final public function create(): View
