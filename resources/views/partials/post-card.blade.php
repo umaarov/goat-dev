@@ -16,6 +16,13 @@
     $postSlug = Str::slug($post->question, '-', 'en');
     $postUrl = route('posts.show', ['post' => $post, 'slug' => $postSlug]);
     $insightPreference = Auth::user()->ai_insight_preference ?? 'expanded';
+
+    $totalVotes = $post->total_votes;
+    $optionOneVotes = $post->option_one_votes;
+    $optionTwoVotes = $post->option_two_votes;
+    $percentOne = $totalVotes > 0 ? round(($optionOneVotes / $totalVotes) * 100) : 0;
+    $percentTwo = $totalVotes > 0 ? round(($optionTwoVotes / $totalVotes) * 100) : 0;
+    $hasVoted = !is_null($currentViewerVote);
 @endphp
 @push('schema')
     <script type="application/ld+json">
@@ -234,43 +241,54 @@
         @endif
     </div>
 
+    {{-- Main Image Display --}}
     <div class="grid grid-cols-2 gap-4 p-4">
         {{-- OPTION ONE IMAGE --}}
-        <div class="image-loader-container aspect-square rounded-md overflow-hidden bg-gray-100 bg-cover bg-center"
-             @if($post->option_one_image_lqip)
-                 style="background-image: url('{{ $post->option_one_image_lqip }}');"
-            @endif
-        >
+        <div class="relative image-loader-container aspect-square rounded-md overflow-hidden bg-gray-100 bg-cover bg-center {{ $hasVoted && $currentViewerVote !== 'option_one' ? 'is-monochrome' : '' }}"
+             data-image-option="option_one"
+             @if($post->option_one_image_lqip) style="background-image: url('{{ $post->option_one_image_lqip }}');" @endif>
+
             @if($post->option_one_image)
                 <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
                      data-src="{{ asset('storage/' . $post->option_one_image) }}"
                      alt="{{ $post->question }} - {{ $post->option_one_title }}"
-                     class="progressive-image h-full w-full object-cover object-center cursor-pointer zoomable-image"
+                     class="progressive-image h-full w-full object-cover object-center cursor-pointer zoomable-image transition-all duration-300"
                      decoding="async">
             @else
                 <div class="bg-gray-200 rounded-full p-2">
                     <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 </div>
             @endif
+
+            {{-- Vote Result Overlay --}}
+            <div class="vote-result-overlay absolute inset-0 flex items-center justify-center pointer-events-none {{ $hasVoted ? 'opacity-100' : 'opacity-0' }} transition-opacity duration-300">
+                <div class="water-fill absolute bottom-0 left-0 w-full bg-blue-800 bg-opacity-70 transition-all duration-700 ease-in-out" style="height: {{ $hasVoted ? $percentOne : 0 }}%;"></div>
+                <span class="vote-percentage-text relative text-white text-4xl font-bold" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.7);">{{ $hasVoted ? "{$percentOne}%" : '0%' }}</span>
+            </div>
         </div>
 
         {{-- OPTION TWO IMAGE --}}
-        <div class="image-loader-container aspect-square rounded-md overflow-hidden bg-gray-100 bg-cover bg-center"
-             @if($post->option_two_image_lqip)
-                 style="background-image: url('{{ $post->option_two_image_lqip }}');"
-            @endif
-        >
+        <div class="relative image-loader-container aspect-square rounded-md overflow-hidden bg-gray-100 bg-cover bg-center {{ $hasVoted && $currentViewerVote !== 'option_two' ? 'is-monochrome' : '' }}"
+             data-image-option="option_two"
+             @if($post->option_two_image_lqip) style="background-image: url('{{ $post->option_two_image_lqip }}');" @endif>
+
             @if($post->option_two_image)
                 <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
                      data-src="{{ asset('storage/' . $post->option_two_image) }}"
                      alt="{{ $post->question }} - {{ $post->option_two_title }}"
-                     class="progressive-image h-full w-full object-cover object-center cursor-pointer zoomable-image"
+                     class="progressive-image h-full w-full object-cover object-center cursor-pointer zoomable-image transition-all duration-300"
                      decoding="async">
             @else
                 <div class="bg-gray-200 rounded-full p-2">
                     <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 </div>
             @endif
+
+            {{-- Vote Result Overlay --}}
+            <div class="vote-result-overlay absolute inset-0 flex items-center justify-center pointer-events-none {{ $hasVoted ? 'opacity-100' : 'opacity-0' }} transition-opacity duration-300">
+                <div class="water-fill absolute bottom-0 left-0 w-full bg-blue-800 bg-opacity-70 transition-all duration-700 ease-in-out" style="height: {{ $hasVoted ? $percentTwo : 0 }}%;"></div>
+                <span class="vote-percentage-text relative text-white text-4xl font-bold" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.7);">{{ $hasVoted ? "{$percentTwo}%" : '0%' }}</span>
+            </div>
         </div>
     </div>
 
@@ -295,7 +313,8 @@
             @if($showPercentagesOnButtons) data-tooltip-show-count="true" @endif
             @if($showVotedByOwnerIcon && $voteByProfileOwner === 'option_one') data-tooltip-is-owner-choice="true" @endif
         >
-            <p class="button-text-truncate">{{ $post->option_one_title }} {{ $showPercentagesOnButtons ? "($percentOne%)" : "" }}</p>
+{{--            <p class="button-text-truncate">{{ $post->option_one_title }} {{ $showPercentagesOnButtons ? "($percentOne%)" : "" }}</p>--}}
+            <p class="button-text-truncate">{{ $post->option_one_title }}</p>
             @if($showVotedByOwnerIcon && $voteByProfileOwner === 'option_one')
                 <span
                     class="absolute top-0 right-0 -mt-2 -mr-2 px-1.5 py-0.5 bg-indigo-500 text-white text-[9px] leading-none rounded-full shadow-md flex items-center justify-center pointer-events-none"
@@ -319,7 +338,8 @@
             @if($showVotedByOwnerIcon && $voteByProfileOwner === 'option_two') data-tooltip-is-owner-choice="true"
             @endif
         >
-            <p class="button-text-truncate">{{ $post->option_two_title }} {{ $showPercentagesOnButtons ? "($percentTwo%)" : "" }}</p>
+{{--            <p class="button-text-truncate">{{ $post->option_two_title }} {{ $showPercentagesOnButtons ? "($percentTwo%)" : "" }}</p>--}}
+            <p class="button-text-truncate">{{ $post->option_two_title }}</p>
             @if($showVotedByOwnerIcon && $voteByProfileOwner === 'option_two')
                 <span
                     class="absolute top-0 right-0 -mt-2 -mr-2 px-1.5 py-0.5 bg-indigo-500 text-white text-[9px] leading-none rounded-full shadow-md flex items-center justify-center pointer-events-none"
@@ -722,6 +742,21 @@
         100% {
             background-position: -200% 0;
         }
+    }
+
+    .is-monochrome .progressive-image {
+        filter: grayscale(1);
+        -webkit-filter: grayscale(1);
+    }
+    .water-fill {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: #3b82f6;
+        opacity: 0.5;
+        transition: height 0.5s ease-out, opacity 0.3s ease-in-out;
+        will-change: height, opacity;
     }
 </style>
 
@@ -1964,8 +1999,6 @@ ${canDeleteComment(commentData) ? `
             return;
         }
 
-        console.log(`updateVoteUI called for post: ${postId}, userVote: ${userVotedOption}`, voteData);
-
         postElement.dataset.userVote = userVotedOption;
         postElement.dataset.optionOneVotes = voteData.option_one_votes;
         postElement.dataset.optionTwoVotes = voteData.option_two_votes;
@@ -1973,99 +2006,60 @@ ${canDeleteComment(commentData) ? `
         const totalVotesDisplayElement = postElement.querySelector('.flex.justify-between.items-center .flex.flex-col.items-center.gap-1 span.text-lg.font-semibold');
         if (totalVotesDisplayElement) {
             totalVotesDisplayElement.textContent = voteData.total_votes;
-        } else {
-            console.warn(`updateVoteUI: Total votes display element not found for post ${postId}.`);
         }
+
+        const totalVotes = parseInt(voteData.total_votes, 10) || 0;
+        const optionOneVotes = parseInt(voteData.option_one_votes, 10) || 0;
+        const optionTwoVotes = parseInt(voteData.option_two_votes, 10) || 0;
+        const percentOne = totalVotes > 0 ? Math.round((optionOneVotes / totalVotes) * 100) : 0;
+        const percentTwo = totalVotes > 0 ? Math.round((optionTwoVotes / totalVotes) * 100) : 0;
+
+        const imageContainers = postElement.querySelectorAll('.image-loader-container[data-image-option]');
+        imageContainers.forEach(container => {
+            const option = container.dataset.imageOption;
+            const overlay = container.querySelector('.vote-result-overlay');
+            const waterFill = container.querySelector('.water-fill');
+            const percentageText = container.querySelector('.vote-percentage-text');
+
+            if (!overlay || !waterFill || !percentageText) return;
+
+            const isVotedOption = (option === userVotedOption);
+            const percentage = (option === 'option_one') ? percentOne : percentTwo;
+
+            overlay.classList.remove('opacity-0');
+            overlay.classList.add('opacity-100');
+            percentageText.textContent = `${percentage}%`;
+            waterFill.style.height = `${percentage}%`;
+
+            if (isVotedOption) {
+                container.classList.remove('is-monochrome');
+            } else {
+                container.classList.add('is-monochrome');
+            }
+        });
 
         const optionOneButton = postElement.querySelector('button.vote-button[data-option="option_one"]');
         const optionTwoButton = postElement.querySelector('button.vote-button[data-option="option_two"]');
 
         if (optionOneButton && optionTwoButton) {
-            const optionOneTitleText = postElement.dataset.optionOneTitle || window.translations.js_option_1_default_title || 'Option 1';
-            const optionTwoTitleText = postElement.dataset.optionTwoTitle || window.translations.js_option_2_default_title || 'Option 2';
-
-            const totalVotes = parseInt(voteData.total_votes, 10);
-            const optionOneVotes = parseInt(voteData.option_one_votes, 10);
-            const optionTwoVotes = parseInt(voteData.option_two_votes, 10);
-
-            const numOptionOneVotes = isNaN(optionOneVotes) ? 0 : optionOneVotes;
-            const numOptionTwoVotes = isNaN(optionTwoVotes) ? 0 : optionTwoVotes;
-            const numTotalVotes = isNaN(totalVotes) ? (numOptionOneVotes + numOptionTwoVotes) : totalVotes;
-
-
-            const percentOne = numTotalVotes > 0 ? Math.round((numOptionOneVotes / numTotalVotes) * 100) : 0;
-            const percentTwo = numTotalVotes > 0 ? Math.round((numOptionTwoVotes / numTotalVotes) * 100) : 0;
-
-            optionOneButton.querySelector('.button-text-truncate').textContent = `${optionOneTitleText} (${percentOne}%)`;
-            optionTwoButton.querySelector('.button-text-truncate').textContent = `${optionTwoTitleText} (${percentTwo}%)`;
-
             const highlightClasses = ['bg-blue-800', 'text-white'];
-            const defaultClasses = ['bg-white', 'border', 'border-gray-300', 'hover:bg-gray-50'];
-            const noHoverDefaultClasses = ['bg-white', 'border', 'border-gray-300'];
+            const defaultClasses = ['bg-white', 'border', 'border-gray-300'];
 
             [optionOneButton, optionTwoButton].forEach(button => {
-                button.classList.remove(...highlightClasses, ...defaultClasses, ...noHoverDefaultClasses);
+                button.classList.remove(...highlightClasses, ...defaultClasses, 'hover:bg-gray-50');
             });
 
             if (userVotedOption === 'option_one') {
                 optionOneButton.classList.add(...highlightClasses);
-                optionTwoButton.classList.add(...noHoverDefaultClasses);
+                optionTwoButton.classList.add(...defaultClasses);
             } else if (userVotedOption === 'option_two') {
                 optionTwoButton.classList.add(...highlightClasses);
-                optionOneButton.classList.add(...noHoverDefaultClasses);
-            } else {
                 optionOneButton.classList.add(...defaultClasses);
-                optionTwoButton.classList.add(...defaultClasses);
             }
 
-            const showPercentagesBasedOnCurrentState = userVotedOption || postElement.dataset.profileOwnerVoteOption;
-            let votesLabelToUse = window.translations && window.translations.js_votes_label; // Check if window.translations itself exists
-            let problemDetected = false;
-            console.log("Value of window.translations.js_votes_label:", votesLabelToUse, "Type:", typeof votesLabelToUse);
-
-            if (typeof votesLabelToUse !== 'string') {
-                problemDetected = true;
-                if (votesLabelToUse === undefined) {
-                    console.warn("Tooltip 'votes' label (js_votes_label) is undefined in window.translations. Defaulting to 'votes'. Ensure 'messages.post_card.votes_label' is correctly defined in your Blade file and localization settings.");
-                } else if (votesLabelToUse === null) {
-                    console.warn("Tooltip 'votes' label (js_votes_label) is null in window.translations. Defaulting to 'votes'. Ensure 'messages.post_card.votes_label' is correctly defined.");
-                } else {
-                    console.warn(`Tooltip 'votes' label (js_votes_label) is not a string (type: ${typeof votesLabelToUse}, value: ${String(votesLabelToUse)}). Defaulting to 'votes'. Ensure 'messages.post_card.votes_label' provides a string.`);
-                }
-            } else if (votesLabelToUse.trim() === '' || votesLabelToUse.trim().toLowerCase() === 'undefined') {
-                problemDetected = true;
-                if (votesLabelToUse.trim().toLowerCase() === 'undefined') {
-                    console.warn("The translation for 'js_votes_label' was the string 'undefined'. Defaulting to 'votes'. Please check your localization files (e.g., messages.post_card.votes_label).");
-                } else {
-                    console.warn("Tooltip 'votes' label (js_votes_label) is an empty string in window.translations. Defaulting to 'votes'. Ensure 'messages.post_card.votes_label' is correctly defined and not empty.");
-                }
-            }
-
-            if (problemDetected) {
-                votesLabelToUse = 'votes';
-            }
-            console.log("Final votesLabelToUse before setting title:", votesLabelToUse, "Type:", typeof votesLabelToUse);
-            console.log("numOptionOneVotes:", numOptionOneVotes, "numOptionTwoVotes:", numOptionTwoVotes);
-
-            if (showPercentagesBasedOnCurrentState) {
-                optionOneButton.dataset.tooltipShowCount = "true";
-                optionTwoButton.dataset.tooltipShowCount = "true";
-
-                optionOneButton.title = `${numOptionOneVotes} ${votesLabelToUse}`;
-                optionTwoButton.title = `${numOptionTwoVotes} ${votesLabelToUse}`;
-                console.log("Set title for option one:", optionOneButton.title);
-                console.log("Set title for option two:", optionTwoButton.title);
-            } else {
-                optionOneButton.removeAttribute('data-tooltip-show-count');
-                optionTwoButton.removeAttribute('data-tooltip-show-count');
-                optionOneButton.removeAttribute('title');
-                optionTwoButton.removeAttribute('title');
-            }
-
-            optionOneButton.dataset.tooltipShowCount = "true";
-            optionTwoButton.dataset.tooltipShowCount = "true";
-        } else {
-            console.warn(`updateVoteUI: Vote buttons not found for post ${postId}.`);
+            // const votesLabel = window.translations.js_votes_label || 'votes';
+            // optionOneButton.title = `${optionOneVotes} ${votesLabel}`;
+            // optionTwoButton.title = `${optionTwoVotes} ${votesLabel}`;
         }
     }
 </script>
