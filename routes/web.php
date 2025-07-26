@@ -25,7 +25,8 @@ Route::middleware('guest')->group(function () {
     Route::get('/auth/google/callback', [AuthController::class, 'googleCallback']);
 });
 
-Route::get('/', [PostController::class, 'index'])->name('home')->middleware('cache.response:10');
+Route::get('/', [PostController::class, 'index'])->name('home');
+//Route::get('/', [PostController::class, 'index'])->name('home')->middleware('cache.response:10');
 Route::get('/search', [PostController::class, 'search'])->name('search');
 Route::get('/p/{id}/{slug?}', [PostController::class, 'showBySlug'])->name('posts.showSlug')->middleware('cache.response:60');
 Route::get('/@{username}', [UserController::class, 'showProfile'])->name('profile.show');
