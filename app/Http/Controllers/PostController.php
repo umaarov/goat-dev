@@ -962,4 +962,31 @@ class PostController extends Controller
             'queryTerm' => $queryTerm
         ]);
     }
+
+    final public function loadMorePosts(Request $request): JsonResponse
+    {
+        $query = Post::query()->withPostData();
+
+        switch ($request->input('filter')) {
+            case 'trending':
+                $query->where('created_at', '>=', now()->subDays(7))
+                    ->orderByDesc('total_votes')
+                    ->orderByDesc('created_at');
+                break;
+            case 'latest':
+            default:
+                $query->orderByDesc('created_at')->orderByDesc('id');
+                break;
+        }
+
+        $posts = $query->paginate(15)->withQueryString();
+        $this->attachUserVoteStatus($posts);
+
+        $html = view('partials.posts-list', ['posts' => $posts])->render();
+
+        return response()->json([
+            'html' => $html,
+            'hasMorePages' => $posts->hasMorePages()
+        ]);
+    }
 }

@@ -92,7 +92,7 @@
                 loadingIndicator.classList.remove('hidden');
 
                 const filter = new URLSearchParams(window.location.search).get('filter') || '';
-                const url = `{{ route('home') }}?page=${nextPage}${filter ? '&filter=' + filter : ''}`;
+                const url = `{{ route('posts.load_more') }}?page=${nextPage}${filter ? '&filter=' + filter : ''}`;
 
                 try {
                     const response = await fetch(url, {

@@ -112,6 +112,8 @@ Route::get('/email/verify/{id}/{token}', [AuthController::class, 'verifyEmail'])
 
 Route::get('/sitemap.xml', [SitemapController::class, 'index']);
 
+Route::get('/load-more-posts', [PostController::class, 'loadMorePosts'])->name('posts.load_more');
+
 Route::fallback(function () {
     return response()->view('errors.404', [], 404);
 })->middleware('cache.response:1440');
