@@ -50,7 +50,7 @@ jobs:
       # It uses a dedicated action to install the Emscripten SDK first.
       - name: Build C++ with Emscripten
         if: matrix.language == 'cpp'
-        uses: emscripten-core/setup-emscripten@v4
+        uses: emscripten-core/setup-emscripten@v3
         with:
           # Specify the version of Emscripten to use. 'latest' is usually fine.
           emscripten-version: 'latest'
