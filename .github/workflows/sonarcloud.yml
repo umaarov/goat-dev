@@ -39,5 +39,4 @@ jobs:
             -Dsonar.organization=your_organization_key
             -Dsonar.sources=app,config,routes
             -Dsonar.tests=tests
-            -Dsonar.php.exclusions=**/vendor/**,**/public/**,**/database/**
-            -Dsonar.cpd.exclusions=**/vendor/**,**/public/**,**/database/**
+            -Dsonar.exclusions=**/vendor/**,**/public/**,**/database/**
