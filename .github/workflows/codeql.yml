@@ -49,7 +49,7 @@ jobs:
         shell: bash
         run: |
           npm install
-          npm run build:wasm
+          emmake npm run build:wasm
 
       # Step 5: Perform the final CodeQL analysis.
       - name: Perform CodeQL Analysis
