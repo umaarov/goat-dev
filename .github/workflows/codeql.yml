@@ -1,12 +1,12 @@
 # GitHub Action for CodeQL Analysis
-# Scans C/C++ (compiled to Wasm) and JavaScript.
+# Scans JavaScript. C++ analysis is disabled due to a tool incompatibility.
 name: CodeQL Security Analysis
 
 on:
   push:
-    branches: [ "master", "develop" ]
+    branches: ["master", "develop"]
   pull_request:
-    branches: [ "master", "develop" ]
+    branches: ["master", "develop"]
   schedule:
     - cron: '0 4 * * 0'
 
@@ -23,7 +23,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'cpp', 'javascript' ]
+        # Running JavaScript only, as C++ analysis is not compatible.
+        language: ['javascript']
 
     steps:
       # Step 1: Check out the repository's code.
@@ -36,29 +37,7 @@ jobs:
         with:
           languages: ${{ matrix.language }}
 
-      # Step 3: Setup Emscripten environment (for C++ job only).
-      - name: Setup Emscripten
-        if: matrix.language == 'cpp'
-        uses: mymindstorm/setup-emsdk@v14
-        with:
-          version: 'latest'
-
-      # Step 4: Build C++ using the raw compiler command (for C++ job only).
-      - name: Build C++ with Emscripten
-        if: matrix.language == 'cpp'
-        shell: bash
-        run: |
-          npm install
-          emcc cpp/geometry_optimizer.cpp \
-            -o public/assets/wasm/geometry_optimizer.js \
-            -O3 \
-            -s WASM=1 \
-            -s MODULARIZE=1 \
-            -s EXPORT_ES6=1 \
-            -s EXPORTED_FUNCTIONS="['_createComplexWeaverGeometry', '_malloc', '_free']" \
-            -s EXPORTED_RUNTIME_METHODS="['cwrap', 'getValue', 'wasmMemory']"
-
-      # Step 5: Perform the final CodeQL analysis.
+      # Step 3: Perform the final CodeQL analysis.
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
