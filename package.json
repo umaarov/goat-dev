@@ -11,7 +11,7 @@
         "@types/stats.js": "^0.17.4",
         "lil-gui": "^0.20.0",
         "stats.js": "^0.17.0",
-        "three": "^0.165.0"
+        "three": "^0.178.0"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.1.3",
