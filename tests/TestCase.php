@@ -13,6 +13,18 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        Vite::fake();
+        $this->app->singleton(
+            Vite::class,
+            fn () => new class extends Vite {
+                public function __invoke(string $entrypoints, ?string $buildDirectory = null): string
+                {
+                    return '';
+                }
+                public function asset(string $asset, ?string $buildDirectory = null): string
+                {
+                    return '';
+                }
+            }
+        );
     }
 }
