@@ -26,30 +26,37 @@ jobs:
         language: [ 'cpp', 'javascript' ]
 
     steps:
-      # Step 1: Check out the repository's code so the workflow can access it.
+      # Step 1: Check out the repository's code.
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Initialize the CodeQL tools for the specified language.
+      # Step 2: Initialize CodeQL to start tracing.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
 
-      # Step 3: Setup Emscripten (only for the 'cpp' job)
+      # Step 3: Setup Emscripten environment (for C++ job only).
       - name: Setup Emscripten
         if: matrix.language == 'cpp'
         uses: mymindstorm/setup-emsdk@v14
         with:
           version: 'latest'
 
-      # Step 4: Build the C++ code (only for the 'cpp' job)
+      # Step 4: Build C++ using the raw compiler command (for C++ job only).
       - name: Build C++ with Emscripten
         if: matrix.language == 'cpp'
         shell: bash
         run: |
           npm install
-          emmake npm run build:wasm
+          emcc cpp/geometry_optimizer.cpp \
+            -o public/assets/wasm/geometry_optimizer.js \
+            -O3 \
+            -s WASM=1 \
+            -s MODULARIZE=1 \
+            -s EXPORT_ES6=1 \
+            -s EXPORTED_FUNCTIONS="['_createComplexWeaverGeometry', '_malloc', '_free']" \
+            -s EXPORTED_RUNTIME_METHODS="['cwrap', 'getValue', 'wasmMemory']"
 
       # Step 5: Perform the final CodeQL analysis.
       - name: Perform CodeQL Analysis
