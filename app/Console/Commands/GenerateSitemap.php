@@ -62,7 +62,7 @@ class GenerateSitemap extends Command
                 foreach ($posts as $post) {
                     $slug = Str::slug($post->question);
                     try {
-                        $url = route('posts.show.slug', ['id' => $post->id, 'slug' => $slug]);
+                        $url = route('posts.show.user-scoped', ['username' => $post->user->username, 'post' => $post->id]);
                         $sitemap->add(Url::create($url)
                             ->setLastModificationDate($post->updated_at)
                             ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY)
