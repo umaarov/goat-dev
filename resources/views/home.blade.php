@@ -19,6 +19,15 @@
 @endpush
 
 @section('content')
+    <a href="https://t.me/voteongoat" target="_blank" rel="noopener noreferrer"
+       class="flex items-center justify-center gap-x-2.5 text-sm text-center p-3 mb-6 bg-sky-100 text-sky-800 rounded-lg hover:bg-sky-200 transition-colors duration-200 shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)]">
+        <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+                d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.57c-.28 1.13-1.04 1.4-1.74.88L14.25 16l-4.12 3.9c-.78.76-1.36.37-1.57-.49z"/>
+        </svg>
+        <span class="font-medium">{{ __('messages.app.telegram_ad') }}</span>
+    </a>
+
     <div id="posts-wrapper">
         <div id="posts-loading-shimmer">
             @for ($i = 0; $i < 5; $i++)

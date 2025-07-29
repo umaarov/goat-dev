@@ -247,6 +247,7 @@ return [
     'app.default_title' => 'GOAT | Community Polls',
     'app.meta_description_default' => 'What is the GOAT? Create and vote on "this or that" polls. Join the community, share your opinion, and see what\'s trending.',
     'app.logo_alt' => 'GOAT.uz - Community Polls Logo',
+    'app.telegram_ad' => 'Join our telegram channel !',
 
     'app.all_caught_up' => "You're all caught up",
     'app.you_have_seen_all_posts' => 'You have seen all the posts for now.',

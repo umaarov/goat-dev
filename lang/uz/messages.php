@@ -502,4 +502,6 @@ return [
         'ai_insight_hidden' => 'Yashirilgan',
         'ai_insight_hidden_desc' => 'Panelni to‘liq yashirish. Siz savol yonidagi belgi orqali uni ochishingiz mumkin.',
     ],
+
+    'app.telegram_ad' => 'Telegram kanalimizga obuna bo\'ling!',
 ];
