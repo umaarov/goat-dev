@@ -1,19 +1,19 @@
-# Last updated: 2025-06-17
+# Last updated: 2025-07-29
 User-agent: *
 
-Disallow: /login
-Disallow: /register
-Disallow: /logout
-Disallow: /auth/
-Disallow: /email/
-Disallow: /posts/create
-Disallow: /*/edit$
-Disallow: /notifications
-Disallow: /profile/edit
+#Disallow: /login
+#Disallow: /register
+#Disallow: /logout
+#Disallow: /auth/
+#Disallow: /email/
+#Disallow: /posts/create
+#Disallow: /*/edit$
+#Disallow: /notifications
+#Disallow: /profile/edit
 Disallow: /profile/change-password
 
-Disallow: /*/posts-data$
-Disallow: /*/voted-data$
+#Disallow: /*/posts-data$
+#Disallow: /*/voted-data$
 Disallow: /check-username
 
 Sitemap: https://goat.uz/sitemap.xml
