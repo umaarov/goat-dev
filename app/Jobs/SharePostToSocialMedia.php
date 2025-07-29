@@ -37,7 +37,6 @@ class SharePostToSocialMedia implements ShouldQueue
         XService         $xService
     ): void
     {
-        // Refresh the post to get the latest data
         $freshPost = Post::find($this->post->id);
 
         if (!$freshPost) {
@@ -80,7 +79,7 @@ class SharePostToSocialMedia implements ShouldQueue
 
             $telegramService->share($freshPost);
             Log::info('Post shared to Telegram successfully', ['post_id' => $freshPost->id]);
-        } catch (Throwable $e) { // Catch Throwable
+        } catch (Throwable $e) {
             $errors['telegram'] = $e->getMessage();
             Log::error('Failed to share post to Telegram', [
                 'post_id' => $freshPost->id,

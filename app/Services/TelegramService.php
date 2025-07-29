@@ -72,8 +72,9 @@ class TelegramService
             $imageOnePath = Storage::disk('public')->path($post->option_one_image);
             $imageTwoPath = Storage::disk('public')->path($post->option_two_image);
             $fontPath = storage_path('app/fonts/Inter-Bold.ttf');
+            $logoFontPath = storage_path('app/fonts/Inter-Black.ttf');
 
-            if (!File::exists($imageOnePath) || !File::exists($imageTwoPath) || !File::exists($fontPath)) {
+            if (!File::exists($imageOnePath) || !File::exists($imageTwoPath) || !File::exists($fontPath) || !File::exists($logoFontPath)) {
                 Log::error('Required image or font file not found for GD generation.', ['post_id' => $post->id]);
                 return null;
             }
@@ -123,32 +124,50 @@ class TelegramService
             imagecopy($canvas, $img1_bordered, $x1, $y, 0, 0, $borderedImageSize, $borderedImageSize);
             imagecopy($canvas, $img2_bordered, $x2, $y, 0, 0, $borderedImageSize, $borderedImageSize);
 
-            $lineColor = imagecolorallocatealpha($canvas, 255, 255, 255, 30);
-            $glowColor = imagecolorallocatealpha($canvas, 255, 255, 255, 90);
+            // --- "VS" Separator ---
             $centerX = 1200 / 2;
-            $lineTop = $y - 20;
-            $lineBottom = $y + $borderedImageSize + 20;
+            $centerY = 630 / 2;
+            $vsCircleRadius = 100;
+            $vsCircleColor = imagecolorallocatealpha($canvas, 0, 0, 0, 85);
+            $vsTextColor = imagecolorallocatealpha($canvas, 255, 255, 255, 10);
 
-            imagesetthickness($canvas, 15);
-            imageline($canvas, $centerX, $lineTop, $centerX, $lineBottom, $glowColor);
-            imagesetthickness($canvas, 4);
-            imageline($canvas, $centerX, $lineTop, $centerX, $lineBottom, $lineColor);
+            imagefilledellipse($canvas, $centerX, $centerY, $vsCircleRadius, $vsCircleRadius, $vsCircleColor);
 
-            $badgeWidth = 150;
-            $badgeHeight = 50;
-            $badgePadding = 20;
+            $vsText = 'VS';
+            $vsFontSize = 40;
+            $vsTextBox = imagettfbbox($vsFontSize, 0, $fontPath, $vsText);
+            $vsTextWidth = $vsTextBox[2] - $vsTextBox[0];
+            $vsTextHeight = $vsTextBox[1] - $vsTextBox[7];
+            $vsTextX = $centerX - ($vsTextWidth / 2);
+            $vsTextY = $centerY + ($vsTextHeight / 2);
+            imagettftext($canvas, $vsFontSize, 0, $vsTextX, $vsTextY, $vsTextColor, $fontPath, $vsText);
+
+            // ---  Watermark ---
+            $badgeHeight = 45;
+            $badgeWidth = 160;
+            $badgePadding = 25;
             $badgeX = 1200 - $badgeWidth - $badgePadding;
             $badgeY = 630 - $badgeHeight - $badgePadding;
-            $badgeColor = imagecolorallocatealpha($canvas, 0, 0, 0, 50);
-            $textColor = imagecolorallocatealpha($canvas, 255, 255, 255, 12);
+            $radius = $badgeHeight / 2;
 
-            imagefilledrectangle($canvas, $badgeX, $badgeY, $badgeX + $badgeWidth, $badgeY + $badgeHeight, $badgeColor);
+            $startColor = imagecolorallocatealpha($canvas, 30, 30, 30, 40);
+            $endColor = imagecolorallocatealpha($canvas, 0, 0, 0, 40);
 
-            $textBox = imagettfbbox(24, 0, $fontPath, 'GOAT.UZ');
-            $textWidth = $textBox[2] - $textBox[0];
-            $textX = $badgeX + ($badgeWidth - $textWidth) / 2;
-            $textY = $badgeY + ($badgeHeight - ($textBox[5] - $textBox[1])) / 2 - $textBox[5];
-            imagettftext($canvas, 24, 0, $textX, $textY, $textColor, $fontPath, 'GOAT.UZ');
+            imagefilledrectangle($canvas, $badgeX + $radius, $badgeY, $badgeX + $badgeWidth - $radius, $badgeY + $badgeHeight, $startColor);
+            imagefilledellipse($canvas, $badgeX + $radius, $badgeY + $radius, $badgeHeight, $badgeHeight, $startColor);
+            imagefilledellipse($canvas, $badgeX + $badgeWidth - $radius, $badgeY + $radius, $badgeHeight, $badgeHeight, $endColor);
+
+            // Watermark Text
+            $watermarkText = 'GOAT.UZ';
+            $watermarkFontSize = 20;
+            $watermarkTextColor = imagecolorallocatealpha($canvas, 255, 255, 255, 15);
+            $watermarkTextBox = imagettfbbox($watermarkFontSize, 0, $logoFontPath, $watermarkText);
+            $watermarkTextWidth = $watermarkTextBox[2] - $watermarkTextBox[0];
+            $watermarkTextHeight = $watermarkTextBox[1] - $watermarkTextBox[7];
+            $watermarkTextX = $badgeX + ($badgeWidth - $watermarkTextWidth) / 2;
+            $watermarkTextY = $badgeY + ($badgeHeight + $watermarkTextHeight) / 2;
+            imagettftext($canvas, $watermarkFontSize, 0, $watermarkTextX, $watermarkTextY, $watermarkTextColor, $logoFontPath, $watermarkText);
+
 
             ob_start();
             imagejpeg($canvas, null, 90);
