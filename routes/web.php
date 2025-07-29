@@ -10,7 +10,6 @@ use App\Http\Controllers\RatingController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\SssController;
 
 Route::get('/language/{locale}', [LocaleController::class, 'setLocale'])->name('language.set');
 
@@ -27,7 +26,11 @@ Route::middleware('guest')->group(function () {
 
 Route::get('/', [PostController::class, 'index'])->name('home')->middleware('cache.response:10');
 Route::get('/search', [PostController::class, 'search'])->name('search');
-Route::get('/p/{id}/{slug?}', [PostController::class, 'showBySlug'])->name('posts.showSlug')->middleware('cache.response:60');
+//Route::get('/p/{id}/{slug?}', [PostController::class, 'showBySlug'])->name('posts.showSlug')->middleware('cache.response:60');
+Route::get('/@{username}/post/{post}', [PostController::class, 'showUserPost'])
+    ->name('posts.show.user-scoped')
+    ->where('post', '[0-9]+')->middleware('cache.response:60');
+
 Route::get('/@{username}', [UserController::class, 'showProfile'])->name('profile.show');
 Route::get('/check-username', [UserController::class, 'checkUsername'])->name('check.username');
 

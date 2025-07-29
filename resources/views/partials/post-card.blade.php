@@ -13,8 +13,9 @@
     $highlightOptionForViewer = $currentViewerVote;
     $showPercentagesOnButtons = $currentViewerVote || $voteByProfileOwner;
     $showVotedByOwnerIcon = $profileOwnerToDisplay && !$showManagementOptions && $voteByProfileOwner;
-    $postSlug = Str::slug($post->question, '-', 'en');
-    $postUrl = route('posts.show', ['post' => $post, 'slug' => $postSlug]);
+//    $postSlug = Str::slug($post->question, '-', 'en');
+//    $postUrl = route('posts.show', ['post' => $post, 'slug' => $postSlug]);
+    $postUrl = route('posts.show.user-scoped', ['username' => $post->user->username, 'post' => $post->id]);
     $insightPreference = Auth::user()->ai_insight_preference ?? 'expanded';
 
     $totalVotes = $post->total_votes;
@@ -82,6 +83,7 @@
 <article class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4"
          id="post-{{ $post->id }}"
          style="content-visibility: auto; contain-intrinsic-size: 500px;"
+         data-share-url="{{ $postUrl }}"
          data-option-one-title="{{ $post->option_one_title }}"
          data-option-two-title="{{ $post->option_two_title }}"
          data-option-one-votes="{{ $post->option_one_votes }}"
@@ -845,11 +847,13 @@
         }
         const question = questionElement.textContent;
 
-        const slug = question.toLowerCase()
-            .replace(/[^\w\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .substring(0, 60);
-        const shareUrl = `${window.location.origin}/p/${postId}/${slug}`;
+        // const slug = question.toLowerCase()
+        //     .replace(/[^\w\s-]/g, '')
+        //     .replace(/\s+/g, '-')
+        //     .substring(0, 60);
+        // const shareUrl = `${window.location.origin}/p/${postId}/${slug}`;
+
+        const shareUrl = postElement.dataset.shareUrl;
 
         if (navigator.share) {
             navigator.share({

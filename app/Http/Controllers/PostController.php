@@ -1024,4 +1024,28 @@ class PostController extends Controller
             'hasMorePages' => $posts->hasMorePages()
         ]);
     }
+
+    final public function showUserPost(string $username, Post $post)
+    {
+        if ($post->user->username !== $username) {
+            return redirect()->route('posts.show.user-scoped', [
+                'username' => $post->user->username,
+                'post' => $post->id
+            ], 301);
+        }
+
+        $position = Post::query()
+                ->where('created_at', '>', $post->created_at)
+                ->orWhere(function ($query) use ($post) {
+                    $query->where('created_at', $post->created_at)
+                        ->where('id', '>', $post->id);
+                })
+                ->count() + 1;
+
+        $perPage = 15;
+        $page = ceil($position / $perPage);
+        return redirect()->route('home', ['page' => $page])
+            ->with('scrollToPost', $post->id);
+    }
+
 }

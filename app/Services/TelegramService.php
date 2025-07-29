@@ -20,6 +20,7 @@ class TelegramService
     {
         $post = $post->fresh();
 
+        $post->loadMissing('user');
         if (!$post) {
             throw new Exception('Post not found when trying to share to Telegram.');
         }
@@ -43,7 +44,10 @@ class TelegramService
             throw new Exception('Failed to generate the composite image.');
         }
 
-        $postUrl = route('posts.showSlug', ['id' => $post->id, 'slug' => Str::slug($post->question)]);
+        $postUrl = route('posts.show.user-scoped', [
+            'username' => $post->user->username,
+            'post' => $post->id
+        ]);
         $caption = "⚡️ " . $post->question . "\n\n";
         $caption .= "1️⃣ " . $post->option_one_title . "\n";
         $caption .= "2️⃣ " . $post->option_two_title . "\n\n";
