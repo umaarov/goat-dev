@@ -14,6 +14,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class SharePostToSocialMedia implements ShouldQueue
 {
@@ -21,7 +22,7 @@ class SharePostToSocialMedia implements ShouldQueue
 
     public $tries = 3;
     public $timeout = 180;
-    public $backoff = [30, 60, 120]; // Wait 30s, 60s, 120s between retries
+    public $backoff = [30, 60, 120];
 
     public Post $post;
 
@@ -79,7 +80,7 @@ class SharePostToSocialMedia implements ShouldQueue
 
             $telegramService->share($freshPost);
             Log::info('Post shared to Telegram successfully', ['post_id' => $freshPost->id]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) { // Catch Throwable
             $errors['telegram'] = $e->getMessage();
             Log::error('Failed to share post to Telegram', [
                 'post_id' => $freshPost->id,
@@ -93,7 +94,7 @@ class SharePostToSocialMedia implements ShouldQueue
         try {
             $instagramService->share($freshPost);
             Log::info('Post shared to Instagram successfully', ['post_id' => $freshPost->id]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) { // Catch Throwable
             $errors['instagram'] = $e->getMessage();
             Log::error('Failed to share post to Instagram', [
                 'post_id' => $freshPost->id,
@@ -105,7 +106,7 @@ class SharePostToSocialMedia implements ShouldQueue
         try {
             $xService->share($freshPost);
             Log::info('Post shared to X successfully', ['post_id' => $freshPost->id]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) { // Catch Throwable
             $errors['x'] = $e->getMessage();
             Log::error('Failed to share post to X', [
                 'post_id' => $freshPost->id,
@@ -113,12 +114,10 @@ class SharePostToSocialMedia implements ShouldQueue
             ]);
         }
 
-        // If all services failed, throw an exception to trigger retry
         if (count($errors) === 3) {
             throw new Exception('All social media sharing failed: ' . json_encode($errors));
         }
 
-        // If only some services failed, log the partial success
         if (!empty($errors)) {
             Log::warning('Partial social media sharing failure', [
                 'post_id' => $freshPost->id,
@@ -134,7 +133,7 @@ class SharePostToSocialMedia implements ShouldQueue
         ]);
     }
 
-    public function failed(Exception $exception): void
+    public function failed(Throwable $exception): void
     {
         Log::error('SharePostToSocialMedia job failed permanently', [
             'post_id' => $this->post->id,

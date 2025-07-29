@@ -4,23 +4,20 @@ namespace App\Services;
 
 use App\Models\Post;
 use Exception;
+use GdImage;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use Intervention\Image\Drivers\Gd\Driver as GdDriver;
-use Intervention\Image\Encoders\JpegEncoder;
-use Intervention\Image\ImageManager;
+use Throwable;
 
 class TelegramService
 {
     public function share(Post $post): void
     {
-        $post = $post->fresh();
+        $post = $post->fresh()->loadMissing('user');
 
-        $post->loadMissing('user');
         if (!$post) {
             throw new Exception('Post not found when trying to share to Telegram.');
         }
@@ -32,22 +29,12 @@ class TelegramService
             throw new Exception('Telegram bot token or chat ID is not configured.');
         }
 
-        Log::info('Attempting to share post to Telegram', [
-            'post_id' => $post->id,
-            'post_attributes' => $post->getAttributes(),
-            'has_option_one_image' => !empty($post->option_one_image),
-            'has_option_two_image' => !empty($post->option_two_image)
-        ]);
-
-        $imageData = $this->generateTelegramImage($post);
+        $imageData = $this->generateTelegramImageWithGd($post);
         if (!$imageData) {
-            throw new Exception('Failed to generate the composite image.');
+            throw new Exception('Failed to generate the composite image using GD.');
         }
 
-        $postUrl = route('posts.show.user-scoped', [
-            'username' => $post->user->username,
-            'post' => $post->id
-        ]);
+        $postUrl = route('posts.show.user-scoped', ['username' => $post->user->username, 'post' => $post->id]);
         $caption = "⚡️ " . $post->question . "\n\n";
         $caption .= "1️⃣ " . $post->option_one_title . "\n";
         $caption .= "2️⃣ " . $post->option_two_title . "\n\n";
@@ -55,14 +42,7 @@ class TelegramService
 
         $apiUrl = "https://api.telegram.org/bot{$botToken}/sendPhoto";
 
-        Log::info('Sending image to Telegram', [
-            'post_id' => $post->id,
-            'image_size' => strlen($imageData),
-            'caption_length' => strlen($caption),
-            'api_url' => str_replace($botToken, '[REDACTED]', $apiUrl)
-        ]);
-
-        $response = Http::timeout(30)->attach(
+        $response = Http::timeout(45)->attach(
             'photo',
             $imageData,
             'telegram_post_' . $post->id . '.jpg',
@@ -77,129 +57,118 @@ class TelegramService
                 'status' => $response->status(),
                 'body' => $response->body(),
                 'post_id' => $post->id,
-                'image_size' => strlen($imageData),
-                'caption_length' => strlen($caption)
             ]);
             throw new Exception('Telegram API request failed: ' . $response->body());
         }
 
-        Log::info('Successfully shared post to Telegram', [
-            'post_id' => $post->id,
-            'response_status' => $response->status()
-        ]);
+        Log::info('Successfully shared post to Telegram', ['post_id' => $post->id]);
     }
 
-    private function generateTelegramImage(Post $post): ?string
+    private function generateTelegramImageWithGd(Post $post): ?string
     {
+        $resources = [];
+
         try {
-            // Add detailed logging for debugging
-            Log::info('Generating Telegram image', [
-                'post_id' => $post->id,
-                'option_one_image' => $post->option_one_image,
-                'option_two_image' => $post->option_two_image,
-                'post_data' => [
-                    'user_id' => $post->user_id,
-                    'question' => $post->question,
-                    'option_one_title' => $post->option_one_title,
-                    'option_two_title' => $post->option_two_title
-                ]
-            ]);
-
-            if (!$post->option_one_image || !$post->option_two_image) {
-                Log::error('Post missing image paths', [
-                    'post_id' => $post->id,
-                    'option_one_image' => $post->option_one_image,
-                    'option_two_image' => $post->option_two_image,
-                    'all_attributes' => $post->getAttributes()
-                ]);
-                return null;
-            }
-
-            $manager = new ImageManager(new GdDriver());
-
-            // Check if images exist in storage
-            if (!Storage::disk('public')->exists($post->option_one_image)) {
-                Log::error('Option one image does not exist in storage', [
-                    'post_id' => $post->id,
-                    'path' => $post->option_one_image,
-                    'full_path' => Storage::disk('public')->path($post->option_one_image)
-                ]);
-                return null;
-            }
-
-            if (!Storage::disk('public')->exists($post->option_two_image)) {
-                Log::error('Option two image does not exist in storage', [
-                    'post_id' => $post->id,
-                    'path' => $post->option_two_image,
-                    'full_path' => Storage::disk('public')->path($post->option_two_image)
-                ]);
-                return null;
-            }
-
             $imageOnePath = Storage::disk('public')->path($post->option_one_image);
             $imageTwoPath = Storage::disk('public')->path($post->option_two_image);
+            $fontPath = storage_path('app/fonts/Inter-Bold.ttf');
 
-            Log::info('Image paths resolved', [
-                'post_id' => $post->id,
-                'path1' => $imageOnePath,
-                'path2' => $imageTwoPath,
-                'exists1' => File::exists($imageOnePath),
-                'exists2' => File::exists($imageTwoPath)
-            ]);
-
-            if (!File::exists($imageOnePath) || !File::exists($imageTwoPath)) {
-                Log::error('Source image files not found on filesystem', [
-                    'post_id' => $post->id,
-                    'path1' => $imageOnePath,
-                    'path2' => $imageTwoPath,
-                    'exists1' => File::exists($imageOnePath),
-                    'exists2' => File::exists($imageTwoPath)
-                ]);
+            if (!File::exists($imageOnePath) || !File::exists($imageTwoPath) || !File::exists($fontPath)) {
+                Log::error('Required image or font file not found for GD generation.', ['post_id' => $post->id]);
                 return null;
             }
 
-            $img1 = $manager->read($imageOnePath);
-            $img2 = $manager->read($imageTwoPath);
-            $canvas = $manager->create(1200, 630, '#1a1a1a');
+            $canvas = imagecreatetruecolor(1200, 630);
+            $resources[] = $canvas;
+            $img1_src = imagecreatefromwebp($imageOnePath);
+            $img2_src = imagecreatefromwebp($imageTwoPath);
+            $resources[] = $img1_src;
+            $resources[] = $img2_src;
 
-            $img1->cover(550, 550);
-            $img2->cover(550, 550);
+            imagecopy($canvas, $img1_src, 0, 0, 0, 0, 600, 630);
+            imagecopy($canvas, $img2_src, 600, 0, imagesx($img2_src) - 600, 0, 600, 630);
 
-            $x1 = (1200 - (550 * 2 + 40)) / 2;
-            $y1 = (630 - 550) / 2;
-            $x2 = $x1 + 550 + 40;
-
-            $canvas->place($img1, 'top-left', $x1, $y1);
-            $canvas->place($img2, 'top-left', $x2, $y1);
-
-            $fontPath = storage_path('app/fonts/Inter-Bold.ttf');
-            if (!File::exists($fontPath)) {
-                throw new Exception('Required font file not found at: ' . $fontPath);
+            for ($i = 0; $i < 25; $i++) {
+                imagefilter($canvas, IMG_FILTER_GAUSSIAN_BLUR);
             }
-            $canvas->text('VS', 600, 315, function ($font) use ($fontPath) {
-                $font->file($fontPath)->size(96)->color('#ffffff')->align('center')->valign('middle');
-            });
 
-            $canvas->text('goat.uz', 1170, 600, function ($font) use ($fontPath) {
-                if (is_string($fontPath)) $font->file($fontPath);
-                $font->size(32)->color('rgba(255, 255, 255, 0.5)')->align('right')->valign('bottom');
-            });
+            $overlayColor = imagecolorallocatealpha($canvas, 0, 0, 0, 64);
+            imagefilledrectangle($canvas, 0, 0, 1200, 630, $overlayColor);
 
-            $imageData = (string)$canvas->encode(new JpegEncoder(quality: 85));
+            $imageSize = 500;
+            $borderSize = 8;
+            $borderedImageSize = $imageSize + ($borderSize * 2);
 
-            Log::info('Telegram image generated successfully', [
-                'post_id' => $post->id,
-                'image_size' => strlen($imageData)
-            ]);
+            $img1_resized = imagecreatetruecolor($imageSize, $imageSize);
+            imagecopyresampled($img1_resized, $img1_src, 0, 0, 0, 0, $imageSize, $imageSize, imagesx($img1_src), imagesy($img1_src));
+            $img1_bordered = imagecreatetruecolor($borderedImageSize, $borderedImageSize);
+            $borderColor = imagecolorallocatealpha($canvas, 255, 255, 255, 95);
+            imagefill($img1_bordered, 0, 0, $borderColor);
+            imagecopy($img1_bordered, $img1_resized, $borderSize, $borderSize, 0, 0, $imageSize, $imageSize);
+            $resources[] = $img1_resized;
+            $resources[] = $img1_bordered;
 
+            $img2_resized = imagecreatetruecolor($imageSize, $imageSize);
+            imagecopyresampled($img2_resized, $img2_src, 0, 0, 0, 0, $imageSize, $imageSize, imagesx($img2_src), imagesy($img2_src));
+            $img2_bordered = imagecreatetruecolor($borderedImageSize, $borderedImageSize);
+            imagefill($img2_bordered, 0, 0, $borderColor);
+            imagecopy($img2_bordered, $img2_resized, $borderSize, $borderSize, 0, 0, $imageSize, $imageSize);
+            $resources[] = $img2_resized;
+            $resources[] = $img2_bordered;
+
+            $gap = 60;
+            $x1 = (1200 - ($borderedImageSize * 2 + $gap)) / 2;
+            $y = (630 - $borderedImageSize) / 2;
+            $x2 = $x1 + $borderedImageSize + $gap;
+            imagecopy($canvas, $img1_bordered, $x1, $y, 0, 0, $borderedImageSize, $borderedImageSize);
+            imagecopy($canvas, $img2_bordered, $x2, $y, 0, 0, $borderedImageSize, $borderedImageSize);
+
+            $lineColor = imagecolorallocatealpha($canvas, 255, 255, 255, 30);
+            $glowColor = imagecolorallocatealpha($canvas, 255, 255, 255, 90);
+            $centerX = 1200 / 2;
+            $lineTop = $y - 20;
+            $lineBottom = $y + $borderedImageSize + 20;
+
+            imagesetthickness($canvas, 15);
+            imageline($canvas, $centerX, $lineTop, $centerX, $lineBottom, $glowColor);
+            imagesetthickness($canvas, 4);
+            imageline($canvas, $centerX, $lineTop, $centerX, $lineBottom, $lineColor);
+
+            $badgeWidth = 150;
+            $badgeHeight = 50;
+            $badgePadding = 20;
+            $badgeX = 1200 - $badgeWidth - $badgePadding;
+            $badgeY = 630 - $badgeHeight - $badgePadding;
+            $badgeColor = imagecolorallocatealpha($canvas, 0, 0, 0, 50);
+            $textColor = imagecolorallocatealpha($canvas, 255, 255, 255, 12);
+
+            imagefilledrectangle($canvas, $badgeX, $badgeY, $badgeX + $badgeWidth, $badgeY + $badgeHeight, $badgeColor);
+
+            $textBox = imagettfbbox(24, 0, $fontPath, 'GOAT.UZ');
+            $textWidth = $textBox[2] - $textBox[0];
+            $textX = $badgeX + ($badgeWidth - $textWidth) / 2;
+            $textY = $badgeY + ($badgeHeight - ($textBox[5] - $textBox[1])) / 2 - $textBox[5];
+            imagettftext($canvas, 24, 0, $textX, $textY, $textColor, $fontPath, 'GOAT.UZ');
+
+            ob_start();
+            imagejpeg($canvas, null, 90);
+            $imageData = ob_get_clean();
+
+            Log::info('Creative Telegram image generated successfully using GD', ['post_id' => $post->id]);
             return $imageData;
 
-        } catch (Exception $e) {
-            Log::error('Error generating Telegram image: ' . $e->getMessage(), [
+        } catch (Throwable $e) {
+            Log::error('Error generating GD Telegram image: ' . $e->getMessage(), [
                 'post_id' => $post->id,
                 'trace' => $e->getTraceAsString()
             ]);
             return null;
+        } finally {
+            foreach ($resources as $resource) {
+                if (is_resource($resource) || $resource instanceof GdImage) {
+                    imagedestroy($resource);
+                }
+            }
         }
     }
 }

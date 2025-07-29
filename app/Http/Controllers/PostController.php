@@ -132,7 +132,7 @@ class PostController extends Controller
             'ip_address' => $request->ip(),
         ];
 
-        // --- Moderation Stage (keeping your existing moderation code) ---
+        // --- Moderation Stage ---
         $fieldsToModerate = [
             'question' => $request->input('question'),
             'option_one_title' => $request->input('option_one_title'),
@@ -150,25 +150,27 @@ class PostController extends Controller
             }
 
             // 2. Gemini Text Check
-            $geminiTextCheck = $this->moderateTextWithGemini($content, $field);
-            if (!$geminiTextCheck['is_appropriate']) {
-                $moderationErrorField = $field;
-                $categoryKey = 'messages.gemini_category_' . $geminiTextCheck['category'];
-                $translatedCategoryDisplay = trans()->has($categoryKey) ? __($categoryKey) : Str::ucfirst(strtolower(str_replace('_', ' ', $geminiTextCheck['category'])));
-                $reasonText = $geminiTextCheck['reason'] ?? $translatedCategoryDisplay;
+            if (!App::isLocal()) {
+                $geminiTextCheck = $this->moderateTextWithGemini($content, $field);
+                if (!$geminiTextCheck['is_appropriate']) {
+                    $moderationErrorField = $field;
+                    $categoryKey = 'messages.gemini_category_' . $geminiTextCheck['category'];
+                    $translatedCategoryDisplay = trans()->has($categoryKey) ? __($categoryKey) : Str::ucfirst(strtolower(str_replace('_', ' ', $geminiTextCheck['category'])));
+                    $reasonText = $geminiTextCheck['reason'] ?? $translatedCategoryDisplay;
 
-                if (str_starts_with($geminiTextCheck['category'], 'ERROR_') || str_starts_with($geminiTextCheck['category'], 'UNCHECKED_')) {
-                    $moderationErrorMessage = __('messages.error_post_moderation_system_issue', ['field' => __("messages.field_name_$field", [], App::getLocale())]);
-                    Log::warning('Gemini Text Moderation Service Error during post creation.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiTextCheck]));
-                } else {
-                    $actualReasonForMessage = $geminiTextCheck['reason'] ? $geminiTextCheck['reason'] : $translatedCategoryDisplay;
-                    $moderationErrorMessage = __('messages.error_post_content_inappropriate', [
-                        'field' => __("messages.field_name_$field", [], App::getLocale()),
-                        'reason' => $actualReasonForMessage
-                    ]);
-                    Log::channel('audit_trail')->info('Post creation rejected by Gemini text moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $geminiTextCheck['reason'], 'category' => $geminiTextCheck['category'], 'content_snippet' => Str::limit($content, 50)]));
+                    if (str_starts_with($geminiTextCheck['category'], 'ERROR_') || str_starts_with($geminiTextCheck['category'], 'UNCHECKED_')) {
+                        $moderationErrorMessage = __('messages.error_post_moderation_system_issue', ['field' => __("messages.field_name_$field", [], App::getLocale())]);
+                        Log::warning('Gemini Text Moderation Service Error during post creation.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiTextCheck]));
+                    } else {
+                        $actualReasonForMessage = $geminiTextCheck['reason'] ? $geminiTextCheck['reason'] : $translatedCategoryDisplay;
+                        $moderationErrorMessage = __('messages.error_post_content_inappropriate', [
+                            'field' => __("messages.field_name_$field", [], App::getLocale()),
+                            'reason' => $actualReasonForMessage
+                        ]);
+                        Log::channel('audit_trail')->info('Post creation rejected by Gemini text moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $geminiTextCheck['reason'], 'category' => $geminiTextCheck['category'], 'content_snippet' => Str::limit($content, 50)]));
+                    }
+                    return redirect()->back()->withErrors([$moderationErrorField => $moderationErrorMessage])->withInput();
                 }
-                return redirect()->back()->withErrors([$moderationErrorField => $moderationErrorMessage])->withInput();
             }
         }
 
@@ -184,18 +186,21 @@ class PostController extends Controller
         ];
 
         foreach ($imagesToModerate as $field => $imageFile) {
-            $geminiImageCheck = $this->moderateImageWithGemini($imageFile, $field, $postContext);
-            if (!$geminiImageCheck['is_appropriate']) {
-                $moderationErrorField = $field;
-                $reasonText = $geminiImageCheck['reason'] ?? $geminiImageCheck['category'];
-                if (str_starts_with($geminiImageCheck['category'], 'ERROR_') || str_starts_with($geminiImageCheck['category'], 'UNCHECKED_')) {
-                    $moderationErrorMessage = __('messages.error_post_image_moderation_system_issue', ['field' => $field]);
-                    Log::warning('Gemini Image Moderation Service Error during post creation.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiImageCheck]));
-                } else {
-                    $moderationErrorMessage = __('messages.error_post_image_inappropriate', ['field' => $field, 'reason' => $reasonText]);
-                    Log::channel('audit_trail')->info('Post creation rejected by Gemini image moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $geminiImageCheck['category']]));
+            // Moderate images only in non-local environments
+            if (!App::isLocal()) {
+                $geminiImageCheck = $this->moderateImageWithGemini($imageFile, $field, $postContext);
+                if (!$geminiImageCheck['is_appropriate']) {
+                    $moderationErrorField = $field;
+                    $reasonText = $geminiImageCheck['reason'] ?? $geminiImageCheck['category'];
+                    if (str_starts_with($geminiImageCheck['category'], 'ERROR_') || str_starts_with($geminiImageCheck['category'], 'UNCHECKED_')) {
+                        $moderationErrorMessage = __('messages.error_post_image_moderation_system_issue', ['field' => $field]);
+                        Log::warning('Gemini Image Moderation Service Error during post creation.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiImageCheck]));
+                    } else {
+                        $moderationErrorMessage = __('messages.error_post_image_inappropriate', ['field' => $field, 'reason' => $reasonText]);
+                        Log::channel('audit_trail')->info('Post creation rejected by Gemini image moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $geminiImageCheck['category']]));
+                    }
+                    return redirect()->back()->withErrors([$moderationErrorField => $moderationErrorMessage])->withInput();
                 }
-                return redirect()->back()->withErrors([$moderationErrorField => $moderationErrorMessage])->withInput();
             }
         }
         // --- End Moderation Stage ---
@@ -243,23 +248,25 @@ class PostController extends Controller
             ]
         ]);
 
-        $post->ai_generated_context = $this->generateContextWithGemini(
-            $post->question,
-            $post->option_one_title,
-            $post->option_two_title
-        );
+        if (app()->environment('production')) {
+            $post->ai_generated_context = $this->generateContextWithGemini(
+                $post->question,
+                $post->option_one_title,
+                $post->option_two_title
+            );
 
-        $post->ai_generated_tags = $this->generateTagsWithGemini(
-            $post->question,
-            $post->option_one_title,
-            $post->option_two_title
-        );
+            $post->ai_generated_tags = $this->generateTagsWithGemini(
+                $post->question,
+                $post->option_one_title,
+                $post->option_two_title
+            );
 
-        if ($post->isDirty('ai_generated_context') || $post->isDirty('ai_generated_tags')) {
-            $post->save();
+            if ($post->isDirty('ai_generated_context') || $post->isDirty('ai_generated_tags')) {
+                $post->save();
+            }
+
+            $post->refresh();
         }
-
-        $post->refresh();
 
         if (!Storage::disk('public')->exists($post->option_one_image) ||
             !Storage::disk('public')->exists($post->option_two_image)) {
@@ -687,17 +694,19 @@ class PostController extends Controller
                 }
 
                 // 2. Gemini Text Check
-                $geminiTextCheck = $this->moderateTextWithGemini($newContent, $field);
-                if (!$geminiTextCheck['is_appropriate']) {
-                    $reasonText = $geminiTextCheck['reason'] ?? $geminiTextCheck['category'];
-                    if (str_starts_with($geminiTextCheck['category'], 'ERROR_') || str_starts_with($geminiTextCheck['category'], 'UNCHECKED_')) {
-                        $moderationErrorMessage = __('messages.error_post_moderation_system_issue', ['field' => $field]);
-                        Log::warning('Gemini Text Moderation Service Error during post update.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiTextCheck]));
-                    } else {
-                        $moderationErrorMessage = __('messages.error_post_content_inappropriate', ['field' => $field, 'reason' => $reasonText]);
-                        Log::channel('audit_trail')->info('Post update rejected by Gemini text moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $geminiTextCheck['category']]));
+                if (!App::isLocal()) {
+                    $geminiTextCheck = $this->moderateTextWithGemini($newContent, $field);
+                    if (!$geminiTextCheck['is_appropriate']) {
+                        $reasonText = $geminiTextCheck['reason'] ?? $geminiTextCheck['category'];
+                        if (str_starts_with($geminiTextCheck['category'], 'ERROR_') || str_starts_with($geminiTextCheck['category'], 'UNCHECKED_')) {
+                            $moderationErrorMessage = __('messages.error_post_moderation_system_issue', ['field' => $field]);
+                            Log::warning('Gemini Text Moderation Service Error during post update.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiTextCheck]));
+                        } else {
+                            $moderationErrorMessage = __('messages.error_post_content_inappropriate', ['field' => $field, 'reason' => $reasonText]);
+                            Log::channel('audit_trail')->info('Post update rejected by Gemini text moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $geminiTextCheck['category']]));
+                        }
+                        return redirect()->back()->withErrors([$field => $moderationErrorMessage])->withInput();
                     }
-                    return redirect()->back()->withErrors([$field => $moderationErrorMessage])->withInput();
                 }
             }
         }
@@ -707,18 +716,29 @@ class PostController extends Controller
         if ($request->hasFile('option_one_image')) $imagesToModerateOnUpdate['option_one_image'] = $request->file('option_one_image');
         if ($request->hasFile('option_two_image')) $imagesToModerateOnUpdate['option_two_image'] = $request->file('option_two_image');
 
+        // Create the context required for image moderation.
+        $postContextForUpdate = [
+            'question' => $request->input('question'),
+            'option_one_title' => $request->input('option_one_title'),
+            'option_two_title' => $request->input('option_two_title'),
+        ];
+
         foreach ($imagesToModerateOnUpdate as $field => $imageFile) {
-            $geminiImageCheck = $this->moderateImageWithGemini($imageFile, $field);
-            if (!$geminiImageCheck['is_appropriate']) {
-                $reasonText = $geminiImageCheck['reason'] ?? $geminiImageCheck['category'];
-                if (str_starts_with($geminiImageCheck['category'], 'ERROR_') || str_starts_with($geminiImageCheck['category'], 'UNCHECKED_')) {
-                    $moderationErrorMessage = __('messages.error_post_image_moderation_system_issue', ['field' => $field]);
-                    Log::warning('Gemini Image Moderation Service Error during post update.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiImageCheck]));
-                } else {
-                    $moderationErrorMessage = __('messages.error_post_image_inappropriate', ['field' => $field, 'reason' => $reasonText]);
-                    Log::channel('audit_trail')->info('Post update rejected by Gemini image moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $geminiImageCheck['category']]));
+            // Moderate images
+            if (!App::isLocal()) {
+                // Pass the context to the moderation function.
+                $geminiImageCheck = $this->moderateImageWithGemini($imageFile, $field, $postContextForUpdate);
+                if (!$geminiImageCheck['is_appropriate']) {
+                    $reasonText = $geminiImageCheck['reason'] ?? $geminiImageCheck['category'];
+                    if (str_starts_with($geminiImageCheck['category'], 'ERROR_') || str_starts_with($geminiImageCheck['category'], 'UNCHECKED_')) {
+                        $moderationErrorMessage = __('messages.error_post_image_moderation_system_issue', ['field' => $field]);
+                        Log::warning('Gemini Image Moderation Service Error during post update.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiImageCheck]));
+                    } else {
+                        $moderationErrorMessage = __('messages.error_post_image_inappropriate', ['field' => $field, 'reason' => $reasonText]);
+                        Log::channel('audit_trail')->info('Post update rejected by Gemini image moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $geminiImageCheck['category']]));
+                    }
+                    return redirect()->back()->withErrors([$field => $moderationErrorMessage])->withInput();
                 }
-                return redirect()->back()->withErrors([$field => $moderationErrorMessage])->withInput();
             }
         }
         // --- End Moderation Stage for Update ---
