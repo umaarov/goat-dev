@@ -30,12 +30,7 @@
         <div id="posts-container" class="hidden">
             @if ($posts->count() > 0)
                 @foreach($posts as $post)
-                    @include('partials.post-card', [
-                        'post' => $post,
-                        'isFirst' => $loop->first,
-                        'showManagementOptions' => $showManagementOptions ?? false,
-                        'profileOwnerToDisplay' => $profileOwnerToDisplay ?? null,
-                    ])
+                    @include('partials.post-card', ['post' => $post])
                 @endforeach
             @else
                 <div class="text-center p-8 bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)]">

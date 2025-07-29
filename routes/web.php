@@ -29,7 +29,7 @@ Route::get('/search', [PostController::class, 'search'])->name('search');
 //Route::get('/p/{id}/{slug?}', [PostController::class, 'showBySlug'])->name('posts.showSlug')->middleware('cache.response:60');
 Route::get('/@{username}/post/{post}', [PostController::class, 'showUserPost'])
     ->name('posts.show.user-scoped')
-    ->where('post', '[0-9]+')->middleware('cache.response:60');
+    ->where('post', '[0-9]+');
 
 Route::get('/@{username}', [UserController::class, 'showProfile'])->name('profile.show');
 Route::get('/check-username', [UserController::class, 'checkUsername'])->name('check.username');

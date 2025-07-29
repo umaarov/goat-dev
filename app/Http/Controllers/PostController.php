@@ -1027,6 +1027,12 @@ class PostController extends Controller
 
     final public function showUserPost(string $username, Post $post)
     {
+        $post->load(
+            'user:id,username,profile_picture',
+            'comments.user',
+            'comments.likes'
+        );
+
         if ($post->user->username !== $username) {
             return redirect()->route('posts.show.user-scoped', [
                 'username' => $post->user->username,
@@ -1034,18 +1040,11 @@ class PostController extends Controller
             ], 301);
         }
 
-        $position = Post::query()
-                ->where('created_at', '>', $post->created_at)
-                ->orWhere(function ($query) use ($post) {
-                    $query->where('created_at', $post->created_at)
-                        ->where('id', '>', $post->id);
-                })
-                ->count() + 1;
+        $paginatorForOnePost = new \Illuminate\Pagination\LengthAwarePaginator(
+            collect([$post]), 1, 1, 1
+        );
+        $this->attachUserVoteStatus($paginatorForOnePost);
 
-        $perPage = 15;
-        $page = ceil($position / $perPage);
-        return redirect()->route('home', ['page' => $page])
-            ->with('scrollToPost', $post->id);
+        return view('posts.show', compact('post'));
     }
-
 }

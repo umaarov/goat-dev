@@ -714,29 +714,26 @@
 @if (session('scrollToPost'))
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const postId = @json(session('scrollToPost'));
-            const commentId = @json(session('scrollToComment'));
+            const postIdToFind = @json(session('scrollToPost'));
 
-            if (!postId) {
-                return;
-            }
+            if (postIdToFind) {
+                window.addEventListener('load', function () {
+                    const postElement = document.getElementById(`post-${postIdToFind}`);
 
-            setTimeout(function() {
-                const postElement = document.getElementById(`post-${postId}`);
+                    if (postElement) {
+                        postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-                if (postElement) {
-                    postElement.scrollIntoView({behavior: 'smooth', block: 'center'});
-                    postElement.classList.add('highlight-flash');
+                        postElement.style.transition = 'background-color 0.5s ease';
+                        postElement.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
 
-                    if (commentId && typeof fetchAndShowComment === 'function') {
                         setTimeout(() => {
-                            fetchAndShowComment(postId, commentId);
-                        }, 400);
+                            postElement.style.backgroundColor = '';
+                        }, 2000);
+                    } else {
+                        console.error(`[DEBUG] Final attempt failed: Could not find element #post-${postIdToFind} even after page load.`);
                     }
-                } else {
-                    console.warn(`[DEBUG] Could not find post element with ID: post-${postId} after a delay.`);
-                }
-            }, 300);
+                });
+            }
         });
     </script>
 @endif
