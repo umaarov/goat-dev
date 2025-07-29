@@ -223,6 +223,7 @@ class PostController extends Controller
         $post = Post::create([
             'user_id' => Auth::id(),
             'question' => $request->question,
+            'slug' => Str::slug($request->question),
             'option_one_title' => $request->option_one_title,
             'option_one_image' => $optionOneImagePaths['main'],
             'option_one_image_lqip' => $optionOneImagePaths['lqip'],

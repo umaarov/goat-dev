@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Encoders\JpegEncoder;
 use Intervention\Image\ImageManager;
@@ -42,7 +43,7 @@ class TelegramService
             throw new Exception('Failed to generate the composite image.');
         }
 
-        $postUrl = route('posts.show', ['post' => $post->id]);
+        $postUrl = route('posts.showSlug', ['id' => $post->id, 'slug' => Str::slug($post->question)]);
         $caption = "⚡️ " . $post->question . "\n\n";
         $caption .= "1️⃣ " . $post->option_one_title . "\n";
         $caption .= "2️⃣ " . $post->option_two_title . "\n\n";
@@ -168,8 +169,9 @@ class TelegramService
             $canvas->place($img2, 'top-left', $x2, $y1);
 
             $fontPath = storage_path('app/fonts/Inter-Bold.ttf');
-            if (!File::exists($fontPath)) $fontPath = 1;
-
+            if (!File::exists($fontPath)) {
+                throw new Exception('Required font file not found at: ' . $fontPath);
+            }
             $canvas->text('VS', 600, 315, function ($font) use ($fontPath) {
                 $font->file($fontPath)->size(96)->color('#ffffff')->align('center')->valign('middle');
             });
