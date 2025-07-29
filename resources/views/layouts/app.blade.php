@@ -195,33 +195,33 @@
 </nav>
 
 <main class="flex-grow pt-20 mx-auto w-full max-w-[450px] px-4 pb-16">
-    @if (session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md mb-4">
-            {{ session('success') }}
-        </div>
-    @endif
+{{--    @if (session('success'))--}}
+{{--        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md mb-4">--}}
+{{--            {{ session('success') }}--}}
+{{--        </div>--}}
+{{--    @endif--}}
 
-    @if (session('error'))
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4">
-            {{ session('error') }}
-        </div>
-    @endif
+{{--    @if (session('error'))--}}
+{{--        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4">--}}
+{{--            {{ session('error') }}--}}
+{{--        </div>--}}
+{{--    @endif--}}
 
-    @if (session('info'))
-        <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-md mb-4">
-            {{ session('info') }}
-        </div>
-    @endif
+{{--    @if (session('info'))--}}
+{{--        <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-md mb-4">--}}
+{{--            {{ session('info') }}--}}
+{{--        </div>--}}
+{{--    @endif--}}
 
-    @if ($errors->any())
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4">
-            <ul class="list-disc pl-5">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+{{--    @if ($errors->any())--}}
+{{--        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4">--}}
+{{--            <ul class="list-disc pl-5">--}}
+{{--                @foreach ($errors->all() as $error)--}}
+{{--                    <li>{{ $error }}</li>--}}
+{{--                @endforeach--}}
+{{--            </ul>--}}
+{{--        </div>--}}
+{{--    @endif--}}
 
     @yield('content')
     <footer class="mb-8 text-center text-gray-700 text-xs leading-relaxed px-4">
@@ -793,6 +793,27 @@
     }
 
     window.addEventListener('load', loadGoogleAds);
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        @if (session('success'))
+        window.showToast("{{ session('success') }}", 'success');
+        @endif
+
+        @if (session('error'))
+        window.showToast("{{ session('error') }}", 'error');
+        @endif
+
+        @if (session('info'))
+        window.showToast("{{ session('info') }}", 'info');
+        @endif
+
+        @if ($errors->any())
+        const errors = {!! json_encode($errors->all()) !!};
+        window.showToast(errors.join('<br>'), 'error');
+        @endif
+    });
 </script>
 
 </body>
