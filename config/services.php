@@ -35,4 +35,11 @@ return [
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),
         'chat_id' => env('TELEGRAM_CHAT_ID'),
     ],
+
+    'x' => [
+        'api_key' => env('X_API_KEY'),
+        'api_secret_key' => env('X_API_SECRET_KEY'),
+        'access_token' => env('X_ACCESS_TOKEN'),
+        'access_token_secret' => env('X_ACCESS_TOKEN_SECRET'),
+    ],
 ];

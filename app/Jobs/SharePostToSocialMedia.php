@@ -12,6 +12,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
@@ -67,33 +68,36 @@ class SharePostToSocialMedia implements ShouldQueue
         $errors = [];
 
         // --- Share to Telegram ---
-        try {
-            if (!$freshPost->option_one_image || !$freshPost->option_two_image) {
-                throw new Exception('Post missing required images for Telegram sharing');
-            }
+        if (App::environment() !== 'local') {
+            try {
+                if (!$freshPost->option_one_image || !$freshPost->option_two_image) {
+                    throw new Exception('Post missing required images for Telegram sharing');
+                }
 
-            if (!Storage::disk('public')->exists($freshPost->option_one_image) ||
-                !Storage::disk('public')->exists($freshPost->option_two_image)) {
-                throw new Exception('Post images do not exist in storage');
-            }
+                if (!Storage::disk('public')->exists($freshPost->option_one_image) ||
+                    !Storage::disk('public')->exists($freshPost->option_two_image)) {
+                    throw new Exception('Post images do not exist in storage');
+                }
 
-            $telegramService->share($freshPost);
-            Log::info('Post shared to Telegram successfully', ['post_id' => $freshPost->id]);
-        } catch (Throwable $e) {
-            $errors['telegram'] = $e->getMessage();
-            Log::error('Failed to share post to Telegram', [
-                'post_id' => $freshPost->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'attempt' => $this->attempts()
-            ]);
+                $telegramService->share($freshPost);
+                Log::info('Post shared to Telegram successfully', ['post_id' => $freshPost->id]);
+            } catch (Throwable $e) {
+                $errors['telegram'] = $e->getMessage();
+                Log::error('Failed to share post to Telegram', [
+                    'post_id' => $freshPost->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'attempt' => $this->attempts()
+                ]);
+            }
+        } else {
+            Log::info('Skipping Telegram share in local environment.', ['post_id' => $freshPost->id]);
         }
 
-        // --- Share to Instagram ---
         try {
             $instagramService->share($freshPost);
             Log::info('Post shared to Instagram successfully', ['post_id' => $freshPost->id]);
-        } catch (Throwable $e) { // Catch Throwable
+        } catch (Throwable $e) {
             $errors['instagram'] = $e->getMessage();
             Log::error('Failed to share post to Instagram', [
                 'post_id' => $freshPost->id,
@@ -105,7 +109,7 @@ class SharePostToSocialMedia implements ShouldQueue
         try {
             $xService->share($freshPost);
             Log::info('Post shared to X successfully', ['post_id' => $freshPost->id]);
-        } catch (Throwable $e) { // Catch Throwable
+        } catch (Throwable $e) {
             $errors['x'] = $e->getMessage();
             Log::error('Failed to share post to X', [
                 'post_id' => $freshPost->id,
