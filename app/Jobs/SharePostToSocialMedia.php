@@ -68,7 +68,7 @@ class SharePostToSocialMedia implements ShouldQueue
         $errors = [];
 
         // --- Share to Telegram ---
-        if (App::environment() !== 'local') {
+        if (!App::isLocal()) {
             try {
                 if (!$freshPost->option_one_image || !$freshPost->option_two_image) {
                     throw new Exception('Post missing required images for Telegram sharing');
