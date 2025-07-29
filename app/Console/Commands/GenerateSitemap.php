@@ -20,7 +20,7 @@ class GenerateSitemap extends Command
     public function handle()
     {
         $this->info('Starting sitemap generation...');
-        $sitemapPath = public_path('old_sitemap.xml');
+        $sitemapPath = public_path('sitemap.xml');
 
         $sitemap = Sitemap::create();
 
