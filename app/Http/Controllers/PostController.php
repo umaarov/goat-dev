@@ -1033,6 +1033,8 @@ class PostController extends Controller
             'comments.likes'
         );
 
+        $post->loadCount('comments');
+
         if ($post->user->username !== $username) {
             return redirect()->route('posts.show.user-scoped', [
                 'username' => $post->user->username,

@@ -584,16 +584,18 @@
 
         function sharePost(postId) {
             const postElement = document.getElementById(`post-${postId}`);
-            if (!postElement) return;
+            if (!postElement) {
+                console.error('Share failed: Could not find post element with ID:', postId);
+                return;
+            }
 
-            const questionElement = postElement.querySelector('.pt-4.px-4.font-semibold.text-center p');
-            const question = questionElement ? questionElement.textContent : 'Check out this post';
-            const slug = question.toLowerCase()
-                .replace(/[^\w\s-]/g, '')
-                .replace(/\s+/g, '-')
-                .substring(0, 60);
+            const shareUrl = postElement.dataset.shareUrl;
+            const question = postElement.querySelector('h2').textContent.trim();
 
-            const shareUrl = `${window.location.origin}/p/${postId}/${slug}`;
+            if (!shareUrl) {
+                console.error('Share failed: data-share-url attribute is missing on post element.');
+                return;
+            }
 
             if (navigator.share) {
                 navigator.share({
