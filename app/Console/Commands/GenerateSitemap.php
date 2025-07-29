@@ -7,7 +7,6 @@ use App\Models\User;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Support\Str;
 use Spatie\Sitemap\Sitemap;
 use Spatie\Sitemap\Tags\Url;
 
@@ -53,26 +52,33 @@ class GenerateSitemap extends Command
 
         // 2. Add Posts
         $this->info('Adding posts...');
-        Post::query()
+
+        Post::with('user')
             // ->where('is_published', true)
             // ->where('moderation_status', 'approved')
             // ->whereNotNull('slug')
             ->orderBy('created_at', 'desc')
             ->chunk(200, function ($posts) use ($sitemap) {
                 foreach ($posts as $post) {
-                    $slug = Str::slug($post->question);
                     try {
-                        $url = route('posts.show.user-scoped', ['username' => $post->user->username, 'post' => $post->id]);
-                        $sitemap->add(Url::create($url)
-                            ->setLastModificationDate($post->updated_at)
-                            ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY)
-                            ->setPriority(0.9));
-                        // $post->update(['slug' => $slug]);
+                        $url = route('posts.show.user-scoped', [
+                            'username' => $post->user->username,
+                            'post' => $post->id,
+                        ]);
+
+                        $sitemap->add(
+                            Url::create($url)
+                                ->setLastModificationDate($post->updated_at)
+                                ->setChangeFrequency(Url::CHANGE_FREQUENCY_WEEKLY)
+                                ->setPriority(0.9)
+                        );
+
                     } catch (Exception $e) {
                         $this->error("Could not generate URL for Post ID {$post->id} ('{$post->question}'): " . $e->getMessage());
                     }
                 }
             });
+
         $this->info('Posts added.');
 
         // 3. Add User Profiles

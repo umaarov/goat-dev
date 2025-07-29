@@ -15,7 +15,7 @@ class SitemapController extends Controller
             echo View::make('sitemap.partials.header')->render();
             echo View::make('sitemap.partials.static')->render();
 
-            Post::chunkById(2000, function ($posts) {
+            Post::with('user')->chunkById(2000, function ($posts) {
                 echo View::make('sitemap.partials.posts', ['posts' => $posts])->render();
             });
 
