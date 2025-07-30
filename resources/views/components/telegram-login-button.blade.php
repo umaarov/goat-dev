@@ -21,18 +21,29 @@
                 data-size="large"
                 data-auth-url="{{ $callbackRoute }}"
                 data-request-access="write"
-                onload="
-                    var container = document.getElementById('telegram-login-button-container');
-                    var scriptWrapper = document.getElementById('telegram-script-wrapper');
-
-                    var iframe = scriptWrapper.querySelector('iframe');
-
-                    if (iframe) {
-                        container.appendChild(iframe);
-                    }
-                "
         ></script>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const maxAttempts = 50;
+            let attempt = 0;
+
+            const interval = setInterval(function () {
+                const container = document.getElementById('telegram-login-button-container');
+                const scriptWrapper = document.getElementById('telegram-script-wrapper');
+                const iframe = scriptWrapper.querySelector('iframe');
+
+                if (iframe) {
+                    container.appendChild(iframe);
+                    clearInterval(interval);
+                } else if (attempt++ > maxAttempts) {
+                    clearInterval(interval);
+                    console.error('Telegram widget did not load in time.');
+                }
+            }, 100);
+        });
+    </script>
 
     <style>
         #telegram-login-button-container iframe {
