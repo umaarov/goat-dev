@@ -470,7 +470,8 @@ class AuthController extends Controller
             'email' => $googleUser->getEmail(),
             'google_id' => $googleUser->getId(),
             'email_verified_at' => now(),
-            'password' => Hash::make(Str::random(24)),
+//            'password' => Hash::make(Str::random(24)),
+            'password' => null,
         ]);
         Log::channel('audit_trail')->info('User model created in DB.', ['user_id' => $user->id, 'username' => $username, 'time_after_eloquent_create' => microtime(true)]);
 
@@ -992,7 +993,8 @@ class AuthController extends Controller
             'email' => $xUser->getEmail() ?: $username . '@x-user.local',
             'x_id' => $xUser->getId(),
             'email_verified_at' => now(),
-            'password' => Hash::make(Str::random(24)),
+//            'password' => Hash::make(Str::random(24)),
+            'password' => null,
         ]);
         Log::channel('audit_trail')->info('User model created in DB.', ['user_id' => $user->id, 'username' => $username, 'time_after_eloquent_create' => microtime(true)]);
 
@@ -1135,7 +1137,8 @@ class AuthController extends Controller
                 'username' => $this->generateUniqueUsername($baseName, $telegramUser['id']),
                 'email' => $telegramUser['id'] . '@telegram-user.local',
                 'email_verified_at' => now(),
-                'password' => Hash::make(Str::random(24)),
+//                'password' => Hash::make(Str::random(24)),
+                'password' => null,
             ]);
 
             $user->save();
@@ -1154,6 +1157,69 @@ class AuthController extends Controller
         }
 
         return $user;
+    }
+
+    public function socialRedirect(string $provider)
+    {
+        if (!in_array($provider, ['google', 'x', 'telegram'])) {
+            abort(404);
+        }
+
+        if ($provider === 'telegram') {
+            return $this->telegramRedirect();
+        }
+
+        $scopes = ($provider === 'x') ? ['users.read', 'tweet.read'] : [];
+
+        return Socialite::driver($provider)->scopes($scopes)->redirect();
+    }
+
+    public function socialCallback(Request $request, string $provider)
+    {
+        if (!in_array($provider, ['google', 'x', 'telegram'])) {
+            abort(404);
+        }
+
+        if ($provider === 'telegram') {
+            return $this->telegramCallback($request);
+        }
+
+        try {
+            $socialUser = Socialite::driver($provider)->stateless()->user();
+
+            if (Auth::check()) {
+                $user = Auth::user();
+                $existingUser = User::where("{$provider}_id", $socialUser->getId())->where('id', '!=', $user->id)->first();
+
+                if ($existingUser) {
+                    return redirect()->route('profile.edit')->with('error', "This {$provider} account is already linked to another user.");
+                }
+
+                $user->forceFill(["{$provider}_id" => $socialUser->getId()])->save();
+                return redirect()->route('profile.edit')->with('success', "Successfully linked your {$provider} account.");
+            }
+
+            $user = User::where("{$provider}_id", $socialUser->getId())->first();
+
+            if ($user) {
+                Auth::login($user, true);
+            } else {
+                $userWithEmail = User::where('email', $socialUser->getEmail())->first();
+                if ($userWithEmail) {
+                    $userWithEmail->forceFill(["{$provider}_id" => $socialUser->getId()])->save();
+                    Auth::login($userWithEmail, true);
+                } else {
+                    $newUser = ($provider === 'google') ? $this->createUserFromGoogle($socialUser) : $this->createUserFromX($socialUser);
+                    Auth::login($newUser, true);
+                }
+            }
+
+            return redirect()->intended(route('home'));
+
+        } catch (Exception $e) {
+            Log::error("{$provider} auth failed", ['error' => $e->getMessage()]);
+            return redirect()->route('login')->with('error', 'Authentication failed. Please try again.');
+        }
     }
 }
 

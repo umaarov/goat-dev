@@ -29,6 +29,13 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/auth/telegram/redirect', [AuthController::class, 'telegramRedirect'])->name('auth.telegram.redirect');
     Route::get('/auth/telegram/callback', [AuthController::class, 'telegramCallback'])->name('auth.telegram.callback');
+
+    Route::prefix('auth/{provider}')->name('auth.')->group(function () {
+        Route::get('/redirect', [App\Http\Controllers\Auth\AuthController::class, 'socialRedirect'])
+            ->name('social.redirect');
+        Route::get('/callback', [App\Http\Controllers\Auth\AuthController::class, 'socialCallback'])
+            ->name('social.callback');
+    });
 });
 
 Route::get('/', [PostController::class, 'index'])->name('home')->middleware('cache.response:10');
@@ -65,11 +72,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/@{username}/posts-data', 'getUserPosts')->name('profile.posts.data');
         Route::get('/@{username}/voted-data', 'getUserVotedPosts')->name('profile.voted.data');
         Route::post('/profile/generate-picture', 'generateProfilePicture')->name('profile.picture.generate');
+    });
 
-        Route::get('/profile/link/{provider}', [UserController::class, 'linkSocial'])->name('profile.link.social');
-        Route::post('/profile/unlink/{provider}', [UserController::class, 'unlinkSocial'])->name('profile.unlink.social');
-        Route::get('/profile/set-password', [UserController::class, 'showSetPasswordForm'])->name('profile.password.set');
-        Route::post('/profile/set-password', [UserController::class, 'setPassword']);
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/link/{provider}', [App\Http\Controllers\UserController::class, 'linkSocial'])
+            ->name('link.social');
+        Route::post('/unlink/{provider}', [App\Http\Controllers\UserController::class, 'unlinkSocial'])
+            ->name('unlink.social');
+        Route::get('/password/set', [App\Http\Controllers\UserController::class, 'showSetPasswordForm'])
+            ->name('password.set.form');
+        Route::post('/password/set', [App\Http\Controllers\UserController::class, 'setPassword'])
+            ->name('password.set');
+        Route::delete('/password/remove', [App\Http\Controllers\UserController::class, 'removePassword'])
+            ->name('password.remove')
+            ->middleware('password.confirm');
     });
 
     Route::get('/rating', [RatingController::class, 'index'])->name('rating.index');

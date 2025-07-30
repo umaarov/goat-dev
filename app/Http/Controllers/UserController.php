@@ -915,22 +915,21 @@ class UserController extends Controller
     final public function unlinkSocial(Request $request, string $provider): RedirectResponse
     {
         $user = Auth::user();
+        $provider_id_column = "{$provider}_id";
 
         if (!in_array($provider, ['google', 'x', 'telegram'])) {
             abort(404);
+        }
+
+        if (is_null($user->{$provider_id_column})) {
+            return redirect()->route('profile.edit')->with('error', 'This account is not linked.');
         }
 
         if ($user->getActiveAuthMethodsCount() <= 1) {
             return redirect()->route('profile.edit')->with('error', __('messages.error_cannot_unlink_last_auth'));
         }
 
-        $provider_id_column = "{$provider}_id";
-        if (is_null($user->$provider_id_column)) {
-            return redirect()->route('profile.edit')->with('error', 'This account is not linked.');
-        }
-
-        $user->$provider_id_column = null;
-        $user->save();
+        $user->forceFill([$provider_id_column => null])->save();
 
         Log::channel('audit_trail')->info('User unlinked a social provider.', [
             'user_id' => $user->id, 'provider' => $provider, 'ip_address' => $request->ip(),
@@ -939,7 +938,7 @@ class UserController extends Controller
         return redirect()->route('profile.edit')->with('success', ucfirst($provider) . ' account has been unlinked.');
     }
 
-    final public function removePassword(Request $request): RedirectResponse
+    final public function removePassword(): RedirectResponse
     {
         $user = Auth::user();
 
@@ -951,16 +950,10 @@ class UserController extends Controller
             return redirect()->route('profile.edit')->with('error', __('messages.error_cannot_unlink_last_auth'));
         }
 
-        if (!Hash::check($request->input('password'), $user->password)) {
-            return back()->withErrors(['password' => __('auth.password')]);
-        }
-
-        $user->password = null;
-        $user->save();
+        $user->forceFill(['password' => null])->save();
 
         Log::channel('audit_trail')->info('User removed their password.', [
-            'user_id' => $user->id,
-            'ip_address' => $request->ip(),
+            'user_id' => $user->id, 'ip_address' => request()->ip(),
         ]);
 
         return redirect()->route('profile.edit')->with('success', 'Your password has been successfully removed.');
