@@ -135,3 +135,26 @@ Route::fallback(function () {
 //        'trustedProxies' => app(Request::class)->getTrustedProxies(),
 //    ];
 //});
+
+
+Route::get('/__netdebug', function () {
+    abort_unless(app()->environment(['local', 'staging', 'debug']), 403);
+
+    $allowedIps = explode(',', env('DEBUG_ALLOWED_IPS', ''));
+
+    $requestIp = request()->ip();
+    if (!in_array($requestIp, $allowedIps)) {
+        abort(403, [
+            'error' => 'Access denied',
+        ]);
+    }
+
+    return [
+        'ip' => $requestIp,
+        'trustedProxies' => request()->getTrustedProxies(),
+        'headers' => request()->headers->all(),
+        'secure' => request()->isSecure(),
+        'scheme' => request()->getScheme(),
+        'cfConnectingIp' => request()->header('CF-Connecting-IP'),
+    ];
+});
