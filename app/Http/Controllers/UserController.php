@@ -278,6 +278,14 @@ class UserController extends Controller
         $current_locale = Session::get('locale', Config::get('app.locale'));
         $headerTemplates = $this->getHeaderTemplates();
 
+        $authMethods = [
+            'password' => !is_null($user->password),
+            'google' => !is_null($user->google_id),
+            'x' => !is_null($user->x_id),
+            'telegram' => !is_null($user->telegram_id),
+        ];
+        $authMethodsCount = $user->getActiveAuthMethodsCount();
+
         $sessions = collect();
         if (config('session.driver') === 'database') {
             $sessionsCollection = DB::table(config('session.table', 'sessions'))
@@ -315,7 +323,9 @@ class UserController extends Controller
             'available_locales',
             'current_locale',
             'headerTemplates',
-            'sessions'
+            'sessions',
+            'authMethods',
+            'authMethodsCount'
         ));
     }
 
@@ -849,10 +859,15 @@ class UserController extends Controller
         return $path;
     }
 
+
     final public function showSetPasswordForm(): View
     {
+        if (Auth::user()->password) {
+            return redirect()->route('profile.edit')->with('error', __('messages.error_password_already_set'));
+        }
         return view('users.set-password');
     }
+
 
     final public function setPassword(Request $request): RedirectResponse
     {
@@ -881,6 +896,48 @@ class UserController extends Controller
 
         return redirect()->intended(route('profile.edit'))
             ->with('success', __('messages.password_set_successfully'));
+    }
+
+    final public function linkSocial(string $provider): RedirectResponse
+    {
+        if (!in_array($provider, ['google', 'x', 'telegram'])) {
+            abort(404);
+        }
+
+        session()->put('auth_link_redirect', route('profile.edit'));
+
+        Log::channel('audit_trail')->info('User initiating social link.', [
+            'user_id' => Auth::id(), 'provider' => $provider, 'ip_address' => request()->ip(),
+        ]);
+
+        return redirect()->route("auth.{$provider}.redirect");
+    }
+
+    final public function unlinkSocial(Request $request, string $provider): RedirectResponse
+    {
+        $user = Auth::user();
+
+        if (!in_array($provider, ['google', 'x', 'telegram'])) {
+            abort(404);
+        }
+
+        if ($user->getActiveAuthMethodsCount() <= 1) {
+            return redirect()->route('profile.edit')->with('error', __('messages.error_cannot_unlink_last_auth'));
+        }
+
+        $provider_id_column = "{$provider}_id";
+        if (is_null($user->$provider_id_column)) {
+            return redirect()->route('profile.edit')->with('error', 'This account is not linked.');
+        }
+
+        $user->$provider_id_column = null;
+        $user->save();
+
+        Log::channel('audit_trail')->info('User unlinked a social provider.', [
+            'user_id' => $user->id, 'provider' => $provider, 'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->route('profile.edit')->with('success', ucfirst($provider) . ' account has been unlinked.');
     }
 
 }

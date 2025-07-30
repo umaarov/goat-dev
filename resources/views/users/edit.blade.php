@@ -420,6 +420,88 @@
                 @endif
                 {{-- Sessions Section END --}}
 
+                {{-- Authentication Methods Section START --}}
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ __('Authentication Methods') }}</h3>
+                    <p class="text-sm text-gray-500 mb-4">{{ __('Manage the ways you can log in to your account. For security, you cannot unlink your only remaining sign-in method.') }}</p>
+
+                    <div class="space-y-4">
+                        {{-- Password Auth Method --}}
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <div class="flex items-center gap-4">
+                                {{-- Icon for Password --}}
+                                <div class="flex-shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.864 4.243A7.5 7.5 0 0119.5 12c0 2.42-.943 4.65-2.523 6.316m-4.596-4.596a3.75 3.75 0 10-5.303 5.303m5.303-5.303l-5.303 5.303" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-md text-gray-800">{{ __('Password') }}</p>
+                                    <p class="text-xs text-gray-500">
+                                        @if($authMethods['password'])
+                                            {{ __('A password is set for your account.') }}
+                                        @else
+                                            {{ __('No password is set for your account.') }}
+                                        @endif
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0 ml-4">
+                                @if($authMethods['password'])
+                                    <a href="{{ route('password.change.form') }}" class="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline">{{ __('Change') }}</a>
+                                @else
+                                    <a href="{{ route('profile.password.set') }}" class="text-sm font-medium text-green-600 hover:text-green-800 hover:underline">{{ __('Set Password') }}</a>
+                                @endif
+                            </div>
+                        </div>
+
+                        {{-- Social Auth Methods --}}
+                        @foreach (['google', 'x', 'telegram'] as $provider)
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                <div class="flex items-center gap-4">
+                                    {{-- Icon for Provider --}}
+                                    <div class="flex-shrink-0 h-6 w-6 flex items-center justify-center">
+                                        @if($provider === 'google')
+                                            <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"></path><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"></path><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"></path><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C42.022 35.158 44 30.022 44 24c0-1.341-.138-2.65-.389-3.917z"></path></svg>
+                                        @elseif($provider === 'x')
+                                            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+                                        @elseif($provider === 'telegram')
+                                            <svg fill="#2AABEE" viewBox="0 0 24 24"><path d="M19.2 4.4L2.9 10.7c-1.1.4-1.1 1.1-.2 1.3l4.1 1.3l1.6 4.8c.2.5.1.7.6.7c.4 0 .6-.2.8-.4l2-2l4.2 3.1c.8.4 1.3.2 1.5-.7l2.8-13.1c.3-1.2-.4-1.6-1.1-1.3z"></path></svg>
+                                        @endif
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-md text-gray-800">{{ ucfirst($provider) }}</p>
+                                        <p class="text-xs text-gray-500">
+                                            @if($authMethods[$provider])
+                                                {{ __('Linked') }}
+                                            @else
+                                                {{ __('Not Linked') }}
+                                            @endif
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex-shrink-0 ml-4">
+                                    @if($authMethods[$provider])
+                                        <form method="POST" action="{{ route('profile.unlink.social', $provider) }}" onsubmit="return confirm('{{ __('Are you sure you want to unlink this account?') }}');">
+                                            @csrf
+                                            <button type="submit"
+                                                    class="text-sm font-medium text-red-600 hover:text-red-800 hover:underline disabled:text-gray-400 disabled:no-underline disabled:cursor-not-allowed"
+                                                    @if($authMethodsCount <= 1) disabled title="{{ __('Cannot unlink the last authentication method.') }}" @endif>
+                                                {{ __('Unlink') }}
+                                            </button>
+                                        </form>
+                                    @else
+                                        <a href="{{ route('profile.link.social', $provider) }}" class="text-sm font-medium text-green-600 hover:text-green-800 hover:underline">
+                                            {{ __('Link') }}
+                                        </a>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                {{-- Authentication Methods Section END --}}
+
 
                 <div class="flex items-center justify-between mt-6">
                     <button type="submit"

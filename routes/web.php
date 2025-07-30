@@ -64,6 +64,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/@{username}/posts-data', 'getUserPosts')->name('profile.posts.data');
         Route::get('/@{username}/voted-data', 'getUserVotedPosts')->name('profile.voted.data');
         Route::post('/profile/generate-picture', 'generateProfilePicture')->name('profile.picture.generate');
+
+        Route::get('/profile/link/{provider}', [UserController::class, 'linkSocial'])->name('profile.link.social');
+        Route::post('/profile/unlink/{provider}', [UserController::class, 'unlinkSocial'])->name('profile.unlink.social');
+        Route::get('/profile/set-password', [UserController::class, 'showSetPasswordForm'])->name('profile.password.set');
+        Route::post('/profile/set-password', [UserController::class, 'setPassword']);
     });
 
     Route::get('/rating', [RatingController::class, 'index'])->name('rating.index');

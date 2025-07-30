@@ -217,6 +217,31 @@ class AuthController extends Controller
 
     public function googleCallback(Request $request): RedirectResponse
     {
+        if (Auth::check() && session()->has('auth_link_redirect')) {
+            $redirectRoute = session()->pull('auth_link_redirect', route('profile.edit'));
+            $user = Auth::user();
+
+            try {
+                $googleUser = Socialite::driver('google')->stateless()->user();
+                $existingUser = User::where('google_id', $googleUser->getId())->where('id', '!=', $user->id)->first();
+
+                if ($existingUser) {
+                    return redirect($redirectRoute)->with('error', 'This Google account is already linked to another user.');
+                }
+
+                $user->google_id = $googleUser->getId();
+                $user->save();
+
+                Log::channel('audit_trail')->info('User linked Google account.', [
+                    'user_id' => $user->id, 'google_id' => $googleUser->getId(), 'ip_address' => $request->ip(),
+                ]);
+
+                return redirect($redirectRoute)->with('success', 'Successfully linked your Google account.');
+            } catch (Exception $e) {
+                Log::error('Google account linking failed for user: ' . $user->id, ['error' => $e->getMessage()]);
+                return redirect($redirectRoute)->with('error', 'Failed to link Google account. Please try again.');
+            }
+        }
         $time_start_callback = microtime(true);
         Log::channel('audit_trail')->info('Google callback initiated.', [
             'ip_address' => $request->ip(),
@@ -717,6 +742,30 @@ class AuthController extends Controller
 
     public function xCallback(Request $request): RedirectResponse
     {
+        if (Auth::check() && session()->has('auth_link_redirect')) {
+            $redirectRoute = session()->pull('auth_link_redirect', route('profile.edit'));
+            $user = Auth::user();
+
+            try {
+                $xUser = Socialite::driver('x')->user();
+                $existingUser = User::where('x_id', $xUser->getId())->where('id', '!=', $user->id)->first();
+
+                if ($existingUser) {
+                    return redirect($redirectRoute)->with('error', 'This X account is already linked to another user.');
+                }
+
+                $user->x_id = $xUser->getId();
+                $user->save();
+
+                Log::channel('audit_trail')->info('User linked X account.', [
+                    'user_id' => $user->id, 'x_id' => $xUser->getId(), 'ip_address' => $request->ip(),
+                ]);
+                return redirect($redirectRoute)->with('success', 'Successfully linked your X account.');
+            } catch (Exception $e) {
+                Log::error('X account linking failed for user: ' . $user->id, ['error' => $e->getMessage()]);
+                return redirect($redirectRoute)->with('error', 'Failed to link X account. Please try again.');
+            }
+        }
         $time_start_callback = microtime(true);
         Log::channel('audit_trail')->info('X callback initiated.', [
             'ip_address' => $request->ip(),
@@ -989,6 +1038,34 @@ class AuthController extends Controller
 
     public function telegramCallback(Request $request): RedirectResponse
     {
+        if (Auth::check() && session()->has('auth_link_redirect')) {
+            $redirectRoute = session()->pull('auth_link_redirect', route('profile.edit'));
+            $user = Auth::user();
+
+            try {
+                $telegramUser = $this->telegramAuthService->validate($request->all());
+                if (!$telegramUser) {
+                    return redirect($redirectRoute)->with('error', 'Telegram authentication failed.');
+                }
+                $existingUser = User::where('telegram_id', $telegramUser['id'])->where('id', '!=', $user->id)->first();
+
+                if ($existingUser) {
+                    return redirect($redirectRoute)->with('error', 'This Telegram account is already linked to another user.');
+                }
+
+                $user->telegram_id = $telegramUser['id'];
+                $user->save();
+
+                Log::channel('audit_trail')->info('User linked Telegram account.', [
+                    'user_id' => $user->id, 'telegram_id' => $telegramUser['id'], 'ip_address' => $request->ip(),
+                ]);
+                return redirect($redirectRoute)->with('success', 'Successfully linked your Telegram account.');
+            } catch (Exception $e) {
+                Log::error('Telegram account linking failed for user: ' . $user->id, ['error' => $e->getMessage()]);
+                return redirect($redirectRoute)->with('error', 'Failed to link Telegram account. Please try again.');
+            }
+        }
+
         $time_start_callback = microtime(true);
         Log::channel('audit_trail')->info('Telegram callback initiated.', [
             'ip_address' => $request->ip(),

@@ -88,4 +88,16 @@ class User extends Authenticatable
     {
         return $this->hasMany(RefreshToken::class);
     }
+
+    public function getActiveAuthMethodsCount(): int
+    {
+        $methods = [
+            $this->password,
+            $this->google_id,
+            $this->x_id,
+            $this->telegram_id,
+        ];
+
+        return count(array_filter($methods));
+    }
 }
