@@ -407,13 +407,19 @@
                         {{-- Terminate All Other Sessions Button --}}
                         @if($sessions->where('is_current_device', false)->count() > 0)
                             <div class="mt-6">
-                                <form method="POST" action="{{ route('profile.sessions.terminate_all') }}">
-                                    @csrf
-                                    <button type="submit" class="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                                @if($authMethods['password'])
+                                    <a href="{{ route('password.confirm') }}" class="block w-full text-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
                                         {{ __('messages.terminate_all_other_sessions') }}
-                                    </button>
-                                </form>
-                                <p class="text-xs text-center text-gray-500 mt-2">{{ __('messages.password_confirm_notice_sessions') }}</p>
+                                    </a>
+                                    <p class="text-xs text-center text-gray-500 mt-2">{{ __('messages.password_confirm_notice_sessions') }}</p>
+                                @else
+                                    <form method="POST" action="{{ route('profile.sessions.terminate_all') }}" onsubmit="return confirm('{{ __('Are you sure you want to log out all other devices?') }}');">
+                                        @csrf
+                                        <button type="submit" class="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                                            {{ __('messages.terminate_all_other_sessions') }}
+                                        </button>
+                                    </form>
+                                @endif
                             </div>
                         @endif
                     </div>
@@ -432,7 +438,7 @@
                                 {{-- Icon for Password --}}
                                 <div class="flex-shrink-0">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.864 4.243A7.5 7.5 0 0119.5 12c0 2.42-.943 4.65-2.523 6.316m-4.596-4.596a3.75 3.75 0 10-5.303 5.303m5.303-5.303l-5.303 5.303" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
                                     </svg>
                                 </div>
                                 <div>
@@ -446,9 +452,19 @@
                                     </p>
                                 </div>
                             </div>
-                            <div class="flex-shrink-0 ml-4">
+                            <div class="flex-shrink-0 ml-4 flex items-center gap-x-4">
                                 @if($authMethods['password'])
                                     <a href="{{ route('password.change.form') }}" class="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline">{{ __('Change') }}</a>
+
+                                    <form method="POST" action="{{ route('profile.password.remove') }}" onsubmit="return confirm('{{ __('Are you sure you want to remove your password? You will only be able to log in via your linked social accounts.') }}');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                                class="text-sm font-medium text-red-600 hover:text-red-800 hover:underline disabled:text-gray-400 disabled:no-underline disabled:cursor-not-allowed"
+                                                @if($authMethodsCount <= 1) disabled title="{{ __('Cannot remove the last authentication method.') }}" @endif>
+                                            {{ __('Remove') }}
+                                        </button>
+                                    </form>
                                 @else
                                     <a href="{{ route('profile.password.set') }}" class="text-sm font-medium text-green-600 hover:text-green-800 hover:underline">{{ __('Set Password') }}</a>
                                 @endif

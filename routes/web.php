@@ -9,6 +9,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\UserController;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/language/{locale}', [LocaleController::class, 'setLocale'])->name('language.set');
@@ -116,8 +117,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::delete('/profile/sessions/{session_id}', [UserController::class, 'terminateSession'])->name('profile.sessions.terminate')->middleware(['password.is_set', 'password.confirm']);
 
-    Route::post('/profile/sessions/terminate-all', [UserController::class, 'terminateAllOtherSessions'])->name('profile.sessions.terminate_all')->middleware(['password.is_set', 'password.confirm']);
+    Route::post('/profile/sessions/terminate-all', [UserController::class, 'terminateAllOtherSessions'])
+        ->name('profile.sessions.terminate_all')
+        ->middleware('password.confirm');
 
+    Route::delete('/profile/password', [UserController::class, 'removePassword'])
+        ->name('profile.password.remove')
+        ->middleware('password.confirm');
 
 });
 
@@ -141,8 +147,6 @@ Route::fallback(function () {
 //});
 
 
-use Illuminate\Http\JsonResponse;
-
 Route::get('/__netdebug', function (): JsonResponse {
     $clientIp = request()->header('CF-Connecting-IP')
         ?? request()->header('X-Forwarded-For')
@@ -152,20 +156,20 @@ Route::get('/__netdebug', function (): JsonResponse {
         array_map('trim', explode(',', env('DEBUG_ALLOWED_IPS', '')))
     );
 
-    if (! in_array($clientIp, $allowedIps, true)) {
+    if (!in_array($clientIp, $allowedIps, true)) {
         return response()->json([
             'error' => 'Access denied'
         ], 403);
     }
 
     return response()->json([
-        'clientIp'        => $clientIp,
+        'clientIp' => $clientIp,
         'trustedProxies' => request()->getTrustedProxies(),
-        'cfConnectingIp'  => request()->header('CF-Connecting-IP'),
-        'xForwardedFor'   => request()->header('X-Forwarded-For'),
-        'remoteAddr'      => $_SERVER['REMOTE_ADDR'] ?? null,
-        'headers'         => request()->headers->all(),
-        'isSecure'        => request()->isSecure(),
-        'scheme'          => request()->getScheme(),
+        'cfConnectingIp' => request()->header('CF-Connecting-IP'),
+        'xForwardedFor' => request()->header('X-Forwarded-For'),
+        'remoteAddr' => $_SERVER['REMOTE_ADDR'] ?? null,
+        'headers' => request()->headers->all(),
+        'isSecure' => request()->isSecure(),
+        'scheme' => request()->getScheme(),
     ]);
 });
