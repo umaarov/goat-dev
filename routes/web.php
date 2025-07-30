@@ -128,10 +128,10 @@ Route::fallback(function () {
     return response()->view('errors.404', [], 404);
 })->middleware('cache.response:1440');
 
-Route::get('/debug-proxies', function () {
-    return [
-        'isSecure' => request()->isSecure(),
-        'ip' => request()->ip(),
-        'trustedProxies' => app(Request::class)->getTrustedProxies(),
-    ];
-});
+//Route::get('/debug-proxies', function () {
+//    return [
+//        'isSecure' => request()->isSecure(),
+//        'ip' => request()->ip(),
+//        'trustedProxies' => app(Request::class)->getTrustedProxies(),
+//    ];
+//});
