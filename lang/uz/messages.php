@@ -513,4 +513,9 @@ return [
     'error_x_auth_failed_state' => 'X autentifikatsiyasi muvaffaqiyatsiz bo‘ldi. Iltimos, qaytadan urining. Agar muammo davom etsa, iltimos, qo‘llab-quvvatlash xizmatiga murojaat qiling.',
     'error_x_auth_network' => 'X autentifikatsiya tarmoq xatosi yuz berdi. Iltimos, internet aloqangizni tekshiring va qaytadan urining.',
     'error_x_login_failed' => 'X orqali kirish muvaffaqiyatsiz bo‘ldi. Iltimos, qaytadan urining.',
+
+    'auth.login_with_telegram' => 'Telegram orqali kirish',
+    'auth.signup_with_telegram' => 'Telegram orqali ro‘yxatdan o‘tish',
+    'telegram_login_success' => 'Telegram orqali muvaffaqiyatli kirildi!',
+    'error_telegram_login_failed' => 'Telegram orqali kirish muvaffaqiyatsiz bo‘ldi. Iltimos, qaytadan urining.',
 ];

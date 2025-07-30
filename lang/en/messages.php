@@ -533,4 +533,6 @@ return [
 
     'auth.login_with_telegram' => 'Login with Telegram',
     'auth.signup_with_telegram' => 'Sign up with Telegram',
+    'telegram_login_success' => 'Successfully logged in with Telegram!',
+    'error_telegram_login_failed' => 'Telegram login failed. Please try again.',
 ];
