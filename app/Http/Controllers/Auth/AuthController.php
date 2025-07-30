@@ -987,12 +987,14 @@ class AuthController extends Controller
 
         $botId = explode(':', $botToken, 2)[0];
 
-        $origin = route('auth.telegram.callback');
+        $origin = config('app.url');
+        $redirectTo = route('auth.telegram.callback');
         $requestAccess = 'write';
 
         $telegramAuthUrl = "https://oauth.telegram.org/auth?" . http_build_query([
                 'bot_id' => $botId,
                 'origin' => $origin,
+                'redirect_to' => $redirectTo,
                 'request_access' => $requestAccess,
             ]);
 
