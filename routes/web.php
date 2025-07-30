@@ -136,7 +136,9 @@ Route::fallback(function () {
 //});
 
 
-Route::get('/__netdebug', function () {
+use Illuminate\Http\JsonResponse;
+
+Route::get('/__netdebug', function (): JsonResponse {
     $clientIp = request()->header('CF-Connecting-IP')
         ?? request()->header('X-Forwarded-For')
         ?? request()->ip();
@@ -145,18 +147,22 @@ Route::get('/__netdebug', function () {
         array_map('trim', explode(',', env('DEBUG_ALLOWED_IPS', '')))
     );
 
-    if (!in_array($clientIp, $allowedIps, true)) {
-        abort(403, ['error' => 'Access denied']);
+    if (! in_array($clientIp, $allowedIps, true)) {
+        return response()->json([
+            'error' => 'Access denied',
+            'ip' => $clientIp,
+        ], 403);
     }
 
-    return [
-        'clientIp' => $clientIp,
+    return response()->json([
+        'clientIp'        => $clientIp,
         'trustedProxies' => request()->getTrustedProxies(),
-        'cfConnectingIp' => request()->header('CF-Connecting-IP'),
-        'xForwardedFor' => request()->header('X-Forwarded-For'),
-        'remoteAddr' => $_SERVER['REMOTE_ADDR'] ?? null,
-        'headers' => request()->headers->all(),
-        'isSecure' => request()->isSecure(),
-        'scheme' => request()->getScheme(),
-    ];
+        'cfConnectingIp'  => request()->header('CF-Connecting-IP'),
+        'xForwardedFor'   => request()->header('X-Forwarded-For'),
+        'remoteAddr'      => $_SERVER['REMOTE_ADDR'] ?? null,
+        'headers'         => request()->headers->all(),
+        'isSecure'        => request()->isSecure(),
+        'scheme'          => request()->getScheme(),
+    ]);
 });
+
