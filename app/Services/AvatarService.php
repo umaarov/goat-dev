@@ -2,83 +2,103 @@
 
 namespace App\Services;
 
+use Exception;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
+use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Typography\FontFactory;
 
-
 class AvatarService
 {
-    final public function generateInitialsAvatar(string $firstName, string $lastName, string $userId, int $size = 200): string
+    private const AVATAR_SIZE = 200;
+    private const FONT_SIZE_RATIO = 0.45;
+    private const IMAGE_QUALITY = 85;
+
+    final public function generateInitialsAvatar(string $firstName, string $lastName = '', string $userId): string
     {
-        $firstInitial = mb_substr($firstName, 0, 1);
-        $lastInitial = !empty($lastName) ? mb_substr($lastName, 0, 1) : '';
-        $initials = mb_strtoupper($firstInitial . $lastInitial);
+        try {
+            $firstInitial = !empty($firstName) ? mb_strtoupper(mb_substr($firstName, 0, 1, 'UTF-8')) : '';
+            $lastInitial = !empty($lastName) ? mb_strtoupper(mb_substr($lastName, 0, 1, 'UTF-8')) : '';
+            $initials = $firstInitial . $lastInitial;
 
-        $manager = new ImageManager(new GdDriver());
+            if (empty(trim($initials))) {
+                $initials = '?';
+            }
 
-        $hash = md5($userId);
-        $hue = hexdec(substr($hash, 0, 2)) % 360;
-        $backgroundColor = $this->hsvToRgb($hue, 0.7, 0.9);
+            $fontPath = storage_path('app/fonts/NotoSans-Regular.ttf');
+            if (!file_exists($fontPath)) {
+                Log::error('AvatarService: Font not found at path: ' . $fontPath);
+                return 'images/avatars/default.png';
+            }
 
-        $image = $manager->create($size, $size)->fill($backgroundColor);
+            $manager = new ImageManager(new GdDriver());
+            $image = $manager->create(self::AVATAR_SIZE, self::AVATAR_SIZE);
 
-        $image->text($initials, $size / 2, $size / 2, function (FontFactory $font) use ($size) {
-            $font->file(public_path('fonts/poppins.ttf'));
-            $font->size($size * 0.4);
-            $font->color('#ffffff');
-            $font->align('center');
-            $font->valign('middle');
-        });
+            $backgroundColor = $this->generateBackgroundColor($userId);
+            $image->fill($backgroundColor);
 
-        $path = 'profile_pictures/initial_' . $userId . '.png';
+            $image->text($initials, self::AVATAR_SIZE / 2, self::AVATAR_SIZE / 2, function (FontFactory $font) use ($fontPath) {
+                $font->file($fontPath);
+                $font->size(self::AVATAR_SIZE * self::FONT_SIZE_RATIO);
+                $font->color('#FFFFFF');
+                $font->align('center');
+                $font->valign('middle');
+            });
 
-        $encodedImage = $image->toPng()->toString();
+            $path = 'profile_pictures/initials_' . $userId . '_' . Str::random(5) . '.webp';
+            $encodedImage = $image->encode(new WebpEncoder(quality: self::IMAGE_QUALITY));
+            Storage::disk('public')->put($path, $encodedImage);
 
-        Storage::disk('public')->put($path, $encodedImage);
+            return $path;
 
-        return $path;
+        } catch (Exception $e) {
+            Log::error('Failed to generate initials avatar for user ' . $userId, [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return 'images/avatars/default.png';
+        }
     }
 
-    private function hsvToRgb(float $h, float $s, float $v): string
+    private function generateBackgroundColor(string $seed): string
+    {
+        $hash = crc32($seed);
+        $hue = $hash % 360;
+        $saturation = 0.5;
+        $value = 0.8;
+        return $this->hsvToRgbString($hue, $saturation, $value);
+    }
+
+    private function hsvToRgbString(float $h, float $s, float $v): string
     {
         $h_i = floor($h / 60) % 6;
         $f = $h / 60 - $h_i;
         $p = $v * (1 - $s);
         $q = $v * (1 - $f * $s);
         $t = $v * (1 - (1 - $f) * $s);
-
-        $r_float = 0.0;
-        $g_float = 0.0;
-        $b_float = 0.0;
-
         switch ($h_i) {
             case 0:
-                [$r_float, $g_float, $b_float] = [$v, $t, $p];
+                list($r, $g, $b) = [$v, $t, $p];
                 break;
             case 1:
-                [$r_float, $g_float, $b_float] = [$q, $v, $p];
+                list($r, $g, $b) = [$q, $v, $p];
                 break;
             case 2:
-                [$r_float, $g_float, $b_float] = [$p, $v, $t];
+                list($r, $g, $b) = [$p, $v, $t];
                 break;
             case 3:
-                [$r_float, $g_float, $b_float] = [$p, $q, $v];
+                list($r, $g, $b) = [$p, $q, $v];
                 break;
             case 4:
-                [$r_float, $g_float, $b_float] = [$t, $p, $v];
+                list($r, $g, $b) = [$t, $p, $v];
                 break;
-            case 5:
             default:
-                [$r_float, $g_float, $b_float] = [$v, $p, $q];
+                list($r, $g, $b) = [$v, $p, $q];
                 break;
         }
-
-        $r = round($r_float * 255);
-        $g = round($g_float * 255);
-        $b = round($b_float * 255);
-
-        return "rgba($r, $g, $b, 1)";
+        return sprintf("#%02x%02x%02x", round($r * 255), round($g * 255), round($b * 255));
     }
 }

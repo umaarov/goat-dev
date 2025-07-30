@@ -1022,7 +1022,8 @@ class AuthController extends Controller
                 'total_callback_duration_seconds' => microtime(true) - $time_start_callback,
             ]);
 
-            return redirect()->intended(route('home'))->with('success', __('messages.telegram_login_success'));
+//            return redirect()->intended(route('home'))->with('success', __('messages.telegram_login_success'));
+            return redirect()->route('home')->with('success', __('messages.telegram_login_success'));
 
         } catch (Exception $e) {
             Log::channel('audit_trail')->error('Telegram authentication/callback failed with generic Exception.', [
@@ -1048,9 +1049,12 @@ class AuthController extends Controller
         if (!$user->exists) {
             $baseName = $telegramUser['username'] ?? ($telegramUser['first_name'] . ($telegramUser['last_name'] ?? ''));
 
+            $firstName = preg_replace('/[^\\p{L}\\p{N}\\s]/u', '', $telegramUser['first_name']);
+            $lastName = preg_replace('/[^\\p{L}\\p{N}\\s]/u', '', $telegramUser['last_name'] ?? '');
+
             $user->fill([
-                'first_name' => $telegramUser['first_name'],
-                'last_name' => $telegramUser['last_name'] ?? null,
+                'first_name' => $firstName,
+                'last_name' => $lastName,
                 'username' => $this->generateUniqueUsername($baseName, $telegramUser['id']),
                 'email' => $telegramUser['id'] . '@telegram-user.local',
                 'email_verified_at' => now(),

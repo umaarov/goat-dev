@@ -827,13 +827,14 @@
         const urlFragment = window.location.hash.substring(1);
 
         if (urlFragment.startsWith('tgAuthResult=')) {
-            document.documentElement.style.backgroundColor = '#f9fafb';
-            document.body.style.display = 'none';
+            document.documentElement.style.visibility = 'hidden';
+            // document.documentElement.style.backgroundColor = '#f9fafb';
+            // document.body.style.display = 'none';
 
             const loader = document.createElement('div');
             loader.textContent = 'Authenticating...';
-            loader.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.25rem; color: #4b5563; font-family: sans-serif;';
-            document.body.insertAdjacentElement('afterend', loader);
+            loader.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background-color: #f9fafb; font-size: 1.25rem; color: #4b5563; font-family: sans-serif; z-index: 9999;';
+            document.body.appendChild(loader);
 
             try {
                 const encodedData = urlFragment.substring('tgAuthResult='.length);
