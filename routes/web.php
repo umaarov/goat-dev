@@ -9,6 +9,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\UserController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/language/{locale}', [LocaleController::class, 'setLocale'])->name('language.set');
@@ -126,3 +127,11 @@ Route::get('/load-more-posts', [PostController::class, 'loadMorePosts'])->name('
 Route::fallback(function () {
     return response()->view('errors.404', [], 404);
 })->middleware('cache.response:1440');
+
+Route::get('/debug-proxies', function () {
+    return [
+        'isSecure' => request()->isSecure(),
+        'ip' => request()->ip(),
+        'trustedProxies' => app(Request::class)->getTrustedProxies(),
+    ];
+});
