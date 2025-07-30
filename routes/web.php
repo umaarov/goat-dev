@@ -149,8 +149,7 @@ Route::get('/__netdebug', function (): JsonResponse {
 
     if (! in_array($clientIp, $allowedIps, true)) {
         return response()->json([
-            'error' => 'Access denied',
-            'ip' => $clientIp,
+            'error' => 'Access denied'
         ], 403);
     }
 
