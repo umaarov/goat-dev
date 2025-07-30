@@ -471,12 +471,12 @@ class AuthController extends Controller
         return $user;
     }
 
-    private function generateUniqueUsername(string $name): string
+    private function generateUniqueUsername(string $name, ?int $telegramId = null): string
     {
         $time_start_username_gen = microtime(true);
         $baseUsername = Str::slug($name, '');
         if (empty($baseUsername)) {
-            $baseUsername = 'user';
+            $baseUsername = $telegramId ? 'user' . $telegramId : 'user';
         }
         if (!preg_match('/^[a-zA-Z]/', $baseUsername)) {
             $baseUsername = 'u' . $baseUsername;
@@ -518,8 +518,8 @@ class AuthController extends Controller
             $suffix = (string)$counter;
             $availableLengthForBase = $maxLength - strlen($suffix);
 
-            if ($availableLengthForBase < 1) { // Suffix itself is too long, should not happen with small counters
-                $username = Str::random($maxLength - 5) . Str::random(5); // Highly defensive
+            if ($availableLengthForBase < 1) {
+                $username = Str::random($maxLength - 5) . Str::random(5);
                 continue;
             }
 
@@ -531,7 +531,7 @@ class AuthController extends Controller
             $counter++;
         }
 
-        Cache::put($cacheKey, $username, now()->addMinutes(10)); // Cache the successfully generated username
+        Cache::put($cacheKey, $username, now()->addMinutes(10));
         $duration_username_gen = microtime(true) - $time_start_username_gen;
         Log::channel('audit_trail')->info('Generated unique username.', [
             'original_name' => $name,
@@ -1052,12 +1052,15 @@ class AuthController extends Controller
 
     private function handleTelegramUser(array $telegramUser): User
     {
+        $baseName = $telegramUser['username'] ?? ($telegramUser['first_name'] . ($telegramUser['last_name'] ?? ''));
+        $username = $this->generateUniqueUsername($baseName, $telegramUser['id']);
+
         return User::firstOrCreate(
             ['telegram_id' => $telegramUser['id']],
             [
                 'first_name' => $telegramUser['first_name'],
                 'last_name' => $telegramUser['last_name'] ?? null,
-                'username' => $this->generateUniqueUsername($telegramUser['username'] ?? ($telegramUser['first_name'] . ($telegramUser['last_name'] ?? ''))),
+                'username' => $username,
                 'email' => $telegramUser['id'] . '@telegram-user.local',
                 'email_verified_at' => now(),
                 'password' => Hash::make(Str::random(24)),

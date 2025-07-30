@@ -823,22 +823,32 @@
 </script>
 
 <script>
-    window.onload = function () {
+    (function () {
         const urlFragment = window.location.hash.substring(1);
+
         if (urlFragment.startsWith('tgAuthResult=')) {
+            document.documentElement.style.backgroundColor = '#f9fafb';
+            document.body.style.display = 'none';
+
+            const loader = document.createElement('div');
+            loader.textContent = 'Authenticating...';
+            loader.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.25rem; color: #4b5563; font-family: sans-serif;';
+            document.body.insertAdjacentElement('afterend', loader);
+
             try {
                 const encodedData = urlFragment.substring('tgAuthResult='.length);
                 const jsonString = atob(encodedData);
                 const data = JSON.parse(jsonString);
                 const queryParams = new URLSearchParams(data).toString();
                 const callbackUrl = "{{ route('auth.telegram.callback') }}";
-                window.location.href = `${callbackUrl}?${queryParams}`;
+
+                window.location.replace(`${callbackUrl}?${queryParams}`);
             } catch (error) {
                 console.error('Failed to process Telegram auth data:', error);
-                // window.location.href = "{{ route('login') }}?error=telegram_processing_failed";
+                window.location.href = "{{ route('login') }}?error=telegram_processing_failed";
             }
         }
-    };
+    })();
 </script>
 
 </body>
