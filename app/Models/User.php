@@ -24,6 +24,8 @@ class User extends Authenticatable
         'google_id',
         'x_id',
         'telegram_id',
+        'github_id',
+        'is_developer',
         'email_verified_at',
         'email_verification_token',
         'show_voted_posts_publicly',
@@ -42,6 +44,7 @@ class User extends Authenticatable
         'google_id',
         'x_id',
         'telegram_id',
+        'github_id',
     ];
 
     protected $casts = [
@@ -50,6 +53,7 @@ class User extends Authenticatable
         'password' => 'hashed',
         'show_voted_posts_publicly' => 'boolean',
         'external_links' => 'array',
+        'is_developer' => 'boolean',
     ];
 
     public function isAdmin(): bool
@@ -96,6 +100,7 @@ class User extends Authenticatable
             $this->google_id,
             $this->x_id,
             $this->telegram_id,
+            $this->github_id,
         ];
 
         return count(array_filter($methods));

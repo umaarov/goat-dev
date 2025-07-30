@@ -1200,7 +1200,7 @@ class AuthController extends Controller
                 $telegramData = $this->telegramAuthService->validate($request->all());
                 if (!$telegramData) throw new Exception('Telegram authentication failed. Invalid data.');
 
-                $socialUser = (object) [
+                $socialUser = (object)[
                     'id' => $telegramData['id'],
                     'name' => trim($telegramData['first_name'] . ' ' . ($telegramData['last_name'] ?? '')),
                     'email' => null,
@@ -1212,7 +1212,7 @@ class AuthController extends Controller
                 $socialUser = Socialite::driver($provider)->stateless()->user();
             }
 
-            Log::info("Socialite user data for {$provider}:", (array) $socialUser);
+            Log::info("Socialite user data for {$provider}:", (array)$socialUser);
 
             if (Auth::check()) {
                 $user = Auth::user();
@@ -1228,8 +1228,7 @@ class AuthController extends Controller
 
                 if ($provider === 'x' && !empty($socialUser->nickname)) {
                     $updateData['x_username'] = $socialUser->nickname;
-                }
-                elseif ($provider === 'telegram' && !empty($socialUser->nickname)) {
+                } elseif ($provider === 'telegram' && !empty($socialUser->nickname)) {
                     $updateData['telegram_username'] = $socialUser->nickname;
                 }
 
@@ -1300,6 +1299,141 @@ class AuthController extends Controller
         $user->save();
 
         return $user;
+    }
+
+    public function githubRedirect()
+    {
+        try {
+            Log::channel('audit_trail')->info('Redirecting to GitHub for authentication.', [
+                'time' => microtime(true)
+            ]);
+            return Socialite::driver('github')->scopes(['user:email'])->redirect();
+        } catch (Exception $e) {
+            Log::error('GitHub redirect failed: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->route('login')->with('error', __('messages.error_github_auth_failed', [], 'en'));
+        }
+    }
+
+    public function githubCallback(Request $request): RedirectResponse
+    {
+        if (Auth::check() && session()->has('auth_link_redirect')) {
+            $redirectRoute = session()->pull('auth_link_redirect', route('profile.edit'));
+            $user = Auth::user();
+
+            try {
+                $githubUser = Socialite::driver('github')->stateless()->user();
+                $existingUser = User::where('github_id', $githubUser->getId())->where('id', '!=', $user->id)->first();
+
+                if ($existingUser) {
+                    return redirect($redirectRoute)->with('error', 'This GitHub account is already linked to another user.');
+                }
+
+                $user->github_id = $githubUser->getId();
+                $user->is_developer = true;
+                $user->save();
+
+                Log::channel('audit_trail')->info('User linked GitHub account and was granted developer access.', [
+                    'user_id' => $user->id, 'github_id' => $githubUser->getId(), 'ip_address' => $request->ip(),
+                ]);
+
+                return redirect($redirectRoute)->with('success', __('messages.auth.github_link_success', [], 'en'));
+            } catch (Exception $e) {
+                Log::error('GitHub account linking failed for user: ' . $user->id, ['error' => $e->getMessage()]);
+                return redirect($redirectRoute)->with('error', 'Failed to link GitHub account. Please try again.');
+            }
+        }
+
+        try {
+            if ($request->has('error')) {
+                Log::channel('audit_trail')->error('GitHub callback returned an error.', ['error' => $request->input('error'), 'ip_address' => $request->ip()]);
+                return redirect()->route('login')->with('error', __('messages.error_github_auth_denied_or_failed', [], 'en'));
+            }
+
+            $githubUser = Socialite::driver('github')->stateless()->user();
+            $userModel = User::where('github_id', $githubUser->getId())->first();
+            $action = "Logged in";
+
+            if (!$userModel) {
+                $userModel = $this->handleGithubUser($githubUser);
+                $action = $userModel->wasRecentlyCreated ? 'Registered and logged in' : 'Logged in (linked to existing email)';
+                if ($userModel->wasRecentlyCreated) {
+                    event(new UserRegistered($userModel));
+                }
+            } else {
+                if (!$userModel->is_developer) {
+                    $userModel->is_developer = true;
+                    $userModel->save();
+                }
+            }
+
+            Auth::login($userModel, true);
+            $request->session()->regenerate();
+
+            Log::channel('audit_trail')->info("User $action via GitHub.", [
+                'user_id' => $userModel->id, 'username' => $userModel->username, 'github_id' => $githubUser->getId(), 'ip_address' => $request->ip(),
+            ]);
+
+            return redirect()->intended(route('home'))->with('success', __('messages.github_login_success', [], 'en'));
+
+        } catch (InvalidStateException $e) {
+            Log::error('GitHub Auth Invalid State Error', ['error' => $e->getMessage(), 'ip' => $request->ip()]);
+            return redirect()->route('login')->with('error', __('messages.error_github_auth_failed_state', [], 'en'));
+        } catch (Exception $e) {
+            Log::error('GitHub Auth System Error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString(), 'ip' => $request->ip()]);
+            return redirect()->route('login')->with('error', __('messages.error_github_login_failed', [], 'en'));
+        }
+    }
+
+    private function handleGithubUser($githubUser): User
+    {
+        $user = null;
+        $githubEmail = $githubUser->getEmail();
+
+        if ($githubEmail) {
+            $user = User::where('email', $githubEmail)->first();
+        }
+
+        if ($user) {
+            $user->github_id = $githubUser->getId();
+            $user->is_developer = true; // Grant developer access!
+            $user->email_verified_at = $user->email_verified_at ?? now();
+            $user->save();
+            Log::channel('audit_trail')->info('Linked existing user to GitHub and granted developer access.', ['user_id' => $user->id]);
+            return $user;
+        }
+
+        $username = $this->generateUniqueUsername($githubUser->getNickname() ?? $githubUser->getName());
+        $nameParts = explode(' ', $githubUser->getName() ?? '', 2);
+        $firstName = $nameParts[0] ?? $githubUser->getNickname() ?? 'Dev';
+        $lastName = $nameParts[1] ?? null;
+
+        $email = $githubEmail ?: "{$githubUser->getId()}@github-user.local";
+        if (User::where('email', $email)->exists()) {
+            $email = $githubUser->getId() . '_' . Str::random(5) . "@github-user.local";
+        }
+
+        $newUser = User::create([
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'username' => $username,
+            'email' => $email,
+            'github_id' => $githubUser->getId(),
+            'is_developer' => true,
+            'email_verified_at' => now(),
+            'password' => null,
+        ]);
+
+        if ($githubUser->getAvatar()) {
+            $newUser->profile_picture = $githubUser->getAvatar();
+        } else {
+            $newUser->profile_picture = $this->avatarService->generateInitialsAvatar($newUser->first_name, $newUser->last_name ?? '', $newUser->id);
+        }
+        $newUser->save();
+
+        Log::channel('audit_trail')->info('Created new user from GitHub with developer access.', ['user_id' => $newUser->id]);
+        return $newUser;
     }
 }
 

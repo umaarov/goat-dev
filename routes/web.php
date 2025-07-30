@@ -41,6 +41,9 @@ Route::get('/auth/x/callback', [AuthController::class, 'xCallback'])->name('auth
 Route::get('/auth/telegram/redirect', [AuthController::class, 'telegramRedirect'])->name('auth.telegram.redirect');
 Route::get('/auth/telegram/callback', [AuthController::class, 'telegramCallback'])->name('auth.telegram.callback');
 
+Route::get('/auth/github/redirect', [AuthController::class, 'githubRedirect'])->name('auth.github.redirect');
+Route::get('/auth/github/callback', [AuthController::class, 'githubCallback']);
+
 Route::get('/', [PostController::class, 'index'])->name('home')->middleware('cache.response:10');
 Route::get('/search', [PostController::class, 'search'])->name('search');
 //Route::get('/p/{id}/{slug?}', [PostController::class, 'showBySlug'])->name('posts.showSlug')->middleware('cache.response:60');
