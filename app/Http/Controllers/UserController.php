@@ -285,6 +285,12 @@ class UserController extends Controller
         ];
         $authMethodsCount = $user->getActiveAuthMethodsCount();
 
+        $authData = [
+            'google' => $user->google_id ? $user->email : null,
+            'x' => $user->x_id ? ($user->x_username ? '@' . $user->x_username : null) : null,
+            'telegram' => $user->telegram_id ? ($user->telegram_username ? '@' . $user->telegram_username : null) : null,
+        ];
+
         $sessions = collect();
         if (config('session.driver') === 'database') {
             $sessionsCollection = DB::table(config('session.table', 'sessions'))
@@ -324,7 +330,8 @@ class UserController extends Controller
             'headerTemplates',
             'sessions',
             'authMethods',
-            'authMethodsCount'
+            'authMethodsCount',
+            'authData'
         ));
     }
 

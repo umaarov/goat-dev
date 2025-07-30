@@ -960,6 +960,8 @@ class AuthController extends Controller
             $user->x_id = $xUser->getId();
         }
 
+        $user->x_username = $xUser->getNickname();
+
         if (!$user->profile_picture && $xUser->getAvatar()) {
             $user->profile_picture = $xUser->getAvatar();
         }
@@ -996,6 +998,9 @@ class AuthController extends Controller
 //            'password' => Hash::make(Str::random(24)),
             'password' => null,
         ]);
+
+        $user->x_username = $xUser->getNickname();
+
         Log::channel('audit_trail')->info('User model created in DB.', ['user_id' => $user->id, 'username' => $username, 'time_after_eloquent_create' => microtime(true)]);
 
         if ($xUser->getAvatar()) {
@@ -1141,6 +1146,8 @@ class AuthController extends Controller
                 'password' => null,
             ]);
 
+            $user->telegram_username = $telegramUser['username'] ?? null;
+
             $user->save();
 
             if (!empty($telegramUser['photo_url'])) {
@@ -1155,6 +1162,13 @@ class AuthController extends Controller
 
             $user->save();
         }
+
+        if (is_null($user->telegram_username) && isset($telegramUser['username'])) {
+            $user->telegram_username = $telegramUser['username'];
+        }
+
+        $user->telegram_id = $telegramUser['id'];
+        $user->save();
 
         return $user;
     }
@@ -1198,17 +1212,33 @@ class AuthController extends Controller
                 $socialUser = Socialite::driver($provider)->stateless()->user();
             }
 
+            Log::info("Socialite user data for {$provider}:", (array) $socialUser);
+
             if (Auth::check()) {
                 $user = Auth::user();
+
                 $existingUser = User::where("{$provider}_id", $socialUser->id)->where('id', '!=', $user->id)->first();
                 if ($existingUser) {
                     return redirect()->route('profile.edit')->with('error', "This {$provider} account is already linked to another user.");
                 }
 
-                $user->forceFill(["{$provider}_id" => $socialUser->id])->save();
+                $updateData = [
+                    "{$provider}_id" => $socialUser->id,
+                ];
+
+                if ($provider === 'x' && !empty($socialUser->nickname)) {
+                    $updateData['x_username'] = $socialUser->nickname;
+                }
+                elseif ($provider === 'telegram' && !empty($socialUser->nickname)) {
+                    $updateData['telegram_username'] = $socialUser->nickname;
+                }
+
+                $user->forceFill($updateData)->save();
+
                 Log::channel('audit_trail')->info("User {$user->username} linked their {$provider} account.");
                 return redirect()->route('profile.edit')->with('success', "Successfully linked your {$provider} account.");
             }
+
 
             $user = User::where("{$provider}_id", $socialUser->id)->first();
             if ($user) {

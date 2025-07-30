@@ -435,7 +435,6 @@
                         {{-- Password Auth Method --}}
                         <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
                             <div class="flex items-center gap-4">
-                                {{-- Icon for Password --}}
                                 <div class="flex-shrink-0 h-6 w-6 flex items-center justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" /></svg>
                                 </div>
@@ -452,7 +451,7 @@
                             </div>
                             <div class="flex-shrink-0 ml-4 flex items-center gap-x-4">
                                 @if($authMethods['password'])
-                                    <a href="{{ route('password.change.form') }}" class="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline">{{ __('Change') }}</a>
+                                    <a href="{{ route('password.change.form') }}" class="text-sm font-medium text-blue-800 hover:text-blue-950 hover:underline">{{ __('Change') }}</a>
                                 @else
                                     <a href="{{ route('profile.password.set.form') }}" class="text-sm font-medium text-green-600 hover:text-green-800 hover:underline">{{ __('Set Password') }}</a>
                                 @endif
@@ -463,23 +462,29 @@
                         @foreach (['google', 'x', 'telegram'] as $provider)
                             <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
                                 <div class="flex items-center gap-4">
-                                    {{-- Icon and provider name --}}
                                     <div class="flex-shrink-0 h-6 w-6 flex items-center justify-center">
                                         @if($provider === 'google') <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"></path><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"></path><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"></path><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C42.022 35.158 44 30.022 44 24c0-1.341-.138-2.65-.389-3.917z"></path></svg>
                                         @elseif($provider === 'x') <svg fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
-                                        @elseif($provider === 'telegram') <svg fill="#2AABEE" viewBox="0 0 24 24"><path d="M19.2 4.4L2.9 10.7c-1.1.4-1.1 1.1-.2 1.3l4.1 1.3l1.6 4.8c.2.5.1.7.6.7c.4 0 .6-.2.8-.4l2-2l4.2 3.1c.8.4 1.3.2 1.5-.7l2.8-13.1c.3-1.2-.4-1.6-1.1-1.3z"></path></svg>
+                                        @elseif($provider === 'telegram') <svg fill="#193cb8" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.57c-.28 1.13-1.04 1.4-1.74.88L14.25 16l-4.12 3.9c-.78.76-1.36.37-1.57-.49z"/></svg>
                                         @endif
                                     </div>
                                     <div>
                                         <p class="font-semibold text-md text-gray-800">{{ ucfirst($provider) }}</p>
                                         <p class="text-xs text-gray-500">
-                                            @if($authMethods[$provider]) {{ __('Linked') }} @else {{ __('Not Linked') }} @endif
+                                            @if($authMethods[$provider])
+                                                @if(!empty($authData[$provider]))
+                                                    <span class="font-medium text-gray-700">{{ $authData[$provider] }}</span>
+                                                @else
+                                                    {{ __('Linked') }}
+                                                @endif
+                                            @else
+                                                {{ __('Not Linked') }}
+                                            @endif
                                         </p>
                                     </div>
                                 </div>
                                 <div class="flex-shrink-0 ml-4">
                                     @if($authMethods[$provider])
-                                        {{-- The form tag itself is mostly ignored due to nesting, but keep it for structure --}}
                                         <form method="POST" action="{{ route('profile.unlink.social', $provider) }}" onsubmit="return confirm('{{ __('Are you sure you want to unlink this account?') }}');">
                                             @csrf
                                             <button type="submit"
