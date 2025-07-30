@@ -473,16 +473,24 @@ class AuthController extends Controller
 
     private function generateUniqueUsername(string $name, ?int $telegramId = null): string
     {
-        $time_start_username_gen = microtime(true);
-        $baseUsername = Str::slug($name, '');
+        $time_start = microtime(true);
+        $maxLength = 24;
+        $minLength = 5;
+
+        $baseUsername = preg_replace('/[^a-zA-Z0-9_-]/', '', $name);
+
         if (empty($baseUsername)) {
-            $baseUsername = $telegramId ? 'user' . $telegramId : 'user';
+            $baseUsername = $telegramId ? 'user' . $telegramId : 'user' . Str::random(8);
         }
+
         if (!preg_match('/^[a-zA-Z]/', $baseUsername)) {
             $baseUsername = 'u' . $baseUsername;
         }
-        $baseUsername = substr($baseUsername, 0, 20);
 
+        if (strlen($baseUsername) < $minLength) {
+            $baseUsername .= Str::lower(Str::random($minLength - strlen($baseUsername)));
+        }
+        $baseUsername = substr($baseUsername, 0, 20);
 
         $cacheKey = 'username_check_' . md5($baseUsername);
         if (Cache::has($cacheKey)) {
@@ -490,56 +498,38 @@ class AuthController extends Controller
             if (!User::where('username', $cachedUsername)->exists()) {
                 Log::channel('audit_trail')->debug('Using cached unique username.', ['username' => $cachedUsername]);
                 return $cachedUsername;
-            } else {
-                Cache::forget($cacheKey);
             }
+            Cache::forget($cacheKey);
         }
 
         $username = $baseUsername;
         $counter = 1;
-        $maxLength = 24;
-
-        if (strlen($username) > $maxLength) {
-            $username = substr($username, 0, $maxLength);
-        }
-
-        $maxAttempts = 1000;
         $attempt = 0;
+        $maxAttempts = 1000;
+
         while (User::where('username', $username)->exists()) {
             if ($attempt++ >= $maxAttempts) {
-                $username = 'user' . Str::random(10);
-                while (User::where('username', $username)->exists()) {
-                    $username = 'user' . Str::random(10);
-                }
-                Log::channel('audit_trail')->warning('Max attempts reached for username generation, used random.', ['base' => $baseUsername, 'final_username' => $username]);
+                Log::channel('audit_trail')->warning('Max attempts reached, generating random username.', ['base' => $baseUsername]);
+                do {
+                    $username = 'user' . Str::lower(Str::random(10));
+                } while (User::where('username', $username)->exists());
                 break;
             }
 
-            $suffix = (string)$counter;
-            $availableLengthForBase = $maxLength - strlen($suffix);
-
-            if ($availableLengthForBase < 1) {
-                $username = Str::random($maxLength - 5) . Str::random(5);
-                continue;
-            }
-
-            if (strlen($baseUsername) > $availableLengthForBase) {
-                $username = substr($baseUsername, 0, $availableLengthForBase) . $suffix;
-            } else {
-                $username = $baseUsername . $suffix;
-            }
-            $counter++;
+            $suffix = '_' . $counter++;
+            $trimLength = $maxLength - strlen($suffix);
+            $username = substr($baseUsername, 0, $trimLength) . $suffix;
         }
 
         Cache::put($cacheKey, $username, now()->addMinutes(10));
-        $duration_username_gen = microtime(true) - $time_start_username_gen;
         Log::channel('audit_trail')->info('Generated unique username.', [
             'original_name' => $name,
             'base_username' => $baseUsername,
             'generated_username' => $username,
             'attempts' => $attempt,
-            'duration_seconds' => $duration_username_gen
+            'duration_seconds' => microtime(true) - $time_start
         ]);
+
         return $username;
     }
 
@@ -1050,51 +1040,37 @@ class AuthController extends Controller
         }
     }
 
+
     private function handleTelegramUser(array $telegramUser): User
     {
-        $baseName = $telegramUser['username'] ?? ($telegramUser['first_name'] . ($telegramUser['last_name'] ?? ''));
-        $username = $this->generateUniqueUsername($baseName, $telegramUser['id']);
+        $user = User::firstOrNew(['telegram_id' => $telegramUser['id']]);
 
-        return User::firstOrCreate(
-            ['telegram_id' => $telegramUser['id']],
-            [
+        if (!$user->exists) {
+            $baseName = $telegramUser['username'] ?? ($telegramUser['first_name'] . ($telegramUser['last_name'] ?? ''));
+
+            $user->fill([
                 'first_name' => $telegramUser['first_name'],
                 'last_name' => $telegramUser['last_name'] ?? null,
-                'username' => $username,
+                'username' => $this->generateUniqueUsername($baseName, $telegramUser['id']),
                 'email' => $telegramUser['id'] . '@telegram-user.local',
                 'email_verified_at' => now(),
                 'password' => Hash::make(Str::random(24)),
-                'profile_picture' => $telegramUser['photo_url'] ?? null,
-            ]
-        );
-    }
+            ]);
 
-    private function createUserFromTelegram(array $telegramUser): User
-    {
-        $username = $this->generateUniqueUsername($telegramUser['username'] ?? ($telegramUser['first_name'] . ($telegramUser['last_name'] ?? '')));
+            $user->save();
 
-        $user = User::create([
-            'first_name' => $telegramUser['first_name'],
-            'last_name' => $telegramUser['last_name'] ?? null,
-            'username' => $username,
-            'email' => $telegramUser['id'] . '@telegram-user.local',
-            'telegram_id' => $telegramUser['id'],
-            'email_verified_at' => now(),
-            'password' => Hash::make(Str::random(24)),
-        ]);
+            if (!empty($telegramUser['photo_url'])) {
+                $user->profile_picture = $telegramUser['photo_url'];
+            } else {
+                $user->profile_picture = $this->avatarService->generateInitialsAvatar(
+                    $user->first_name,
+                    $user->last_name ?? '',
+                    $user->id
+                );
+            }
 
-        if (!empty($telegramUser['photo_url'])) {
-            $user->profile_picture = $telegramUser['photo_url'];
-        } else {
-            $user->profile_picture = $this->avatarService->generateInitialsAvatar(
-                $user->first_name,
-                $user->last_name ?? '',
-                $user->id
-            );
+            $user->save();
         }
-        $user->save();
-
-        Log::channel('audit_trail')->info('Created new user from Telegram data.', ['user_id' => $user->id, 'telegram_id' => $user->telegram_id]);
 
         return $user;
     }
