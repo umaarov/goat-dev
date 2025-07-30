@@ -117,6 +117,8 @@
                 </a>
             </div>
 
+            <x-telegram-login-button/>
+
             <p class="text-center text-gray-600 mt-4">
                 {{ __('messages.auth.dont_have_account') }}
                 <a href="{{ route('register') }}"

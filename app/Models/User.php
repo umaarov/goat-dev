@@ -23,6 +23,7 @@ class User extends Authenticatable
         'header_background',
         'google_id',
         'x_id',
+        'telegram_id',
         'email_verified_at',
         'email_verification_token',
         'show_voted_posts_publicly',
@@ -40,6 +41,7 @@ class User extends Authenticatable
         'remember_token',
         'google_id',
         'x_id',
+        'telegram_id',
     ];
 
     protected $casts = [

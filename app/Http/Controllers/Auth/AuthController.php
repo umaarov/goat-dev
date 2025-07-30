@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\AvatarService;
 use App\Services\EmailVerificationService;
+use App\Services\TelegramAuthService;
 use Exception;
 use GuzzleHttp\Exception\ConnectException;
 use Illuminate\Contracts\View\View;
@@ -26,11 +27,17 @@ class AuthController extends Controller
 {
     private AvatarService $avatarService;
     private EmailVerificationService $emailVerificationService;
+    private TelegramAuthService $telegramAuthService;
 
-    public function __construct(AvatarService $avatarService, EmailVerificationService $emailVerificationService)
+    public function __construct(
+        AvatarService            $avatarService,
+        EmailVerificationService $emailVerificationService,
+        TelegramAuthService      $telegramAuthService
+    )
     {
         $this->avatarService = $avatarService;
         $this->emailVerificationService = $emailVerificationService;
+        $this->telegramAuthService = $telegramAuthService;
     }
 
     public function showRegistrationForm(): View
@@ -966,6 +973,97 @@ class AuthController extends Controller
             'user_id' => $user->id,
             'duration_create_user_seconds' => $time_end_create - $time_start_create
         ]);
+
+        return $user;
+    }
+
+    public function telegramCallback(Request $request): RedirectResponse
+    {
+        $time_start_callback = microtime(true);
+        Log::channel('audit_trail')->info('Telegram callback initiated.', [
+            'ip_address' => $request->ip(),
+            'query_params' => $request->query(),
+        ]);
+
+        try {
+            $telegramUser = $this->telegramAuthService->validate($request->all());
+
+            if (!$telegramUser) {
+                Log::channel('audit_trail')->error('Telegram authentication failed: Invalid data or hash.');
+                return redirect()->route('login')->with('error', __('messages.error_telegram_auth_failed'));
+            }
+
+            $userModel = User::where('telegram_id', $telegramUser['id'])->first();
+            $action = "Logged in";
+
+            if (!$userModel) {
+                $userModel = $this->handleTelegramUser($telegramUser);
+                if ($userModel->wasRecentlyCreated) {
+                    $action = 'Registered and logged in';
+                    event(new UserRegistered($userModel));
+                }
+            }
+
+            Auth::login($userModel, true);
+            $request->session()->regenerate();
+
+            Log::channel('audit_trail')->info("User $action via Telegram.", [
+                'user_id' => $userModel->id,
+                'username' => $userModel->username,
+                'telegram_id' => $telegramUser['id'],
+                'ip_address' => $request->ip(),
+                'total_callback_duration_seconds' => microtime(true) - $time_start_callback,
+            ]);
+
+            return redirect()->intended(route('home'))->with('success', __('messages.telegram_login_success'));
+
+        } catch (Exception $e) {
+            Log::channel('audit_trail')->error('Telegram authentication/callback failed with generic Exception.', [
+                'error' => $e->getMessage(),
+                'exception_type' => get_class($e),
+                'ip_address' => $request->ip(),
+            ]);
+            Log::error('Telegram Auth System Error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'ip' => $request->ip()
+            ]);
+
+            return redirect()->route('login')->with('error', __('messages.error_telegram_login_failed'));
+        }
+    }
+
+    private function handleTelegramUser(array $telegramUser): User
+    {
+        return User::where('telegram_id', $telegramUser['id'])->first() ?? $this->createUserFromTelegram($telegramUser);
+    }
+
+    private function createUserFromTelegram(array $telegramUser): User
+    {
+        $username = $this->generateUniqueUsername($telegramUser['username'] ?? ($telegramUser['first_name'] . ($telegramUser['last_name'] ?? '')));
+
+        $user = User::create([
+            'first_name' => $telegramUser['first_name'],
+            'last_name' => $telegramUser['last_name'] ?? null,
+            'username' => $username,
+            'email' => $telegramUser['id'] . '@telegram-user.local',
+            'telegram_id' => $telegramUser['id'],
+            'email_verified_at' => now(),
+            'password' => Hash::make(Str::random(24)),
+        ]);
+
+        if (!empty($telegramUser['photo_url'])) {
+            $user->profile_picture = $telegramUser['photo_url'];
+        } else {
+            $user->profile_picture = $this->avatarService->generateInitialsAvatar(
+                $user->first_name,
+                $user->last_name ?? '',
+                $user->id
+            );
+        }
+        $user->save();
+
+        Log::channel('audit_trail')->info('Created new user from Telegram data.', ['user_id' => $user->id, 'telegram_id' => $user->telegram_id]);
 
         return $user;
     }

@@ -24,6 +24,7 @@ Route::middleware('guest')->group(function () {
     Route::get('/auth/google/callback', [AuthController::class, 'googleCallback']);
     Route::get('/auth/x', [AuthController::class, 'xRedirect'])->name('auth.x');
     Route::get('/auth/x/callback', [AuthController::class, 'xCallback'])->name('auth.x.callback');
+    Route::get('/auth/telegram/callback', [AuthController::class, 'telegramCallback'])->name('auth.telegram.callback');
 });
 
 Route::get('/', [PostController::class, 'index'])->name('home')->middleware('cache.response:10');

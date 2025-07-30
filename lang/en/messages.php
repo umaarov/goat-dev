@@ -530,4 +530,7 @@ return [
     'error_x_auth_failed_state' => 'X authentication failed due to invalid state.',
     'error_x_auth_network' => 'Could not connect to X for authentication.',
     'error_x_login_failed' => 'X login failed. Please try again.',
+
+    'auth.login_with_telegram' => 'Login with Telegram',
+    'auth.signup_with_telegram' => 'Sign up with Telegram',
 ];
