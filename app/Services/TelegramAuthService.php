@@ -16,13 +16,12 @@ class TelegramAuthService
     public function validate(array $authData): ?array
     {
         if (empty($this->botToken) || !isset($authData['hash'])) {
-            Log::error('Telegram Auth Failed: Bot token is not configured or hash is missing.');
+            Log::error('Telegram Auth Failed: Bot token or hash is missing from auth data.');
             return null;
         }
 
         $checkHash = $authData['hash'];
         unset($authData['hash']);
-
         ksort($authData);
 
         $dataCheckString = collect($authData)
@@ -34,7 +33,11 @@ class TelegramAuthService
 
         $authDate = (int)($authData['auth_date'] ?? 0);
         if (time() - $authDate > 300) {
-            Log::warning('Telegram Auth Failed: Stale auth_date received.', ['auth_data' => $authData]);
+            Log::warning('Telegram Auth Failed: Stale auth_date.', [
+                'auth_date' => $authDate,
+                'current_time' => time(),
+                'difference_seconds' => time() - $authDate
+            ]);
             return null;
         }
 
@@ -42,7 +45,11 @@ class TelegramAuthService
             return $authData;
         }
 
-        Log::warning('Telegram Auth Failed: Invalid hash.', ['auth_data' => $authData]);
+        Log::warning('Telegram Auth Failed: Invalid hash.', [
+            'data_check_string' => $dataCheckString,
+            'expected_hash' => $hash,
+            'received_hash' => $checkHash,
+        ]);
         return null;
     }
 }

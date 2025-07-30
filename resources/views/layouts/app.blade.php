@@ -835,7 +835,7 @@
 
             } catch (error) {
                 console.error('Failed to process Telegram auth data:', error);
-                window.location.href = "{{ route('login') }}?error=telegram_auth_failed";
+{{--                window.location.href = "{{ route('login') }}?error=telegram_auth_failed";--}}
             }
         }
     };
