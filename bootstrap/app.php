@@ -67,7 +67,33 @@ return Application::configure(basePath: dirname(__DIR__))
         );
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (Throwable $e, Request $request) {
+
+            if ($request->wantsJson()) {
+
+                $status = 500;
+                $errorCode = 'internal_server_error';
+
+                if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
+                    $status = $e->getStatusCode();
+                    $errorCode = match ($status) {
+                        401 => 'authentication_required',
+                        403 => 'access_forbidden',
+                        404 => 'not_found',
+                        429 => 'rate_limit_exceeded',
+                        default => 'unexpected_error',
+                    };
+                }
+
+                return response()->json([
+                    'success' => false,
+                    'error_code' => $errorCode,
+                    'message' => $e->getMessage(),
+                ], $status);
+            }
+
+            return null;
+        });
     })->withCommands(
         (array)CleanupUnverifiedUsers::class,
         SendPostNotifications::class,
