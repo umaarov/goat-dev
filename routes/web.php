@@ -164,20 +164,3 @@ Route::get('/__netdebug', function (): JsonResponse {
         'scheme'          => request()->getScheme(),
     ]);
 });
-
-Route::get('/test-403', function () {
-    abort(403);
-});
-
-Route::get('/test-401', function () {
-    abort(401);
-});
-
-Route::get('/test-429', function () {
-    abort(429);
-});
-
-Route::get('/test-500', function () {
-    throw new Exception("Simulated server error");
-});
-
