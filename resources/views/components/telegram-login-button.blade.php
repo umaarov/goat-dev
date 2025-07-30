@@ -15,7 +15,7 @@
         </div>
     </div>
 
-    <div id="telegram-script-wrapper" style="display: none;">
+    <div id="telegram-script-wrapper" style="position: absolute; top: -9999px; left: -9999px;">
         <script async src="https://telegram.org/js/telegram-widget.js?22"
                 data-telegram-login="{{ $botUsername }}"
                 data-size="large"
@@ -26,40 +26,46 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            console.log('Telegram Auth: Ready.');
+
+            function positionTelegramOverlay() {
+                const styledButton = document.getElementById('telegram-login-button-container');
+                const scriptWrapper = document.getElementById('telegram-script-wrapper');
+
+                if (styledButton && scriptWrapper) {
+                    const rect = styledButton.getBoundingClientRect();
+
+                    scriptWrapper.style.top = `${rect.top + window.scrollY}px`;
+                    scriptWrapper.style.left = `${rect.left + window.scrollX}px`;
+                    scriptWrapper.style.width = `${rect.width}px`;
+                    scriptWrapper.style.height = `${rect.height}px`;
+                    scriptWrapper.style.zIndex = '100';
+
+                    const iframe = scriptWrapper.querySelector('iframe');
+                    if (iframe) {
+                        iframe.style.width = '100%';
+                        iframe.style.height = '100%';
+                        iframe.style.opacity = '0';
+                        iframe.style.cursor = 'pointer';
+                    }
+                }
+            }
+
             const maxAttempts = 50;
             let attempt = 0;
-
             const interval = setInterval(function () {
-                const container = document.getElementById('telegram-login-button-container');
-                const scriptWrapper = document.getElementById('telegram-script-wrapper');
-                const iframe = scriptWrapper.querySelector('iframe');
-
+                const iframe = document.querySelector('#telegram-script-wrapper iframe');
                 if (iframe) {
-                    container.appendChild(iframe);
                     clearInterval(interval);
+                    positionTelegramOverlay();
+                    window.addEventListener('resize', positionTelegramOverlay);
                 } else if (attempt++ > maxAttempts) {
                     clearInterval(interval);
-                    console.error('Telegram widget did not load in time.');
+                    console.error('Telegram widget did not load in time. Please check your domain in @BotFather.');
                 }
             }, 100);
         });
     </script>
-
-    <style>
-        #telegram-login-button-container iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        #telegram-login-button-container {
-            position: relative;
-        }
-    </style>
 @else
     <div class="mb-2 p-2 text-center bg-red-100 text-red-700 rounded-md">
         Telegram login is not configured.
