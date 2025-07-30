@@ -828,14 +828,14 @@
         if (urlFragment.startsWith('tgAuthResult=')) {
             try {
                 const encodedData = urlFragment.substring('tgAuthResult='.length);
-                const data = JSON.parse(decodeURIComponent(encodedData));
+                const jsonString = atob(encodedData);
+                const data = JSON.parse(jsonString);
                 const queryParams = new URLSearchParams(data).toString();
                 const callbackUrl = "{{ route('auth.telegram.callback') }}";
                 window.location.href = `${callbackUrl}?${queryParams}`;
-
             } catch (error) {
                 console.error('Failed to process Telegram auth data:', error);
-{{--                window.location.href = "{{ route('login') }}?error=telegram_auth_failed";--}}
+                // window.location.href = "{{ route('login') }}?error=telegram_processing_failed";
             }
         }
     };
