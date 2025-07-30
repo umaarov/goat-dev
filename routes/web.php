@@ -9,7 +9,6 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\UserController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/language/{locale}', [LocaleController::class, 'setLocale'])->name('language.set');
@@ -138,23 +137,26 @@ Route::fallback(function () {
 
 
 Route::get('/__netdebug', function () {
-    abort_unless(app()->environment(['local', 'staging', 'debug']), 403);
+    $clientIp = request()->header('CF-Connecting-IP')
+        ?? request()->header('X-Forwarded-For')
+        ?? request()->ip();
 
-    $allowedIps = explode(',', env('DEBUG_ALLOWED_IPS', ''));
+    $allowedIps = array_filter(
+        array_map('trim', explode(',', env('DEBUG_ALLOWED_IPS', '')))
+    );
 
-    $requestIp = request()->ip();
-    if (!in_array($requestIp, $allowedIps)) {
-        abort(403, [
-            'error' => 'Access denied',
-        ]);
+    if (!in_array($clientIp, $allowedIps, true)) {
+        abort(403, ['error' => 'Access denied']);
     }
 
     return [
-        'ip' => $requestIp,
+        'clientIp' => $clientIp,
         'trustedProxies' => request()->getTrustedProxies(),
-        'headers' => request()->headers->all(),
-        'secure' => request()->isSecure(),
-        'scheme' => request()->getScheme(),
         'cfConnectingIp' => request()->header('CF-Connecting-IP'),
+        'xForwardedFor' => request()->header('X-Forwarded-For'),
+        'remoteAddr' => $_SERVER['REMOTE_ADDR'] ?? null,
+        'headers' => request()->headers->all(),
+        'isSecure' => request()->isSecure(),
+        'scheme' => request()->getScheme(),
     ];
 });
