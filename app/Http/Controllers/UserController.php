@@ -903,19 +903,21 @@ class UserController extends Controller
             abort(404);
         }
 
+        session()->put('auth_action', 'link');
         session()->put('auth_link_redirect', route('profile.edit'));
 
         Log::channel('audit_trail')->info('User initiating social link.', [
             'user_id' => Auth::id(), 'provider' => $provider, 'ip_address' => request()->ip(),
         ]);
 
-        return redirect()->route("auth.{$provider}.redirect");
+        return redirect()->route('auth.redirect', ['provider' => $provider]);
     }
 
     final public function unlinkSocial(Request $request, string $provider): RedirectResponse
     {
         $user = Auth::user();
         $provider_id_column = "{$provider}_id";
+        $provider_token_column = "{$provider}_token";
 
         if (!in_array($provider, ['google', 'x', 'telegram'])) {
             abort(404);
@@ -929,7 +931,12 @@ class UserController extends Controller
             return redirect()->route('profile.edit')->with('error', __('messages.error_cannot_unlink_last_auth'));
         }
 
-        $user->forceFill([$provider_id_column => null])->save();
+        $updateData = [$provider_id_column => null];
+        if (property_exists($user, $provider_token_column)) {
+            $updateData[$provider_token_column] = null;
+        }
+
+        $user->forceFill($updateData)->save();
 
         Log::channel('audit_trail')->info('User unlinked a social provider.', [
             'user_id' => $user->id, 'provider' => $provider, 'ip_address' => $request->ip(),

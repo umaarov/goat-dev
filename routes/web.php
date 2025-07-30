@@ -20,22 +20,25 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+});
 
-    Route::get('/auth/google', [AuthController::class, 'googleRedirect'])->name('auth.google');
-    Route::get('/auth/google/callback', [AuthController::class, 'googleCallback']);
+Route::get('/auth/google', [AuthController::class, 'googleRedirect'])->name('auth.google');
+Route::get('/auth/google/callback', [AuthController::class, 'googleCallback']);
 
-    Route::get('/auth/x', [AuthController::class, 'xRedirect'])->name('auth.x');
-    Route::get('/auth/x/callback', [AuthController::class, 'xCallback'])->name('auth.x.callback');
+Route::get('/auth/x', [AuthController::class, 'xRedirect'])->name('auth.x');
+Route::get('/auth/x/callback', [AuthController::class, 'xCallback'])->name('auth.x.callback');
 
-    Route::get('/auth/telegram/redirect', [AuthController::class, 'telegramRedirect'])->name('auth.telegram.redirect');
-    Route::get('/auth/telegram/callback', [AuthController::class, 'telegramCallback'])->name('auth.telegram.callback');
+Route::get('/auth/telegram/redirect', [AuthController::class, 'telegramRedirect'])->name('auth.telegram.redirect');
+Route::get('/auth/telegram/callback', [AuthController::class, 'telegramCallback'])->name('auth.telegram.callback');
 
-    Route::prefix('auth/{provider}')->name('auth.')->group(function () {
-        Route::get('/redirect', [App\Http\Controllers\Auth\AuthController::class, 'socialRedirect'])
-            ->name('social.redirect');
-        Route::get('/callback', [App\Http\Controllers\Auth\AuthController::class, 'socialCallback'])
-            ->name('social.callback');
-    });
+
+Route::prefix('auth/{provider}')->name('auth.')->group(function () {
+    Route::get('/redirect', [AuthController::class, 'socialRedirect'])
+        ->name('redirect')
+        ->where('provider', 'google|x|telegram');
+    Route::get('/callback', [AuthController::class, 'socialCallback'])
+        ->name('callback')
+        ->where('provider', 'google|x|telegram');
 });
 
 Route::get('/', [PostController::class, 'index'])->name('home')->middleware('cache.response:10');
@@ -75,15 +78,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::prefix('profile')->name('profile.')->group(function () {
-        Route::get('/link/{provider}', [App\Http\Controllers\UserController::class, 'linkSocial'])
-            ->name('link.social');
-        Route::post('/unlink/{provider}', [App\Http\Controllers\UserController::class, 'unlinkSocial'])
-            ->name('unlink.social');
-        Route::get('/password/set', [App\Http\Controllers\UserController::class, 'showSetPasswordForm'])
-            ->name('password.set.form');
-        Route::post('/password/set', [App\Http\Controllers\UserController::class, 'setPassword'])
-            ->name('password.set');
-        Route::delete('/password/remove', [App\Http\Controllers\UserController::class, 'removePassword'])
+        Route::get('/link/{provider}', [UserController::class, 'linkSocial'])
+            ->name('link.social')
+            ->where('provider', 'google|x|telegram');
+
+        Route::post('/unlink/{provider}', [UserController::class, 'unlinkSocial'])
+            ->name('unlink.social')
+            ->where('provider', 'google|x|telegram');
+
+        Route::get('/password/set', [UserController::class, 'showSetPasswordForm'])->name('password.set.form');
+        Route::post('/password/set', [UserController::class, 'setPassword'])->name('password.set');
+
+        Route::delete('/password/remove', [UserController::class, 'removePassword'])
             ->name('password.remove')
             ->middleware('password.confirm');
     });

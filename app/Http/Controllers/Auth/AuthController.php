@@ -1031,7 +1031,7 @@ class AuthController extends Controller
         $telegramAuthUrl = "https://oauth.telegram.org/auth?" . http_build_query([
                 'bot_id' => $botId,
                 'origin' => config('app.url'),
-                'redirect_to' => config('app.url'),
+                'redirect_to' => route('auth.callback', 'telegram'),
                 'request_access' => 'write',
             ]);
 
@@ -1159,67 +1159,117 @@ class AuthController extends Controller
         return $user;
     }
 
-    public function socialRedirect(string $provider)
+    public function socialRedirect(string $provider): RedirectResponse
     {
-        if (!in_array($provider, ['google', 'x', 'telegram'])) {
-            abort(404);
-        }
-
         if ($provider === 'telegram') {
-            return $this->telegramRedirect();
+            $botToken = config('services.telegram.bot_token');
+            $botId = explode(':', $botToken, 2)[0];
+            $url = "https://oauth.telegram.org/auth?" . http_build_query([
+                    'bot_id' => $botId,
+                    'origin' => config('app.url'),
+                    'redirect_to' => route('auth.callback', ['provider' => 'telegram']),
+                    'request_access' => 'write',
+                ]);
+            return Redirect::to($url);
         }
 
-        $scopes = ($provider === 'x') ? ['users.read', 'tweet.read'] : [];
-
+        $scopes = ($provider === 'x') ? ['users.read', 'tweet.read', 'offline.access'] : [];
         return Socialite::driver($provider)->scopes($scopes)->redirect();
     }
 
-    public function socialCallback(Request $request, string $provider)
+    public function socialCallback(Request $request, string $provider): RedirectResponse
     {
-        if (!in_array($provider, ['google', 'x', 'telegram'])) {
-            abort(404);
-        }
-
-        if ($provider === 'telegram') {
-            return $this->telegramCallback($request);
-        }
-
         try {
-            $socialUser = Socialite::driver($provider)->stateless()->user();
+            $socialUser = null;
+
+            if ($provider === 'telegram') {
+                $telegramData = $this->telegramAuthService->validate($request->all());
+                if (!$telegramData) throw new Exception('Telegram authentication failed. Invalid data.');
+
+                $socialUser = (object) [
+                    'id' => $telegramData['id'],
+                    'name' => trim($telegramData['first_name'] . ' ' . ($telegramData['last_name'] ?? '')),
+                    'email' => null,
+                    'avatar' => $telegramData['photo_url'] ?? null,
+                    'nickname' => $telegramData['username'] ?? null
+                ];
+
+            } else {
+                $socialUser = Socialite::driver($provider)->stateless()->user();
+            }
 
             if (Auth::check()) {
                 $user = Auth::user();
-                $existingUser = User::where("{$provider}_id", $socialUser->getId())->where('id', '!=', $user->id)->first();
-
+                $existingUser = User::where("{$provider}_id", $socialUser->id)->where('id', '!=', $user->id)->first();
                 if ($existingUser) {
                     return redirect()->route('profile.edit')->with('error', "This {$provider} account is already linked to another user.");
                 }
 
-                $user->forceFill(["{$provider}_id" => $socialUser->getId()])->save();
+                $user->forceFill(["{$provider}_id" => $socialUser->id])->save();
+                Log::channel('audit_trail')->info("User {$user->username} linked their {$provider} account.");
                 return redirect()->route('profile.edit')->with('success', "Successfully linked your {$provider} account.");
             }
 
-            $user = User::where("{$provider}_id", $socialUser->getId())->first();
-
+            $user = User::where("{$provider}_id", $socialUser->id)->first();
             if ($user) {
                 Auth::login($user, true);
-            } else {
-                $userWithEmail = User::where('email', $socialUser->getEmail())->first();
-                if ($userWithEmail) {
-                    $userWithEmail->forceFill(["{$provider}_id" => $socialUser->getId()])->save();
-                    Auth::login($userWithEmail, true);
-                } else {
-                    $newUser = ($provider === 'google') ? $this->createUserFromGoogle($socialUser) : $this->createUserFromX($socialUser);
-                    Auth::login($newUser, true);
+                Log::channel('audit_trail')->info("User {$user->username} logged in via {$provider}.");
+                return redirect()->intended(route('home'));
+            }
+
+            if ($socialUser->email) {
+                $user = User::where('email', $socialUser->email)->first();
+                if ($user) {
+                    $user->forceFill(["{$provider}_id" => $socialUser->id])->save();
+                    Auth::login($user, true);
+                    Log::channel('audit_trail')->info("User {$user->username} logged in via {$provider} (linked to existing email).");
+                    return redirect()->intended(route('home'));
                 }
             }
+
+            $newUser = $this->createUserFromSocial($provider, $socialUser);
+            Auth::login($newUser, true);
+            Log::channel('audit_trail')->info("New user {$newUser->username} registered and logged in via {$provider}.");
 
             return redirect()->intended(route('home'));
 
         } catch (Exception $e) {
-            Log::error("{$provider} auth failed", ['error' => $e->getMessage()]);
+            Log::error("{$provider} auth callback failed", ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return redirect()->route('login')->with('error', 'Authentication failed. Please try again.');
         }
+    }
+
+    private function createUserFromSocial(string $provider, object $socialUser): User
+    {
+        $username = $this->generateUniqueUsername($socialUser->name ?: $socialUser->nickname);
+
+        $nameParts = explode(' ', $socialUser->name, 2);
+        $firstName = $nameParts[0];
+        $lastName = $nameParts[1] ?? null;
+
+        $email = $socialUser->email ?: $socialUser->id . "@{$provider}-user.local";
+        if (User::where('email', $email)->exists()) {
+            $email = $socialUser->id . '_' . Str::random(5) . "@{$provider}-user.local";
+        }
+
+        $user = User::create([
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'username' => $username,
+            'email' => $email,
+            "{$provider}_id" => $socialUser->id,
+            'email_verified_at' => now(),
+            'password' => null,
+        ]);
+
+        if ($socialUser->avatar) {
+            $user->profile_picture = $socialUser->avatar;
+        } else {
+            $user->profile_picture = $this->avatarService->generateInitialsAvatar($firstName, $lastName ?? '', $user->id);
+        }
+        $user->save();
+
+        return $user;
     }
 }
 
