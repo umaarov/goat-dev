@@ -22,8 +22,11 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/auth/google', [AuthController::class, 'googleRedirect'])->name('auth.google');
     Route::get('/auth/google/callback', [AuthController::class, 'googleCallback']);
+
     Route::get('/auth/x', [AuthController::class, 'xRedirect'])->name('auth.x');
     Route::get('/auth/x/callback', [AuthController::class, 'xCallback'])->name('auth.x.callback');
+
+    Route::get('/auth/telegram/redirect', [AuthController::class, 'telegramRedirect'])->name('auth.telegram.redirect');
     Route::get('/auth/telegram/callback', [AuthController::class, 'telegramCallback'])->name('auth.telegram.callback');
 });
 

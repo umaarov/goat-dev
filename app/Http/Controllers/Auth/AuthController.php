@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
@@ -975,6 +976,27 @@ class AuthController extends Controller
         ]);
 
         return $user;
+    }
+
+    public function telegramRedirect(): RedirectResponse
+    {
+        $botToken = config('services.telegram.bot_token');
+        if (!$botToken) {
+            return redirect()->route('login')->with('error', 'Telegram login is not configured.');
+        }
+
+        $botId = explode(':', $botToken, 2)[0];
+
+        $origin = route('auth.telegram.callback');
+        $requestAccess = 'write';
+
+        $telegramAuthUrl = "https://oauth.telegram.org/auth?" . http_build_query([
+                'bot_id' => $botId,
+                'origin' => $origin,
+                'request_access' => $requestAccess,
+            ]);
+
+        return Redirect::to($telegramAuthUrl);
     }
 
     public function telegramCallback(Request $request): RedirectResponse

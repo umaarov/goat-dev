@@ -181,6 +181,17 @@
                 </a>
             </div>
 
+            <div class="mb-2">
+                <a href="{{ route('auth.telegram.redirect') }}"
+                   class="w-full flex items-center justify-center bg-[#2AABEE] text-white py-2 rounded-md hover:bg-[#1E98D4] focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.57c-.28 1.13-1.04 1.4-1.74.88L14.25 16l-4.12 3.9c-.78.76-1.36.37-1.57-.49z"/>
+                    </svg>
+                    <span>{{ __('messages.auth.signup_with_telegram') }}</span>
+                </a>
+            </div>
+
             <p class="text-center text-gray-600 mt-4">
                 {{ __('messages.auth.already_have_account') }}
                 <a href="{{ route('login') }}"
