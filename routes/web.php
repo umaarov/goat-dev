@@ -82,7 +82,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('link.social')
             ->where('provider', 'google|x|telegram');
 
-        Route::post('/unlink/{provider}', [UserController::class, 'unlinkSocial'])
+        Route::put('/unlink/{provider}', [UserController::class, 'unlinkSocial'])
             ->name('unlink.social')
             ->where('provider', 'google|x|telegram');
 
