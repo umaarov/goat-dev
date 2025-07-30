@@ -700,10 +700,15 @@ class AuthController extends Controller
     public function xRedirect()
     {
         try {
+            $scopes = ['users.read', 'tweet.read'];
+
             Log::channel('audit_trail')->info('Redirecting to X for authentication.', [
-                'time' => microtime(true)
+                'time' => microtime(true),
+                'scopes_requested' => $scopes
             ]);
-            return Socialite::driver('x')->redirect();
+
+            return Socialite::driver('x')->scopes($scopes)->redirect();
+
         } catch (Exception $e) {
             Log::error('X redirect failed: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
@@ -746,7 +751,7 @@ class AuthController extends Controller
             $time_before_socialite_user = microtime(true);
             Log::channel('audit_trail')->info('Attempting to fetch X user from Socialite.', ['time' => $time_before_socialite_user]);
 
-            $xUser = Socialite::driver('x')->stateless()->user();
+            $xUser = Socialite::driver('x')->user();
 
             $time_after_socialite_user = microtime(true);
             $duration_socialite_user_call = $time_after_socialite_user - $time_before_socialite_user;
