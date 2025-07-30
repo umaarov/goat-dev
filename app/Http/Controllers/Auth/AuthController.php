@@ -697,5 +697,272 @@ class AuthController extends Controller
             ->withErrors(['email' => __($status)]);
     }
 
+    public function xRedirect()
+    {
+        try {
+            Log::channel('audit_trail')->info('Redirecting to X for authentication.', [
+                'time' => microtime(true)
+            ]);
+            return Socialite::driver('x')->redirect();
+        } catch (Exception $e) {
+            Log::error('X redirect failed: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->route('login')->with('error', __('messages.error_x_auth_failed'));
+        }
+    }
+
+    public function xCallback(Request $request): RedirectResponse
+    {
+        $time_start_callback = microtime(true);
+        Log::channel('audit_trail')->info('X callback initiated.', [
+            'ip_address' => $request->ip(),
+            'query_params' => $request->query(),
+            'time_start_callback' => $time_start_callback
+        ]);
+
+        try {
+            if ($request->has('error')) {
+                Log::channel('audit_trail')->error('X callback returned an error.', [
+                    'error' => $request->input('error'),
+                    'error_description' => $request->input('error_description'),
+                    'ip_address' => $request->ip(),
+                    'time' => microtime(true),
+                ]);
+                return redirect()->route('login')
+                    ->with('error', __('messages.error_x_auth_denied_or_failed'));
+            }
+
+            if (!$request->has('code')) {
+                Log::channel('audit_trail')->error('X callback missing authorization code.', [
+                    'ip_address' => $request->ip(),
+                    'query_params' => $request->query(),
+                    'time' => microtime(true),
+                ]);
+                return redirect()->route('login')
+                    ->with('error', __('messages.error_x_auth_failed') . ' (Missing authorization code)');
+            }
+
+            $time_before_socialite_user = microtime(true);
+            Log::channel('audit_trail')->info('Attempting to fetch X user from Socialite.', ['time' => $time_before_socialite_user]);
+
+            $xUser = Socialite::driver('x')->stateless()->user();
+
+            $time_after_socialite_user = microtime(true);
+            $duration_socialite_user_call = $time_after_socialite_user - $time_before_socialite_user;
+            Log::channel('audit_trail')->info('Successfully fetched X user from Socialite.', [
+                'x_user_id' => $xUser->getId(),
+                'x_user_email' => $xUser->getEmail(),
+                'time' => $time_after_socialite_user,
+                'duration_socialite_user_call_seconds' => $duration_socialite_user_call
+            ]);
+
+            $time_before_db_lookup = microtime(true);
+            $userModel = User::where('x_id', $xUser->getId())->first();
+            $time_after_db_lookup = microtime(true);
+            Log::channel('audit_trail')->info('DB lookup for existing X ID.', [
+                'duration_db_lookup_seconds' => $time_after_db_lookup - $time_before_db_lookup,
+                'found_user_by_x_id' => !is_null($userModel)
+            ]);
+
+            $action = "Logged in";
+            $initialUserModelNull = is_null($userModel);
+
+            if (!$userModel) {
+                $time_before_handle_user = microtime(true);
+                Log::channel('audit_trail')->info('No existing user by X ID. Calling handleXUser.', [
+                    'x_email' => $xUser->getEmail(),
+                    'time' => $time_before_handle_user
+                ]);
+
+                $userModel = $this->handleXUser($xUser);
+
+                $time_after_handle_user = microtime(true);
+                Log::channel('audit_trail')->info('Finished handleXUser call.', [
+                    'user_id_returned' => $userModel->id,
+                    'was_recently_created' => $userModel->wasRecentlyCreated,
+                    'duration_handle_user_seconds' => $time_after_handle_user - $time_before_handle_user
+                ]);
+
+                if ($userModel->wasRecentlyCreated) {
+                    $action = 'Registered and logged in';
+                    event(new UserRegistered($userModel));
+                } elseif ($initialUserModelNull && $userModel->x_id == $xUser->getId()) {
+                    $action = 'Logged in (linked X to existing email account)';
+                } else {
+                    $action = 'Logged in (handleXUser resolved)';
+                }
+            } else {
+                $action = "Logged in (existing X ID)";
+            }
+
+            $user = $userModel;
+
+            Auth::login($user, true);
+            $request->session()->regenerate();
+
+            $time_end_callback = microtime(true);
+            $total_callback_duration = $time_end_callback - $time_start_callback;
+            Log::channel('audit_trail')->info("User $action via X.", [
+                'user_id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
+                'x_id' => $xUser->getId(),
+                'ip_address' => $request->ip(),
+                'time_end_callback' => $time_end_callback,
+                'total_callback_duration_seconds' => $total_callback_duration
+            ]);
+
+            return redirect()->intended(route('home'))->with('success', __('messages.x_login_success'));
+
+        } catch (InvalidStateException $e) {
+            Log::channel('audit_trail')->error('X authentication failed: Invalid State.', [
+                'error' => $e->getMessage(),
+                'ip_address' => $request->ip(),
+                'time_exception' => microtime(true),
+            ]);
+            Log::error('X Auth Invalid State Error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'ip' => $request->ip()
+            ]);
+            return redirect()->route('login')
+                ->with('error', __('messages.error_x_auth_failed_state') ?: 'X authentication failed due to an invalid state. Please try again.');
+        } catch (ConnectException $e) {
+            Log::channel('audit_trail')->error('X authentication failed: Connection issue (Guzzle).', [
+                'error' => $e->getMessage(),
+                'ip_address' => $request->ip(),
+                'time_exception' => microtime(true),
+            ]);
+            Log::error('X Auth Guzzle ConnectException', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'ip' => $request->ip()
+            ]);
+            return redirect()->route('login')
+                ->with('error', __('messages.error_x_auth_network') ?: 'Could not connect to X for authentication. Please check your internet connection and try again.');
+        } catch (Exception $e) {
+            Log::channel('audit_trail')->error('X authentication/callback failed with generic Exception.', [
+                'error' => $e->getMessage(),
+                'exception_type' => get_class($e),
+                'ip_address' => $request->ip(),
+                'time_exception' => microtime(true),
+            ]);
+            Log::error('X Auth System Error (Generic Exception)', [
+                'error' => $e->getMessage(),
+                'exception_type' => get_class($e),
+                'trace' => $e->getTraceAsString(),
+                'ip' => $request->ip()
+            ]);
+
+            return redirect()->route('login')
+                ->with('error', __('messages.error_x_login_failed'));
+        }
+    }
+
+    private function handleXUser($xUser): User
+    {
+        $time_start_handle = microtime(true);
+        Log::channel('audit_trail')->info('Inside handleXUser.', [
+            'x_email' => $xUser->getEmail(),
+            'x_id_from_socialite' => $xUser->getId(),
+            'time_start' => $time_start_handle
+        ]);
+
+        $existingUserByEmail = User::where('email', $xUser->getEmail())->first();
+        $time_after_email_lookup = microtime(true);
+        Log::channel('audit_trail')->info('DB lookup for existing email in handleXUser.', [
+            'duration_email_lookup_seconds' => $time_after_email_lookup - $time_start_handle,
+            'found_user_by_email' => !is_null($existingUserByEmail)
+        ]);
+
+        if ($existingUserByEmail) {
+            Log::channel('audit_trail')->info('Existing user found by email in handleXUser. Updating with X ID if not set.', [
+                'user_id' => $existingUserByEmail->id,
+                'current_x_id_on_user' => $existingUserByEmail->x_id
+            ]);
+            $userToReturn = $this->updateExistingUserWithX($existingUserByEmail, $xUser);
+            $log_action = 'updated_existing_user_with_x_info';
+        } else {
+            Log::channel('audit_trail')->info('No existing user by email in handleXUser. Creating new user from X info.');
+            $userToReturn = $this->createUserFromX($xUser);
+            $log_action = 'created_new_user_from_x_info';
+        }
+
+        $time_end_handle = microtime(true);
+        Log::channel('audit_trail')->info('Finished handleXUser.', [
+            'user_id_processed' => $userToReturn->id,
+            'action_taken' => $log_action,
+            'was_recently_created_flag' => $userToReturn->wasRecentlyCreated,
+            'final_x_id_on_user' => $userToReturn->x_id,
+            'duration_handle_user_total_seconds' => $time_end_handle - $time_start_handle,
+        ]);
+
+        return $userToReturn;
+    }
+
+    private function updateExistingUserWithX(User $user, $xUser): User
+    {
+        if (is_null($user->x_id)) {
+            $user->x_id = $xUser->getId();
+        }
+
+        if (!$user->profile_picture && $xUser->getAvatar()) {
+            $user->profile_picture = $xUser->getAvatar();
+        }
+
+        $user->email_verified_at = $user->email_verified_at ?? now();
+        $user->save();
+        Log::channel('audit_trail')->info('Updated existing user with X info.', ['user_id' => $user->id, 'x_id_set' => $user->x_id]);
+        return $user;
+    }
+
+    private function createUserFromX($xUser): User
+    {
+        $time_start_create = microtime(true);
+        Log::channel('audit_trail')->info('Creating new user from X data.', [
+            'x_email' => $xUser->getEmail(),
+            'x_name' => $xUser->getName(),
+            'time_start' => $time_start_create
+        ]);
+
+        $username = $this->generateUniqueUsername($xUser->getName() ?: $xUser->getNickname() ?: 'user');
+
+        $name = $xUser->getName() ?: $xUser->getNickname() ?: '';
+        $nameParts = explode(' ', $name, 2);
+        $firstName = $nameParts[0] ?? Str::studly(Str::before($xUser->getEmail() ?: 'user@x.com', '@'));
+        $lastName = $nameParts[1] ?? null;
+
+        $user = User::create([
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'username' => $username,
+            'email' => $xUser->getEmail() ?: $username . '@x-user.local',
+            'x_id' => $xUser->getId(),
+            'email_verified_at' => now(),
+            'password' => Hash::make(Str::random(24)),
+        ]);
+        Log::channel('audit_trail')->info('User model created in DB.', ['user_id' => $user->id, 'username' => $username, 'time_after_eloquent_create' => microtime(true)]);
+
+        if ($xUser->getAvatar()) {
+            $user->profile_picture = $xUser->getAvatar();
+        } else {
+            $profilePicturePath = $this->avatarService->generateInitialsAvatar(
+                $user->first_name,
+                $user->last_name ?? '',
+                $user->id
+            );
+            $user->profile_picture = $profilePicturePath;
+        }
+        $user->save();
+
+        $time_end_create = microtime(true);
+        Log::channel('audit_trail')->info('Finished creating user from X and saved profile picture.', [
+            'user_id' => $user->id,
+            'duration_create_user_seconds' => $time_end_create - $time_start_create
+        ]);
+
+        return $user;
+    }
 }
 

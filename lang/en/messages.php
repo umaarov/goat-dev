@@ -276,7 +276,7 @@ return [
     'create_post.subject_2_placeholder' => 'Subject 2',
     'create_post.submit_button' => 'Submit',
     'create_post.js.fill_all_fields_warning' => 'Please fill all required fields, including images.',
-    'create_post.js.moderation_in_progress'=> 'Please wait a moment. We are checking your post to ensure it meets our community guidelines.',
+    'create_post.js.moderation_in_progress' => 'Please wait a moment. We are checking your post to ensure it meets our community guidelines.',
     'create_post.js.overlay.title' => 'Finalizing Your Post...',
     'create_post.js.overlay.message' => 'We\'re running a quick automated check to ensure everything meets our community standards. This usually takes just a few seconds. Thanks for your patience!',
 
@@ -506,9 +506,6 @@ return [
 
     'password_set_required_info' => 'For your security, you must set a password to access this feature.',
     'password_set_successfully' => 'Your password has been successfully set. You can now proceed.',
-    'auth' => [
-        'forgot_password' => 'Forgot Your Password?',
-    ],
 
     'settings' => [
         'display_preferences_title' => 'Display Preferences',
@@ -521,4 +518,16 @@ return [
         'ai_insight_hidden' => 'Hidden by Default',
         'ai_insight_hidden_desc' => 'Hide the panel completely. You can open it by clicking the icon next to the question.',
     ],
+
+    'auth' => [
+        'login_with_x' => 'Login with X',
+        'signup_with_x' => 'Sign up with X',
+        'forgot_password' => 'Forgot Your Password?',
+    ],
+    'x_login_success' => 'Successfully logged in with X!',
+    'error_x_auth_failed' => 'X authentication failed. Please try again.',
+    'error_x_auth_denied_or_failed' => 'X authentication was denied or failed.',
+    'error_x_auth_failed_state' => 'X authentication failed due to invalid state.',
+    'error_x_auth_network' => 'Could not connect to X for authentication.',
+    'error_x_login_failed' => 'X login failed. Please try again.',
 ];

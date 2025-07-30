@@ -487,9 +487,6 @@ return [
 
     'password_set_required_info' => 'Xavfsizlik maqsadida, ushbu funksiyadan foydalanish uchun parol o‘rnatishingiz shart.',
     'password_set_successfully' => 'Parolingiz muvaffaqiyatli o‘rnatildi. Endi davom etishingiz mumkin.',
-    'auth' => [
-        'forgot_password' => 'Parolingizni unutdingizmi?',
-    ],
 
     'settings' => [
         'display_preferences_title' => 'Ko‘rish sozlamalari',
@@ -504,4 +501,16 @@ return [
     ],
 
     'app.telegram_ad' => 'Telegram kanalimizga obuna bo\'ling!',
+
+    'auth' => [
+        'login_with_x' => 'X orqali kirish',
+        'signup_with_x' => 'X orqali ro‘yxatdan o‘tish',
+        'forgot_password' => 'Parolni unutdingizmi?',
+    ],
+    'x_login_success' => 'X orqali muvaffaqiyatli kirildi!',
+    'error_x_auth_failed' => 'X autentifikatsiyasi muvaffaqiyatsiz bo‘ldi. Iltimos, qaytadan urining.',
+    'error_x_auth_denied_or_failed' => 'X autentifikatsiyasi rad etildi yoki muvaffaqiyatsiz bo‘ldi. Iltimos, qaytadan urining.',
+    'error_x_auth_failed_state' => 'X autentifikatsiyasi muvaffaqiyatsiz bo‘ldi. Iltimos, qaytadan urining. Agar muammo davom etsa, iltimos, qo‘llab-quvvatlash xizmatiga murojaat qiling.',
+    'error_x_auth_network' => 'X autentifikatsiya tarmoq xatosi yuz berdi. Iltimos, internet aloqangizni tekshiring va qaytadan urining.',
+    'error_x_login_failed' => 'X orqali kirish muvaffaqiyatsiz bo‘ldi. Iltimos, qaytadan urining.',
 ];

@@ -22,6 +22,7 @@ class User extends Authenticatable
         'profile_picture',
         'header_background',
         'google_id',
+        'x_id',
         'email_verified_at',
         'email_verification_token',
         'show_voted_posts_publicly',
@@ -38,6 +39,7 @@ class User extends Authenticatable
         'password',
         'remember_token',
         'google_id',
+        'x_id',
     ];
 
     protected $casts = [

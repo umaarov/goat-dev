@@ -41,5 +41,8 @@ return [
         'api_secret_key' => env('X_API_SECRET_KEY'),
         'access_token' => env('X_ACCESS_TOKEN'),
         'access_token_secret' => env('X_ACCESS_TOKEN_SECRET'),
+        'client_id' => env('X_CLIENT_ID'),
+        'client_secret' => env('X_CLIENT_SECRET'),
+        'redirect' => env('APP_URL') . '/auth/x/callback',
     ],
 ];

@@ -85,7 +85,7 @@
                 <span class="border-t border-gray-300 flex-grow ml-3"></span>
             </div>
 
-            <div class="mb-4">
+            <div class="mb-2">
                 <a href="{{ route('auth.google') }}"
                    class="w-full flex items-center justify-center bg-white border border-gray-300 text-gray-700 py-2 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <svg class="h-5 w-5 mr-2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -103,6 +103,17 @@
                             fill="#EA4335"/>
                     </svg>
                     {{ __('messages.auth.login_with_google') }}
+                </a>
+            </div>
+
+            <div class="mb-2">
+                <a href="{{ route('auth.x') }}"
+                   class="w-full flex items-center justify-center bg-black text-white py-2 rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <svg class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                    {{ __('messages.auth.login_with_x') }}
                 </a>
             </div>
 
