@@ -20,8 +20,11 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @stack('styles')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}"></noscript>
+    <link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}" media="print"
+          onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}">
+    </noscript>
     @vite(['resources/js/app.js'])
     {{--    @include('partials.critical-css')--}}
     {{--    <link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}" media="print" onload="this.media='all'">--}}
@@ -195,33 +198,33 @@
 </nav>
 
 <main class="flex-grow pt-20 mx-auto w-full max-w-[450px] px-4 pb-16">
-{{--    @if (session('success'))--}}
-{{--        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md mb-4">--}}
-{{--            {{ session('success') }}--}}
-{{--        </div>--}}
-{{--    @endif--}}
+    {{--    @if (session('success'))--}}
+    {{--        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md mb-4">--}}
+    {{--            {{ session('success') }}--}}
+    {{--        </div>--}}
+    {{--    @endif--}}
 
-{{--    @if (session('error'))--}}
-{{--        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4">--}}
-{{--            {{ session('error') }}--}}
-{{--        </div>--}}
-{{--    @endif--}}
+    {{--    @if (session('error'))--}}
+    {{--        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4">--}}
+    {{--            {{ session('error') }}--}}
+    {{--        </div>--}}
+    {{--    @endif--}}
 
-{{--    @if (session('info'))--}}
-{{--        <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-md mb-4">--}}
-{{--            {{ session('info') }}--}}
-{{--        </div>--}}
-{{--    @endif--}}
+    {{--    @if (session('info'))--}}
+    {{--        <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-md mb-4">--}}
+    {{--            {{ session('info') }}--}}
+    {{--        </div>--}}
+    {{--    @endif--}}
 
-{{--    @if ($errors->any())--}}
-{{--        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4">--}}
-{{--            <ul class="list-disc pl-5">--}}
-{{--                @foreach ($errors->all() as $error)--}}
-{{--                    <li>{{ $error }}</li>--}}
-{{--                @endforeach--}}
-{{--            </ul>--}}
-{{--        </div>--}}
-{{--    @endif--}}
+    {{--    @if ($errors->any())--}}
+    {{--        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4">--}}
+    {{--            <ul class="list-disc pl-5">--}}
+    {{--                @foreach ($errors->all() as $error)--}}
+    {{--                    <li>{{ $error }}</li>--}}
+    {{--                @endforeach--}}
+    {{--            </ul>--}}
+    {{--        </div>--}}
+    {{--    @endif--}}
 
     @yield('content')
     <footer class="mb-8 text-center text-gray-700 text-xs leading-relaxed px-4">
@@ -237,8 +240,11 @@
 
             <div class="flex items-center justify-center gap-x-2 mb-1">
                 <p class="font-semibold">{{ __('messages.copyright_text') }}</p>
-                <a href="https://buymeacoffee.com/umarov" target="_blank" rel="noopener noreferrer" title="Support this project with a coffee" class="inline-block transition-transform duration-200 hover:scale-105">
-                    <img src="{{ asset('images/bmc-logo-no-background.png') }}" alt="Buy Me A Coffee" class="h-4 w-auto" loading="lazy">
+                <a href="https://buymeacoffee.com/umarov" target="_blank" rel="noopener noreferrer"
+                   title="Support this project with a coffee"
+                   class="inline-block transition-transform duration-200 hover:scale-105">
+                    <img src="{{ asset('images/bmc-logo-no-background.png') }}" alt="Buy Me A Coffee" class="h-4 w-auto"
+                         loading="lazy">
                 </a>
             </div>
         </div>
@@ -721,7 +727,7 @@
                     const postElement = document.getElementById(`post-${postIdToFind}`);
 
                     if (postElement) {
-                        postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        postElement.scrollIntoView({behavior: 'smooth', block: 'center'});
 
                         postElement.style.transition = 'background-color 0.5s ease';
                         postElement.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
@@ -814,6 +820,25 @@
         window.showToast(errors.join('<br>'), 'error');
         @endif
     });
+</script>
+
+<script>
+    window.onload = function () {
+        const urlFragment = window.location.hash.substring(1);
+        if (urlFragment.startsWith('tgAuthResult=')) {
+            try {
+                const encodedData = urlFragment.substring('tgAuthResult='.length);
+                const data = JSON.parse(decodeURIComponent(encodedData));
+                const queryParams = new URLSearchParams(data).toString();
+                const callbackUrl = "{{ route('auth.telegram.callback') }}";
+                window.location.href = `${callbackUrl}?${queryParams}`;
+
+            } catch (error) {
+                console.error('Failed to process Telegram auth data:', error);
+                window.location.href = "{{ route('login') }}?error=telegram_auth_failed";
+            }
+        }
+    };
 </script>
 
 </body>

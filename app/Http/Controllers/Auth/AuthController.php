@@ -987,15 +987,11 @@ class AuthController extends Controller
 
         $botId = explode(':', $botToken, 2)[0];
 
-        $origin = config('app.url');
-        $redirectTo = route('auth.telegram.callback');
-        $requestAccess = 'write';
-
         $telegramAuthUrl = "https://oauth.telegram.org/auth?" . http_build_query([
                 'bot_id' => $botId,
-                'origin' => $origin,
-                'redirect_to' => $redirectTo,
-                'request_access' => $requestAccess,
+                'origin' => config('app.url'),
+                'redirect_to' => config('app.url'),
+                'request_access' => 'write',
             ]);
 
         return Redirect::to($telegramAuthUrl);
@@ -1017,15 +1013,12 @@ class AuthController extends Controller
                 return redirect()->route('login')->with('error', __('messages.error_telegram_auth_failed'));
             }
 
-            $userModel = User::where('telegram_id', $telegramUser['id'])->first();
-            $action = "Logged in";
+            $userModel = $this->handleTelegramUser($telegramUser);
 
-            if (!$userModel) {
-                $userModel = $this->handleTelegramUser($telegramUser);
-                if ($userModel->wasRecentlyCreated) {
-                    $action = 'Registered and logged in';
-                    event(new UserRegistered($userModel));
-                }
+            $action = $userModel->wasRecentlyCreated ? 'Registered and logged in' : 'Logged in';
+
+            if ($userModel->wasRecentlyCreated) {
+                event(new UserRegistered($userModel));
             }
 
             Auth::login($userModel, true);
@@ -1059,7 +1052,18 @@ class AuthController extends Controller
 
     private function handleTelegramUser(array $telegramUser): User
     {
-        return User::where('telegram_id', $telegramUser['id'])->first() ?? $this->createUserFromTelegram($telegramUser);
+        return User::firstOrCreate(
+            ['telegram_id' => $telegramUser['id']],
+            [
+                'first_name' => $telegramUser['first_name'],
+                'last_name' => $telegramUser['last_name'] ?? null,
+                'username' => $this->generateUniqueUsername($telegramUser['username'] ?? ($telegramUser['first_name'] . ($telegramUser['last_name'] ?? ''))),
+                'email' => $telegramUser['id'] . '@telegram-user.local',
+                'email_verified_at' => now(),
+                'password' => Hash::make(Str::random(24)),
+                'profile_picture' => $telegramUser['photo_url'] ?? null,
+            ]
+        );
     }
 
     private function createUserFromTelegram(array $telegramUser): User
