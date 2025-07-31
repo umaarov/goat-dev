@@ -2006,31 +2006,33 @@ ${canDeleteComment(commentData) ? `
     </script>
 @endpush
 
-@section('structured_data')
+@push('schema')
     <script type="application/ld+json">
         {
             "@@context": "https://schema.org",
-            "@type": "Person",
-            "name": "{{ addslashes($displayName) }}",
-    "alternateName": "{{ '@' . $user->username }}",
-    "url": "{{ route('profile.show', ['username' => $user->username]) }}",
+            "@@graph": [
+                {
+                    "@@type": "Person",
+                    "name": "{{ addslashes($displayName) }}",
+            "alternateName": "{{ '@' . $user->username }}",
+            "url": "{{ route('profile.show', ['username' => $user->username]) }}",
         @if($profilePic && !Str::contains($profilePic, 'default-pfp.png'))
             "image": "{{ $profilePic }}",
         @endif
         "description": "{{ addslashes(__('messages.profile.meta_description', ['username' => $user->username])) }}",
-    "mainEntityOfPage": {
-        "@type": "ProfilePage",
-        "@id": "{{ route('profile.show', ['username' => $user->username]) }}"
-    },
-    "interactionStatistic": [
-        {
-            "@type": "InteractionCounter",
-            "interactionType": { "@type": "WriteAction" },
-            "userInteractionCount": {{ $user->posts_count }}
+            "mainEntityOfPage": {
+                "@@type": "ProfilePage",
+                "@@id": "{{ route('profile.show', ['username' => $user->username]) }}"
+            },
+            "interactionStatistic": [
+                {
+                    "@@type": "InteractionCounter",
+                    "interactionType": { "@@type": "WriteAction" },
+                    "userInteractionCount": {{ $user->posts_count }}
         },
         {
-            "@type": "InteractionCounter",
-            "interactionType": { "@type": "LikeAction" },
+            "@@type": "InteractionCounter",
+            "interactionType": { "@@type": "LikeAction" },
             "userInteractionCount": {{ $totalVotesOnUserPosts }}
         }
     ]
@@ -2041,6 +2043,24 @@ ${canDeleteComment(commentData) ? `
             @endforeach
             ]
         @endif
+        },
+        {
+            "@@type": "BreadcrumbList",
+            "itemListElement": [
+                {
+                    "@@type": "ListItem",
+                    "position": 1,
+                    "name": "Home",
+                    "item": "{{ route('home') }}"
+                },
+                {
+                    "@@type": "ListItem",
+                    "position": 2,
+                    "name": "{{ '@' . $user->username }}"
+                }
+            ]
         }
+    ]
+}
     </script>
-@endsection
+@endpush

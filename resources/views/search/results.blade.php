@@ -4,6 +4,69 @@
 @section('title', $queryTerm ? __('messages.search_results.title_with_query', ['queryTerm' => e($queryTerm)]) : __('messages.search_results.title_default'))
 @section('meta_robots', 'noindex, follow')
 
+@push('schema')
+    @if ($queryTerm)
+        <script type="application/ld+json">
+            {
+              "@@context": "https://schema.org",
+              "@@graph": [
+                {
+                  "@@type": "SearchResultsPage",
+                  "name": "{{ __('messages.search_results.title_with_query', ['queryTerm' => e($queryTerm)]) }}",
+      "description": "Search results for '{{ e($queryTerm) }}' on GOAT.uz, showing matching polls and user profiles.",
+      "url": "{{ url()->full() }}",
+      "mainEntity": {
+        "@@type": "ItemList",
+        "name": "Search Results",
+        "numberOfItems": {{ $users->count() + $posts->count() }},
+        "itemListElement": [
+            @foreach($users as $user)
+                {
+                    "@@type": "ListItem",
+                    "position": {{ $loop->index + 1 }},
+                "item": {
+                    "@@type": "Person",
+                    "@@id": "{{ route('profile.show', $user->username) }}",
+                    "name": "{{ $user->username }}"
+                }
+            }{{ ($loop->last && $posts->isEmpty()) ? '' : ',' }}
+            @endforeach
+            @foreach($posts as $post)
+                {
+                    "@@type": "ListItem",
+                    "position": {{ $users->count() + $loop->index + 1 }},
+                "item": {
+                    "@@type": "SocialMediaPosting",
+                    "@@id": "{{ route('posts.show.user-scoped', ['username' => $post->user->username, 'post' => $post->id]) }}",
+                    "headline": "{{ addslashes($post->question) }}"
+                }
+            }{{ $loop->last ? '' : ',' }}
+            @endforeach
+            ]
+          },
+          "isPartOf": {
+            "@@id": "{{ config('app.url') }}#website"
+      }
+    },
+    {
+      "@@type": "BreadcrumbList",
+      "itemListElement": [{
+        "@@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "{{ route('home') }}"
+      },{
+        "@@type": "ListItem",
+        "position": 2,
+        "name": "Search"
+      }]
+    }
+  ]
+}
+        </script>
+    @endif
+@endpush
+
 @section('content')
     <div class="flex flex-col items-center justify-center w-full">
         <form action="{{ route('search') }}" method="GET" class="w-full max-w-xl mx-auto">

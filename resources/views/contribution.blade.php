@@ -2,6 +2,35 @@
 
 @section('title', __('messages.contribution.title'))
 
+@push('schema')
+    <script type="application/ld+json">
+        {
+          "@@context": "https://schema.org",
+          "@@graph": [
+            {
+              "@@type": "WebPage",
+              "name": "{{ __('messages.contribution.title') }}",
+      "description": "{{ __('messages.contribution.intro_p1') }}",
+      "url": "{{ route('contribution') }}"
+    },
+    {
+      "@@type": "BreadcrumbList",
+      "itemListElement": [{
+        "@@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "{{ route('home') }}"
+      },{
+        "@@type": "ListItem",
+        "position": 2,
+        "name": "{{ __('messages.contribution.title') }}"
+      }]
+    }
+  ]
+}
+    </script>
+@endpush
+
 @section('content')
     <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4">
         <div class="p-6 sm:p-8">

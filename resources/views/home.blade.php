@@ -4,18 +4,28 @@
 @section('meta_description', __('messages.home.meta_description'))
 
 @push('schema')
-    <script type="application/ld+json">
-        {
-            "@@context": "https://schema.org",
-          "@type": "WebPage",
-          "url": "{{ route('home') }}",
-          "name": "{{ __('messages.home.page_title_posts') }}",
-          "description": "{{ __('messages.home.meta_description') }}",
-          "isPartOf": {
-            "@id": "{{ config('app.url', 'https://goat.uz') }}#website"
-          }
-        }
-    </script>
+    @if ($posts->isNotEmpty())
+        <script type="application/ld+json">
+            {
+                "@@context": "https://schema.org",
+                "@@type": "FAQPage",
+                "mainEntity": [
+                    @foreach($posts as $post)
+                    {
+                        "@@type": "Question",
+                        "name": "{{ addslashes($post->question) }}",
+                        "acceptedAnswer": {
+                            "@@type": "Answer",
+                            "text": "Vote now and see what the community thinks on GOAT.uz. This poll has {{ $post->total_votes }}
+                            votes and {{ $post->comments_count }} comments. Join the conversation!",
+                            "url": "{{ route('posts.show.user-scoped', ['username' => $post->user->username, 'post' => $post->id]) }}"
+                        }
+                    }{{ !$loop->last ? ',' : '' }}
+                    @endforeach
+                ]
+            }
+        </script>
+    @endif
 @endpush
 
 @section('content')

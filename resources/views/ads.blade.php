@@ -2,6 +2,35 @@
 
 @section('title', __('messages.ads'))
 
+@push('schema')
+    <script type="application/ld+json">
+        {
+          "@@context": "https://schema.org",
+          "@@graph": [
+            {
+              "@@type": "ContactPage",
+              "name": "{{ __('messages.ads') }}",
+      "description": "{{ __('messages.ads.advertisement_text') }}",
+      "url": "{{ route('ads') }}"
+    },
+    {
+      "@@type": "BreadcrumbList",
+      "itemListElement": [{
+        "@@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "{{ route('home') }}"
+      },{
+        "@@type": "ListItem",
+        "position": 2,
+        "name": "{{ __('messages.ads') }}"
+      }]
+    }
+  ]
+}
+    </script>
+@endpush
+
 @section('content')
     <div class="max-w-md mx-auto bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4">
         <div class="p-6">

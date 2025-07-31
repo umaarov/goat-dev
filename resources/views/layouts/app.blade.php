@@ -72,35 +72,35 @@
     <script type="application/ld+json">
         {
             "@@context": "https://schema.org",
-            "@type": "WebSite",
-            "@id": "https://goat.uz'#website",
+            "@@type": "WebSite",
+            "@@id": "https://goat.uz#website",
             "name": "GOAT.uz",
             "url": "https://goat.uz",
             "alternateName": "GOAT",
             "potentialAction": {
-                "@type": "SearchAction",
+                "@@type": "SearchAction",
                 "target": {
-                    "@type": "EntryPoint",
+                    "@@type": "EntryPoint",
                     "urlTemplate": "https://goat.uz/search?q={search_term_string}"
                 },
                 "query-input": "required name=search_term_string"
             },
             "publisher": {
-                "@type": "Organization",
+                "@@type": "Organization",
                 "name": "GOAT.uz",
                 "url": "https://goat.uz",
                 "logo": {
-                    "@type": "ImageObject",
+                    "@@type": "ImageObject",
                     "url": "https://goat.uz/images/icons/icon-512x512.png"
                 }
             },
             "logo": "https://goat.uz/images/icons/icon-512x512.png",
             "founder": {
-                "@type": "Person",
+                "@@type": "Person",
                 "name": "Ismoiljon Umarov"
             },
             "contactPoint": {
-                "@type": "ContactPoint",
+                "@@type": "ContactPoint",
                 "contactType": "customer support",
                 "email": "info@goat.uz",
                 "telephone": "+998-33-500-25-17"

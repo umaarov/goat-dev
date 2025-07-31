@@ -25,61 +25,6 @@
     $percentTwo = $totalVotes > 0 ? round(($optionTwoVotes / $totalVotes) * 100) : 0;
     $hasVoted = !is_null($currentViewerVote);
 @endphp
-@push('schema')
-    <script type="application/ld+json">
-        {
-            "@@context": "https://schema.org",
-            "@type": "SocialMediaPosting",
-            "headline": "{{ addslashes($post->question) }}",
-        @if($post->ai_generated_context)
-            "description": "{{ addslashes(Str::limit($post->ai_generated_context, 160)) }}",
-                "articleBody": "{{ addslashes($post->ai_generated_context) }}",
-        @endif
-        @if(!empty($post->ai_generated_tags))
-            "keywords": "{{ addslashes($post->ai_generated_tags) }}",
-        @endif
-        "url": "{{ $postUrl }}",
-            "datePublished": "{{ $post->created_at->toIso8601String() }}",
-            "author": {
-                "@type": "Person",
-                "name": "{{ '@' . $post->user->username }}",
-                "url": "{{ route('profile.show', $post->user->username) }}"
-            },
-        @if($post->option_one_image || $post->option_two_image)
-            "image": [
-            @php $images = []; @endphp
-            @if($post->option_one_image)
-                @php $images[] = asset('storage/' . $post->option_one_image); @endphp
-            @endif
-            @if($post->option_two_image)
-                @php $images[] = asset('storage/' . $post->option_two_image); @endphp
-            @endif
-            {!! json_encode($images, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
-            ],
-        @endif
-        "interactionStatistic": [
-            {
-                "@type": "InteractionCounter",
-                "interactionType": { "@type": "CommentAction" },
-                "userInteractionCount": {{ $post->comments_count }}
-        },
-        {
-            "@type": "InteractionCounter",
-            "interactionType": { "@type": "LikeAction" },
-            "userInteractionCount": {{ $post->total_votes }}
-        }
-    ],
-    "publisher": {
-        "@type": "Organization",
-        "name": "GOAT.uz",
-        "logo": {
-            "@type": "ImageObject",
-            "url": "{{ asset('images/icons/icon-512x512.png') }}"
-                }
-            }
-        }
-    </script>
-@endpush
 <article class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4"
          id="post-{{ $post->id }}"
          style="content-visibility: auto; contain-intrinsic-size: 500px;"
