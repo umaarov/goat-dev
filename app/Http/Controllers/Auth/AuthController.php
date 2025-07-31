@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Events\UserRegistered;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\AuthTokenService;
 use App\Services\AvatarService;
 use App\Services\EmailVerificationService;
 use App\Services\TelegramAuthService;
@@ -29,16 +30,19 @@ class AuthController extends Controller
     private AvatarService $avatarService;
     private EmailVerificationService $emailVerificationService;
     private TelegramAuthService $telegramAuthService;
+    private AuthTokenService $authTokenService;
 
     public function __construct(
         AvatarService            $avatarService,
         EmailVerificationService $emailVerificationService,
-        TelegramAuthService      $telegramAuthService
+        TelegramAuthService      $telegramAuthService,
+        AuthTokenService         $authTokenService
     )
     {
         $this->avatarService = $avatarService;
         $this->emailVerificationService = $emailVerificationService;
         $this->telegramAuthService = $telegramAuthService;
+        $this->authTokenService = $authTokenService;
     }
 
     public function showRegistrationForm(): View
@@ -327,7 +331,8 @@ class AuthController extends Controller
 
             $user = $userModel;
 
-            Auth::login($user, true);
+//            Auth::login($user, true);
+            Auth::login($user);
             $request->session()->regenerate();
 
             $time_end_callback = microtime(true);
@@ -342,8 +347,10 @@ class AuthController extends Controller
                 'total_callback_duration_seconds' => $total_callback_duration
             ]);
 
-            return redirect()->intended(route('home'))->with('success', __('messages.google_login_success'));
-
+            $cookie = $this->authTokenService->issueToken($user, $request);
+            return redirect()->intended(route('home'))
+                ->with('success', __('messages.google_login_success'))
+                ->withCookie($cookie);
         } catch (InvalidStateException $e) {
             Log::channel('audit_trail')->error('Google authentication failed: Invalid State.', [
                 'error' => $e->getMessage(),
@@ -384,8 +391,11 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
 
+            $cookie = $this->authTokenService->issueToken($user, $request);
+
             return redirect()->route('login')
-                ->with('error', __('messages.error_google_login_failed'));
+                ->with('error', __('messages.error_google_login_failed'))
+                ->withCookie($cookie);
         }
     }
 
@@ -569,7 +579,7 @@ class AuthController extends Controller
         $loginInput = $request->input('login_identifier');
         $password = $request->input('password');
 //        $remember = $request->filled('remember');
-        $remember = true;
+//        $remember = true;
 
         $fieldType = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
@@ -578,15 +588,13 @@ class AuthController extends Controller
             'password' => $password,
         ];
 
-        if (Auth::attempt($credentials, $remember)) {
+        if (Auth::attempt($credentials)) {
             $user = Auth::user();
 
             if (!$user->email_verified_at) {
                 Auth::logout();
                 Log::channel('audit_trail')->warning('Login attempt failed: Email not verified.', [
-                    'login_identifier' => $loginInput,
-                    'user_id' => $user->id,
-                    'ip_address' => $request->ip(),
+                    'login_identifier' => $loginInput, 'user_id' => $user->id, 'ip_address' => $request->ip(),
                 ]);
                 return redirect()->route('login')
                     ->withErrors(['login_identifier' => __('messages.error_email_not_verified_login')])
@@ -594,14 +602,17 @@ class AuthController extends Controller
             }
 
             $request->session()->regenerate();
-            Log::debug('DEBUG LOGIN: User ' . $user->username . ' successfully authenticated. About to log to audit_trail.');
             Log::channel('audit_trail')->info('User authenticated successfully.', [
-                'user_id' => $user->id,
-                'username' => $user->username,
-                'ip_address' => $request->ip(),
+                'user_id' => $user->id, 'username' => $user->username, 'ip_address' => $request->ip(),
             ]);
-            return redirect()->intended(route('home'))->with('success', __('messages.logged_in_successfully'));
+
+            $cookie = $this->authTokenService->issueToken($user, $request);
+
+            return redirect()->intended(route('home'))
+                ->with('success', __('messages.logged_in_successfully'))
+                ->withCookie($cookie);
         }
+
 
         Log::channel('audit_trail')->warning('Failed login attempt: Invalid credentials.', [
             'login_identifier' => $loginInput,
@@ -619,10 +630,16 @@ class AuthController extends Controller
         $user = Auth::user();
         if ($user) {
             Log::channel('audit_trail')->info('User logged out.', [
-                'user_id' => $user->id,
-                'username' => $user->username,
-                'ip_address' => $request->ip(),
+                'user_id' => $user->id, 'username' => $user->username, 'ip_address' => $request->ip(),
             ]);
+
+            $refreshTokenCookie = $request->cookie('refresh_token');
+            if ($refreshTokenCookie) {
+                $token = $this->authTokenService->getValidToken($refreshTokenCookie);
+                if ($token) {
+                    $this->authTokenService->revokeToken($token);
+                }
+            }
         } else {
             Log::channel('audit_trail')->info('Logout attempt by unauthenticated session.', [
                 'ip_address' => $request->ip(),
@@ -633,7 +650,9 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('home')->with('success', __('messages.logged_out_successfully'));
+        return redirect()->route('home')
+            ->with('success', __('messages.logged_out_successfully'))
+            ->withCookie($this->authTokenService->clearCookie());
     }
 
     public function showConfirmForm(): View
@@ -851,7 +870,8 @@ class AuthController extends Controller
 
             $user = $userModel;
 
-            Auth::login($user, true);
+//            Auth::login($user, true);
+            Auth::login($user);
             $request->session()->regenerate();
 
             $time_end_callback = microtime(true);
@@ -866,7 +886,10 @@ class AuthController extends Controller
                 'total_callback_duration_seconds' => $total_callback_duration
             ]);
 
-            return redirect()->intended(route('home'))->with('success', __('messages.x_login_success'));
+            $cookie = $this->authTokenService->issueToken($user, $request);
+            return redirect()->intended(route('home'))
+                ->with('success', __('messages.x_login_success'))
+                ->withCookie($cookie);
 
         } catch (InvalidStateException $e) {
             Log::channel('audit_trail')->error('X authentication failed: Invalid State.', [
@@ -908,8 +931,10 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
 
+            $cookie = $this->authTokenService->issueToken($user, $request);
             return redirect()->route('login')
-                ->with('error', __('messages.error_x_login_failed'));
+                ->with('error', __('messages.error_x_login_failed'))
+                ->withCookie($cookie);
         }
     }
 
@@ -1095,7 +1120,8 @@ class AuthController extends Controller
                 event(new UserRegistered($userModel));
             }
 
-            Auth::login($userModel, true);
+//            Auth::login($userModel, true);
+            Auth::login($userModel);
             $request->session()->regenerate();
 
             Log::channel('audit_trail')->info("User $action via Telegram.", [
@@ -1105,9 +1131,13 @@ class AuthController extends Controller
                 'ip_address' => $request->ip(),
                 'total_callback_duration_seconds' => microtime(true) - $time_start_callback,
             ]);
+            $cookie = $this->authTokenService->issueToken($userModel, $request);
+            return redirect()->route('home')
+                ->with('success', __('messages.telegram_login_success'))
+                ->withCookie($cookie);
 
 //            return redirect()->intended(route('home'))->with('success', __('messages.telegram_login_success'));
-            return redirect()->route('home')->with('success', __('messages.telegram_login_success'));
+//            return redirect()->route('home')->with('success', __('messages.telegram_login_success'));
 
         } catch (Exception $e) {
             Log::channel('audit_trail')->error('Telegram authentication/callback failed with generic Exception.', [
@@ -1121,7 +1151,11 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
 
-            return redirect()->route('login')->with('error', __('messages.error_telegram_login_failed'));
+            $user = $userModel;
+            $cookie = $this->authTokenService->issueToken($user, $request);
+
+            return redirect()->route('login')->with('error', __('messages.error_telegram_login_failed'))
+                ->withCookie($cookie);
         }
     }
 
@@ -1368,14 +1402,19 @@ class AuthController extends Controller
                 }
             }
 
-            Auth::login($userModel, true);
+//            Auth::login($userModel, true);
+            Auth::login($userModel);
             $request->session()->regenerate();
 
             Log::channel('audit_trail')->info("User $action via GitHub.", [
                 'user_id' => $userModel->id, 'username' => $userModel->username, 'github_id' => $githubUser->getId(), 'ip_address' => $request->ip(),
             ]);
 
-            return redirect()->intended(route('home'))->with('success', __('messages.github_login_success', [], 'en'));
+            $user = $userModel;
+            $cookie = $this->authTokenService->issueToken($user, $request);
+
+            return redirect()->intended(route('home'))->with('success', __('messages.github_login_success', [], 'en'))
+                ->withCookie($cookie);
 
         } catch (InvalidStateException $e) {
             Log::error('GitHub Auth Invalid State Error', ['error' => $e->getMessage(), 'ip' => $request->ip()]);

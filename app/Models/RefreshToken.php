@@ -14,12 +14,14 @@ class RefreshToken extends Model
         'user_id',
         'token',
         'expires_at',
-        'revoked',
+        'revoked_at',
+        'ip_address',
+        'user_agent',
     ];
 
     protected $casts = [
         'expires_at' => 'datetime',
-        'revoked' => 'boolean',
+        'revoked_at' => 'datetime',
     ];
 
     final function user(): BelongsTo
@@ -27,8 +29,8 @@ class RefreshToken extends Model
         return $this->belongsTo(User::class);
     }
 
-    final function isExpired(): bool
-    {
-        return $this->expires_at->isPast();
-    }
+    // final function isExpired(): bool
+    // {
+    //     return $this->expires_at->isPast();
+    // }
 }
