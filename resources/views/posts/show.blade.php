@@ -25,19 +25,19 @@
                 {
                     "@@type": "ListItem",
                     "position": 3,
-                    "name": "{{ addslashes(Str::limit($post->question, 50)) }}"
-                }
-            ]
-        },
-        {
-            "@@type": "SocialMediaPosting",
-            "headline": "{{ addslashes($post->question) }}",
+                    "name": {!! json_encode(Str::limit($post->question, 50)) !!}
+        }
+    ]
+},
+{
+    "@@type": "SocialMediaPosting",
+    "headline": {!! json_encode($post->question) !!},
         @if($post->ai_generated_context)
-            "description": "{{ addslashes(Str::limit($post->ai_generated_context, 160)) }}",
-                "articleBody": "{{ addslashes($post->ai_generated_context) }}",
+            "description": {!! json_encode(Str::limit($post->ai_generated_context, 160)) !!},
+                "articleBody": {!! json_encode($post->ai_generated_context) !!},
         @endif
         @if(!empty($post->ai_generated_tags))
-            "keywords": "{{ addslashes($post->ai_generated_tags) }}",
+            "keywords": {!! json_encode($post->ai_generated_tags) !!},
         @endif
         "url": "{{ $postUrl }}",
             "datePublished": "{{ $post->created_at->toIso8601String() }}",
