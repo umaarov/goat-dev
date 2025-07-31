@@ -52,4 +52,11 @@ return [
         'client_secret' => env('GITHUB_CLIENT_SECRET'),
         'redirect' => env('GITHUB_REDIRECT_URI'),
     ],
+
+    'instagram' => [
+        'business_account_id' => env('INSTAGRAM_BUSINESS_ACCOUNT_ID'),
+        'access_token'        => env('INSTAGRAM_ACCESS_TOKEN'),
+        'graph_api_version'   => 'v23.0',
+        'graph_url'           => 'https://graph.facebook.com',
+    ],
 ];
