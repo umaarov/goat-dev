@@ -62,6 +62,9 @@
             @include('partials.post-card-shimmer')
         </div>
     </div>
+    <div class="sr-only">
+        {{ $posts->links() }}
+    </div>
 @endsection
 
 @push('scripts')
