@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('meta_robots', 'noindex, follow')
+{{--@section('meta_robots', 'noindex, follow')--}}
 @section('title', __('messages.register'))
 
 @section('content')

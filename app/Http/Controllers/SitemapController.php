@@ -4,30 +4,44 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use App\Models\User;
-use Illuminate\Support\Facades\View;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Http\Response;
 
 class SitemapController extends Controller
 {
-    public function index(): StreamedResponse
+    public function index(): Response
     {
-        $stream = function () {
-            echo View::make('sitemap.partials.header')->render();
-            echo View::make('sitemap.partials.static')->render();
+        $latestPost = Post::latest('updated_at')->first();
+        $latestUser = User::latest('updated_at')->first();
 
-            Post::with('user')->chunkById(2000, function ($posts) {
-                echo View::make('sitemap.partials.posts', ['posts' => $posts])->render();
-            });
+        return response()
+            ->view('sitemap.index', [
+                'latestPost' => $latestPost,
+                'latestUser' => $latestUser,
+            ])
+            ->header('Content-Type', 'text/xml');
+    }
 
-            User::chunkById(2000, function ($users) {
-                echo View::make('sitemap.partials.users', ['users' => $users])->render();
-            });
+    public function static(): Response
+    {
+        return response()
+            ->view('sitemap.static')
+            ->header('Content-Type', 'text/xml');
+    }
 
-            echo View::make('sitemap.partials.footer')->render();
-        };
+    public function posts(): Response
+    {
+        $posts = Post::with('user')->latest('updated_at')->get();
 
-        return response()->stream($stream, 200, [
-            'Content-Type' => 'text/xml',
-        ]);
+        return response()
+            ->view('sitemap.posts', ['posts' => $posts])
+            ->header('Content-Type', 'text/xml');
+    }
+
+    public function users(): Response
+    {
+        $users = User::latest('updated_at')->get();
+        return response()
+            ->view('sitemap.users', ['users' => $users])
+            ->header('Content-Type', 'text/xml');
     }
 }

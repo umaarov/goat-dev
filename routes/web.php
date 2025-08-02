@@ -155,7 +155,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::get('/email/verify/{id}/{token}', [AuthController::class, 'verifyEmail'])->name('verification.verify');
 
 
-Route::get('/sitemap.xml', [SitemapController::class, 'index']);
+//Route::get('/sitemap.xml', [SitemapController::class, 'index']);
+
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap.index');
+Route::get('/sitemaps/static.xml', [SitemapController::class, 'static'])->name('sitemap.static');
+Route::get('/sitemaps/posts.xml', [SitemapController::class, 'posts'])->name('sitemap.posts');
+Route::get('/sitemaps/users.xml', [SitemapController::class, 'users'])->name('sitemap.users');
 
 Route::get('/load-more-posts', [PostController::class, 'loadMorePosts'])->name('posts.load_more');
 

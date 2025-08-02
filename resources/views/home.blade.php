@@ -8,22 +8,20 @@
         <script type="application/ld+json">
             {
                 "@@context": "https://schema.org",
-                "@@type": "FAQPage",
-                "mainEntity": [
-                    @foreach($posts as $post)
-                    {
-                        "@@type": "Question",
-                        "name": "{{ addslashes($post->question) }}",
-                        "acceptedAnswer": {
-                            "@@type": "Answer",
-                            "text": "Vote now and see what the community thinks on GOAT.uz. This poll has {{ $post->total_votes }}
-                            votes and {{ $post->comments_count }} comments. Join the conversation!",
-                            "url": "{{ route('posts.show.user-scoped', ['username' => $post->user->username, 'post' => $post->id]) }}"
-                        }
-                    }{{ !$loop->last ? ',' : '' }}
-                    @endforeach
-                ]
-            }
+                "@@type": "ItemList",
+                "name": "Trending Polls",
+                "description": "The latest and most popular polls on GOAT.uz.",
+                "itemListElement": [
+            @foreach($posts as $post)
+                {
+                    "@@type": "ListItem",
+                    "position": {{ $loop->iteration }},
+                    "url": "{{ route('posts.show.user-scoped', ['username' => $post->user->username, 'post' => $post->id]) }}"
+                }
+                {{ !$loop->last ? ',' : '' }}
+            @endforeach
+            ]
+        }
         </script>
     @endif
 @endpush

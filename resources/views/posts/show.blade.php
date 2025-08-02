@@ -1,5 +1,18 @@
 @extends('layouts.app')
+
 @section('title', $post->question . ' - GOAT.uz')
+
+@php
+    $postUrl = route('posts.show.user-scoped', ['username' => $post->user->username, 'post' => $post->id]);
+    $ogImage = $post->option_one_image ? asset('storage/' . $post->option_one_image) : ($post->option_two_image ? asset('storage/' . $post->option_two_image) : asset('images/goat.jpg'));
+@endphp
+
+@section('title', $post->question . ' - GOAT.uz')
+@section('meta_description', Str::limit($post->ai_generated_context ?? $post->question, 160))
+@section('canonical_url', $postUrl)
+@section('og_type', 'article')
+@section('og_image', $ogImage)
+
 @section('meta_description', Str::limit($post->ai_generated_context ?? $post->question, 160))
 @php $postUrl = route('posts.show.user-scoped', ['username' => $post->user->username, 'post' => $post->id]); @endphp
 @push('schema')
@@ -26,6 +39,7 @@
                     "@@type": "ListItem",
                     "position": 3,
                     "name": {!! json_encode(Str::limit($post->question, 50)) !!}
+                    "item": "{{ $postUrl }}"
         }
     ]
 },

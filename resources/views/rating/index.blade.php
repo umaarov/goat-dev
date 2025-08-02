@@ -6,6 +6,35 @@
 @section('title', __('messages.ratings.title'))
 @section('meta_description', __('messages.ratings.meta_description'))
 
+@push('schema')
+    <script type="application/ld+json">
+        {
+            "@@context": "https://schema.org",
+            "@@type": "WebPage",
+            "name": "{{ __('messages.ratings.title') }}",
+    "description": "{{ __('messages.ratings.meta_description') }}",
+    "url": "{{ route('rating.index') }}",
+    "mainEntity": {
+        "@@type": "ItemList",
+        "name": "Top Users by Post Votes",
+        "itemListElement": [
+        @foreach($topByPostVotes as $user)
+            {
+                "@@type": "ListItem",
+                "position": {{ $loop->iteration }},
+                "item": {
+                    "@@type": "Person",
+                    "name": "{{ $user->username }}",
+                    "url": "{{ route('profile.show', $user->username) }}"
+                }
+            }{{ !$loop->last ? ',' : '' }}
+        @endforeach
+        ]
+    }
+}
+    </script>
+@endpush
+
 @section('content')
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <header class="mb-8 text-center">

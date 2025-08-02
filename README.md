@@ -4,10 +4,9 @@
 
 ### [Live Demo: goat.uz](https://www.goat.uz)
 
-
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support%20us-orange?style=for-the-badge&logo=buy-me-a-coffee)](https://www.buymeacoffee.com/umarov)
 
-**GOAT** is a sophisticated social debate application built on the **Laravel 12** framework. It's engineered from the ground up to provide a feature-rich, scalable, and secure environment for intelligent, user-driven discussions. The platform's architecture leverages modern design patterns and integrates cutting-edge technologies, including AI for content moderation and real-time 3D graphics for a uniquely engaging user experience.
+**GOAT** is a hyper-performance, feature-rich social debate application engineered on **Laravel 12**. Designed for scalability and security, it provides a robust platform for intelligent, user-driven discussions. The architecture leverages a modern, containerized stack with **Docker** and **FrankenPHP**, and integrates a suite of cutting-edge technologies, including a hybrid AI strategy for content moderation and generation, and a high-fidelity real-time 3D engine for a uniquely engaging user experience.
 
 ---
 
@@ -17,7 +16,8 @@
 - [Technology Stack](#technology-stack)
 - [Getting Started: Local Development](#getting-started-local-development)
     - [Prerequisites](#prerequisites)
-    - [Installation](#installation)
+    - [Recommended: Docker Installation](#recommended-docker-installation)
+    - [Manual Installation](#manual-installation)
 - [Environment Configuration](#environment-configuration)
 - [Artisan Command Suite](#artisan-command-suite)
 - [Show Your Support](#show-your-support)
@@ -28,125 +28,123 @@
 
 ## Key Features & Technical Highlights
 
-GOAT is built with a focus on performance, security, and a premium user experience.
+GOAT is built with a focus on enterprise-grade performance, security, and a premium, responsive user experience.
 
-* **AI-Powered Content Moderation**
-  A robust pipeline leveraging **Google's Gemini Pro API** for real-time analysis and moderation of all user-generated content (posts, comments, images, URLs), augmented by a configurable local keyword filter.
+* **Advanced Hybrid Search Engine**
+  A sophisticated search system powered by a hybrid algorithm combining **BM25** full-text relevance, **Vector** similarity search, **Levenshtein distance** for fuzzy matching, and **Soundex** phonetic analysis. This delivers exceptionally accurate and relevant results for both platform content and users.
 
-* **Dynamic AI Asset Generation**
-  Empowers users to generate unique profile pictures directly from text prompts using a **Stable Diffusion AI** model, providing endless personalization.
+* **Multi-Provider Generative AI Suite**
+    * **Content Moderation:** A robust pipeline leveraging **Google's Gemini Pro API** for real-time analysis of all user-generated content, augmented by a local keyword filter.
+    * **Dynamic Asset Generation:** Empowers users to generate unique profile pictures from text prompts using a **Stable Diffusion AI** model, served via the **Cloudflare AI Workers API**.
 
-* **High-Performance 3D Rendering**
-  A sophisticated **Three.js/WebGL** engine renders interactive 3D achievement badges in a dedicated **Web Worker**. This offloads heavy computation from the main thread, ensuring a consistently smooth and responsive UI.
+* **High-Fidelity 3D Rendering Engine**
+  A sophisticated **Three.js/WebGL** engine renders interactive 3D achievement badges in a dedicated **Web Worker**, offloading heavy computation from the main thread. The engine features advanced post-processing effects (**Bloom, SSR, SSAO, God Rays**), **HDRI lighting**, and `ACESFilmicToneMapping` for photorealistic visuals.
 
-* **WebAssembly (WASM) Optimization**
-  Performance-critical geometry calculations for the 3D engine are handled by **C++ modules compiled to WebAssembly** via Emscripten, delivering near-native speed in the browser.
+* **WebAssembly (WASM) & C++ Optimization**
+  Performance-critical geometry calculations for the 3D engine are handled by **C/C++ modules compiled to WebAssembly** via Emscripten. This delivers near-native speed for complex computations directly in the browser, ensuring a smooth UI.
 
-* **Secure by Design**
-  Implements a hardened authentication system with local credentials and **Google OAuth2**. The application is protected by a strict Content Security Policy (CSP), security headers, and follows industry best practices for user data protection.
+* **Progressive Web App (PWA)**
+  Fully installable as a PWA for an app-like experience on desktop and mobile, with offline access capabilities and enhanced performance thanks to service worker caching.
 
-* **Intelligent Email Notifications**
-  A scheduled, queue-based system intelligently sends activity digests to users. It respects user preferences and only dispatches notifications when there is sufficient new content, preventing spam.
+* **Hardened Security & Authentication**
+    * **Multi-Provider OAuth2:** Secure login via local credentials, **Google, GitHub, X (Twitter), and Telegram**.
+    * **Robust Auth System:** Implements a **Refresh Token** system using **Laravel Sanctum** for persistent, secure sessions.
+    * **Best Practices:** Enforces a strict **Content Security Policy (CSP)**, HSTS, and other security headers. Protected against common vulnerabilities with rate limiting, signed URLs, and `Bcrypt` hashing.
+    * **Static Analysis:** Continuously scanned for vulnerabilities and code quality issues using **SonarCloud, Snyk, and Trivy**.
 
-* **Advanced Fuzzy Search**
-  A powerful search system built with **Levenshtein distance** and **Soundex phonetic algorithms** delivers highly accurate "fuzzy" search results for both platform content and users.
+* **Performance-Optimized Architecture**
+    * **Server:** Built to run on high-performance servers like **FrankenPHP** (with **Caddy**) for HTTP/2 & HTTP/3 support, or traditional stacks like Nginx/Apache with Supervisor.
+    * **Caching:** Leverages **Redis** for application caching, queues, and session storage. Uses **Spatie ResponseCache** for intelligent full-page caching.
+    * **Frontend:** Delivers a lightning-fast experience with **Initial Server-Side Render (SSR) with Client-side Hydration**, LQIP (Low-Quality Image Placeholders) with shimmer effects, asynchronous CSS loading, and asset preloading.
+
+* **DevOps & Automation**
+    * **Containerized Environment:** Ships with a full **Docker Compose** setup including multi-stage builds for lightweight production images.
+    * **CI/CD Ready:** Includes a `Makefile` for streamlined build, test, and deployment automation.
+    * **Feature Flags:** Utilizes a custom **GitHub-based feature flag system** to safely roll out new functionality in production.
+
+* **Advanced SEO & Monetization**
+    * **Deep SEO Integration:** Automated sitemap generation (including Google Image Sitemaps) with ping submissions to Google/Bing. Implements structured data (JSON-LD), `hreflang` tags, and canonical URLs. Integrates with the **Google Search Console (GSC) API**.
+    * **Monetization Ready:** Pre-configured for **Google AdSense** and **Ezoic**, with an integrated **Consent Management Platform (CMP)** for GDPR compliance.
 
 * **Comprehensive Admin Toolkit**
-  Includes a suite of custom Artisan commands for database cleanup, sitemap generation, image optimization, and an advanced, filterable command-line log viewer for streamlined maintenance.
-
-* **Automated Image Optimization**
-  An automated pipeline processes all user-uploaded images, converting them to the next-generation **WebP** format to dramatically reduce bandwidth and improve page load times.
-
-* **SEO & Internationalization (i18n)**
-  Features automated sitemap generation with ping submissions to Google and Bing for optimal search engine indexing. The platform is fully internationalized to support multiple locales.
+  Includes a suite of custom Artisan commands for database cleanup, sitemap generation, image optimization, and `netdebug` for API health checks. Also features an advanced, filterable command-line log viewer.
 
 ---
 
 ## Technology Stack
 
-The project is implemented using a curated selection of modern and powerful technologies.
+The project is implemented using a curated selection of modern, powerful, and scalable technologies.
 
-* **Backend:** PHP 8.3+, Laravel 12, MySQL
-* **Frontend:** JavaScript (ESM), Three.js (WebGL), GLSL, Tailwind CSS, Vite
-* **High-Performance Computing:** C++ compiled to WebAssembly (WASM) via Emscripten
-* **Core APIs:** Google Gemini API, Stable Diffusion (via Cloudflare Workers AI), Google OAuth 2.0
+* **Core Backend:** PHP 8.3+, Laravel 12, MariaDB, Redis
+* **Core Frontend:** JavaScript (ES6+), Three.js (WebGL), Alpine.js, Tailwind CSS, Vite
+* **High-Performance & Interop:** C/C++ compiled to WebAssembly (WASM), GLSL
+* **Server & Deployment:** **FrankenPHP (Caddy)**, **Docker**, Docker Compose, Supervisor, Nginx/Apache
+* **APIs & Services:** Google (Gemini, OAuth, AdSense, GSC), Cloudflare AI, Social APIs (X, Instagram, Telegram), Ezoic
+* **Key Libraries:** GuzzleHttp, Intervention Image, Predis, Spatie Packages (CSP, ResponseCache, Sitemap), nlohmann/json
+* **Tooling & Quality:** Composer, npm, Git, Makefile, **SonarCloud**, **Snyk**, **Trivy**, ESLint, Barryvdh Debugbar, Laravel Pulse
 
 ---
 
 ## Getting Started: Local Development
 
-Follow these steps to get a local instance of GOAT up and running.
-
 ### Prerequisites
 
-* PHP >= 8.3
-* Composer
-* Node.js & npm
-* MySQL (or a compatible database)
-* **Emscripten SDK**: Required for compiling the C++ to WASM module. Follow the [official installation guide](https://emscripten.org/docs/getting_started/downloads.html).
+* **Docker & Docker Compose** (Recommended)
+* OR a manual setup with:
+    * PHP >= 8.3
+    * Composer
+    * Node.js & npm
+    * MariaDB (or MySQL)
+    * Redis
+    * **Emscripten SDK**: Required for compiling the C++ to WASM module. Follow the [official installation guide](https://emscripten.org/docs/getting_started/downloads.html).
 
-### Installation
+### Recommended: Docker Installation
+
+This is the fastest way to get a consistent development environment up and running.
 
 1.  **Clone the repository:**
     ```sh
     git clone [https://github.com/umaarov/goat-dev.git](https://github.com/umaarov/goat-dev.git)
     cd goat-dev
     ```
-
-2.  **Install PHP dependencies:**
+2.  **Set up your environment:**
     ```sh
-    composer install
+    cp .env.example .env
     ```
+    * *Update the `.env` file with your API keys and configuration (see table below).*
 
-3.  **Install Node.js dependencies:**
+3.  **Build and run the containers:**
     ```sh
-    npm install
+    docker-compose up -d --build
     ```
-
-4.  **Set up your environment:**
-    * Copy the example environment file:
-        ```sh
-        cp .env.example .env
-        ```
-    * Generate a unique application key:
-        ```sh
-        php artisan key:generate
-        ```
-    * Configure your database credentials, API keys, and other values in the `.env` file (see table below).
-
-5.  **Run database migrations:**
+4.  **Finalize installation:**
     ```sh
-    php artisan migrate
+    docker-compose exec app composer install
+    docker-compose exec app php artisan key:generate
+    docker-compose exec app php artisan migrate
+    docker-compose exec app npm install
+    docker-compose exec app bash build.sh # Compile WASM
+    docker-compose exec app npm run build
     ```
+5.  Your application is now running! Access it at `http://localhost`.
 
-6.  **Compile the WebAssembly Module:**
-    * Ensure the Emscripten SDK environment is active in your terminal.
-    * Execute the compilation script to build the C++ module:
-        ```sh
-        bash build.sh
-        ```
-    * This will generate `geometry_optimizer.js` and `geometry_optimizer.wasm` in the `public/assets/wasm/` directory.
+### Manual Installation
 
-7.  **Build frontend assets:**
+1.  **Clone the repository** and `cd` into it.
+2.  **Install PHP dependencies:** `composer install`
+3.  **Install Node.js dependencies:** `npm install`
+4.  **Set up your environment:** `cp .env.example .env` then `php artisan key:generate`
+5.  **Configure `.env`:** Add your database, Redis, API keys, etc.
+6.  **Run migrations:** `php artisan migrate`
+7.  **Compile WASM:** Activate Emscripten SDK and run `bash build.sh`
+8.  **Build frontend assets:** `npm run build`
+9.  **Run development servers:**
+    * `php artisan serve` (or configure FrankenPHP/Nginx)
+    * `npm run dev` (for Vite HMR)
+10. **Configure Task Scheduler (Production):**
     ```sh
-    npm run build
+    * * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1
     ```
-
-8.  **Run the development servers:**
-    * Start the Laravel server:
-        ```sh
-        php artisan serve
-        ```
-    * In a new terminal, start the Vite HMR server for frontend assets:
-        ```sh
-        npm run dev
-        ```
-
-9.  **Configure the Task Scheduler (Production):**
-    * To enable scheduled tasks like email notifications, add the following Cron entry to your server:
-        ```sh
-        * * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1
-        ```
 
 ---
 
@@ -154,26 +152,31 @@ Follow these steps to get a local instance of GOAT up and running.
 
 The following `.env` variables are critical for the application's full functionality.
 
-| Variable                | Description                                                   | Required |
-|-------------------------|---------------------------------------------------------------|:--------:|
-| `DB_CONNECTION`         | The database driver (e.g., `mysql`).                          | ✅       |
-| `DB_HOST`               | The database host.                                            | ✅       |
-| `DB_PORT`               | The database port.                                            | ✅       |
-| `DB_DATABASE`           | The database schema name.                                     | ✅       |
-| `DB_USERNAME`           | The database user.                                            | ✅       |
-| `DB_PASSWORD`           | The database user's password.                                 | ✅       |
-| `GOOGLE_CLIENT_ID`      | OAuth Client ID from your Google Cloud project.               | ✅       |
-| `GOOGLE_CLIENT_SECRET`  | OAuth Client Secret from your Google Cloud project.           | ✅       |
-| `GOOGLE_REDIRECT_URI`   | The configured OAuth redirect URI.                            | ✅       |
-| `GEMINI_API_KEY`        | API key for the Google Gemini AI service.                     | ✅       |
-| `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare Account ID for AI services.                   | ✅       |
-| `CLOUDFLARE_API_TOKEN`  | A Cloudflare API Token with AI Workers permissions.           | ✅       |
-| `CLOUDFLARE_AI_MODEL`   | The Cloudflare AI model for image generation.                 | ✅       |
-| `MAIL_MAILER`           | The mail driver (e.g., `smtp`).                               | ✅       |
-| `MAIL_HOST`             | The SMTP server host.                                         | ✅       |
-| `MAIL_USERNAME`         | The SMTP username for authentication.                         | ✅       |
-| `MAIL_PASSWORD`         | The SMTP password for authentication.                         | ✅       |
-
+| Variable | Description | Required |
+|---|---|:---:|
+| `DB_CONNECTION` | The database driver (e.g., `mysql`). | ✅ |
+| `DB_HOST` | The database host. | ✅ |
+| `DB_PORT` | The database port. | ✅ |
+| `DB_DATABASE` | The database schema name. | ✅ |
+| `DB_USERNAME` | The database user. | ✅ |
+| `DB_PASSWORD` | The database user's password. | ✅ |
+| `REDIS_HOST` | The Redis server host. | ✅ |
+| `REDIS_PASSWORD` | The Redis password. | |
+| `REDIS_PORT` | The Redis port. | ✅ |
+| `GOOGLE_CLIENT_ID` | OAuth Client ID from Google Cloud. | ✅ |
+| `GOOGLE_CLIENT_SECRET` | OAuth Client Secret from Google Cloud. | ✅ |
+| `GEMINI_API_KEY` | API key for the Google Gemini AI service. | ✅ |
+| `CLOUDFLARE_ACCOUNT_ID`| Cloudflare Account ID for AI services. | ✅ |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API Token with AI Workers permissions.| ✅ |
+| `GITHUB_CLIENT_ID` | OAuth Client ID from GitHub. | |
+| `GITHUB_CLIENT_SECRET` | OAuth Client Secret from GitHub. | |
+| `X_CLIENT_ID` | OAuth Client ID from X (Twitter). | |
+| `X_CLIENT_SECRET` | OAuth Client Secret from X (Twitter). | |
+| `TELEGRAM_BOT_TOKEN` | Your Telegram Bot token for login/API. | |
+| `MAIL_MAILER` | The mail driver (e.g., `smtp`). | ✅ |
+| `MAIL_HOST` | The SMTP server host. | ✅ |
+| `MAIL_USERNAME` | The SMTP username for authentication. | ✅ |
+| `MAIL_PASSWORD` | The SMTP password for authentication. | ✅ |
 
 ---
 
@@ -182,28 +185,27 @@ The following `.env` variables are critical for the application's full functiona
 The application provides a powerful set of custom commands for system administration and maintenance.
 
 ### `users:cleanup-unverified`
-Deletes user accounts that have not been verified via email within a configured timeframe (default: 1 hour).
+Deletes unverified user accounts after a configured timeframe (default: 1 hour).
 * **Usage**: `php artisan users:cleanup-unverified`
 * **Schedule**: Runs every ten minutes.
 
 ### `sitemap:generate`
-Generates a fresh `sitemap.xml` file containing all application routes accessible to search engines and pings Google/Bing.
+Generates a fresh `sitemap.xml` (with image extensions) and pings Google/Bing.
 * **Usage**: `php artisan sitemap:generate`
 * **Schedule**: Runs daily at 02:00.
 
 ### `images:optimize`
-A powerful batch-processing command that finds and converts all existing JPEG/PNG images (for posts and profiles) to the high-efficiency WebP format.
+Batch-processes existing JPEG/PNG images, converting them to the high-efficiency WebP format.
 * **Usage**: `php artisan images:optimize`
 
 ### `app:show-logs`
-An advanced, interactive log viewer for your terminal.
+An advanced, interactive terminal log viewer.
 * **Usage**: `php artisan app:show-logs [options]`
-* **Options**:
-    * `--lines=<number>`: Number of lines to display.
-    * `--channel=<name>`: Specify a log channel (e.g., `laravel`, `audit_trail`).
-    * `--date=<YYYY-MM-DD>`: View logs for a specific date.
-    * `--grep=<string>`: Filter lines containing a specific string (case-insensitive).
-    * `--tail`: Tail the log file for real-time monitoring.
+* **Options**: `--lines`, `--channel`, `--date`, `--grep`, `--tail`
+
+### `app:netdebug`
+A network utility to diagnose connectivity issues with external APIs (e.g., Google, Cloudflare).
+* **Usage**: `php artisan app:netdebug`
 
 ---
 

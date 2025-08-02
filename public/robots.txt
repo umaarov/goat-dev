@@ -1,19 +1,28 @@
-# Last updated: 2025-07-29
 User-agent: *
 
-#Disallow: /login
-#Disallow: /register
-#Disallow: /logout
-#Disallow: /auth/
-#Disallow: /email/
-#Disallow: /posts/create
-#Disallow: /*/edit$
-#Disallow: /notifications
-#Disallow: /profile/edit
-Disallow: /profile/change-password
+# Block access to authentication, password reset, and verification routes
+Disallow: /login
+Disallow: /register
+Disallow: /logout
+Disallow: /auth/
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /email/
+Disallow: /confirm-password
 
-#Disallow: /*/posts-data$
-#Disallow: /*/voted-data$
+Disallow: /posts/create
+Disallow: /*/edit$
+
+Disallow: /notifications
+#Disallow: /@{username}/posts-data
+#Disallow: /@{username}/voted-data
+
 Disallow: /check-username
+Disallow: /load-more-posts
+Disallow: /__netdebug
+
+Disallow: /*?*
+
+Allow: /
 
 Sitemap: https://goat.uz/sitemap.xml
