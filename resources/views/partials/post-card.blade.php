@@ -715,12 +715,18 @@
 </style>
 
 
-
+<script src="{{ asset('js/pow_solver.js') }}"></script>
 <script>
 
     if (typeof window.postScriptInitialized === 'undefined') {
         window.postScriptInitialized = true;
-    let typingTimers = {};
+        let wasmSolver = null;
+        let typingTimers = {};
+
+        Module.onRuntimeInitialized = () => {
+            wasmSolver = Module.cwrap('solve', 'string', ['string', 'number']);
+            console.log('✅ Proof-of-Work WASM solver loaded!');
+        };
 
         function updateTypingIndicatorUI(postId) {
             const indicator = document.getElementById(`typing-indicator-${postId}`);
@@ -1937,7 +1943,7 @@ ${canDeleteComment(commentData) ? `
         }
     }
 
-    function submitComment(postId, event) {
+    async function submitComment(postId, event) {
         event.preventDefault();
         const form = event.target;
         const submitButton = form.querySelector('button[type="submit"]');
@@ -1949,8 +1955,33 @@ ${canDeleteComment(commentData) ? `
             return;
         }
 
+        if (!wasmSolver) {
+            if(window.showToast) showToast('Anti-spam module is not ready. Please wait.', 'warning');
+            return;
+        }
+
         submitButton.disabled = true;
         submitButton.innerHTML = `<div class="inline-block animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>`;
+
+        let pow_result = null;
+        try {
+            pow_result = await wasmSolver(content, 4);
+        } catch (e) {
+            console.error("WASM PoW solver failed:", e);
+            if(window.showToast) showToast('Anti-spam check failed. Please refresh.', 'error');
+            submitButton.disabled = false;
+            submitButton.innerHTML = window.translations.js_submit_comment_button || 'Submit';
+            return;
+        }
+
+        if (!pow_result) {
+            if(window.showToast) showToast('Could not generate anti-spam token. Try a shorter comment.', 'error');
+            submitButton.disabled = false;
+            submitButton.innerHTML = window.translations.js_submit_comment_button || 'Submit';
+            return;
+        }
+
+        const [nonce, hash] = pow_result.split(':');
 
         const headers = {
             'Content-Type': 'application/json',
@@ -1963,7 +1994,12 @@ ${canDeleteComment(commentData) ? `
         fetch(`/posts/${postId}/comments`, {
             method: 'POST',
             headers: headers,
-            body: JSON.stringify({content: content, parent_id: parentId || null})
+            body: JSON.stringify({
+                content: content,
+                parent_id: parentId || null,
+                nonce: parseInt(nonce),
+                hash: hash
+            })
         })
             .then(response => {
                 if (!response.ok) return response.json().then(err => Promise.reject(err));

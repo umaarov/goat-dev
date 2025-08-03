@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\NewCommentPosted;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\CommentLikeController;
@@ -9,7 +10,10 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\UserController;
+use App\Models\Comment;
+use App\Models\Post;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/language/{locale}', [LocaleController::class, 'setLocale'])->name('language.set');
@@ -114,12 +118,55 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::controller(CommentController::class)->group(function () {
         Route::get('/posts/{post}/comments', 'index')->name('comments.index');
-        Route::post('/posts/{post}/comments', 'store')->name('comments.store')->middleware('throttle:30,1');
+        // Route::post('/posts/{post}/comments', 'store')->name('comments.store')->middleware('throttle:30,1');
         Route::put('/comments/{comment}', 'update')->name('comments.update');
         Route::delete('/comments/{comment}', 'destroy')->name('comments.destroy');
         Route::get('/comments/{comment}/replies', 'getReplies')->name('comments.getReplies');
         Route::get('/posts/{post}/comments/context/{comment}', 'showCommentContext')->name('comments.showContext');
     })->whereNumber(['post', 'comment']);
+
+    Route::post('/posts/{post}/comments', function (Request $request, Post $post) {
+        $data = $request->validate([
+            'content' => 'required|string|max:2000',
+            'parent_id' => 'nullable|integer|exists:comments,id',
+            'nonce' => 'required|integer',
+            'hash' => 'required|string|size:64',
+        ]);
+
+        $difficulty = 4;
+        $prefix = str_repeat('0', $difficulty);
+
+        $string_to_verify = $data['content'] . ':' . $data['nonce'];
+        $server_hash = hash('sha256', $string_to_verify);
+
+        if ($server_hash !== $data['hash'] || !str_starts_with($server_hash, $prefix)) {
+            return response()->json(['message' => 'Invalid anti-spam token. Please try again.'], 422);
+        }
+
+        $comment = new Comment();
+        $comment->content = $data['content'];
+        $comment->user_id = auth()->id();
+        $comment->post_id = $post->id;
+
+        if (!empty($data['parent_id'])) {
+            $parentComment = Comment::find($data['parent_id']);
+            if ($parentComment) {
+                $comment->parent_id = $parentComment->id;
+                $comment->root_comment_id = $parentComment->root_comment_id ?? $parentComment->id;
+            }
+        }
+        $comment->save();
+
+        $comment->load('user', 'parent.user');
+
+        broadcast(new NewCommentPosted($comment))->toOthers();
+
+        return response()->json([
+            'comment' => $comment,
+            'message' => 'Comment posted successfully!'
+        ], 201);
+
+    })->name('comments.store')->middleware(['auth', 'verified', 'throttle:30,1']);
 
     Route::post('/comments/{comment}/toggle-like', [CommentLikeController::class, 'toggleLike'])->name('comments.toggle-like')->middleware('throttle:30,1');
 
