@@ -722,38 +722,48 @@
         window.postScriptInitialized = true;
     let typingTimers = {};
 
-    function updateTypingIndicatorUI(postId) {
-        const indicator = document.getElementById(`typing-indicator-${postId}`);
-        if (!indicator) return;
+        function updateTypingIndicatorUI(postId) {
+            const indicator = document.getElementById(`typing-indicator-${postId}`);
+            if (!indicator) return;
 
-        const typists = indicator.dataset.typists ? JSON.parse(indicator.dataset.typists) : [];
-        indicator.innerHTML = '';
+            const typists = indicator.dataset.typists ? JSON.parse(indicator.dataset.typists) : [];
+            indicator.innerHTML = ''; // Clear previous content
 
-        if (typists.length > 0) {
+            if (typists.length === 0) {
+                return; // No one is typing, so nothing to show.
+            }
+
             const span = document.createElement('span');
-            if (typists.length === 1) {
+
+            // Helper to create a bolded username element
+            const createStrong = (text) => {
                 const strong = document.createElement('strong');
                 strong.className = 'font-semibold not-italic';
-                strong.textContent = typists[0];
-                span.appendChild(strong);
+                strong.textContent = text;
+                return strong;
+            };
+
+            if (typists.length === 1) {
+                // Case: User1 is typing...
+                span.appendChild(createStrong(typists[0]));
                 span.append(' is typing...');
             } else if (typists.length === 2) {
-                const strong1 = document.createElement('strong');
-                strong1.className = 'font-semibold not-italic';
-                strong1.textContent = typists[0];
-                const strong2 = document.createElement('strong');
-                strong2.className = 'font-semibold not-italic';
-                strong2.textContent = typists[1];
-                span.appendChild(strong1);
+                // Case: User1 and User2 are typing...
+                span.appendChild(createStrong(typists[0]));
                 span.append(' and ');
-                span.appendChild(strong2);
+                span.appendChild(createStrong(typists[1]));
                 span.append(' are typing...');
             } else {
-                span.textContent = 'Several people are typing...';
+                // Case: User1 and X others are typing...
+                const othersCount = typists.length - 1;
+                span.appendChild(createStrong(typists[0]));
+                span.append(' and ');
+                span.appendChild(createStrong(othersCount + ' ' + (othersCount > 1 ? 'others' : 'other')));
+                span.append(' are typing...');
             }
+
             indicator.appendChild(span);
         }
-    }
 
     function initializeTypingBroadcastingForPost(postId) {
         const currentUsername = @json(Auth::check() ? Auth::user()->username : null);
@@ -947,6 +957,7 @@
             window.Echo.connector.pusher.connection.bind('disconnected', () => {
                 console.log('Real-time connection lost! Disabling comment forms.');
                 const submitButtons = document.querySelectorAll('form[id^="comment-form-"] button[type="submit"]');
+                submitButtons.forEach(button => {
                 submitButtons.forEach(button => {
                     button.disabled = true;
                     button.classList.add('bg-blue-400', 'cursor-not-allowed');
