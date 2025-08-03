@@ -97,7 +97,25 @@
 @section('content')
     <div class="container mx-auto">
 
+        <div class="my-4" style="display:none;">
+            <div id="ezoic-pub-ad-placeholder-101"></div>
+            <script>
+                ezstandalone.cmd.push(function () {
+                    ezstandalone.showAds(101);
+                });
+            </script>
+        </div>
+
         @include('partials.post-card', ['post' => $post])
+
+        <div class="my-4" style="display:none;">
+            <div id="ezoic-pub-ad-placeholder-102"></div>
+            <script>
+                ezstandalone.cmd.push(function () {
+                    ezstandalone.showAds(102);
+                });
+            </script>
+        </div>
 
     </div>
 @endsection

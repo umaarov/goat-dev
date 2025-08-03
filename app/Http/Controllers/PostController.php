@@ -1018,8 +1018,11 @@ class PostController extends Controller
         ]);
     }
 
+
     final public function loadMorePosts(Request $request): JsonResponse
     {
+        $postCounter = (int) $request->input('post_count', 0);
+
         $query = Post::query()->withPostData();
 
         switch ($request->input('filter')) {
@@ -1037,7 +1040,10 @@ class PostController extends Controller
         $posts = $query->paginate(15)->withQueryString();
         $this->attachUserVoteStatus($posts);
 
-        $html = view('partials.posts-list', ['posts' => $posts])->render();
+        $html = view('partials.posts-list', [
+            'posts' => $posts,
+            'postCounter' => $postCounter
+        ])->render();
 
         return response()->json([
             'html' => $html,

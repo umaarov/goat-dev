@@ -46,9 +46,7 @@
 
         <div id="posts-container" class="hidden">
             @if ($posts->count() > 0)
-                @foreach($posts as $post)
-                    @include('partials.post-card', ['post' => $post])
-                @endforeach
+                @include('partials.posts-list', ['posts' => $posts, 'postCounter' => 0])
             @else
                 <div class="text-center p-8 bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)]">
                     <p>{{ __('messages.app.no_posts_found') }}</p>
@@ -107,8 +105,11 @@
                 loadingIndicator.classList.remove('hidden');
 
                 const filter = new URLSearchParams(window.location.search).get('filter') || '';
-                const url = `{{ route('posts.load_more') }}?page=${nextPage}${filter ? '&filter=' + filter : ''}`;
 
+                const postCount = postContainer.querySelectorAll('article.post-card').length;
+
+                {{--const url = `{{ route('posts.load_more') }}?page=${nextPage}${filter ? '&filter=' + filter : ''}`;--}}
+                const url = `{{ route('posts.load_more') }}?page=${nextPage}&post_count=${postCount}`;
                 try {
                     const response = await fetch(url, {
                         headers: {
