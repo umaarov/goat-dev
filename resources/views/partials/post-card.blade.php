@@ -371,6 +371,8 @@
                         </button>
                     </div>
 
+                    <div id="typing-indicator-{{ $post->id }}" class="text-xs text-gray-500 italic h-5"></div>
+
                     <div class="flex justify-between">
                         <button type="button" onclick="toggleComments('{{ $post->id }}')"
                                 class="bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm py-1 px-4 rounded-md">{{ __('messages.cancel_button') }}
@@ -715,6 +717,67 @@
 
 
 <script>
+
+    if (typeof window.postScriptInitialized === 'undefined') {
+        window.postScriptInitialized = true;
+    let typingTimers = {};
+
+    function updateTypingIndicatorUI(postId) {
+        const indicator = document.getElementById(`typing-indicator-${postId}`);
+        if (!indicator) return;
+
+        const typists = indicator.dataset.typists ? JSON.parse(indicator.dataset.typists) : [];
+        indicator.innerHTML = '';
+
+        if (typists.length > 0) {
+            const span = document.createElement('span');
+            if (typists.length === 1) {
+                const strong = document.createElement('strong');
+                strong.className = 'font-semibold not-italic';
+                strong.textContent = typists[0];
+                span.appendChild(strong);
+                span.append(' is typing...');
+            } else if (typists.length === 2) {
+                const strong1 = document.createElement('strong');
+                strong1.className = 'font-semibold not-italic';
+                strong1.textContent = typists[0];
+                const strong2 = document.createElement('strong');
+                strong2.className = 'font-semibold not-italic';
+                strong2.textContent = typists[1];
+                span.appendChild(strong1);
+                span.append(' and ');
+                span.appendChild(strong2);
+                span.append(' are typing...');
+            } else {
+                span.textContent = 'Several people are typing...';
+            }
+            indicator.appendChild(span);
+        }
+    }
+
+    function initializeTypingBroadcastingForPost(postId) {
+        const currentUsername = @json(Auth::check() ? Auth::user()->username : null);
+        if (!currentUsername) return;
+
+        const form = document.getElementById(`comment-form-${postId}`);
+        if (!form) return;
+
+        const textarea = form.querySelector('textarea[name="content"]');
+        if (!textarea || textarea.dataset.typingListenerAttached) return;
+        textarea.dataset.typingListenerAttached = 'true';
+
+        let typingTimeout;
+        textarea.addEventListener('input', () => {
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                console.log(`[Whisper] Broadcasting 'typing' for post ${postId}`);
+                window.Echo.private(`post.${postId}`).whisper('typing', {
+                    name: currentUsername
+                });
+            }, 300);
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         if (!('IntersectionObserver' in window)) {
             console.warn('IntersectionObserver not supported. Falling back to loading all images.');
@@ -771,32 +834,65 @@
         }
 
         function initializeEchoListeners() {
+            const currentUsername = @json(Auth::check() ? Auth::user()->username : null);
+            if (!currentUsername) return;
+
             const postElements = document.querySelectorAll('article[id^="post-"]:not([data-echo-listening])');
 
             postElements.forEach(postElement => {
                 postElement.dataset.echoListening = 'true';
-
                 const postId = postElement.id.split('-')[1];
 
-                if ({{ Auth::check() ? 'true' : 'false' }}) {
-                    window.Echo.private(`post.${postId}`)
-                        .listen('.NewCommentPosted', (e) => {
-                            console.log('Real-time comment received!', e);
-                            const newCommentData = e.comment;
-                            const commentsSection = document.getElementById(`comments-section-${postId}`);
+                const channel = window.Echo.private(`post.${postId}`);
 
-                            if (String(newCommentData.post_id) === String(postId)) {
-                                if (commentsSection && commentsSection.classList.contains('active')) {
-                                    addNewCommentToUI(newCommentData, postId);
-                                }
+                channel.listen('.NewCommentPosted', (e) => {
+                    console.log('[Echo] Real-time comment received!', e);
+                    const newCommentData = e.comment;
+                    const commentsSection = document.getElementById(`comments-section-${postId}`);
 
-                                const commentCountElement = document.querySelector(`#post-${postId} button[onclick^="toggleComments"] span`);
-                                if (commentCountElement) {
-                                    commentCountElement.textContent = parseInt(commentCountElement.textContent) + 1;
-                                }
-                            }
-                        });
-                }
+                    if (String(newCommentData.post_id) === String(postId)) {
+                        if (commentsSection && commentsSection.classList.contains('active')) {
+                            addNewCommentToUI(newCommentData, postId);
+                        }
+                        const commentCountElement = document.querySelector(`#post-${postId} button[onclick^="toggleComments"] span`);
+                        if (commentCountElement) {
+                            commentCountElement.textContent = parseInt(commentCountElement.textContent) + 1;
+                        }
+                    }
+                });
+
+                channel.listenForWhisper('typing', (e) => {
+                    console.log(`[Whisper] Received 'typing' event on post ${postId} from:`, e.name); // For debugging
+                    const indicator = document.getElementById(`typing-indicator-${postId}`);
+
+                    if (!indicator || e.name === currentUsername) {
+                        return;
+                    }
+
+                    let typists = indicator.dataset.typists ? JSON.parse(indicator.dataset.typists) : [];
+
+                    if (!typists.includes(e.name)) {
+                        typists.push(e.name);
+                    }
+                    indicator.dataset.typists = JSON.stringify(typists);
+
+                    const timerKey = `post-${postId}-${e.name}`;
+                    if (typingTimers[timerKey]) {
+                        clearTimeout(typingTimers[timerKey]);
+                    }
+
+                    typingTimers[timerKey] = setTimeout(() => {
+                        let currentTypists = JSON.parse(indicator.dataset.typists || '[]');
+                        const index = currentTypists.indexOf(e.name);
+                        if (index > -1) {
+                            currentTypists.splice(index, 1);
+                        }
+                        indicator.dataset.typists = JSON.stringify(currentTypists);
+                        updateTypingIndicatorUI(postId);
+                    }, 3000);
+
+                    updateTypingIndicatorUI(postId);
+                });
             });
         }
 
@@ -1088,6 +1184,7 @@
                 if (!clickedCommentsSection.dataset.loaded) {
                     loadComments(postId, 1);
                 }
+                initializeTypingBroadcastingForPost(postId);
             }, 10);
         }
     }
@@ -2133,5 +2230,6 @@ ${canDeleteComment(commentData) ? `
             // optionOneButton.title = `${optionOneVotes} ${votesLabel}`;
             // optionTwoButton.title = `${optionTwoVotes} ${votesLabel}`;
         }
+    }
     }
 </script>
