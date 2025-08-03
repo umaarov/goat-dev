@@ -21,7 +21,7 @@ void sha256_final(SHA256_CTX *ctx, uint8_t *hash);
 EMSCRIPTEN_KEEPALIVE
 char* solve(const char* input_text, int difficulty) {
     if (difficulty < 1 || difficulty > 6) {
-        difficulty = 4; // Set a sane default
+        difficulty = 4;
     }
 
     char prefix[difficulty + 1];

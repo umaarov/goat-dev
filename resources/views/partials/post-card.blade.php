@@ -16,7 +16,7 @@
 //    $postSlug = Str::slug($post->question, '-', 'en');
 //    $postUrl = route('posts.show', ['post' => $post, 'slug' => $postSlug]);
     $postUrl = route('posts.show.user-scoped', ['username' => $post->user->username, 'post' => $post->id]);
-    $insightPreference = Auth::user()->ai_insight_preference ?? 'expanded';
+    $insightPreference = Auth::check() && Auth::user()->ai_insight_preference ? Auth::user()->ai_insight_preference : 'expanded';
 
     $totalVotes = $post->total_votes;
     $optionOneVotes = $post->option_one_votes;
@@ -355,7 +355,7 @@
         @if (Auth::check())
             <div class="p-4 border-b border-gray-200 comment-form-container">
                 <form id="comment-form-{{ $post->id }}"
-                      onsubmit="submitComment('{{ $post->id }}', event)"
+{{--                      onsubmit="submitComment('{{ $post->id }}', event)"--}}
                       class="flex flex-col space-y-2">
                     @csrf
                     <input type="hidden" name="parent_id" value="">
@@ -380,7 +380,8 @@
 {{--                        <button type="submit"--}}
 {{--                                class="bg-blue-800 hover:bg-blue-900 text-white text-sm py-1 px-4 rounded-md">{{ __('messages.submit_comment_button') }}--}}
 {{--                        </button>--}}
-                        <button type="submit"
+                        <button type="button"
+                                onclick="submitComment('{{ $post->id }}')"
                                 disabled
                                 class="bg-blue-400 cursor-not-allowed text-white text-sm py-1 px-4 rounded-md transition-colors duration-300">
                             {{ __('messages.submit_comment_button') }}
@@ -715,7 +716,7 @@
 </style>
 
 
-<script src="{{ asset('js/pow_solver.js') }}"></script>
+{{--<script src="{{ asset('js/pow_solver.js') }}"></script>--}}
 <script>
 
     if (typeof window.postScriptInitialized === 'undefined') {
@@ -723,8 +724,19 @@
         let wasmSolver = null;
         let typingTimers = {};
 
-        Module.onRuntimeInitialized = () => {
-            wasmSolver = Module.cwrap('solve', 'string', ['string', 'number']);
+        var Module = {
+            onRuntimeInitialized: function() {
+                wasmSolver = Module.cwrap('solve', 'string', ['string', 'number']);
+                console.log('✅ Proof-of-Work WASM solver loaded!');
+            }
+        };
+
+        const powSolverScript = document.createElement('script');
+        powSolverScript.src = "{{ asset('js/pow_solver.js') }}";
+        document.body.appendChild(powSolverScript);
+
+        Module.onRuntimeInitialized = function() {
+            window.wasmSolver = Module.cwrap('solve', 'string', ['string', 'number']);
             console.log('✅ Proof-of-Work WASM solver loaded!');
         };
 
@@ -912,6 +924,8 @@
         }
 
 
+
+
         function addNewCommentToUI(commentData, postId) {
             const commentElement = createCommentElement(commentData, postId, !!commentData.parent_id);
             const isReply = !!commentData.parent_id;
@@ -949,50 +963,6 @@
 
         document.addEventListener('posts-loaded', initializeImageLoading);
 
-        if ({{ Auth::check() ? 'true' : 'false' }}) {
-            window.Echo.connector.pusher.connection.bind('connected', () => {
-                console.log('Real-time connection established! Enabling comment forms.');
-                const submitButtons = document.querySelectorAll('form[id^="comment-form-"] button[type="submit"]');
-                submitButtons.forEach(button => {
-                    button.disabled = false;
-                    button.classList.remove('bg-blue-400', 'cursor-not-allowed');
-                    button.classList.add('bg-blue-800', 'hover:bg-blue-900');
-                });
-            });
-            window.Echo.connector.pusher.connection.bind('disconnected', () => {
-                console.log('Real-time connection lost! Disabling comment forms.');
-                const submitButtons = document.querySelectorAll('form[id^="comment-form-"] button[type="submit"]');
-                submitButtons.forEach(button => {
-                    button.disabled = true;
-                    button.classList.add('bg-blue-400', 'cursor-not-allowed');
-                    button.classList.remove('bg-blue-800', 'hover:bg-blue-900');
-                });
-            });
-        }
-
-        // const postElements = document.querySelectorAll('article[id^="post-"]');
-
-        {{--postElements.forEach(postElement => {--}}
-        {{--    const postId = postElement.id.split('-')[1];--}}
-        {{--    if ({{ Auth::check() ? 'true' : 'false' }}) {--}}
-        {{--        window.Echo.private(`post.${postId}`)--}}
-        {{--            .listen('.NewCommentPosted', (e) => {--}}
-        {{--                console.log('Real-time comment received!', e);--}}
-        {{--                const newCommentData = e.comment;--}}
-        {{--                const commentsSection = document.getElementById(`comments-section-${postId}`);--}}
-
-        {{--                if (commentsSection && commentsSection.classList.contains('active')) {--}}
-        {{--                    addNewCommentToUI(newCommentData, postId);--}}
-        {{--                }--}}
-
-        {{--                const commentCountElement = document.querySelector(`#post-${postId} button[onclick^="toggleComments"] span`);--}}
-        {{--                if (commentCountElement) {--}}
-        {{--                    commentCountElement.textContent = parseInt(commentCountElement.textContent) + 1;--}}
-        {{--                }--}}
-        {{--            });--}}
-        {{--    }--}}
-        {{--});--}}
-    });
 
     function scrollToPost(postId) {
         const postElement = document.getElementById(`post-${postId}`);
@@ -1943,111 +1913,118 @@ ${canDeleteComment(commentData) ? `
         }
     }
 
-    async function submitComment(postId, event) {
-        event.preventDefault();
-        const form = event.target;
-        const submitButton = form.querySelector('button[type="submit"]');
-        const content = form.elements.content.value;
-        const parentId = form.elements.parent_id.value;
+        async function submitComment(postId) {
+            const form = document.getElementById(`comment-form-${postId}`);
+            if (!form) {
+                console.error(`Comment form for post ${postId} not found.`);
+                return;
+            }
 
-        if (!content.trim()) {
-            if(window.showToast) showToast(window.translations.js_comment_empty);
-            return;
-        }
+            const submitButton = form.querySelector('button[onclick^="submitComment"]');
+            const content = form.elements.content.value;
+            const parentId = form.elements.parent_id.value;
 
-        if (!wasmSolver) {
-            if(window.showToast) showToast('Anti-spam module is not ready. Please wait.', 'warning');
-            return;
-        }
+            if (!content.trim()) {
+                if (window.showToast) showToast(window.translations.js_comment_empty);
+                return;
+            }
 
-        submitButton.disabled = true;
-        submitButton.innerHTML = `<div class="inline-block animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>`;
+            if (!wasmSolver) {
+                if (window.showToast) showToast('Anti-spam module is not ready. Please wait.', 'warning');
+                return;
+            }
 
-        let pow_result = null;
-        try {
-            pow_result = await wasmSolver(content, 4);
-        } catch (e) {
-            console.error("WASM PoW solver failed:", e);
-            if(window.showToast) showToast('Anti-spam check failed. Please refresh.', 'error');
-            submitButton.disabled = false;
-            submitButton.innerHTML = window.translations.js_submit_comment_button || 'Submit';
-            return;
-        }
+            submitButton.disabled = true;
+            submitButton.innerHTML = `<div class="inline-block animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>`;
 
-        if (!pow_result) {
-            if(window.showToast) showToast('Could not generate anti-spam token. Try a shorter comment.', 'error');
-            submitButton.disabled = false;
-            submitButton.innerHTML = window.translations.js_submit_comment_button || 'Submit';
-            return;
-        }
-
-        const [nonce, hash] = pow_result.split(':');
-
-        const headers = {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Accept': 'application/json',
-            'X-Socket-ID': window.Echo.socketId()
-        };
-
-
-        fetch(`/posts/${postId}/comments`, {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify({
-                content: content,
-                parent_id: parentId || null,
-                nonce: parseInt(nonce),
-                hash: hash
-            })
-        })
-            .then(response => {
-                if (!response.ok) return response.json().then(err => Promise.reject(err));
-                return response.json();
-            })
-            .then(data => {
+            // let pow_result = null;
+            let pow_result = window.wasmSolver(content, 4);
+            try {
+                pow_result = wasmSolver(content, 4);
+            } catch (e) {
+                console.error("WASM PoW solver failed:", e);
+                if (window.showToast) showToast('Anti-spam check failed. Please refresh.', 'error');
                 submitButton.disabled = false;
                 submitButton.innerHTML = window.translations.js_submit_comment_button || 'Submit';
-                cancelReply(postId);
-                form.elements.content.value = '';
+                return;
+            }
 
-                const newComment = data.comment;
-                const isReply = !!newComment.parent_id;
+            if (!pow_result) {
+                if (window.showToast) showToast('Could not generate anti-spam token. Try a shorter comment.', 'error');
+                submitButton.disabled = false;
+                submitButton.innerHTML = window.translations.js_submit_comment_button || 'Submit';
+                return;
+            }
 
-                const commentElement = createCommentElement(newComment, postId, isReply);
+            const [nonce, hash] = pow_result.split(':');
 
-                if (isReply) {
-                    const rootCommentId = newComment.root_comment_id;
-                    const repliesContainer = document.querySelector(`#comment-${rootCommentId} .replies-container`);
-                    if (repliesContainer) {
-                        repliesContainer.appendChild(commentElement);
-                        updateParentUIAfterReply(rootCommentId);
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json',
+                'X-Socket-ID': window.Echo.socketId()
+            };
+
+
+            fetch(`/posts/${postId}/comments`, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({
+                    content: content,
+                    parent_id: parentId || null,
+                    nonce: parseInt(nonce),
+                    hash: hash
+                })
+            })
+                .then(response => {
+                    if (!response.ok) return response.json().then(err => Promise.reject(err));
+                    return response.json();
+                })
+                .then(data => {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = window.translations.js_submit_comment_button || 'Submit';
+                    cancelReply(postId);
+                    form.elements.content.value = '';
+
+                    const newComment = data.comment;
+                    const isReply = !!newComment.parent_id;
+
+                    const commentElement = createCommentElement(newComment, postId, isReply);
+
+                    if (isReply) {
+                        const rootCommentId = newComment.root_comment_id;
+                        const repliesContainer = document.querySelector(`#comment-${rootCommentId} .replies-container`);
+                        if (repliesContainer) {
+                            repliesContainer.appendChild(commentElement);
+                            updateParentUIAfterReply(rootCommentId);
+                        } else {
+                            loadComments(postId, 1);
+                        }
                     } else {
-                        loadComments(postId, 1);
+                        const commentsContainer = document.querySelector(`#comments-section-${postId} .comments-list`);
+                        const noCommentsMessage = commentsContainer.querySelector('p.text-center');
+                        if (noCommentsMessage) noCommentsMessage.remove();
+                        commentsContainer.insertBefore(commentElement, commentsContainer.firstChild);
                     }
-                } else {
-                    const commentsContainer = document.querySelector(`#comments-section-${postId} .comments-list`);
-                    const noCommentsMessage = commentsContainer.querySelector('p.text-center');
-                    if (noCommentsMessage) noCommentsMessage.remove();
-                    commentsContainer.insertBefore(commentElement, commentsContainer.firstChild);
-                }
 
-                setTimeout(() => { commentElement.classList.add('visible'); }, 10);
+                    setTimeout(() => {
+                        commentElement.classList.add('visible');
+                    }, 10);
 
-                const commentCountElement = document.querySelector(`#post-${postId} button[onclick^="toggleComments"] span`);
-                if (commentCountElement) {
-                    commentCountElement.textContent = parseInt(commentCountElement.textContent) + 1;
-                }
-                if (window.showToast) showToast(data.message || 'Comment posted!', 'success');
-            })
-            .catch(errorData => {
-                console.error('Error:', errorData);
-                submitButton.disabled = false;
-                submitButton.innerHTML = window.translations.js_submit_comment_button || 'Submit';
-                const errorMessage = errorData?.errors ? Object.values(errorData.errors).join(' ') : (window.translations.js_failed_add_comment || 'Failed to add comment.');
-                if (window.showToast) showToast(errorMessage, 'error');
-            });
-    }
+                    const commentCountElement = document.querySelector(`#post-${postId} button[onclick^="toggleComments"] span`);
+                    if (commentCountElement) {
+                        commentCountElement.textContent = parseInt(commentCountElement.textContent) + 1;
+                    }
+                    if (window.showToast) showToast(data.message || 'Comment posted!', 'success');
+                })
+                .catch(errorData => {
+                    console.error('Error:', errorData);
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = window.translations.js_submit_comment_button || 'Submit';
+                    const errorMessage = errorData?.errors ? Object.values(errorData.errors).join(' ') : (window.translations.js_failed_add_comment || 'Failed to add comment.');
+                    if (window.showToast) showToast(errorMessage, 'error');
+                });
+        }
 
     function deleteComment(commentId, event) {
         event.preventDefault();
