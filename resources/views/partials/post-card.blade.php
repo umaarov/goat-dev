@@ -728,6 +728,8 @@
         }, {
             rootMargin: '0px 0px 100px 0px'
         });
+
+
         function initializeImageLoading() {
             const imagesToLoad = document.querySelectorAll('.progressive-image[data-src]:not(.loaded)');
             imagesToLoad.forEach(img => {
@@ -763,32 +765,36 @@
             }
         }
 
-        initializeImageLoading();
+        function initializeEchoListeners() {
+            const postElements = document.querySelectorAll('article[id^="post-"]:not([data-echo-listening])');
 
-        document.addEventListener('posts-loaded', initializeImageLoading);
+            postElements.forEach(postElement => {
+                postElement.dataset.echoListening = 'true';
 
-        const postElements = document.querySelectorAll('article[id^="post-"]');
+                const postId = postElement.id.split('-')[1];
 
-        postElements.forEach(postElement => {
-            const postId = postElement.id.split('-')[1];
-            if ({{ Auth::check() ? 'true' : 'false' }}) {
-                window.Echo.private(`post.${postId}`)
-                    .listen('.NewCommentPosted', (e) => {
-                        console.log('Real-time comment received!', e);
-                        const newCommentData = e.comment;
-                        const commentsSection = document.getElementById(`comments-section-${postId}`);
+                if ({{ Auth::check() ? 'true' : 'false' }}) {
+                    window.Echo.private(`post.${postId}`)
+                        .listen('.NewCommentPosted', (e) => {
+                            console.log('Real-time comment received!', e);
+                            const newCommentData = e.comment;
+                            const commentsSection = document.getElementById(`comments-section-${postId}`);
 
-                        if (commentsSection && commentsSection.classList.contains('active')) {
-                            addNewCommentToUI(newCommentData, postId);
-                        }
+                            if (String(newCommentData.post_id) === String(postId)) {
+                                if (commentsSection && commentsSection.classList.contains('active')) {
+                                    addNewCommentToUI(newCommentData, postId);
+                                }
 
-                        const commentCountElement = document.querySelector(`#post-${postId} button[onclick^="toggleComments"] span`);
-                        if (commentCountElement) {
-                            commentCountElement.textContent = parseInt(commentCountElement.textContent) + 1;
-                        }
-                    });
-            }
-        });
+                                const commentCountElement = document.querySelector(`#post-${postId} button[onclick^="toggleComments"] span`);
+                                if (commentCountElement) {
+                                    commentCountElement.textContent = parseInt(commentCountElement.textContent) + 1;
+                                }
+                            }
+                        });
+                }
+            });
+        }
+
 
         function addNewCommentToUI(commentData, postId) {
             const commentElement = createCommentElement(commentData, postId, !!commentData.parent_id);
@@ -817,7 +823,38 @@
             }, 10);
         }
 
+        initializeImageLoading();
 
+        initializeEchoListeners();
+
+        document.addEventListener('posts-loaded', () => {
+            initializeEchoListeners();
+        });
+
+        document.addEventListener('posts-loaded', initializeImageLoading);
+
+        // const postElements = document.querySelectorAll('article[id^="post-"]');
+
+        {{--postElements.forEach(postElement => {--}}
+        {{--    const postId = postElement.id.split('-')[1];--}}
+        {{--    if ({{ Auth::check() ? 'true' : 'false' }}) {--}}
+        {{--        window.Echo.private(`post.${postId}`)--}}
+        {{--            .listen('.NewCommentPosted', (e) => {--}}
+        {{--                console.log('Real-time comment received!', e);--}}
+        {{--                const newCommentData = e.comment;--}}
+        {{--                const commentsSection = document.getElementById(`comments-section-${postId}`);--}}
+
+        {{--                if (commentsSection && commentsSection.classList.contains('active')) {--}}
+        {{--                    addNewCommentToUI(newCommentData, postId);--}}
+        {{--                }--}}
+
+        {{--                const commentCountElement = document.querySelector(`#post-${postId} button[onclick^="toggleComments"] span`);--}}
+        {{--                if (commentCountElement) {--}}
+        {{--                    commentCountElement.textContent = parseInt(commentCountElement.textContent) + 1;--}}
+        {{--                }--}}
+        {{--            });--}}
+        {{--    }--}}
+        {{--});--}}
     });
 
     function scrollToPost(postId) {
@@ -1782,6 +1819,14 @@ ${canDeleteComment(commentData) ? `
 
         submitButton.disabled = true;
         submitButton.innerHTML = `<div class="inline-block animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>`;
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json',
+            'X-Socket-ID': window.Echo.socketId()
+        };
+
 
         fetch(`/posts/${postId}/comments`, {
             method: 'POST',
