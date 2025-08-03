@@ -10,6 +10,7 @@
         "ext-curl": "*",
         "ext-fileinfo": "*",
         "ext-gd": "*",
+        "ext-http": "*",
         "abraham/twitteroauth": "^7.0",
         "google/apiclient": "^2.18",
         "intervention/image": "^3.11",
@@ -21,10 +22,10 @@
         "laravel/socialite": "^5.19",
         "laravel/tinker": "^2.10.1",
         "predis/predis": "^3.0",
+        "pusher/pusher-php-server": "^7.2",
         "spatie/laravel-csp": "^3.13",
         "spatie/laravel-responsecache": "^7.7",
-        "spatie/laravel-sitemap": "^7.3",
-        "ext-http": "*"
+        "spatie/laravel-sitemap": "^7.3"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.15",

@@ -766,6 +766,58 @@
         initializeImageLoading();
 
         document.addEventListener('posts-loaded', initializeImageLoading);
+
+        const postElements = document.querySelectorAll('article[id^="post-"]');
+
+        postElements.forEach(postElement => {
+            const postId = postElement.id.split('-')[1];
+            if ({{ Auth::check() ? 'true' : 'false' }}) {
+                window.Echo.private(`post.${postId}`)
+                    .listen('.NewCommentPosted', (e) => {
+                        console.log('Real-time comment received!', e);
+                        const newCommentData = e.comment;
+                        const commentsSection = document.getElementById(`comments-section-${postId}`);
+
+                        if (commentsSection && commentsSection.classList.contains('active')) {
+                            addNewCommentToUI(newCommentData, postId);
+                        }
+
+                        const commentCountElement = document.querySelector(`#post-${postId} button[onclick^="toggleComments"] span`);
+                        if (commentCountElement) {
+                            commentCountElement.textContent = parseInt(commentCountElement.textContent) + 1;
+                        }
+                    });
+            }
+        });
+
+        function addNewCommentToUI(commentData, postId) {
+            const commentElement = createCommentElement(commentData, postId, !!commentData.parent_id);
+            const isReply = !!commentData.parent_id;
+
+            if (isReply) {
+                const rootCommentId = commentData.root_comment_id;
+                const repliesContainer = document.querySelector(`#comment-${rootCommentId} .replies-container`);
+                if (repliesContainer) {
+                    repliesContainer.appendChild(commentElement);
+                    updateParentUIAfterReply(rootCommentId);
+                }
+            } else {
+                const commentsContainer = document.querySelector(`#comments-section-${postId} .comments-list`);
+                if(commentsContainer){
+                    const noCommentsMessage = commentsContainer.querySelector('p.text-center');
+                    if (noCommentsMessage) noCommentsMessage.remove();
+                    commentsContainer.insertBefore(commentElement, commentsContainer.firstChild);
+                }
+            }
+
+            commentElement.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+            setTimeout(() => {
+                commentElement.classList.add('visible');
+                commentElement.style.backgroundColor = '';
+            }, 10);
+        }
+
+
     });
 
     function scrollToPost(postId) {

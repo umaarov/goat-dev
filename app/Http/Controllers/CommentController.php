@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NewCommentPosted;
 use App\Models\Comment;
 use App\Models\Post;
 use App\Models\User;
@@ -419,6 +420,12 @@ class CommentController extends Controller
         ]);
 
         $comment->load('user:id,username,profile_picture', 'post:id,user_id', 'parent.user');
+
+        try {
+            broadcast(new NewCommentPosted($comment))->toOthers();
+        } catch (\Exception $e) {
+            Log::error('Broadcasting NewCommentPosted failed: ' . $e->getMessage());
+        }
 
         $successMessage = __('messages.comment_added_successfully');
         if ($request->expectsJson() || $request->ajax()) {

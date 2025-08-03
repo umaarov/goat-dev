@@ -1,3 +1,4 @@
+import './bootstrap';
 document.addEventListener('DOMContentLoaded', () => {
 
     if (document.getElementById('badge-container')) {
