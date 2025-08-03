@@ -81,7 +81,7 @@
             @if ($showManagementOptions && Auth::check() && (int)Auth::id() === (int)$post->user_id)
                 <div class="flex justify-end border-gray-200 pl-4 ml-auto">
                     <form action="{{ route('posts.destroy', $post) }}" method="POST"
-                          onsubmit="return confirm('{{ __('messages.confirm_delete_post_text') }}');">
+                          onsubmit="return confirm(@json(__('messages.confirm_delete_post_text')))">
                         @csrf
                         @method('DELETE')
                         <button type="submit"
@@ -727,15 +727,14 @@
             if (!indicator) return;
 
             const typists = indicator.dataset.typists ? JSON.parse(indicator.dataset.typists) : [];
-            indicator.innerHTML = ''; // Clear previous content
+            indicator.innerHTML = '';
 
             if (typists.length === 0) {
-                return; // No one is typing, so nothing to show.
+                return; // No one is typing
             }
 
             const span = document.createElement('span');
 
-            // Helper to create a bolded username element
             const createStrong = (text) => {
                 const strong = document.createElement('strong');
                 strong.className = 'font-semibold not-italic';
@@ -957,7 +956,6 @@
             window.Echo.connector.pusher.connection.bind('disconnected', () => {
                 console.log('Real-time connection lost! Disabling comment forms.');
                 const submitButtons = document.querySelectorAll('form[id^="comment-form-"] button[type="submit"]');
-                submitButtons.forEach(button => {
                 submitButtons.forEach(button => {
                     button.disabled = true;
                     button.classList.add('bg-blue-400', 'cursor-not-allowed');
