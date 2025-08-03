@@ -251,6 +251,7 @@
         <div class="space-y-4">
             <div class="flex flex-wrap justify-center gap-4 text-sm text-blue-800">
                 <a href="{{ route('about') }}" class="hover:underline">{{ __('messages.about_us_nav') }}</a>
+                <a href="{{ route('privacy') }}" class="hover:underline">{{ __('messages.privacy_policy.title_nav') }}</a>
                 <a href="{{ route('terms') }}" class="hover:underline">{{ __('messages.terms_of_use_nav') }}</a>
                 <a href="{{ route('sponsorship') }}" class="hover:underline">{{ __('messages.sponsorship_nav') }}</a>
                 <a href="{{ route('ads') }}" class="hover:underline">{{ __('messages.ads_nav') }}</a>

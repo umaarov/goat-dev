@@ -65,6 +65,7 @@ Route::view('terms', 'terms')->name('terms')->middleware('cache.response:1440');
 Route::view('sponsorship', 'sponsorship')->name('sponsorship')->middleware('cache.response:1440');
 Route::view('ads', 'ads')->name('ads')->middleware('cache.response:1440');
 Route::view('contribution', 'contribution')->name('contribution')->middleware('cache.response:1440');
+Route::view('privacy-policy', 'privacy')->name('privacy')->middleware('cache.response:1440');
 
 //Route::get('/sss', SssController::class)->name('sss.show');
 

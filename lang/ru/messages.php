@@ -524,4 +524,33 @@ return [
     'auth.signup_with_telegram' => 'Зарегистрироваться через Telegram',
     'telegram_login_success' => 'Вы успешно вошли в систему через Telegram!',
     'error_telegram_login_failed' => 'Не удалось войти через Telegram. Пожалуйста, попробуйте еще раз.',
+
+//    'privacy_policy' => [
+//        'title' => 'Privacy Policy - GOAT.uz',
+//        'title_nav' => 'Privacy Policy',
+//    'intro_text' => 'By using GOAT.uz, you consent to the data practices described in this policy.',
+//        'meta_description' => 'Learn how GOAT.uz collects, uses, and protects your personal data. Read our full privacy policy for details on our partnership with Ezoic and your data rights.',
+//        'last_updated' => 'Last Updated',
+//        'section1_heading' => 'Our Commitment to Your Privacy',
+//        'section1_text' => 'Welcome to GOAT.uz. We respect your privacy and are committed to protecting your personal information. This Privacy Policy explains how we collect, use, and share information when you use our website and services. Below you will find detailed information regarding our data practices, including those related to our advertising partners.',
+//        'section2_heading' => 'Information We Collect',
+//        'section2_text' => 'We collect information you provide directly to us, such as when you create an account, create a post, or otherwise communicate with us. We may also collect information automatically as you navigate the site, such as usage details and IP addresses.',
+//        'section3_heading' => 'Contact Us',
+//        'section3_text' => 'If you have any questions or concerns about this Privacy Policy or our data practices, please do not hesitate to contact us at info@goat.uz.',
+//    ],
+
+//russian
+    'privacy_policy' => [
+        'title' => 'Политика конфиденциальности - GOAT.uz',
+        'title_nav' => 'Политика конфиденциальности',
+        'intro_text' => 'Используя GOAT.uz, вы соглашаетесь с практиками обработки данных, описанными в этой политике.',
+        'meta_description' => 'Узнайте, как GOAT.uz собирает, использует и защищает ваши персональные данные. Прочитайте нашу полную политику конфиденциальности для получения подробной информации о нашем партнерстве с Ezoic и ваших правах на данные.',
+        'last_updated' => 'Последнее обновление',
+        'section1_heading' => 'Наше обязательство к вашей конфиденциальности',
+        'section1_text' => 'Добро пожаловать на GOAT.uz. Мы уважаем вашу конфиденциальность и стремимся защищать вашу личную информацию. Эта Политика конфиденциальности объясняет, как мы собираем, используем и делимся информацией, когда вы используете наш веб-сайт и услуги. Ниже вы найдете подробную информацию о наших практиках обработки данных, включая те, которые связаны с нашими рекламными партнерами.',
+        'section2_heading' => 'Информация, которую мы собираем',
+        'section2_text' => 'Мы собираем информацию, которую вы предоставляете нам напрямую, например, когда вы создаете учетную запись, публикуете пост или иным образом общаетесь с нами. Мы также можем собирать информацию автоматически по мере вашего взаимодействия с сайтом, такую как данные об использовании и IP-адреса.',
+        'section3_heading' => 'Свяжитесь с нами',
+        'section3_text' => 'Если у вас есть какие-либо вопросы или опасения по поводу этой Политики конфиденциальности или наших практик обработки данных, пожалуйста, не стесняйтесь связаться с нами по адресу info@goat.uz',
+    ],
 ];

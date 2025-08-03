@@ -346,7 +346,7 @@ return [
     'sponsorship.opportunities_text' => 'We partner with brands & individuals that want to connect with our community in meaningful ways.',
     'sponsorship.reach_out_for_proposals' => 'for proposals and inquiries.',
 
-    'terms.intro_text' => 'By using this website, you agree to the following terms and conditions.',
+        'terms.intro_text' => 'By using this website, you agree to the following terms and conditions.',
     'terms.section1_heading' => '1. Acceptance of Terms',
     'terms.section1_text' => 'By accessing or using our platform, you agree to be bound by these Terms of Use. If you do not agree to these terms, please do not use the service.',
     'terms.section2_heading' => '2. User Responsibilities',
@@ -541,4 +541,18 @@ return [
     'auth.signup_with_telegram' => 'Sign up with Telegram',
     'telegram_login_success' => 'Successfully logged in with Telegram!',
     'error_telegram_login_failed' => 'Telegram login failed. Please try again.',
+
+    'privacy_policy' => [
+        'title' => 'Privacy Policy - GOAT.uz',
+        'title_nav' => 'Privacy Policy',
+        'intro_text' => 'By using GOAT.uz, you consent to the data practices described in this policy.',
+        'meta_description' => 'Learn how GOAT.uz collects, uses, and protects your personal data. Read our full privacy policy for details on our partnership with Ezoic and your data rights.',
+        'last_updated' => 'Last Updated',
+        'section1_heading' => 'Our Commitment to Your Privacy',
+        'section1_text' => 'Welcome to GOAT.uz. We respect your privacy and are committed to protecting your personal information. This Privacy Policy explains how we collect, use, and share information when you use our website and services. Below you will find detailed information regarding our data practices, including those related to our advertising partners.',
+        'section2_heading' => 'Information We Collect',
+        'section2_text' => 'We collect information you provide directly to us, such as when you create an account, create a post, or otherwise communicate with us. We may also collect information automatically as you navigate the site, such as usage details and IP addresses.',
+        'section3_heading' => 'Contact Us',
+        'section3_text' => 'If you have any questions or concerns about this Privacy Policy or our data practices, please do not hesitate to contact us at info@goat.uz.',
+    ],
 ];
