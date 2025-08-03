@@ -375,8 +375,13 @@
                         <button type="button" onclick="toggleComments('{{ $post->id }}')"
                                 class="bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm py-1 px-4 rounded-md">{{ __('messages.cancel_button') }}
                         </button>
+{{--                        <button type="submit"--}}
+{{--                                class="bg-blue-800 hover:bg-blue-900 text-white text-sm py-1 px-4 rounded-md">{{ __('messages.submit_comment_button') }}--}}
+{{--                        </button>--}}
                         <button type="submit"
-                                class="bg-blue-800 hover:bg-blue-900 text-white text-sm py-1 px-4 rounded-md">{{ __('messages.submit_comment_button') }}
+                                disabled
+                                class="bg-blue-400 cursor-not-allowed text-white text-sm py-1 px-4 rounded-md transition-colors duration-300">
+                            {{ __('messages.submit_comment_button') }}
                         </button>
                     </div>
                 </form>
@@ -832,6 +837,27 @@
         });
 
         document.addEventListener('posts-loaded', initializeImageLoading);
+
+        if ({{ Auth::check() ? 'true' : 'false' }}) {
+            window.Echo.connector.pusher.connection.bind('connected', () => {
+                console.log('Real-time connection established! Enabling comment forms.');
+                const submitButtons = document.querySelectorAll('form[id^="comment-form-"] button[type="submit"]');
+                submitButtons.forEach(button => {
+                    button.disabled = false;
+                    button.classList.remove('bg-blue-400', 'cursor-not-allowed');
+                    button.classList.add('bg-blue-800', 'hover:bg-blue-900');
+                });
+            });
+            window.Echo.connector.pusher.connection.bind('disconnected', () => {
+                console.log('Real-time connection lost! Disabling comment forms.');
+                const submitButtons = document.querySelectorAll('form[id^="comment-form-"] button[type="submit"]');
+                submitButtons.forEach(button => {
+                    button.disabled = true;
+                    button.classList.add('bg-blue-400', 'cursor-not-allowed');
+                    button.classList.remove('bg-blue-800', 'hover:bg-blue-900');
+                });
+            });
+        }
 
         // const postElements = document.querySelectorAll('article[id^="post-"]');
 
@@ -1830,7 +1856,7 @@ ${canDeleteComment(commentData) ? `
 
         fetch(`/posts/${postId}/comments`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json'},
+            headers: headers,
             body: JSON.stringify({content: content, parent_id: parentId || null})
         })
             .then(response => {
