@@ -485,15 +485,12 @@
                                 </div>
                                 <div class="flex-shrink-0 ml-4">
                                     @if($authMethods[$provider])
-                                        <form method="POST" action="{{ route('profile.unlink.social', $provider) }}" onsubmit="return confirm('{{ __('Are you sure you want to unlink this account?') }}');">
-                                            @csrf
-                                            <button type="submit"
-                                                    formaction="{{ route('profile.unlink.social', $provider) }}"
-                                                    class="text-sm font-medium text-red-600 hover:text-red-800 hover:underline disabled:text-gray-400 disabled:no-underline disabled:cursor-not-allowed"
-                                                    @if($authMethodsCount <= 1) disabled title="{{ __('Cannot unlink the last authentication method.') }}" @endif>
-                                                {{ __('Unlink') }}
-                                            </button>
-                                        </form>
+                                        <button type="button"
+                                                onclick="unlinkProvider('{{ $provider }}', '{{ route('profile.unlink.social', $provider) }}')"
+                                                class="text-sm font-medium text-red-600 hover:text-red-800 hover:underline disabled:text-gray-400 disabled:no-underline disabled:cursor-not-allowed"
+                                                @if($authMethodsCount <= 1) disabled title="{{ __('Cannot unlink the last authentication method.') }}" @endif>
+                                            {{ __('Unlink') }}
+                                        </button>
                                     @else
                                         <a href="{{ route('profile.link.social', $provider) }}" class="text-sm font-medium text-green-600 hover:text-green-800 hover:underline">
                                             {{ __('Link') }}
@@ -612,6 +609,25 @@
                     }
                 }
             });
+        }
+
+
+        function unlinkProvider(provider, url) {
+            if (confirm("{{ __('Are you sure you want to unlink this account?') }}")) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = url;
+
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_token';
+                csrfInput.value = csrfToken;
+                form.appendChild(csrfInput);
+
+                document.body.appendChild(form);
+                form.submit();
+            }
         }
 
         // External Link Icon Logic
@@ -947,6 +963,7 @@
                     }
                 });
             }
+
         });
     </script>
 
