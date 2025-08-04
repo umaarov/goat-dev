@@ -1,6 +1,4 @@
 <?php
-// app/Events/NewCommentPosted.php
-// [NEW FILE]
 
 namespace App\Events;
 

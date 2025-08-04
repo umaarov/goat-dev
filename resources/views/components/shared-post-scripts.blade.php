@@ -218,6 +218,23 @@
         }
 
 
+    function updateCommentFormState() {
+        const isConnected = window.Echo && window.Echo.connector && window.Echo.connector.pusher && window.Echo.connector.pusher.connection.state === 'connected';
+        const submitButtons = document.querySelectorAll('form[id^="comment-form-"] button[type="submit"]');
+
+        submitButtons.forEach(button => {
+            if (isConnected) {
+                button.disabled = false;
+                button.classList.remove('bg-blue-400', 'cursor-not-allowed');
+                button.classList.add('bg-blue-800', 'hover:bg-blue-900');
+            } else {
+                button.disabled = true;
+                button.classList.add('bg-blue-400', 'cursor-not-allowed');
+                button.classList.remove('bg-blue-800', 'hover:bg-blue-900');
+            }
+        });
+    }
+
         document.addEventListener('DOMContentLoaded', () => {
             // if (!('IntersectionObserver' in window)) {
             //     console.warn('IntersectionObserver not supported. Falling back to loading all images.');
@@ -230,31 +247,29 @@
             initializeEchoListeners();
 
             document.addEventListener('posts-loaded', () => {
+                console.log('[Event] posts-loaded triggered. Re-initializing scripts.');
                 initializeEchoListeners();
                 initializeImageLoading();
+                updateCommentFormState();
+                if (typeof initializeZoomableImages === 'function') {
+                    initializeZoomableImages(document.getElementById('posts-container'));
+                }
             });
 
             // document.addEventListener('posts-loaded', initializeImageLoading);
 
             if ({{ Auth::check() ? 'true' : 'false' }}) {
                 window.Echo.connector.pusher.connection.bind('connected', () => {
-                    console.log('Real-time connection established! Enabling comment forms.');
-                    const submitButtons = document.querySelectorAll('form[id^="comment-form-"] button[type="submit"]');
-                    submitButtons.forEach(button => {
-                        button.disabled = false;
-                        button.classList.remove('bg-blue-400', 'cursor-not-allowed');
-                        button.classList.add('bg-blue-800', 'hover:bg-blue-900');
-                    });
+                    console.log('Real-time connection established! Updating comment forms.');
+                    updateCommentFormState();
                 });
+
                 window.Echo.connector.pusher.connection.bind('disconnected', () => {
-                    console.log('Real-time connection lost! Disabling comment forms.');
-                    const submitButtons = document.querySelectorAll('form[id^="comment-form-"] button[type="submit"]');
-                    submitButtons.forEach(button => {
-                        button.disabled = true;
-                        button.classList.add('bg-blue-400', 'cursor-not-allowed');
-                        button.classList.remove('bg-blue-800', 'hover:bg-blue-900');
-                    });
+                    console.log('Real-time connection lost! Updating comment forms.');
+                    updateCommentFormState();
                 });
+
+                updateCommentFormState();
             }
 
             // const postElements = document.querySelectorAll('article[id^="post-"]');

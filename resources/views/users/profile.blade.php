@@ -347,11 +347,11 @@
                     postsContainer.innerHTML = shimmerHTML;
                     Object.keys(isLoading).forEach(key => { if (key !== type) isLoading[key] = false; });
                     activeTabData = { url, type };
-                    if(observer) observer.unobserve(scrollTrigger);
+                    if (observer) observer.unobserve(scrollTrigger);
                 } else {
                     currentPage[type]++;
                     loadingIndicator.classList.remove('hidden');
-                    if(observer) observer.unobserve(scrollTrigger);
+                    if (observer) observer.unobserve(scrollTrigger);
                 }
 
                 const fetchUrl = `${url}?page=${currentPage[type]}`;
@@ -362,8 +362,8 @@
                     });
 
                     if (response.status === 401) {
-                        const message = window.i18n.profile.js.login_to_see_posts.replace(':username', window.profileUsername);
-                        postsContainer.innerHTML = `<p class="text-gray-500 text-center py-8">${message}</p>`;
+                        const loginMessage = (window.i18n?.profile?.js?.login_to_see_posts || 'Please log in to see posts by :username.').replace(':username', window.profileUsername || 'this user');
+                        postsContainer.innerHTML = `<p class="text-gray-500 text-center py-8">${loginMessage}</p>`;
                         hasMorePages[type] = false;
                         return;
                     }
@@ -371,14 +371,15 @@
                     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
                     const data = await response.json();
+                    const noPostsMessage = window.i18n?.profile?.js?.no_posts_found || 'No posts were found.';
 
                     if (!loadMore) {
-                        postsContainer.innerHTML = data.html || `<p class="text-gray-500 text-center py-8">${window.i18n.profile.js.no_posts_found}</p>`;
+                        postsContainer.innerHTML = data.html || `<p class="text-gray-500 text-center py-8">${noPostsMessage}</p>`;
                     } else {
                         postsContainer.insertAdjacentHTML('beforeend', data.html || '');
                     }
 
-                    initializeProgressiveImages(postsContainer);
+                    document.dispatchEvent(new CustomEvent('posts-loaded'));
 
                     hasMorePages[type] = data.hasMorePages;
 
@@ -387,14 +388,15 @@
                     }
 
                     if (postsContainer.children.length === 0 || (postsContainer.children.length === 1 && postsContainer.children[0].tagName === 'P')) {
-                        postsContainer.innerHTML = `<p class="text-gray-500 text-center py-8">${window.i18n.profile.js.no_posts_found}</p>`;
+                        postsContainer.innerHTML = `<p class="text-gray-500 text-center py-8">${noPostsMessage}</p>`;
                         if(observer) observer.unobserve(scrollTrigger);
                     }
 
                 } catch (error) {
                     console.error('Error loading posts:', error);
                     if (!loadMore) {
-                        postsContainer.innerHTML = `<p class="text-red-500 text-center py-8">${window.i18n.profile.js.error_loading_posts}</p>`;
+                        const errorMessage = window.i18n?.profile?.js?.error_loading_posts || 'An error occurred while loading posts.';
+                        postsContainer.innerHTML = `<p class="text-red-500 text-center py-8">${errorMessage}</p>`;
                     }
                 } finally {
                     isLoading[type] = false;

@@ -465,7 +465,7 @@ class CommentController extends Controller
 
     public function showCommentContext(Request $request, Post $post, Comment $comment): JsonResponse
     {
-        if ((int) $comment->post_id !== (int) $post->id) {
+        if ((int)$comment->post_id !== (int)$post->id) {
             abort(404, 'Comment does not belong to this post.');
         }
 
@@ -488,7 +488,7 @@ class CommentController extends Controller
             ->count();
 
 
-        $page = (int) ceil($newerOrSameCommentsCount / $perPage);
+        $page = (int)ceil($newerOrSameCommentsCount / $perPage);
         if ($page < 1) $page = 1;
 
         $request->merge(['page' => $page]);
@@ -595,7 +595,6 @@ class CommentController extends Controller
             if ($request->expectsJson()) return response()->json(['error' => $unauthorizedMessage], 403);
             abort(403, $unauthorizedMessage);
         }
-
         $commentId = $comment->id;
         $originalCommenterId = $comment->user_id;
         $commentSnippet = Str::limit($comment->content, 100);
