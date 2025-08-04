@@ -20,6 +20,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @stack('styles')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/posts.css'])
 {{--    <link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}" media="print"--}}
 {{--          onload="this.media='all'">--}}
 {{--    <noscript>--}}
