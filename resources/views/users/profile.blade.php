@@ -56,22 +56,33 @@
                     {{-- Info Block --}}
                     <div class="ml-4 flex-1 flex flex-col">
                         <div>
-                            <div class="flex items-center">
-                                <h1 class="text-2xl font-semibold {{ $hasBackground ? 'text-white' : 'text-gray-800' }}" style="font-size: 1.5rem; line-height: 2rem; font-weight: 600; display: inline;">{{ $displayName }}</h1>
-                                @if($isVerified)
-                                    <span class="ml-1.5" title="{{ __('messages.profile.verified_account') }}">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                        </svg>
+                            {{-- Name, Verified, and Moderator Badge --}}
+                            <div class="flex flex-wrap items-center gap-y-1">
+                                <div class="flex items-center">
+                                    <h1 class="text-2xl font-semibold {{ $hasBackground ? 'text-white' : 'text-gray-800' }}" style="font-size: 1.5rem; line-height: 2rem; font-weight: 600;">{{ $displayName }}</h1>
+                                    @if($isVerified)
+                                        <span class="ml-1.5" title="{{ __('messages.profile.verified_account') }}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                            </svg>
+                                        </span>
+                                    @endif
+                                </div>
+
+                                @if($user->username === 'goat')
+                                    <span class="ml-2 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold {{ $hasBackground ? 'bg-green-400/25 text-green-300' : 'bg-green-100 text-green-800' }}">
+                                        Moderator
                                     </span>
                                 @endif
                             </div>
 
+                            {{-- Username and Join Date --}}
                             @if($showSubUsername)
-                                <p class="{{ $hasBackground ? 'text-gray-300' : 'text-gray-600' }} text-sm mt-0.5">{{ "@".$user->username }}</p>
+                                <p class="{{ $hasBackground ? 'text-gray-300' : 'text-gray-600' }} text-sm mt-1.5">{{ "@".$user->username }}</p>
                             @endif
                             <p class="{{ $hasBackground ? 'text-gray-400' : 'text-gray-500' }} text-xs mt-1">{{ __('messages.profile.joined_label') }} <time datetime="{{ $user->created_at->toIso8601String() }}">{{ $user->created_at->format('M d, Y') }}</time></p>
                         </div>
+
 
 
                         {{-- Rank Badge Logic & Display --}}
