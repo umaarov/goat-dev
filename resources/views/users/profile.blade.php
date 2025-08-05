@@ -250,6 +250,18 @@
 @endsection
 
 @push('scripts')
+    <script>
+        // Pass the necessary PHP variables to JavaScript
+        window.i18n = {
+            profile: {
+                js: {
+                    login_to_see_posts: `{!! addslashes(__('messages.profile.js.login_to_see_posts')) !!}`
+                }
+            }
+        };
+
+        window.profileUsername = '{{ addslashes($user->username) }}';
+    </script>
     <x-shared-post-scripts />
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -382,7 +394,7 @@
                     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
                     const data = await response.json();
-                    const noPostsMessage = window.i18n?.profile?.js?.no_posts_found || 'No posts were found.';
+                    const noPostsMessage = window.i18n?.profile?.js?.no_posts_found || 'No pozsts were found.';
 
                     if (!loadMore) {
                         postsContainer.innerHTML = data.html || `<p class="text-gray-500 text-center py-8">${noPostsMessage}</p>`;

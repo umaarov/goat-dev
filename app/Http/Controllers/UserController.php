@@ -107,6 +107,11 @@ class UserController extends Controller
 
     final public function getUserPosts(Request $request, string $username): JsonResponse
     {
+
+        if (!Auth::check()) {
+            return response()->json(['message' => 'Please log in to see posts.'], 401);
+        }
+
         Log::channel('audit_trail')->info('User posts data accessed.', [
             'accessor_user_id' => Auth::id(),
             'accessor_username' => Auth::user()?->username,
@@ -152,7 +157,7 @@ class UserController extends Controller
             ]);
 
             return response()->json([
-                'html' => '<p>Error loading posts: ' . $e->getMessage() . '</p>',
+                'html' => '<p class="text-red-500 text-center py-8">Error loading posts. Please try again.</p>',
                 'hasMorePages' => false
             ], 500);
         }
@@ -189,12 +194,16 @@ class UserController extends Controller
             $profileUser = User::where('username', $username)->firstOrFail();
             $isOwnProfile = Auth::check() && Auth::id() === $profileUser->id;
 
-            if (!$isOwnProfile && !$profileUser->show_voted_posts_publicly) {
-                Log::info('Access to voted posts denied due to privacy settings.', ['profile_user_id' => $profileUser->id]);
-                return response()->json([
-                    'html' => '<p class="text-center text-gray-500 py-8">This user has chosen to keep their voted posts private.</p>',
-                    'hasMorePages' => false
-                ], 403);
+            if (!$profileUser->show_voted_posts_publicly) {
+                if (!Auth::check()) {
+                    return response()->json(['message' => 'Please log in to see voted posts.'], 401);
+                }
+                if (Auth::id() !== $profileUser->id) {
+                    return response()->json([
+                        'html' => '<p class="text-center text-gray-500 py-8">This user has made their voted posts private.</p>',
+                        'hasMorePages' => false
+                    ], 403);
+                }
             }
 
             Log::info('User authorized to view voted posts.', ['profile_user_id' => $profileUser->id, 'viewer_is_owner' => $isOwnProfile]);

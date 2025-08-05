@@ -6,6 +6,7 @@ use App\Console\Commands\SendPostNotifications;
 use App\Http\Middleware\EnsurePasswordIsSet;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -20,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
 //        api: __DIR__ . '/../routes/api.php',
         commands: __DIR__ . '/../routes/console.php',
         health: '/up',
-        channels: __DIR__.'/../routes/channels.php',
+        channels: __DIR__ . '/../routes/channels.php',
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
@@ -109,9 +110,17 @@ return Application::configure(basePath: dirname(__DIR__))
         );
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->render(function (Throwable $e, Request $request) {
+        $exceptions->render(function (Throwable $e, \Illuminate\Http\Request $request) {
 
             if ($request->wantsJson()) {
+
+                if ($e instanceof AuthenticationException) {
+                    return response()->json([
+                        'success' => false,
+                        'error_code' => 'authentication_required',
+                        'message' => 'Unauthenticated.',
+                    ], 401);
+                }
 
                 $status = 500;
                 $errorCode = 'internal_server_error';
