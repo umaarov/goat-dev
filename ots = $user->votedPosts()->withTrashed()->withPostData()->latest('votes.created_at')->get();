@@ -1,0 +1,53 @@
+[90m= [39m[34;4mIlluminate\Database\Eloquent\Collection[39;24m {#6026
+    [34mall[39m: [
+      [34;4mApp\Models\Post[39;24m {#7015
+        [34mid[39m: [35m94[39m,
+        [34muser_id[39m: [35m25[39m,
+        [34mquestion[39m: "[32mBreaking Bad or Better Call Saul?[39m",
+        [34mai_generated_context[39m: "[32mTwo critically acclaimed shows, both set within the same universe, but each offering a unique perspective: "Breaking Bad" and "Better Call Saul." "Breaking Bad" captivated audiences with its gripping narrative of transformation, following Walter White's descent into the criminal underworld, praised for its intense plot and memorable characters. On the other hand, "Better Call Saul" offers a more nuanced character study, delving into the complex moral ambiguities of Jimmy McGill's evolution into Saul Goodman, celebrated for its intricate storytelling and deliberate pacing. Both series boast stellar performances, masterful direction, and unforgettable moments, leaving fans deeply divided. Which show reigns supreme in the hearts of viewers? Join the debate and cast your vote: Breaking Bad or Better Call Saul? Let's see where the community lands on this compelling television rivalry.[39m\n",
+        [34mai_generated_tags[39m: "[32mBreakingBad, BetterCallSaul, BB, BCS, VinceGilligan[39m",
+        [34moption_one_title[39m: "[32mBB[39m",
+        [34moption_one_image[39m: "[32mpost_images/post_opt1_6890f7a457907.webp[39m",
+        [34moption_one_image_lqip[39m: "[32mdata:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD//gA7Q1JFQVRPUjogZ2QtanBlZyB2MS4wICh1c2luZyBJSkcgSlBFRyB2NjIpLCBxdWFsaXR5ID0gMzAK/9sAQwAbEhQXFBEbFxYXHhwbIChCKyglJShROj0wQmBVZWRfVV1baniZgWpxkHNbXYW1hpCeo6utq2eAvMm6pseZqKuk/9sAQwEcHh4oIyhOKytOpG5dbqSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSk/8AAEQgAGAAYAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/aAAwDAQACEQMRAD8Ay7eLfIM9K0/s8QTpWeh2ciphcGT5elS2TFN7ladcSHHSinGNpHIoqronUgEhFKJSKKKk0FFwynIoooosgP/Z[39m",
+        [34moption_one_image_blurhash[39m: [36mnull[39m,
+        [34moption_two_title[39m: "[32mBCS[39m",
+        [34moption_two_image[39m: "[32mpost_images/post_opt2_6890f7a45be16.webp[39m",
+        [34moption_two_image_lqip[39m: "[32mdata:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD//gA7Q1JFQVRPUjogZ2QtanBlZyB2MS4wICh1c2luZyBJSkcgSlBFRyB2NjIpLCBxdWFsaXR5ID0gMzAK/9sAQwAbEhQXFBEbFxYXHhwbIChCKyglJShROj0wQmBVZWRfVV1baniZgWpxkHNbXYW1hpCeo6utq2eAvMm6pseZqKuk/9sAQwEcHh4oIyhOKytOpG5dbqSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSk/8AAEQgAGAAYAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/aAAwDAQACEQMRAD8AxRw2amDFhwKiI5q5ZFRwRnNJopMqSZPair17FGqAjrRQhMz5H+bipYJNvNFFMAluTIcUUUUAz//Z[39m",
+        [34moption_two_image_blurhash[39m: [36mnull[39m,
+        [34moption_one_votes[39m: [35m2[39m,
+        [34moption_two_votes[39m: [35m1[39m,
+        [34mtotal_votes[39m: [35m3[39m,
+        [34mview_count[39m: [35m0[39m,
+        [34mcreated_at[39m: "[32m2025-08-04 23:10:44[39m",
+        [34mupdated_at[39m: "[32m2025-08-05 12:14:17[39m",
+        [34mshares_count[39m: [35m0[39m,
+        [34mdeleted_at[39m: [36mnull[39m,
+        [34mcomments_count[39m: [35m0[39m,
+        [34mshares_relation_count[39m: [35m0[39m,
+        [34muser[39m: [34;4mApp\Models\User[39;24m {#6998
+          [34mid[39m: [35m25[39m,
+          [34musername[39m: "[32mmirrr[39m",
+          [34mprofile_picture[39m: "[32mprofile_pictures/mirrr_25_1750097538.webp[39m",
+        },
+        +[1moption_one_percentage[22m: [33m66.7[39m,
+        +[1moption_two_percentage[22m: [33m33.3[39m,
+      },
+      [34;4mApp\Models\Post[39;24m {#7010
+        [34mid[39m: [35m93[39m,
+        [34muser_id[39m: [35m25[39m,
+        [34mquestion[39m: "[32mLOTR or Hobbit?[39m",
+        [34mai_generated_context[39m: """
+          [32mJ.R.R. Tolkien's works have captivated readers and viewers for generations, sparking endless discussions about the best tales from Middle-earth. Among the most beloved are "The Lord of the Rings" and "The Hobbit," both adapted into blockbuster film trilogies. But which reigns supreme?[39m\n
+          \n
+          [32mSome argue "The Lord of the Rings" offers a more epic and complex narrative, with deeper character development and a grander scale of conflict between good and evil. Others champion "The Hobbit" for its lighter, more adventurous tone, focusing on a smaller group and a classic hero's journey. Is it the sprawling world-building and intricate plotlines of LOTR that win out, or the charming simplicity and accessible storytelling of The Hobbit that makes it the better overall experience?[39m\n
+          \n
+          [32mCast your vote and join the debate! Which of these legendary series stands tallest in your estimation?[39m\n
+          """,
+        [34mai_generated_tags[39m: "[32mLOTR, Hobbit, Tolkien, Fantasy, Middle-earth[39m",
+        [34moption_one_title[39m: "[32mLOTR[39m",
+        [34moption_one_image[39m: "[32mpost_images/post_opt1_6890f6a6dd6f7.webp[39m",
+        [34moption_one_image_lqip[39m: "[32mdata:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD//gA7Q1JFQVRPUjogZ2QtanBlZyB2MS4wICh1c2luZyBJSkcgSlBFRyB2NjIpLCBxdWFsaXR5ID0gMzAK/9sAQwAbEhQXFBEbFxYXHhwbIChCKyglJShROj0wQmBVZWRfVV1baniZgWpxkHNbXYW1hpCeo6utq2eAvMm6pseZqKuk/9sAQwEcHh4oIyhOKytOpG5dbqSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSk/8AAEQgAGAAYAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/aAAwDAQACEQMRAD8Az0l+yy7k6VN9vn3bz92qG4kYxUxlYw7NtZl6F574sARRVe3ClfmoqRiCIINzCpVkiIwVoopiGmLf9zgUUUUgP//Z[39m",
+        [34moption_one_image_blurhash[39m: [36mnull[39m,
+        [34moption_two_title[39m: "[32mHobbit[39m",
+        [34moption_two_image[39m: "[32mpost_images/post_opt2_6890f6a6e0c67.webp[39m",
+        [34moption_two_image_lqip[39m: "[32mdata:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD//gA7Q1JFQVRPUjogZ2QtanBlZyB2MS4wICh1c2luZyBJSkcgSlBFRyB2NjIpLCBxdWFsaXR5ID0gMzAK/9sAQwAbEhQXFBEbFxYXHhwbIChCKyglJShROj0wQmBVZWRfVV1baniZgWpxkHNbXYW1hpCeo6utq2eAvMm6pseZqKuk/9sAQwEcHh4oIyhOKytOpG5dbqSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSk/8AAEQgAGAAYAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQ

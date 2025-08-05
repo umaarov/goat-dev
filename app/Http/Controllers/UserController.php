@@ -121,7 +121,7 @@ class UserController extends Controller
                 'page' => $request->input('page')
             ]);
 
-            $user = User::where('username', $username)->firstOrFail();
+            $user = User::withTrashed()->where('username', $username)->firstOrFail();
             Log::info('User found', ['user_id' => $user->id]);
 
             $posts = $user->posts()
