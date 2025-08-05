@@ -578,9 +578,6 @@ class AuthController extends Controller
 
         $loginInput = $request->input('login_identifier');
         $password = $request->input('password');
-//        $remember = $request->filled('remember');
-//        $remember = true;
-
         $fieldType = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
         $credentials = [
@@ -613,6 +610,31 @@ class AuthController extends Controller
                 ->withCookie($cookie);
         }
 
+        $user = User::withTrashed()->where($fieldType, $loginInput)->first();
+
+        if ($user && Hash::check($password, $user->password)) {
+
+            if ($user->trashed()) {
+                if ($user->deleted_at->gt(now()->subDays(30))) {
+                    $user->restore();
+
+                    Log::channel('audit_trail')->info('User account REACTIVATED successfully upon login.', [
+                        'user_id' => $user->id,
+                        'username' => $user->username,
+                        'ip_address' => $request->ip(),
+                    ]);
+
+                    Auth::login($user);
+                    $request->session()->regenerate();
+
+                    $cookie = $this->authTokenService->issueToken($user, $request);
+
+                    return redirect()->intended(route('home'))
+                        ->with('success', 'Welcome back! Your account has been successfully reactivated.')
+                        ->withCookie($cookie);
+                }
+            }
+        }
 
         Log::channel('audit_trail')->warning('Failed login attempt: Invalid credentials.', [
             'login_identifier' => $loginInput,

@@ -37,7 +37,7 @@ class Post extends Model
 
     final function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     final function votes(): HasMany

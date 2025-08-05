@@ -85,6 +85,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/profile/generate-picture', 'generateProfilePicture')->name('profile.picture.generate');
     });
 
+    Route::delete('profile/deactivate', [UserController::class, 'deactivate'])
+        ->middleware(['auth', 'password.confirm'])
+        ->name('profile.deactivate');
+
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/link/{provider}', [UserController::class, 'linkSocial'])
             ->name('link.social')

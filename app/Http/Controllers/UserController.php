@@ -59,7 +59,8 @@ class UserController extends Controller
 
     final public function showProfile(string $username): View
     {
-        $user = User::where('username', $username)
+        $user = User::withTrashed()
+            ->where('username', $username)
             ->withCount('posts')
             ->firstOrFail();
 
@@ -973,4 +974,28 @@ class UserController extends Controller
         return redirect()->route('profile.edit')->with('success', 'Your password has been successfully removed.');
     }
 
+    final public function deactivate(Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+
+        Log::channel('audit_trail')->warning('User initiating account deactivation.', [
+            'user_id' => $user->id,
+            'username' => $user->username,
+            'ip_address' => $request->ip(),
+        ]);
+
+        $user->delete();
+
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        Log::channel('audit_trail')->notice('User account DEACTIVATED successfully.', [
+            'user_id' => $user->id,
+            'username' => $user->username,
+        ]);
+
+        return redirect('/')->with('success', __('messages.account_deactivated_successfully'));
+    }
 }
