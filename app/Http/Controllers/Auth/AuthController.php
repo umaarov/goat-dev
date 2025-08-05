@@ -616,12 +616,38 @@ class AuthController extends Controller
 
             if ($user->trashed()) {
                 if ($user->deleted_at->gt(now()->subDays(30))) {
+
+                    $originalFirstName = $user->original_first_name;
+                    $originalLastName = $user->original_last_name;
+                    $originalEmail = $user->original_email;
+                    $originalPfp = $user->original_profile_picture;
+
                     $user->restore();
 
-                    Log::channel('audit_trail')->info('User account REACTIVATED successfully upon login.', [
-                        'user_id' => $user->id,
-                        'username' => $user->username,
-                        'ip_address' => $request->ip(),
+                    $user->first_name = $originalFirstName ?? 'User';
+                    $user->last_name = $originalLastName;
+                    $user->email = $originalEmail;
+
+                    if (is_null($originalPfp) || Str::contains($originalPfp, 'initial_')) {
+                        $user->profile_picture = $this->avatarService->generateInitialsAvatar(
+                            $user->first_name,
+                            $user->last_name ?? '',
+                            $user->id
+                        );
+                    } else {
+                        $user->profile_picture = $originalPfp;
+                    }
+
+                    $user->original_first_name = null;
+                    $user->original_last_name = null;
+                    $user->original_email = null;
+                    $user->original_profile_picture = null;
+
+                    $user->save();
+
+                    Log::channel('audit_trail')->info('User account REACTIVATED successfully upon login.');
+                    Log::channel('audit_trail')->info('User account reactivated.', [
+                        'user_id' => $user->id, 'username' => $user->username, 'ip_address' => $request->ip(),
                     ]);
 
                     Auth::login($user);

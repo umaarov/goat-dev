@@ -11,22 +11,21 @@
     <div class="max-w-3xl mx-auto">
         @php
             $isDeactivated = $user->trashed();
-
             $hasBackground = !$isDeactivated && !empty($headerBackgroundUrl);
 
-            $profilePic = $isDeactivated
-                ? asset('images/default-deactivated-pfp.png')
-                : ($user->profile_picture
+            if ($isDeactivated) {
+                $profilePic = asset($user->profile_picture);
+                $displayName = __('messages.profile.deactivated_name');
+                $showSubUsername = false;
+            } else {
+                $profilePic = $user->profile_picture
                     ? (Str::startsWith($user->profile_picture, ['http', 'https'])
                         ? $user->profile_picture
                         : Storage::url($user->profile_picture))
-                    : asset('images/default-pfp.png'));
-
-            $displayName = $isDeactivated
-                ? __('messages.profile.deactivated_name')
-                : (($user->first_name || $user->last_name) ? trim($user->first_name . ' ' . $user->last_name) : "@".$user->username);
-
-            $showSubUsername = !$isDeactivated && ($user->first_name || $user->last_name);
+                    : asset('images/default-pfp.png');
+                $displayName = ($user->first_name || $user->last_name) ? trim($user->first_name . ' ' . $user->last_name) : "@".$user->username;
+                $showSubUsername = ($user->first_name || $user->last_name);
+            }
         @endphp
 
         @if ($isDeactivated)

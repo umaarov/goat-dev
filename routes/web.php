@@ -1,6 +1,5 @@
 <?php
 
-use App\Events\NewCommentPosted;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\CommentLikeController;
@@ -10,10 +9,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\UserController;
-use App\Models\Comment;
-use App\Models\Post;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/language/{locale}', [LocaleController::class, 'setLocale'])->name('language.set');
@@ -89,6 +85,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware(['auth', 'password.confirm'])
         ->name('profile.deactivate');
 
+    Route::post('/profile/reactivate', [App\Http\Controllers\UserController::class, 'reactivate'])->name('profile.reactivate')->middleware('auth');
+
     Route::prefix('profile')->name('profile.')->group(function () {
         Route::get('/link/{provider}', [UserController::class, 'linkSocial'])
             ->name('link.social')
@@ -122,7 +120,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::controller(CommentController::class)->group(function () {
         Route::get('/posts/{post}/comments', 'index')->name('comments.index');
-         Route::post('/posts/{post}/comments', 'store')->name('comments.store')->middleware('throttle:30,1');
+        Route::post('/posts/{post}/comments', 'store')->name('comments.store')->middleware('throttle:30,1');
         Route::put('/comments/{comment}', 'update')->name('comments.update');
         Route::delete('/comments/{comment}', 'destroy')->name('comments.destroy');
         Route::get('/comments/{comment}/replies', 'getReplies')->name('comments.getReplies');

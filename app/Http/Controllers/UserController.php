@@ -992,28 +992,59 @@ class UserController extends Controller
             'username' => $user->username,
             'ip_address' => $request->ip(),
         ]);
+        $user->original_first_name = $user->first_name;
+        $user->original_last_name = $user->last_name;
+        $user->original_email = $user->email;
+        $user->original_profile_picture = $user->profile_picture;
 
         $user->first_name = 'Deactivated';
         $user->last_name = 'User';
         $user->email = $user->id . '_' . time() . '@deleted.user';
-        $user->profile_picture = null;
         $user->header_background = null;
         $user->external_links = [];
         $user->show_voted_posts_publicly = false;
-        $user->save();
 
+        $avatarIndex = rand(1, 8);
+        $user->profile_picture = "avatars/goat_ghost_{$avatarIndex}.png";
+
+        $user->save();
         $user->delete();
 
-        Auth::logout();
 
+        Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        Log::channel('audit_trail')->notice('User account DEACTIVATED successfully.', [
-            'user_id' => $user->id,
-            'username' => $user->username,
-        ]);
+        Log::channel('audit_trail')->notice('User account DEACTIVATED successfully.',
+            [
+                'user_id' => $user->id,
+                'username' => $user->username,
+                'ip_address' => $request->ip(),
+            ]);
 
         return redirect('/')->with('success', __('messages.account_deactivated_successfully'));
+    }
+
+    final public function reactivate(Request $request): RedirectResponse
+    {
+        $user = User::withTrashed()->find(Auth::id());
+
+        if ($user && $user->trashed()) {
+            $user->profile_picture = $user->original_profile_picture;
+            $user->original_profile_picture = null;
+
+            $user->save();
+
+            $user->restore();
+
+            Log::channel('audit_trail')->info('User account REACTIVATED successfully.', [
+                'user_id' => $user->id,
+                'username' => $user->username,
+            ]);
+
+            return redirect()->route('profile.edit')->with('success', 'Your account has been successfully reactivated!');
+        }
+
+        return redirect('/')->with('error', 'This account is already active.');
     }
 }

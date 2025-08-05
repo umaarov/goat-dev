@@ -17,7 +17,7 @@ class AvatarService
     private const FONT_SIZE_RATIO = 0.45;
     private const IMAGE_QUALITY = 85;
 
-    final public function generateInitialsAvatar(string $firstName, string $lastName = '', string $userId): string
+    final public function generateInitialsAvatar(?string $firstName, ?string $lastName = '', string $userId): string
     {
         try {
             $firstInitial = !empty($firstName) ? mb_strtoupper(mb_substr($firstName, 0, 1, 'UTF-8')) : '';
