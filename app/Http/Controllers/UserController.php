@@ -993,6 +993,15 @@ class UserController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
+        $user->first_name = 'Deactivated';
+        $user->last_name = 'User';
+        $user->email = $user->id . '_' . time() . '@deleted.user';
+        $user->profile_picture = null;
+        $user->header_background = null;
+        $user->external_links = [];
+        $user->show_voted_posts_publicly = false;
+        $user->save();
+
         $user->delete();
 
         Auth::logout();

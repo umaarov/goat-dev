@@ -42,6 +42,7 @@ return [
     'profile.js.loading' => 'Загрузка...',
     'profile.js.load_more' => 'Загрузить еще',
     'profile.js.login_to_see_posts' => 'Пожалуйста, <a class="text-blue-800 hover:underline" href="/login">войдите</a>, чтобы увидеть посты :username.',
+    'profile.js.login_to_see_voted_posts' => 'Пожалуйста, <a class="text-blue-800 hover:underline" href="/login">войдите</a>, чтобы увидеть оцененные посты :username.',
     'profile.js.error_loading_posts' => 'Ошибка загрузки постов. Пожалуйста, попробуйте еще раз.',
     'profile.alt_profile_picture_js' => "фото профиля :username",
 
@@ -525,21 +526,6 @@ return [
     'telegram_login_success' => 'Вы успешно вошли в систему через Telegram!',
     'error_telegram_login_failed' => 'Не удалось войти через Telegram. Пожалуйста, попробуйте еще раз.',
 
-//    'privacy_policy' => [
-//        'title' => 'Privacy Policy - GOAT.uz',
-//        'title_nav' => 'Privacy Policy',
-//    'intro_text' => 'By using GOAT.uz, you consent to the data practices described in this policy.',
-//        'meta_description' => 'Learn how GOAT.uz collects, uses, and protects your personal data. Read our full privacy policy for details on our partnership with Ezoic and your data rights.',
-//        'last_updated' => 'Last Updated',
-//        'section1_heading' => 'Our Commitment to Your Privacy',
-//        'section1_text' => 'Welcome to GOAT.uz. We respect your privacy and are committed to protecting your personal information. This Privacy Policy explains how we collect, use, and share information when you use our website and services. Below you will find detailed information regarding our data practices, including those related to our advertising partners.',
-//        'section2_heading' => 'Information We Collect',
-//        'section2_text' => 'We collect information you provide directly to us, such as when you create an account, create a post, or otherwise communicate with us. We may also collect information automatically as you navigate the site, such as usage details and IP addresses.',
-//        'section3_heading' => 'Contact Us',
-//        'section3_text' => 'If you have any questions or concerns about this Privacy Policy or our data practices, please do not hesitate to contact us at info@goat.uz.',
-//    ],
-
-//russian
     'privacy_policy' => [
         'title' => 'Политика конфиденциальности - GOAT.uz',
         'title_nav' => 'Политика конфиденциальности',
@@ -553,4 +539,30 @@ return [
         'section3_heading' => 'Свяжитесь с нами',
         'section3_text' => 'Если у вас есть какие-либо вопросы или опасения по поводу этой Политики конфиденциальности или наших практик обработки данных, пожалуйста, не стесняйтесь связаться с нами по адресу info@goat.uz',
     ],
+
+
+//    'danger_zone_title' => 'Danger Zone',
+//    'deactivate_account_title' => 'Deactivate Account',
+//    'deactivate_account_description' => 'Once your account is deactivated, all of its resources and data will be hidden. You will be logged out immediately.',
+//    'deactivate_account_warning' => 'You can reactivate your account by logging in again within 30 days. After this period, your account and all data will be permanently deleted.',
+//    'deactivate_account_button' => 'Deactivate Account',
+//    'deactivate_modal_title' => 'Are you absolutely sure?',
+//    'deactivate_modal_content' => 'This is a critical action. Your account will become inaccessible, and your profile and content will be hidden from the platform. You will be logged out from all devices.',
+//    'deactivate_modal_password_prompt' => 'You will be asked to confirm your password to proceed.',
+//    'deactivate_modal_confirm_button' => 'Yes, Deactivate My Account',
+//    'account_deactivated_successfully' => 'Your account has been successfully deactivated.',
+
+
+    'danger_zone_title' => 'Опасная зона',
+    'deactivate_account_title' => 'Деактивировать аккаунт',
+    'deactivate_account_description' => 'После деактивации ваш аккаунт и все его данные будут скрыты. Вы будете немедленно выведены из системы.',
+    'deactivate_account_warning' => 'Вы можете восстановить свой аккаунт, войдя в систему снова в течение 30 дней. После этого периода ваш аккаунт и все данные будут удалены навсегда.',
+    'deactivate_account_button' => 'Деактивировать аккаунт',
+    'deactivate_modal_title' => 'Вы абсолютно уверены?',
+    'deactivate_modal_content' => 'Это критическое действие. Ваш аккаунт станет недоступным, а ваш профиль и контент будут скрыты от платформы. Вы будете выведены из системы на всех устройствах.',
+    'deactivate_modal_password_prompt' => 'Вам будет предложено подтвердить свой пароль для продолжения.',
+    'deactivate_modal_confirm_button' => 'Да, деактивировать мой аккаунт',
+    'account_deactivated_successfully' => 'Ваш аккаунт успешно деактивирован.',
+
+
 ];

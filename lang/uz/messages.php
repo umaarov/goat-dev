@@ -42,6 +42,7 @@ return [
     'profile.js.loading' => 'Yuklanmoqda...',
     'profile.js.load_more' => 'Ko‘proq yuklash',
     'profile.js.login_to_see_posts' => ':username\'ning postlarini ko‘rish uchun <a class="text-blue-800 hover:underline" href="/login">tizimga kiring</a>.',
+    'profile.js.login_to_see_voted_posts' => ':username\'ning ovoz bergan postlarini ko‘rish uchun <a class="text-blue-800 hover:underline" href="/login">tizimga kiring</a>.',
     'profile.js.error_loading_posts' => 'Postlarni yuklashda xatolik. Iltimos, qaytadan urining.',
     'profile.alt_profile_picture_js' => ":username'ning profil rasmi",
 
@@ -525,21 +526,6 @@ return [
     'telegram_login_success' => 'Telegram orqali muvaffaqiyatli kirildi!',
     'error_telegram_login_failed' => 'Telegram orqali kirish muvaffaqiyatsiz bo‘ldi. Iltimos, qaytadan urining.',
 
-    //    'privacy_policy' => [
-//        'title' => 'Privacy Policy - GOAT.uz',
-//        'title_nav' => 'Privacy Policy',
-//    'intro_text' => 'By using GOAT.uz, you consent to the data practices described in this policy.',
-//        'meta_description' => 'Learn how GOAT.uz collects, uses, and protects your personal data. Read our full privacy policy for details on our partnership with Ezoic and your data rights.',
-//        'last_updated' => 'Last Updated',
-//        'section1_heading' => 'Our Commitment to Your Privacy',
-//        'section1_text' => 'Welcome to GOAT.uz. We respect your privacy and are committed to protecting your personal information. This Privacy Policy explains how we collect, use, and share information when you use our website and services. Below you will find detailed information regarding our data practices, including those related to our advertising partners.',
-//        'section2_heading' => 'Information We Collect',
-//        'section2_text' => 'We collect information you provide directly to us, such as when you create an account, create a post, or otherwise communicate with us. We may also collect information automatically as you navigate the site, such as usage details and IP addresses.',
-//        'section3_heading' => 'Contact Us',
-//        'section3_text' => 'If you have any questions or concerns about this Privacy Policy or our data practices, please do not hesitate to contact us at info@goat.uz.',
-//    ],
-
-//uzbek
 
     'privacy_policy' => [
         'title' => 'Maxfiylik siyosati - GOAT.uz',
@@ -553,5 +539,33 @@ return [
         'section2_text' => 'Biz siz to‘g‘ridan-to‘g‘ri bizga taqdim etgan ma\'lumotlarni, masalan, akkaunt yaratganingizda, post yaratganingizda yoki biz bilan aloqa qilganingizda to‘playmiz. Shuningdek, saytni ko‘zdan kechirish jarayonida avtomatik ravishda foydalanish ma\'lumotlari va IP manzillari kabi ma\'lumotlarni to‘playmiz.',
         'section3_heading' => 'Biz bilan bog‘laning',
         'section3_text' => 'Agar ushbu Maxfiylik siyosati yoki ma\'lumot amaliyotlarimiz haqida savollaringiz yoki tashvishlaringiz bo‘lsa, iltimos, biz bilan bog‘laning: info@goat.uz',
-    ]
+    ],
+
+
+//    'danger_zone_title' => 'Danger Zone',
+//    'deactivate_account_title' => 'Deactivate Account',
+//    'deactivate_account_description' => 'Once your account is deactivated, all of its resources and data will be hidden. You will be logged out immediately.',
+//    'deactivate_account_warning' => 'You can reactivate your account by logging in again within 30 days. After this period, your account and all data will be permanently deleted.',
+//    'deactivate_account_button' => 'Deactivate Account',
+//    'deactivate_modal_title' => 'Are you absolutely sure?',
+//    'deactivate_modal_content' => 'This is a critical action. Your account will become inaccessible, and your profile and content will be hidden from the platform. You will be logged out from all devices.',
+//    'deactivate_modal_password_prompt' => 'You will be asked to confirm your password to proceed.',
+//    'deactivate_modal_confirm_button' => 'Yes, Deactivate My Account',
+//    'account_deactivated_successfully' => 'Your account has been successfully deactivated.',
+
+
+//uzbek
+
+    'danger_zone_title' => 'Xavfli zona',
+    'deactivate_account_title' => 'Hisobni o‘chirish',
+    'deactivate_account_description' => 'Hisobingiz o‘chirilib, uning barcha resurslari va ma\'lumotlari yashiriladi. Siz darhol tizimdan chiqib ketasiz.',
+    'deactivate_account_warning' => 'Agar 30 kun ichida qayta kirishni amalga oshirsangiz, hisobingizni qayta yoqishingiz mumkin. Ushbu muddatdan so‘ng, hisobingiz va barcha ma\'lumotlar doimiy ravishda o‘chiriladi.',
+    'deactivate_account_button' => 'Hisobni o‘chirish',
+    'deactivate_modal_title' => 'Siz haqiqatan ham ishonchingiz komilmi?',
+    'deactivate_modal_content' => 'Bu muhim harakatdir. Hisobingizga kirish imkoni bo‘lmaydi va profilingiz va kontentingiz platformadan yashiriladi. Siz barcha qurilmalardan chiqib ketasiz.',
+    'deactivate_modal_password_prompt' => 'Davom etish uchun parolingizni tasdiqlashingiz so‘raladi.',
+    'deactivate_modal_confirm_button' => 'Ha, hisobimni o‘chiraman',
+    'account_deactivated_successfully' => 'Hisobingiz muvaffaqiyatli o‘chirildi.',
+
+
 ];

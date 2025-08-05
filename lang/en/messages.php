@@ -568,4 +568,8 @@ return [
     'deactivate_modal_confirm_button' => 'Yes, Deactivate My Account',
     'account_deactivated_successfully' => 'Your account has been successfully deactivated.',
 
+    'profile.deactivated_title' => 'Account Deactivated',
+    'profile.deactivated_message' => 'This user has deactivated their account. Their information has been anonymized.',
+    'profile.deactivated_name' => 'Deactivated User',
+
 ];
