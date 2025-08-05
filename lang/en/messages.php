@@ -43,6 +43,7 @@ return [
     'profile.js.loading' => 'Loading...',
     'profile.js.load_more' => 'Load More',
     'profile.js.login_to_see_posts' => 'Please <a class="text-blue-800 hover:underline" href="/login">log in</a> to see :username\'s posts.',
+    'profile.js.login_to_see_voted_posts' => 'Please <a class="text-blue-800 hover:underline" href="/login">log in</a> to see :username\'s voted posts.',
     'profile.js.error_loading_posts' => 'Error loading posts. Please try again.',
     'profile.alt_profile_picture_js' => ":username's profile picture",
 

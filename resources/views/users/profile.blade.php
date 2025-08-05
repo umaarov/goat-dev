@@ -251,11 +251,11 @@
 
 @push('scripts')
     <script>
-        // Pass the necessary PHP variables to JavaScript
         window.i18n = {
             profile: {
                 js: {
-                    login_to_see_posts: `{!! addslashes(__('messages.profile.js.login_to_see_posts')) !!}`
+                    login_to_see_posts: `{!! addslashes(__('messages.profile.js.login_to_see_posts')) !!}`,
+                    login_to_see_voted_posts: `{!! addslashes(__('messages.profile.js.login_to_see_voted_posts')) !!}`
                 }
             }
         };
@@ -385,8 +385,17 @@
                     });
 
                     if (response.status === 401) {
-                        const loginMessage = (window.i18n?.profile?.js?.login_to_see_posts || 'Please log in to see posts by :username.').replace(':username', window.profileUsername || 'this user');
+                        let messageTemplate;
+
+                        if (type === 'voted-posts') {
+                            messageTemplate = window.i18n?.profile?.js?.login_to_see_voted_posts || 'Please log in to see voted posts by :username.';
+                        } else {
+                            messageTemplate = window.i18n?.profile?.js?.login_to_see_posts || 'Please log in to see posts by :username.';
+                        }
+
+                        const loginMessage = messageTemplate.replace(':username', window.profileUsername || 'this user');
                         postsContainer.innerHTML = `<p class="text-gray-500 text-center py-8">${loginMessage}</p>`;
+
                         hasMorePages[type] = false;
                         return;
                     }
@@ -394,7 +403,7 @@
                     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
                     const data = await response.json();
-                    const noPostsMessage = window.i18n?.profile?.js?.no_posts_found || 'No pozsts were found.';
+                    const noPostsMessage = window.i18n?.profile?.js?.no_posts_found || 'No posts were found.';
 
                     if (!loadMore) {
                         postsContainer.innerHTML = data.html || `<p class="text-gray-500 text-center py-8">${noPostsMessage}</p>`;
