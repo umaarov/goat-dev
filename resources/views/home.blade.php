@@ -48,6 +48,23 @@
             @if ($posts->count() > 0)
                 @foreach($posts as $post)
                     @include('partials.post-card', ['post' => $post])
+                    @if (($loop->iteration % 4) == 0)
+                        <article class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4 p-4">
+
+                            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
+                                    crossorigin="anonymous"></script>
+                            <ins class="adsbygoogle"
+                                 style="display:block"
+                                 data-ad-format="fluid"
+                                 data-ad-layout-key="-6t+ed+2i-1n-4w"
+                                 data-ad-client="ca-pub-2989575196315667"
+                                 data-ad-slot="7674157999"></ins>
+                            <script>
+                                (adsbygoogle = window.adsbygoogle || []).push({});
+                            </script>
+
+                        </article>
+                    @endif
                 @endforeach
             @else
                 <div class="text-center p-8 bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)]">
