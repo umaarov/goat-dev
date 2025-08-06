@@ -88,14 +88,15 @@
             const noPostsMessage = '{{ $posts->isEmpty() }}';
 
             function loadVisibleAds() {
-                let adSlots = document.querySelectorAll('ins.adsbygoogle[data-ad-status!="filled"]');
-                adSlots.forEach(() => {
+                let adSlots = document.querySelectorAll('ins.adsbygoogle:not([data-ad-status="filled"])');
+
+                if (adSlots.length > 0) {
                     try {
                         (adsbygoogle = window.adsbygoogle || []).push({});
                     } catch (e) {
                         console.error("AdSense push error: ", e);
                     }
-                });
+                }
             }
 
             if (shimmer && container) {
