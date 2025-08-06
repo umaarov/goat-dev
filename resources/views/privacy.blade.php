@@ -59,9 +59,9 @@
                 {{ __('messages.privacy_policy.section2_text') }}
             </p>
 
-            <div class="text-gray-600 text-sm mb-4">
-                <div id="ezoic-privacy-policy-embed"></div>
-            </div>
+{{--            <div class="text-gray-600 text-sm mb-4">--}}
+{{--                <div id="ezoic-privacy-policy-embed"></div>--}}
+{{--            </div>--}}
 
             <h3 class="text-md font-semibold mb-1" style="font-size: 1rem; font-weight: 600;">
                 {{ __('messages.privacy_policy.section3_heading') }}

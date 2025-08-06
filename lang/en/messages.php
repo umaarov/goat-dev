@@ -571,5 +571,4 @@ return [
     'profile.deactivated_title' => 'Account Deactivated',
     'profile.deactivated_message' => 'This user has deactivated their account. Their information has been anonymized.',
     'profile.deactivated_name' => 'Deactivated User',
-
 ];

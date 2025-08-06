@@ -20,24 +20,24 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @stack('styles')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-{{--    @vite(['resources/css/posts.css'])--}}
-{{--    <link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}" media="print"--}}
-{{--          onload="this.media='all'">--}}
-{{--    <noscript>--}}
-{{--        <link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}">--}}
-{{--    </noscript>--}}
-    @vite(['resources/js/app.js'])
+    {{--    @vite(['resources/css/posts.css'])--}}
+    {{--    <link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}" media="print"--}}
+    {{--          onload="this.media='all'">--}}
+    {{--    <noscript>--}}
+    {{--        <link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}">--}}
+    {{--    </noscript>--}}
+    {{--    @vite(['resources/js/app.js'])--}}
     {{--    @include('partials.critical-css')--}}
     {{--    <link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}" media="print" onload="this.media='all'">--}}
     {{--    <noscript><link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}"></noscript>--}}
 
-    <script src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false"></script>
-    <script src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false"></script>
-    <script async src="//www.ezojs.com/ezoic/sa.min.js"></script>
-    <script>
-        window.ezstandalone = window.ezstandalone || {};
-        ezstandalone.cmd = ezstandalone.cmd || [];
-    </script>
+{{--    <script src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false"></script>--}}
+{{--    <script src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false"></script>--}}
+    {{--    <script async src="//www.ezojs.com/ezoic/sa.min.js"></script>--}}
+{{--    <script>--}}
+{{--        window.ezstandalone = window.ezstandalone || {};--}}
+{{--        ezstandalone.cmd = ezstandalone.cmd || [];--}}
+{{--    </script>--}}
 
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="style"
@@ -252,7 +252,8 @@
         <div class="space-y-4">
             <div class="flex flex-wrap justify-center gap-4 text-sm text-blue-800">
                 <a href="{{ route('about') }}" class="hover:underline">{{ __('messages.about_us_nav') }}</a>
-                <a href="{{ route('privacy') }}" class="hover:underline">{{ __('messages.privacy_policy.title_nav') }}</a>
+                <a href="{{ route('privacy') }}"
+                   class="hover:underline">{{ __('messages.privacy_policy.title_nav') }}</a>
                 <a href="{{ route('terms') }}" class="hover:underline">{{ __('messages.terms_of_use_nav') }}</a>
                 <a href="{{ route('sponsorship') }}" class="hover:underline">{{ __('messages.sponsorship_nav') }}</a>
                 <a href="{{ route('ads') }}" class="hover:underline">{{ __('messages.ads_nav') }}</a>
