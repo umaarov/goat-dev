@@ -49,7 +49,9 @@
                 @foreach($posts as $post)
                     @include('partials.post-card', ['post' => $post])
                     @if (($loop->iteration % 4) == 0)
-                            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
+                        <div class="mb-4">
+                            <script async
+                                    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
                                     crossorigin="anonymous"></script>
                             <ins class="adsbygoogle"
                                  style="display:block"
@@ -60,6 +62,7 @@
                             <script>
                                 (adsbygoogle = window.adsbygoogle || []).push({});
                             </script>
+                        </div>
                     @endif
                 @endforeach
             @else
