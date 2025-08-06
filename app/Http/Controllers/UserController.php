@@ -142,7 +142,13 @@ class UserController extends Controller
 
             $showManagementOptions = Auth::check() && Auth::id() === $user->id;
 
-            $postsHtml = view('users.partials.posts-list', compact('posts', 'showManagementOptions'))->render();
+            $postCounter = ($posts->currentPage() - 1) * $posts->perPage();
+
+            $postsHtml = view('users.partials.posts-list', [
+                'posts' => $posts,
+                'showManagementOptions' => $showManagementOptions,
+                'postCounter' => $postCounter,
+            ])->render();
             Log::info('View rendered successfully');
 
 
@@ -221,11 +227,13 @@ class UserController extends Controller
 
             $showManagementOptions = $isOwnProfile;
             $profileOwnerToDisplay = $profileUser;
-            $postsHtml = view('users.partials.posts-list', compact(
-                'posts',
-                'showManagementOptions',
-                'profileOwnerToDisplay'
-            ))->render();
+            $postCounter = ($posts->currentPage() - 1) * $posts->perPage();
+            $postsHtml = view('users.partials.posts-list', [
+                'posts' => $posts,
+                'showManagementOptions' => $showManagementOptions,
+                'profileOwnerToDisplay' => $profileOwnerToDisplay,
+                'postCounter' => $postCounter,
+            ])->render();
 
 
             return response()->json([

@@ -147,10 +147,23 @@
 
                 {{-- 2. POSTS RESULTS SECTION --}}
                 @if ($posts->isNotEmpty())
-                    {{-- <h2 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2 border-gray-200">{{ __('messages.search_results.posts') }}</h2>--}}
                     <div class="space-y-4">
                         @foreach ($posts as $post)
                             @include('partials.post-card', ['post' => $post])
+
+                            @if (($loop->iteration % 6) == 0)
+                                <div class="w-full mb-4">
+                                    <script async
+                                            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
+                                            crossorigin="anonymous"></script>
+                                    <ins class="adsbygoogle"
+                                         style="display:block"
+                                         data-ad-format="fluid"
+                                         data-ad-layout-key="-6t+ed+2i-1n-4w"
+                                         data-ad-client="ca-pub-2989575196315667"
+                                         data-ad-slot="7674157999"></ins>
+                                </div>
+                            @endif
                         @endforeach
                     </div>
                     <div class="pagination mt-8">
