@@ -540,19 +540,6 @@ return [
         'section3_text' => 'Если у вас есть какие-либо вопросы или опасения по поводу этой Политики конфиденциальности или наших практик обработки данных, пожалуйста, не стесняйтесь связаться с нами по адресу info@goat.uz',
     ],
 
-
-//    'danger_zone_title' => 'Danger Zone',
-//    'deactivate_account_title' => 'Deactivate Account',
-//    'deactivate_account_description' => 'Once your account is deactivated, all of its resources and data will be hidden. You will be logged out immediately.',
-//    'deactivate_account_warning' => 'You can reactivate your account by logging in again within 30 days. After this period, your account and all data will be permanently deleted.',
-//    'deactivate_account_button' => 'Deactivate Account',
-//    'deactivate_modal_title' => 'Are you absolutely sure?',
-//    'deactivate_modal_content' => 'This is a critical action. Your account will become inaccessible, and your profile and content will be hidden from the platform. You will be logged out from all devices.',
-//    'deactivate_modal_password_prompt' => 'You will be asked to confirm your password to proceed.',
-//    'deactivate_modal_confirm_button' => 'Yes, Deactivate My Account',
-//    'account_deactivated_successfully' => 'Your account has been successfully deactivated.',
-
-
     'danger_zone_title' => 'Опасная зона',
     'deactivate_account_title' => 'Деактивировать аккаунт',
     'deactivate_account_description' => 'После деактивации ваш аккаунт и все его данные будут скрыты. Вы будете немедленно выведены из системы.',
@@ -563,6 +550,16 @@ return [
     'deactivate_modal_password_prompt' => 'Вам будет предложено подтвердить свой пароль для продолжения.',
     'deactivate_modal_confirm_button' => 'Да, деактивировать мой аккаунт',
     'account_deactivated_successfully' => 'Ваш аккаунт успешно деактивирован.',
+
+    'create_post.template_title' => 'Быстрый старт',
+    'create_post.template_description' => 'Используйте предопределенный шаблон "Да / Нет".',
+    'create_post.apply_template_button' => 'Применить шаблон',
+    'create_post.applying_template_button' => 'Применение шаблона...',
+
+    'create_post.template_load_error' => 'Не удалось загрузить шаблон. Пожалуйста, попробуйте еще раз позже.',
+
+    'yes' => 'Yes',
+    'no' => 'No',
 
 
 ];

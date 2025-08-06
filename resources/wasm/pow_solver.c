@@ -5,7 +5,6 @@
 #include <emscripten.h>
 
 /* A self-contained, public-domain SHA256 implementation */
-// (For brevity, I'm showing just the function signatures here. The full code block below will contain the full SHA256 implementation)
 typedef struct {
     uint8_t  buf[64];
     uint32_t hash[8];

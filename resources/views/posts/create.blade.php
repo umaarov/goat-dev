@@ -122,11 +122,104 @@
                         {{ __('messages.create_post.js.moderation_in_progress', ['default' => 'Please wait a moment. We are checking your post to ensure it meets our community guidelines.']) }}
                     </p>
                 </div>
+
+                {{-- Template Selector --}}
+                <div class="mt-4">
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <div class="flex-grow pr-4">
+                            <p class="text-sm font-semibold text-gray-800">{{ __('messages.create_post.template_title', ['default' => 'Quick Start']) }}</p>
+                            <p class="text-xs text-gray-500">{{ __('messages.create_post.template_description', ['default' => 'Use a predefined "Yes / No" template.']) }}</p>
+                        </div>
+                        <button type="button" id="yesNoTemplateBtn"
+                                class="flex-shrink-0 px-4 py-2 bg-white text-blue-800 border border-blue-800 text-xs font-bold rounded-md hover:bg-blue-800 hover:text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            {{ __('messages.create_post.apply_template_button', ['default' => 'Apply']) }}
+                        </button>
+                    </div>
+                </div>
+                {{-- Template Selector --}}
+
             </form>
         </div>
     </div>
 
     <script>
+        async function setFileInputFromUrl(url, inputId, fileName) {
+            try {
+                const response = await fetch(url, {cache: 'no-store'});
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status} for URL: ${url}`);
+                }
+                const blob = await response.blob();
+                const file = new File([blob], fileName, {
+                    type: blob.type || 'image/png',
+                    lastModified: new Date().getTime()
+                });
+
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+
+                const fileInput = document.getElementById(inputId);
+                if (fileInput) {
+                    fileInput.files = dataTransfer.files;
+                }
+            } catch (error) {
+                console.error('Error setting file input from URL:', error);
+                throw error;
+            }
+        }
+
+        async function applyYesNoTemplate() {
+            const yesNoTemplateBtn = document.getElementById('yesNoTemplateBtn');
+            if (!yesNoTemplateBtn || yesNoTemplateBtn.disabled) return;
+
+            const yesImageUrl = "{{ asset('images/templates/yes.webp') }}";
+            const noImageUrl = "{{ asset('images/templates/no.webp') }}";
+            const yesText = "{{ __('messages.yes', ['default' => 'Yes']) }}";
+            const noText = "{{ __('messages.no', ['default' => 'No']) }}";
+
+            const optionOneTitle = document.getElementById('option_one_title');
+            const optionTwoTitle = document.getElementById('option_two_title');
+            const optionOneImg = document.getElementById('option_one_img');
+            const optionTwoImg = document.getElementById('option_two_img');
+            const optionOnePlaceholder = document.getElementById('option_one_placeholder');
+            const optionTwoPlaceholder = document.getElementById('option_two_placeholder');
+            const optionOnePreview = document.getElementById('option_one_preview');
+            const optionTwoPreview = document.getElementById('option_two_preview');
+
+            yesNoTemplateBtn.disabled = true;
+            yesNoTemplateBtn.textContent = "{{ __('messages.create_post.applying_template_button', ['default' => 'Applying...']) }}";
+
+            try {
+                optionOneTitle.value = yesText;
+                optionTwoTitle.value = noText;
+
+                optionOneImg.src = yesImageUrl;
+                optionOneImg.classList.remove('hidden');
+                optionOnePlaceholder.classList.add('hidden');
+                optionOnePreview?.classList.remove('border-red-500', 'border-dashed');
+
+                optionTwoImg.src = noImageUrl;
+                optionTwoImg.classList.remove('hidden');
+                optionTwoPlaceholder.classList.add('hidden');
+                optionTwoPreview?.classList.remove('border-red-500', 'border-dashed');
+
+                await Promise.all([
+                    setFileInputFromUrl(yesImageUrl, 'option_one_image_final', 'yes.webp'),
+                    setFileInputFromUrl(noImageUrl, 'option_two_image_final', 'no.webp')
+                ]);
+
+            } catch (error) {
+                if (typeof window.showToast === 'function') {
+                    window.showToast("{{ __('messages.create_post.js.template_load_error', ['default' => 'Could not load template images. Please select them manually.']) }}", 'error');
+                } else {
+                    alert("{{ __('messages.create_post.js.template_load_error', ['default' => 'Could not load template images. Please select them manually.']) }}");
+                }
+            } finally {
+                yesNoTemplateBtn.disabled = false;
+                yesNoTemplateBtn.textContent = "{{ __('messages.create_post.apply_template_button', ['default' => 'Apply']) }}";
+            }
+        }
+
         function openImageCropper(event, finalInputId, previewImgId, placeholderId, previewContainerId) {
             const triggerInput = event.target;
             const previewImg = document.getElementById(previewImgId);
@@ -151,6 +244,11 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
+            const yesNoTemplateBtn = document.getElementById('yesNoTemplateBtn');
+            if (yesNoTemplateBtn) {
+                yesNoTemplateBtn.addEventListener('click', applyYesNoTemplate);
+            }
+
             const createPostForm = document.getElementById('createPostForm');
             const submitButton = document.getElementById('createPostSubmitButton');
             const submissionOverlay = document.getElementById('submissionOverlay');

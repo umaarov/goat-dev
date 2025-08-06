@@ -541,21 +541,6 @@ return [
         'section3_text' => 'Agar ushbu Maxfiylik siyosati yoki ma\'lumot amaliyotlarimiz haqida savollaringiz yoki tashvishlaringiz bo‘lsa, iltimos, biz bilan bog‘laning: info@goat.uz',
     ],
 
-
-//    'danger_zone_title' => 'Danger Zone',
-//    'deactivate_account_title' => 'Deactivate Account',
-//    'deactivate_account_description' => 'Once your account is deactivated, all of its resources and data will be hidden. You will be logged out immediately.',
-//    'deactivate_account_warning' => 'You can reactivate your account by logging in again within 30 days. After this period, your account and all data will be permanently deleted.',
-//    'deactivate_account_button' => 'Deactivate Account',
-//    'deactivate_modal_title' => 'Are you absolutely sure?',
-//    'deactivate_modal_content' => 'This is a critical action. Your account will become inaccessible, and your profile and content will be hidden from the platform. You will be logged out from all devices.',
-//    'deactivate_modal_password_prompt' => 'You will be asked to confirm your password to proceed.',
-//    'deactivate_modal_confirm_button' => 'Yes, Deactivate My Account',
-//    'account_deactivated_successfully' => 'Your account has been successfully deactivated.',
-
-
-//uzbek
-
     'danger_zone_title' => 'Xavfli zona',
     'deactivate_account_title' => 'Hisobni o‘chirish',
     'deactivate_account_description' => 'Hisobingiz o‘chirilib, uning barcha resurslari va ma\'lumotlari yashiriladi. Siz darhol tizimdan chiqib ketasiz.',
@@ -567,5 +552,14 @@ return [
     'deactivate_modal_confirm_button' => 'Ha, hisobimni o‘chiraman',
     'account_deactivated_successfully' => 'Hisobingiz muvaffaqiyatli o‘chirildi.',
 
+    'create_post.template_title' => 'Shablon yaratish',
+    'create_post.template_description' => 'Oldindan belgilangan "Ha / Yo‘q" shablonidan foydalaning.',
+    'create_post.apply_template_button' => 'Shablonni qo‘llash',
+    'create_post.applying_template_button' => 'Shablon qo‘llanmoqda...',
+
+    'create_post.template_load_error' => 'Shablonni yuklashda xatolik yuz berdi. Iltimos, qaytadan urining.',
+
+    'yes' => 'Yes',
+    'no' => 'No',
 
 ];

@@ -571,4 +571,14 @@ return [
     'profile.deactivated_title' => 'Account Deactivated',
     'profile.deactivated_message' => 'This user has deactivated their account. Their information has been anonymized.',
     'profile.deactivated_name' => 'Deactivated User',
+
+    'create_post.template_title' => 'Quick Start',
+    'create_post.template_description' => 'Use a predefined "Yes / No" template.',
+    'create_post.apply_template_button' => 'Apply',
+    'create_post.applying_template_button' => 'Applying...',
+
+    'create_post.template_load_error' => 'Could not load template images. Please select them manually.',
+
+    'yes' => 'Yes',
+    'no' => 'No',
 ];
