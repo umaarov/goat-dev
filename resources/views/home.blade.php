@@ -48,9 +48,10 @@
             @if ($posts->count() > 0)
                 @foreach($posts as $post)
                     @include('partials.post-card', ['post' => $post])
-                    @if (($loop->iteration % 4) == 0)
-                        <div class="mb-4">
-                            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
+                    @if (($loop->iteration % 6) == 0)
+                        <div class="w-full mb-4">
+                            <script async
+                                    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
                                     crossorigin="anonymous"></script>
                             <ins class="adsbygoogle"
                                  style="display:block"
@@ -58,9 +59,6 @@
                                  data-ad-layout-key="-6t+ed+2i-1n-4w"
                                  data-ad-client="ca-pub-2989575196315667"
                                  data-ad-slot="7674157999"></ins>
-                            <script>
-                                (adsbygoogle = window.adsbygoogle || []).push({});
-                            </script>
                         </div>
                     @endif
                 @endforeach
@@ -83,6 +81,96 @@
 @endsection
 
 @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const shimmer = document.getElementById('posts-loading-shimmer');
+            const container = document.getElementById('posts-container');
+            const noPostsMessage = '{{ $posts->isEmpty() }}';
+
+            function loadVisibleAds() {
+                let adSlots = document.querySelectorAll('ins.adsbygoogle[data-ad-status!="filled"]');
+                adSlots.forEach(() => {
+                    try {
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                    } catch (e) {
+                        console.error("AdSense push error: ", e);
+                    }
+                });
+            }
+
+            if (shimmer && container) {
+                if (noPostsMessage) {
+                    shimmer.style.display = 'none';
+                    container.classList.remove('hidden');
+                } else {
+                    setTimeout(() => {
+                        shimmer.style.display = 'none';
+                        container.classList.remove('hidden');
+
+                        loadVisibleAds();
+                    }, 250);
+                }
+            }
+
+            const postContainer = document.getElementById('posts-container');
+            const trigger = document.getElementById('infinite-scroll-trigger');
+            const loadingIndicator = document.getElementById('loading-indicator');
+
+            let nextPage = 2;
+            let isLoading = false;
+            let hasMorePages = {{ $posts->hasMorePages() ? 'true' : 'false' }};
+
+            if (!hasMorePages) {
+                trigger.style.display = 'none';
+            }
+
+            const loadMorePosts = async () => {
+                if (isLoading || !hasMorePages) return;
+
+                isLoading = true;
+                loadingIndicator.classList.remove('hidden');
+
+                const filter = new URLSearchParams(window.location.search).get('filter') || '';
+                const url = `{{ route('posts.load_more') }}?page=${nextPage}${filter ? '&filter=' + filter : ''}`;
+
+                try {
+                    const response = await fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                    const data = await response.json();
+                    if (data.html.trim().length > 0) {
+                        postContainer.insertAdjacentHTML('beforeend', data.html);
+
+                        loadVisibleAds();
+
+                        document.dispatchEvent(new Event('posts-loaded'));
+                        nextPage++;
+                        hasMorePages = data.hasMorePages;
+                        if (!hasMorePages) trigger.style.display = 'none';
+                    } else {
+                        hasMorePages = false;
+                        trigger.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Error loading more posts:', error);
+                    trigger.style.display = 'none';
+                } finally {
+                    isLoading = false;
+                    loadingIndicator.classList.add('hidden');
+                }
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    loadMorePosts();
+                }
+            }, {rootMargin: '200px'});
+
+            if (hasMorePages) {
+                observer.observe(trigger);
+            }
+        });
+    </script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const shimmer = document.getElementById('posts-loading-shimmer');
