@@ -1,4 +1,4 @@
-FROM php:8.3-cli-alpine
+FROM php:8.4.0RC4-cli-alpine
 
 ARG PUID=1000
 ARG PGID=1000
