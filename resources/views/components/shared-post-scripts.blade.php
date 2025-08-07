@@ -389,88 +389,91 @@
             return linkedText;
         }
 
-        async function fetchAndShowComment(postId, commentId) {
-            console.log(`[DEBUG] Starting fetchAndShowComment for post #${postId}, comment #${commentId}`);
-            const commentsSection = document.getElementById(`comments-section-${postId}`);
-            const commentsContainer = commentsSection.querySelector('.comments-list');
-            const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
-            if (!commentsSection || !commentsContainer || !paginationContainer) {
-                console.error('[DEBUG] Could not find essential comment section elements. Aborting.');
+    async function fetchAndShowComment(postId, commentId) {
+        console.log(`[DEBUG] Starting fetchAndShowComment for post #${postId}, comment #${commentId}`);
+        const commentsSection = document.getElementById(`comments-section-${postId}`);
+        const commentsContainer = commentsSection.querySelector('.comments-list');
+        const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
+        if (!commentsSection || !commentsContainer) {
+            console.error('[DEBUG] Could not find essential comment section elements. Aborting.');
+            return;
+        }
+
+        if (window.currentlyOpenCommentsId && window.currentlyOpenCommentsId !== postId) {
+            const previousSection = document.getElementById(`comments-section-${window.currentlyOpenCommentsId}`);
+            if (previousSection) {
+                previousSection.classList.remove('active');
+                previousSection.classList.add('hidden');
+            }
+        }
+        commentsSection.classList.remove('hidden');
+        setTimeout(() => commentsSection.classList.add('active'), 10);
+        window.currentlyOpenCommentsId = postId;
+
+        commentsContainer.innerHTML = getCommentShimmerHTML();
+        if (paginationContainer) paginationContainer.innerHTML = '';
+
+        try {
+            const fetchUrl = `/posts/${postId}/comments/context/${commentId}`;
+            console.log(`[DEBUG] Fetching comments from URL: ${fetchUrl}`);
+            const contextResponse = await fetch(fetchUrl);
+            if (!contextResponse.ok) throw new Error(`Failed to fetch comment context. Status: ${contextResponse.status}`);
+            const contextData = await contextResponse.json();
+            const targetPage = contextData.comments.current_page;
+            console.log(`[DEBUG] Target comment is on page ${targetPage}. Loading all pages up to it.`);
+
+            const pageFetchPromises = [];
+            for (let page = 1; page <= targetPage; page++) {
+                pageFetchPromises.push(fetch(`/posts/${postId}/comments?page=${page}`).then(res => res.json()));
+            }
+            const pageResults = await Promise.all(pageFetchPromises);
+
+            const allComments = pageResults.flatMap(result => result.comments.data);
+            commentsContainer.innerHTML = '';
+            if (allComments.length === 0) {
+                commentsContainer.innerHTML = `<p class="text-sm text-gray-500 text-center">${window.translations.js_no_comments_be_first}</p>`;
                 return;
             }
 
-            if (window.currentlyOpenCommentsId && window.currentlyOpenCommentsId !== postId) {
-                const previousSection = document.getElementById(`comments-section-${window.currentlyOpenCommentsId}`);
-                if (previousSection) {
-                    previousSection.classList.remove('active');
-                    previousSection.classList.add('hidden');
-                }
+            const fragment = document.createDocumentFragment();
+            allComments.forEach(comment => {
+                fragment.appendChild(createCommentElement(comment, postId, false));
+            });
+            commentsContainer.appendChild(fragment);
+            animateComments(commentsContainer);
+
+            const lastPageData = pageResults[pageResults.length - 1].comments;
+            if (lastPageData.next_page_url) {
+                const loadMoreWrapper = document.createElement('div');
+                loadMoreWrapper.className = 'load-more-comments-wrapper text-start mt-4 py-2';
+                const remainingCount = lastPageData.total - lastPageData.to;
+                loadMoreWrapper.innerHTML = `<button class="text-sm font-semibold text-blue-600 hover:underline" onclick="loadMoreComments(this, ${postId})">${(window.translations.js_view_more_comments || 'View :count more comments').replace(':count', remainingCount)}</button>`;
+                commentsContainer.appendChild(loadMoreWrapper);
             }
-            commentsSection.classList.remove('hidden');
-            setTimeout(() => commentsSection.classList.add('active'), 10);
-            window.currentlyOpenCommentsId = postId;
 
-            commentsContainer.innerHTML = getCommentShimmerHTML();
-            paginationContainer.innerHTML = '';
+            commentsSection.dataset.loaded = "true";
+            commentsSection.dataset.currentPage = targetPage;
 
-            try {
-                const fetchUrl = `/posts/${postId}/comments/context/${commentId}`;
-                console.log(`[DEBUG] Fetching comments from URL: ${fetchUrl}`);
-                const response = await fetch(fetchUrl);
+            setTimeout(() => {
+                const fullCommentId = 'comment-' + commentId;
+                const targetElement = document.getElementById(fullCommentId);
+                console.log(`[DEBUG] Attempting to find final element with ID: ${fullCommentId}. Found:`, targetElement);
 
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch comment context. Status: ${response.status}`);
-                }
-                const data = await response.json();
-                console.log('[DEBUG] Successfully received data:', data);
-
-                commentsContainer.innerHTML = '';
-                if (data.comments.data.length === 0) {
-                    commentsContainer.innerHTML = `<p class="text-sm text-gray-500 text-center">${window.translations.js_no_comments_be_first}</p>`;
-                    return;
-                }
-
-                const fragment = document.createDocumentFragment();
-                data.comments.data.forEach(comment => {
-                    fragment.appendChild(createCommentElement(comment, postId, false));
-                });
-                commentsContainer.appendChild(fragment);
-
-                animateComments(commentsContainer);
-                renderPagination(data.comments, postId, paginationContainer);
-                commentsSection.dataset.loaded = "true";
-                commentsSection.dataset.currentPage = data.comments.current_page;
-
-                setTimeout(() => {
-                    const fullCommentId = 'comment-' + commentId;
-                    const targetElement = document.getElementById(fullCommentId);
-                    console.log(`[DEBUG] Attempting to find final element with ID: ${fullCommentId}. Found:`, targetElement);
-
-                    if (targetElement) {
-                        const repliesContainer = targetElement.closest('.replies-container');
-                        if (repliesContainer && repliesContainer.classList.contains('hidden')) {
-                            console.log('[DEBUG] Target is a reply in a hidden container. Opening replies...');
-                            const rootCommentElement = repliesContainer.closest('.comment');
-                            const toggleButton = rootCommentElement.querySelector('.view-replies-button');
-                            if (toggleButton) {
-                                toggleButton.click();
-                            }
-                        }
-                        console.log('[DEBUG] Scrolling to element...');
-                        scrollToComment(fullCommentId);
-                    } else {
-                        console.error(`[DEBUG] FAILED! The comment element #${commentId} was not found in the HTML after loading.`);
-                        if(window.showToast) {
-                            window.showToast('Could not find the specific comment.', 'warning');
-                        }
+                if (targetElement) {
+                    scrollToComment(fullCommentId);
+                } else {
+                    console.error(`[DEBUG] FAILED! The comment element #${commentId} was not found in the HTML after loading.`);
+                    if (window.showToast) {
+                        window.showToast('Could not find the specific comment.', 'warning');
                     }
-                }, 500);
+                }
+            }, 300);
 
-            } catch (error) {
-                console.error('[DEBUG] An error occurred during the fetch/render process:', error);
-                commentsContainer.innerHTML = `<p class="text-red-500 text-center">${window.translations.js_failed_load_comments}</p>`;
-            }
+        } catch (error) {
+            console.error('[DEBUG] An error occurred during the fetch/render process:', error);
+            commentsContainer.innerHTML = `<p class="text-red-500 text-center">${window.translations.js_failed_load_comments}</p>`;
         }
+    }
 
         function toggleComments(postId) {
             const clickedCommentsSection = document.getElementById(`comments-section-${postId}`);
@@ -527,58 +530,114 @@
             return shimmerContent.repeat(3);
         }
 
-        function loadComments(postId, page) {
-            const commentsSection = document.getElementById(`comments-section-${postId}`);
-            const commentsContainer = commentsSection.querySelector('.comments-list');
-            if (!commentsContainer) {
-                console.error('Comments container not found');
-                return;
-            }
-            const isLoggedIn = {{ Auth::check() ? 'true' : 'false' }};
+    function loadComments(postId, page) {
+        const commentsSection = document.getElementById(`comments-section-${postId}`);
+        const commentsContainer = commentsSection.querySelector('.comments-list');
+        if (!commentsContainer) {
+            console.error('Comments container not found');
+            return;
+        }
+        const isLoggedIn = {{ Auth::check() ? 'true' : 'false' }};
 
-            if (!isLoggedIn) {
-                commentsContainer.innerHTML = `<div class="text-center py-4"><p class="text-sm text-gray-500">${window.translations.js_login_to_comment}</p></div>`;
+        if (!isLoggedIn) {
+            commentsContainer.innerHTML = `<div class="text-center py-4"><p class="text-sm text-gray-500">${window.translations.js_login_to_comment}</p></div>`;
+            const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
+            if (paginationContainer) {
+                paginationContainer.innerHTML = '';
+            }
+            commentsSection.dataset.loaded = "true";
+            return;
+        }
+
+        commentsContainer.innerHTML = getCommentShimmerHTML();
+
+        fetch(`/posts/${postId}/comments?page=${page}`)
+            .then(response => response.json())
+            .then(data => {
+                commentsContainer.innerHTML = '';
+
+                if (data.comments.data.length === 0 && page === 1) {
+                    commentsContainer.innerHTML = `<p class="text-sm text-gray-500 text-center">${window.translations.js_no_comments_be_first}</p>`;
+                    return;
+                }
+
+                const fragment = document.createDocumentFragment();
+                data.comments.data.forEach(comment => {
+                    const commentDiv = createCommentElement(comment, postId, false);
+                    fragment.appendChild(commentDiv);
+                });
+                commentsContainer.appendChild(fragment);
+
+                animateComments(commentsContainer);
+
                 const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
                 if (paginationContainer) {
                     paginationContainer.innerHTML = '';
                 }
+
+                if (data.comments.next_page_url) {
+                    const loadMoreWrapper = document.createElement('div');
+                    loadMoreWrapper.className = 'load-more-comments-wrapper text-center mt-4 py-2';
+                    const remainingCount = data.comments.total - data.comments.to;
+                    loadMoreWrapper.innerHTML = `<button class="text-sm font-semibold text-blue-600 hover:underline" onclick="loadMoreComments(this, ${postId})">${(window.translations.js_view_more_comments || 'View :count more comments').replace(':count', remainingCount)}</button>`;
+                    commentsContainer.appendChild(loadMoreWrapper);
+                }
+
                 commentsSection.dataset.loaded = "true";
-                return;
+                commentsSection.dataset.currentPage = page;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                commentsContainer.innerHTML = `<p class="text-red-500 text-center">${window.translations.js_failed_load_comments}</p>`;
+            });
+    }
+
+    async function loadMoreComments(button, postId) {
+        const commentsSection = document.getElementById(`comments-section-${postId}`);
+        if (!commentsSection) return;
+
+        const commentsContainer = commentsSection.querySelector('.comments-list');
+        const currentPage = parseInt(commentsSection.dataset.currentPage) || 1;
+        const nextPage = currentPage + 1;
+
+        button.disabled = true;
+        button.textContent = window.translations.js_loading_text || 'Loading...';
+        const loadMoreWrapper = button.parentElement;
+
+        const url = `/posts/${postId}/comments?page=${nextPage}`;
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Network response was not ok.');
+            const paginatedComments = await response.json();
+            const data = paginatedComments.comments;
+
+            const fragment = document.createDocumentFragment();
+            data.data.forEach(comment => {
+                const commentDiv = createCommentElement(comment, postId, false);
+                fragment.appendChild(commentDiv);
+            });
+
+            commentsContainer.insertBefore(fragment, loadMoreWrapper);
+
+            animateComments(commentsContainer);
+
+            commentsSection.dataset.currentPage = data.current_page;
+
+            if (data.next_page_url) {
+                const remaining = data.total - data.to;
+                button.textContent = (window.translations.js_view_more_comments || 'View :count more comments').replace(':count', remaining);
+                button.disabled = false;
+            } else {
+                loadMoreWrapper.remove();
             }
 
-            commentsContainer.innerHTML = getCommentShimmerHTML();
-
-            fetch(`/posts/${postId}/comments?page=${page}`)
-                .then(response => response.json())
-                .then(data => {
-                    commentsContainer.innerHTML = '';
-
-                    if (data.comments.data.length === 0 && page === 1) {
-                        commentsContainer.innerHTML = `<p class="text-sm text-gray-500 text-center">${window.translations.js_no_comments_be_first}</p>`;
-                        return;
-                    }
-
-                    const fragment = document.createDocumentFragment();
-                    data.comments.data.forEach(comment => {
-                        const commentDiv = createCommentElement(comment, postId, false);
-                        fragment.appendChild(commentDiv);
-
-                    });
-                    commentsContainer.appendChild(fragment);
-
-                    animateComments(commentsContainer);
-                    const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
-                    if (paginationContainer) {
-                        renderPagination(data.comments, postId, paginationContainer);
-                    }
-                    commentsSection.dataset.loaded = "true";
-                    commentsSection.dataset.currentPage = page;
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    commentsContainer.innerHTML = `<p class="text-red-500 text-center">${window.translations.js_failed_load_comments}</p>`;
-                });
+        } catch (error) {
+            console.error('Error loading more comments:', error);
+            button.textContent = window.translations.js_error_retry_text || 'Error. Click to retry.';
+            button.disabled = false;
         }
+    }
 
         function createCommentElement(commentData, postId, isReply = false) {
             const commentDiv = document.createElement('div');
