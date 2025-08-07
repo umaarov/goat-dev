@@ -234,6 +234,8 @@ Contributions are what make the open-source community such an amazing place to l
 * The full User Interface mockups and design specifications for the platform can be found at [/docs/goat_ui.pdf](https://github.com/umaarov/goat-dev/blob/master/docs/goat_ui.pdf).
 * The complete, advanced database schema for the application is detailed in [/docs/goat_db.pdf](https://github.com/umaarov/goat-dev/blob/master/docs/goat_db.pdf).
 
+---
+
 ## License
 
 This project is open-source software distributed under the MIT License. See `LICENSE` for more information.
