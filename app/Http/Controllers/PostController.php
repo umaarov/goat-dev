@@ -976,8 +976,7 @@ class PostController extends Controller
             ->limit(50)
             ->get();
 
-        // --- 2. SCORE AND SORT CANDIDATES ---
-        $sortedPosts = $this->levenshteinService->findBestMatches(
+        $sortedPostsCollection = $this->levenshteinService->findBestMatches(
             $queryTerm,
             $candidatePosts,
             ['question', 'option_one_title', 'option_two_title', 'ai_generated_tags', 'user.username']
@@ -989,13 +988,12 @@ class PostController extends Controller
             ['username', 'first_name', 'last_name']
         );
 
-        // --- 3. MANUALLY PAGINATE THE SORTED POSTS ---
         $currentPage = Paginator::resolveCurrentPage('page');
-        $currentPagePosts = $sortedPosts->slice(($currentPage - 1) * $perPage, $perPage);
+        $currentPagePosts = $sortedPostsCollection->slice(($currentPage - 1) * $perPage, $perPage);
 
         $posts = new \Illuminate\Pagination\LengthAwarePaginator(
             $currentPagePosts,
-            $sortedPosts->count(),
+            $sortedPostsCollection->count(),
             $perPage,
             $currentPage,
             ['path' => Paginator::resolveCurrentPath(), 'query' => $request->query()]
@@ -1003,11 +1001,11 @@ class PostController extends Controller
 
         $this->attachUserVoteStatus($posts);
 
-        // --- 4. HANDLE RESPONSE TYPE ---
-        if ($request->expectsJson()) {
+        if ($request->ajax()) {
+            $html = view('partials.posts-list', ['posts' => $posts])->render();
             return response()->json([
-                'users' => $sortedUsers->take(10),
-                'posts' => $posts
+                'html' => $html,
+                'hasMorePages' => $posts->hasMorePages()
             ]);
         }
 
@@ -1017,6 +1015,7 @@ class PostController extends Controller
             'queryTerm' => $queryTerm
         ]);
     }
+
 
 
     final public function loadMorePosts(Request $request): JsonResponse

@@ -97,7 +97,6 @@
 
                 {{-- 1. USERS RESULTS SECTION --}}
                 @if ($users->isNotEmpty())
-                    {{-- <h2 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2 border-gray-200">{{ __('messages.search_results.users') }}</h2>--}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         @foreach($users as $user)
                             @php
@@ -127,13 +126,13 @@
                                         @if($isVerified)
                                             <span class="ml-1 flex-shrink-0"
                                                   title="{{ __('messages.profile.verified_account') }}">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" viewBox="0 0 20 20"
-                         fill="currentColor">
-                        <path fill-rule="evenodd"
-                              d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                              clip-rule="evenodd"/>
-                    </svg>
-                </span>
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" viewBox="0 0 20 20"
+                                                     fill="currentColor">
+                                                    <path fill-rule="evenodd"
+                                                          d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                          clip-rule="evenodd"/>
+                                                </svg>
+                                            </span>
                                         @endif
                                     </div>
                                     <p class="text-sm text-gray-600 truncate" title="{{ $user->username }}">
@@ -147,41 +146,143 @@
 
                 {{-- 2. POSTS RESULTS SECTION --}}
                 @if ($posts->isNotEmpty())
-                    <div class="space-y-4">
-                        @foreach ($posts as $post)
-                            @include('partials.post-card', ['post' => $post])
+                    <div id="posts-wrapper">
+                        <div id="posts-container" class="space-y-4">
+                            @foreach ($posts as $post)
+                                @include('partials.post-card', ['post' => $post])
 
-                            @if (($loop->iteration % 6) == 0)
-                                <div class="w-full mb-4">
-                                    <script async
-                                            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
-                                            crossorigin="anonymous"></script>
-                                    <ins class="adsbygoogle"
-                                         style="display:block"
-                                         data-ad-format="fluid"
-                                         data-ad-layout-key="-6t+ed+2i-1n-4w"
-                                         data-ad-client="ca-pub-2989575196315667"
-                                         data-ad-slot="7674157999"></ins>
-                                </div>
-                            @endif
-                        @endforeach
+                                @if (($loop->iteration % 6) == 0)
+                                    <div class="w-full mb-4">
+                                        <script async
+                                                src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
+                                                crossorigin="anonymous"></script>
+                                        <ins class="adsbygoogle"
+                                             style="display:block"
+                                             data-ad-format="fluid"
+                                             data-ad-layout-key="-6t+ed+2i-1n-4w"
+                                             data-ad-client="ca-pub-2989575196315667"
+                                             data-ad-slot="7674157999"></ins>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+
+                        {{-- Infinite Scroll Trigger and Loading Indicator --}}
+                        <div id="infinite-scroll-trigger"></div>
+
+                        <div id="loading-indicator" class="hidden text-center py-4">
+                            @include('partials.post-card-shimmer')
+                        </div>
                     </div>
-                    <div class="pagination mt-8">
-                        {{ $posts->appends(['q' => $queryTerm])->links() }}
-                    </div>
+                @else
+                    @if($users->isEmpty())
+                        <div class="text-center mt-2 mb-8">
+                            <p>{{ __('messages.search_results.no_results_found', ['queryTerm' => e($queryTerm)]) }}</p>
+                            <p>{{ __('messages.search_results.try_different_keywords') }}</p>
+                        </div>
+                    @endif
                 @endif
 
-                {{-- 3. "NO RESULTS" MESSAGE --}}
                 @if ($users->isEmpty() && $posts->isEmpty())
                     <div class="text-center mt-2 mb-8">
                         <p>{{ __('messages.search_results.no_results_found', ['queryTerm' => e($queryTerm)]) }}</p>
                         <p>{{ __('messages.search_results.try_different_keywords') }}</p>
                     </div>
                 @endif
-
             </div>
         @else
             <p class="mt-2 mb-8 text-center">{{ __('messages.search_results.enter_term_prompt') }}</p>
         @endif
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const initialPostsExist = {{ $posts->count() > 0 ? 'true' : 'false' }};
+            if (!initialPostsExist) return;
+
+            const postContainer = document.getElementById('posts-container');
+            const trigger = document.getElementById('infinite-scroll-trigger');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const queryTerm = '{{ $queryTerm ?? '' }}';
+
+            let nextPage = 2;
+            let isLoading = false;
+            let hasMorePages = {{ $posts->hasMorePages() ? 'true' : 'false' }};
+
+            if (!hasMorePages) {
+                trigger.style.display = 'none';
+            }
+
+            function loadVisibleAds() {
+                let adSlots = document.querySelectorAll('ins.adsbygoogle:not([data-ad-status="filled"])');
+                if (adSlots.length > 0) {
+                    try {
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                    } catch (e) {
+                        console.error("AdSense push error: ", e);
+                    }
+                }
+            }
+
+            const loadMorePosts = async () => {
+                if (isLoading || !hasMorePages) return;
+
+                isLoading = true;
+                loadingIndicator.classList.remove('hidden');
+
+                const url = `{{ route('search') }}?page=${nextPage}&q=${encodeURIComponent(queryTerm)}`;
+
+                try {
+                    const response = await fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                        }
+                    });
+
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                    const data = await response.json();
+
+                    if (data.html && data.html.trim().length > 0) {
+                        postContainer.insertAdjacentHTML('beforeend', data.html);
+
+                        loadVisibleAds();
+
+                        document.dispatchEvent(new Event('posts-loaded'));
+                        nextPage++;
+                        hasMorePages = data.hasMorePages;
+
+                        if (!hasMorePages) {
+                            trigger.style.display = 'none';
+                        }
+                    } else {
+                        hasMorePages = false;
+                        trigger.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Error loading more search results:', error);
+                    trigger.style.display = 'none';
+                } finally {
+                    isLoading = false;
+                    loadingIndicator.classList.add('hidden');
+                }
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    loadMorePosts();
+                }
+            }, {
+                rootMargin: '400px',
+            });
+
+            if (hasMorePages) {
+                observer.observe(trigger);
+            }
+        });
+    </script>
+@endpush
+
