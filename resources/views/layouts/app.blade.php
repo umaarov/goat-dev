@@ -21,12 +21,49 @@
     @stack('styles')
     <script>
         (function () {
-            const theme = localStorage.getItem('theme');
-            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
+            window.themeManager = {
+                key: 'theme',
+
+                applyTheme(preference) {
+                    const resolvedTheme = preference === 'system'
+                        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                        : preference;
+
+                    if (resolvedTheme === 'dark') {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+
+                    const event = new CustomEvent('theme:changed', {
+                        detail: {themePreference: preference, resolvedTheme}
+                    });
+                    document.dispatchEvent(event);
+                },
+
+                set(newPreference) {
+                    if (!['light', 'dark', 'system'].includes(newPreference)) {
+                        newPreference = 'system';
+                    }
+                    localStorage.setItem(this.key, newPreference);
+                    this.applyTheme(newPreference);
+                },
+
+                get() {
+                    return localStorage.getItem(this.key) || 'system';
+                },
+
+                init() {
+                    this.applyTheme(this.get());
+
+                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                        if (this.get() === 'system') {
+                            this.applyTheme('system');
+                        }
+                    });
+                }
+            };
+            window.themeManager.init();
         })();
     </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])

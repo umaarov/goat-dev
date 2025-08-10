@@ -730,43 +730,21 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const themeSwitcher = document.getElementById('theme-switcher');
-            if (!themeSwitcher) return;
-
-            const osThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-            const applyThemeToDOM = (resolvedTheme) => {
-                if (resolvedTheme === 'dark') {
-                    document.documentElement.classList.add('dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                }
-            };
-
-            const syncTheme = (preference) => {
-                localStorage.setItem('theme', preference);
-
-                if (preference === 'system') {
-                    applyThemeToDOM(osThemeQuery.matches ? 'dark' : 'light');
-                } else {
-                    applyThemeToDOM(preference);
-                }
-
-                const radio = document.querySelector(`#theme-switcher input[name="theme"][value="${preference}"]`);
+            if (!themeSwitcher || !window.themeManager) return;
+            const updateRadioSelection = (preference) => {
+                const radio = themeSwitcher.querySelector(`input[name="theme"][value="${preference}"]`);
                 if (radio) radio.checked = true;
             };
 
             themeSwitcher.addEventListener('change', (e) => {
-                syncTheme(e.target.value);
+                window.themeManager.set(e.target.value);
             });
 
-            osThemeQuery.addEventListener('change', (e) => {
-                if (localStorage.getItem('theme') === 'system') {
-                    applyThemeToDOM(e.matches ? 'dark' : 'light');
-                }
+            document.addEventListener('theme:changed', (e) => {
+                updateRadioSelection(e.detail.themePreference);
             });
 
-            const initialThemePreference = localStorage.getItem('theme') || 'system';
-            syncTheme(initialThemePreference);
+            updateRadioSelection(window.themeManager.get());
         });
     </script>
     <script>
