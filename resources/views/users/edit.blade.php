@@ -730,44 +730,43 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const themeSwitcher = document.getElementById('theme-switcher');
-            if (themeSwitcher) {
-                const osThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+            if (!themeSwitcher) return;
 
-                const applyTheme = (theme) => {
-                    if (theme === 'dark') {
-                        document.documentElement.classList.add('dark');
-                    } else {
-                        document.documentElement.classList.remove('dark');
-                    }
-                };
+            const osThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-                const handleSystemThemeChange = (e) => {
-                    if (localStorage.getItem('theme') === 'system') {
-                        applyTheme(e.matches ? 'dark' : 'light');
-                    }
-                };
+            const applyThemeToDOM = (resolvedTheme) => {
+                if (resolvedTheme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            };
 
-                const updateRadioButtons = () => {
-                    const storedTheme = localStorage.getItem('theme') || 'system';
-                    const radio = document.querySelector(`#theme-switcher input[name="theme"][value="${storedTheme}"]`);
-                    if (radio) radio.checked = true;
-                };
+            const syncTheme = (preference) => {
+                localStorage.setItem('theme', preference);
 
-                themeSwitcher.addEventListener('change', (e) => {
-                    const selectedTheme = e.target.value;
-                    localStorage.setItem('theme', selectedTheme);
+                if (preference === 'system') {
+                    applyThemeToDOM(osThemeQuery.matches ? 'dark' : 'light');
+                } else {
+                    applyThemeToDOM(preference);
+                }
 
-                    if (selectedTheme === 'system') {
-                        applyTheme(osThemeQuery.matches ? 'dark' : 'light');
-                    } else {
-                        applyTheme(selectedTheme);
-                    }
-                });
+                const radio = document.querySelector(`#theme-switcher input[name="theme"][value="${preference}"]`);
+                if (radio) radio.checked = true;
+            };
 
-                osThemeQuery.addEventListener('change', handleSystemThemeChange);
+            themeSwitcher.addEventListener('change', (e) => {
+                syncTheme(e.target.value);
+            });
 
-                updateRadioButtons();
-            }
+            osThemeQuery.addEventListener('change', (e) => {
+                if (localStorage.getItem('theme') === 'system') {
+                    applyThemeToDOM(e.matches ? 'dark' : 'light');
+                }
+            });
+
+            const initialThemePreference = localStorage.getItem('theme') || 'system';
+            syncTheme(initialThemePreference);
         });
     </script>
     <script>
