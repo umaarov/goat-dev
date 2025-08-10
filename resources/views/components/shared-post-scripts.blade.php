@@ -11,46 +11,44 @@
     var typingTimers = window.typingTimers || {};
 
     function updateTypingIndicatorUI(postId) {
-            const indicator = document.getElementById(`typing-indicator-${postId}`);
-            if (!indicator) return;
+        const indicator = document.getElementById(`typing-indicator-${postId}`);
+        if (!indicator) return;
 
-            const typists = indicator.dataset.typists ? JSON.parse(indicator.dataset.typists) : [];
-            indicator.innerHTML = '';
+        const typists = indicator.dataset.typists ? JSON.parse(indicator.dataset.typists) : [];
+        indicator.innerHTML = '';
 
-            if (typists.length === 0) {
-                return; // No one is typing
-            }
-
-            const span = document.createElement('span');
-
-            const createStrong = (text) => {
-                const strong = document.createElement('strong');
-                strong.className = 'font-semibold not-italic';
-                strong.textContent = text;
-                return strong;
-            };
-
-            if (typists.length === 1) {
-                // Case: User1 is typing...
-                span.appendChild(createStrong(typists[0]));
-                span.append(' is typing...');
-            } else if (typists.length === 2) {
-                // Case: User1 and User2 are typing...
-                span.appendChild(createStrong(typists[0]));
-                span.append(' and ');
-                span.appendChild(createStrong(typists[1]));
-                span.append(' are typing...');
-            } else {
-                // Case: User1 and X others are typing...
-                const othersCount = typists.length - 1;
-                span.appendChild(createStrong(typists[0]));
-                span.append(' and ');
-                span.appendChild(createStrong(othersCount + ' ' + (othersCount > 1 ? 'others' : 'other')));
-                span.append(' are typing...');
-            }
-
-            indicator.appendChild(span);
+        if (typists.length === 0) {
+            return;
         }
+
+        const span = document.createElement('span');
+        span.className = 'text-gray-500 dark:text-gray-400 italic text-xs';
+
+        const createStrong = (text) => {
+            const strong = document.createElement('strong');
+            strong.className = 'font-semibold not-italic text-gray-600 dark:text-gray-300';
+            strong.textContent = text;
+            return strong;
+        };
+
+        if (typists.length === 1) {
+            span.appendChild(createStrong(typists[0]));
+            span.append(' is typing...');
+        } else if (typists.length === 2) {
+            span.appendChild(createStrong(typists[0]));
+            span.append(' and ');
+            span.appendChild(createStrong(typists[1]));
+            span.append(' are typing...');
+        } else {
+            const othersCount = typists.length - 1;
+            span.appendChild(createStrong(typists[0]));
+            span.append(' and ');
+            span.appendChild(createStrong(othersCount + ' ' + (othersCount > 1 ? 'others' : 'other')));
+            span.append(' are typing...');
+        }
+
+        indicator.appendChild(span);
+    }
 
         function initializeTypingBroadcastingForPost(postId) {
             const currentUsername = @json(Auth::check() ? Auth::user()->username : null);
@@ -225,12 +223,12 @@
         submitButtons.forEach(button => {
             if (isConnected) {
                 button.disabled = false;
-                button.classList.remove('bg-blue-400', 'cursor-not-allowed');
-                button.classList.add('bg-blue-800', 'hover:bg-blue-900');
+                button.classList.remove('bg-blue-400', 'cursor-not-allowed', 'dark:bg-blue-800/50');
+                button.classList.add('bg-blue-800', 'hover:bg-blue-900', 'dark:bg-blue-600', 'dark:hover:bg-blue-700');
             } else {
                 button.disabled = true;
-                button.classList.add('bg-blue-400', 'cursor-not-allowed');
-                button.classList.remove('bg-blue-800', 'hover:bg-blue-900');
+                button.classList.add('bg-blue-400', 'cursor-not-allowed', 'dark:bg-blue-800/50');
+                button.classList.remove('bg-blue-800', 'hover:bg-blue-900', 'dark:bg-blue-600', 'dark:hover:bg-blue-700');
             }
         });
     }
@@ -372,22 +370,22 @@
             }
         }
 
-        function linkifyContent(text) {
-            if (typeof text !== 'string') return '';
-            const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])|(\bwww\.[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
-            const mentionRegex = /@([a-zA-Z0-9_]+)/g;
+    function linkifyContent(text) {
+        if (typeof text !== 'string') return '';
+        const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])|(\bwww\.[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+        const mentionRegex = /@([a-zA-Z0-9_]+)/g;
 
-            let linkedText = text.replace(urlRegex, function(url, p1, p2, p3) {
-                const fullUrl = p3 ? 'http://' + p3 : p1;
-                return `<a href="${fullUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline break-all">${url}</a>`;
-            });
+        let linkedText = text.replace(urlRegex, function(url, p1, p2, p3) {
+            const fullUrl = p3 ? 'http://' + p3 : p1;
+            return `<a href="${fullUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline break-all">${url}</a>`;
+        });
 
-            linkedText = linkedText.replace(mentionRegex, function(match, username) {
-                return `<a href="/@${username}" class="text-blue-600 hover:underline font-medium">@${username}</a>`;
-            });
+        linkedText = linkedText.replace(mentionRegex, function(match, username) {
+            return `<a href="/@${username}" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">@${username}</a>`;
+        });
 
-            return linkedText;
-        }
+        return linkedText;
+    }
 
     async function fetchAndShowComment(postId, commentId) {
         console.log(`[DEBUG] Starting fetchAndShowComment for post #${postId}, comment #${commentId}`);
@@ -431,7 +429,7 @@
             const allComments = pageResults.flatMap(result => result.comments.data);
             commentsContainer.innerHTML = '';
             if (allComments.length === 0) {
-                commentsContainer.innerHTML = `<p class="text-sm text-gray-500 text-center">${window.translations.js_no_comments_be_first}</p>`;
+                commentsContainer.innerHTML = `<p class="text-sm text-gray-500 dark:text-gray-400 text-center">${window.translations.js_no_comments_be_first}</p>`;
                 return;
             }
 
@@ -447,7 +445,7 @@
                 const loadMoreWrapper = document.createElement('div');
                 loadMoreWrapper.className = 'load-more-comments-wrapper text-start mt-4 py-2';
                 const remainingCount = lastPageData.total - lastPageData.to;
-                loadMoreWrapper.innerHTML = `<button class="text-sm font-semibold text-blue-600 hover:underline" onclick="loadMoreComments(this, ${postId})">${(window.translations.js_view_more_comments || 'View :count more comments').replace(':count', remainingCount)}</button>`;
+                loadMoreWrapper.innerHTML = `<button class="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline" onclick="loadMoreComments(this, ${postId})">${(window.translations.js_view_more_comments || 'View :count more comments').replace(':count', remainingCount)}</button>`;
                 commentsContainer.appendChild(loadMoreWrapper);
             }
 
@@ -471,7 +469,7 @@
 
         } catch (error) {
             console.error('[DEBUG] An error occurred during the fetch/render process:', error);
-            commentsContainer.innerHTML = `<p class="text-red-500 text-center">${window.translations.js_failed_load_comments}</p>`;
+            commentsContainer.innerHTML = `<p class="text-red-500 dark:text-red-400 text-center">${window.translations.js_failed_load_comments}</p>`;
         }
     }
 
@@ -520,15 +518,15 @@
             });
         }
 
-        function getCommentShimmerHTML() {
-            const template = document.getElementById('comment-shimmer-template');
-            if (!template) {
-                console.warn("Shimmer template not found. Using fallback.");
-                return '<div class="text-center py-4 text-sm text-gray-500">Loading comments...</div>';
-            }
-            const shimmerContent = template.innerHTML;
-            return shimmerContent.repeat(3);
+    function getCommentShimmerHTML() {
+        const template = document.getElementById('comment-shimmer-template');
+        if (!template) {
+            console.warn("Shimmer template not found. Using fallback.");
+            return '<div class="text-center py-4 text-sm text-gray-500 dark:text-gray-400">Loading comments...</div>';
         }
+        const shimmerContent = template.innerHTML;
+        return shimmerContent.repeat(3);
+    }
 
     function loadComments(postId, page) {
         const commentsSection = document.getElementById(`comments-section-${postId}`);
@@ -540,7 +538,7 @@
         const isLoggedIn = {{ Auth::check() ? 'true' : 'false' }};
 
         if (!isLoggedIn) {
-            commentsContainer.innerHTML = `<div class="text-center py-4"><p class="text-sm text-gray-500">${window.translations.js_login_to_comment}</p></div>`;
+            commentsContainer.innerHTML = `<div class="text-center py-4"><p class="text-sm text-gray-500 dark:text-gray-400">${window.translations.js_login_to_comment}</p></div>`;
             const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
             if (paginationContainer) {
                 paginationContainer.innerHTML = '';
@@ -557,7 +555,7 @@
                 commentsContainer.innerHTML = '';
 
                 if (data.comments.data.length === 0 && page === 1) {
-                    commentsContainer.innerHTML = `<p class="text-sm text-gray-500 text-center">${window.translations.js_no_comments_be_first}</p>`;
+                    commentsContainer.innerHTML = `<p class="text-sm text-gray-500 dark:text-gray-400 text-center">${window.translations.js_no_comments_be_first}</p>`;
                     return;
                 }
 
@@ -579,7 +577,7 @@
                     const loadMoreWrapper = document.createElement('div');
                     loadMoreWrapper.className = 'load-more-comments-wrapper text-center mt-4 py-2';
                     const remainingCount = data.comments.total - data.comments.to;
-                    loadMoreWrapper.innerHTML = `<button class="text-sm font-semibold text-blue-600 hover:underline" onclick="loadMoreComments(this, ${postId})">${(window.translations.js_view_more_comments || 'View :count more comments').replace(':count', remainingCount)}</button>`;
+                    loadMoreWrapper.innerHTML = `<button class="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline" onclick="loadMoreComments(this, ${postId})">${(window.translations.js_view_more_comments || 'View :count more comments').replace(':count', remainingCount)}</button>`;
                     commentsContainer.appendChild(loadMoreWrapper);
                 }
 
@@ -588,7 +586,7 @@
             })
             .catch(error => {
                 console.error('Error:', error);
-                commentsContainer.innerHTML = `<p class="text-red-500 text-center">${window.translations.js_failed_load_comments}</p>`;
+                commentsContainer.innerHTML = `<p class="text-red-500 dark:text-red-400 text-center">${window.translations.js_failed_load_comments}</p>`;
             });
     }
 
@@ -663,7 +661,7 @@
 
             const isModerator = commentData.user.username === 'goat';
             const moderatorBadgeHTML = isModerator
-                ? `<span class="ml-1.5 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">Moderator</span>`
+                ? `<span class="ml-1.5 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300">Moderator</span>`
                 : '';
 
             const likesCount = commentData.likes_count || 0;
@@ -675,18 +673,17 @@
             const likeButtonHTML = `
             <div class="flex items-center text-xs">
                 <button onclick="toggleCommentLike(${commentData.id}, this)"
-                        class="like-comment-button flex items-center mb-0.5 rounded-full transition-all duration-150 ease-in-out group ${isLiked ? 'text-red-500 hover:bg-red-100' : 'text-gray-400 hover:text-red-500 hover:bg-red-50'}"
+                        class="like-comment-button flex items-center mb-0.5 rounded-full transition-all duration-150 ease-in-out group ${isLiked ? 'text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50' : 'text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/50'}"
                         data-comment-id="${commentData.id}"
                         title="${isLiked ? (window.translations.unlike_comment_title || 'Unlike') : (window.translations.like_comment_title || 'Like')}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 comment-like-icon group-hover:scale-125 transition-transform duration-150" viewBox="0 0 20 20" fill="currentColor">
                         ${isLiked ? filledHeartSVG : outlineHeartSVG}
                     </svg>
                 </button>
-                <span class="ml-0.5 comment-likes-count font-medium tabular-nums ${parseInt(likesCount) === 0 ? 'text-gray-400' : 'text-gray-700'}" id="comment-likes-count-${commentData.id}">
+                <span class="ml-0.5 comment-likes-count font-medium tabular-nums ${parseInt(likesCount) === 0 ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'}" id="comment-likes-count-${commentData.id}">
                     ${likesCount}
                 </span>
-            </div>
-        `;
+            </div>`;
             let replyToHTML = '';
             // if (commentData.parent_id && commentData.parent && commentData.parent.user) {
             //     const parentUsername = commentData.parent.user.username;
@@ -731,16 +728,11 @@
             //     }
             // }
 
-            const isNestedReply = commentData.parent_id &&
-                commentData.root_comment_id &&
-                Number(commentData.parent_id) !== Number(commentData.root_comment_id);
-
-            if (isNestedReply) {
-                if (commentData.parent && commentData.parent.user) {
-                    const parentUsername = commentData.parent.user.username;
-                    if (!commentData.content.includes(`@${parentUsername}`)) {
-                        replyToHTML = `<a href="javascript:void(0)" onclick="scrollToComment('comment-${commentData.parent_id}')" class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
-                    }
+            const isNestedReply = commentData.parent_id && commentData.root_comment_id && Number(commentData.parent_id) !== Number(commentData.root_comment_id);
+            if (isNestedReply && commentData.parent && commentData.parent.user) {
+                const parentUsername = commentData.parent.user.username;
+                if (!commentData.content.includes(`@${parentUsername}`)) {
+                    replyToHTML = `<a href="javascript:void(0)" onclick="scrollToComment('comment-${commentData.parent_id}')" class="text-blue-600 dark:text-blue-400 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
                 }
             }
 
@@ -757,7 +749,7 @@
 
             let goToParentArrowHTML = '';
             if (isReply && Number(commentData.parent_id) !== Number(commentData.root_comment_id)) {
-                goToParentArrowHTML = `<button onclick="scrollToComment('comment-${commentData.parent_id}')" class="p-1 rounded-full hover:bg-gray-200" title="${window.translations.go_to_parent_comment_title || 'Go to parent comment'}"><svg class="h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612L5.28 9.68a.75.75 0 01-1.06-1.06l5.25-5.25a.75.75 0 011.06 0l5.25 5.25a.75.75 0 11-1.06 1.06L10.75 5.612V16.25A.75.75 0 0110 17z" clip-rule="evenodd" /></svg></button>`;
+                goToParentArrowHTML = `<button onclick="scrollToComment('comment-${commentData.parent_id}')" class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700" title="${window.translations.go_to_parent_comment_title || 'Go to parent comment'}"><svg class="h-4 w-4 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612L5.28 9.68a.75.75 0 01-1.06-1.06l5.25-5.25a.75.75 0 011.06 0l5.25 5.25a.75.75 0 11-1.06 1.06L10.75 5.612V16.25A.75.75 0 0110 17z" clip-rule="evenodd" /></svg></button>`;
             }
 
             let repliesToggleHTML = '';
@@ -774,30 +766,30 @@
                 <div class="flex-1">
                     <div class="text-sm">
                        <div class="flex items-center">
-                            <a href="/@${commentData.user.username}" class="font-semibold text-gray-900 hover:underline">${commentData.user.username}</a>
+                            <a href="/@${commentData.user.username}" class="font-semibold text-gray-900 dark:text-gray-100 hover:underline">${commentData.user.username}</a>
                             ${verifiedIconHTML}
-                            ${moderatorBadgeHTML}  </div>
-                        <span class="text-gray-800">${replyToHTML} ${linkedCommentContent}</span>
+                            ${moderatorBadgeHTML}
+                       </div>
+                        <span class="text-gray-800 dark:text-gray-200">${replyToHTML} ${linkedCommentContent}</span>
                     </div>
-                    <div class="comment-actions mt-1.5 flex items-center space-x-3 text-xs text-gray-500">
-                        <small class="text-xs text-gray-500" title="${commentData.created_at}">${formatTimestamp(commentData.created_at)}</small>
+                    <div class="comment-actions mt-1.5 flex items-center space-x-3 text-xs text-gray-500 dark:text-gray-400">
+                        <small class="text-xs" title="${commentData.created_at}">${formatTimestamp(commentData.created_at)}</small>
                         ${ {{ Auth::check() ? 'true' : 'false' }} ? `<div class="flex items-center">${likeButtonHTML}</div>` : ''}
                         ${replyButton}
-                        ${repliesActionsHTML}
                         ${goToParentArrowHTML}
                     </div>
                 </div>
-${canDeleteComment(commentData) ? `
+                ${canDeleteComment(commentData) ? `
                 <div class="ml-2 pl-1 flex-shrink-0">
                     <form onsubmit="deleteComment('${commentData.id}', event)" class="inline">
-                        <button type="submit" class="text-gray-400 hover:text-red-600 transition-colors duration-150 ease-in-out text-xs p-1 mt-0.5" title="${window.translations.delete_comment_title || 'Delete comment'}">
+                        <button type="submit" class="text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors duration-150 ease-in-out text-xs p-1 mt-0.5" title="${window.translations.delete_comment_title || 'Delete comment'}">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
                     </form>
                 </div>` : ''}
             </div>
-            <div class="replies-container hidden"></div>
-            `;
+            <div class="replies-container hidden"></div>`;
+
             const actionsContainer = commentDiv.querySelector('.comment-actions');
             const repliesContainer = commentDiv.querySelector('.replies-container');
 
@@ -824,8 +816,8 @@ ${canDeleteComment(commentData) ? `
                 if (hasMoreReplies) {
                     const remainingCount = totalRepliesCount - loadedRepliesCount;
                     const loadMoreWrapper = document.createElement('div');
-                    loadMoreWrapper.className = 'load-more-replies-wrapper mt-2'; // Added margin
-                    loadMoreWrapper.innerHTML = `<button class="text-xs font-semibold text-blue-600 hover:underline" onclick="loadMoreReplies(this, ${commentData.id})">${(window.translations.view_more_replies_text || 'View :count more replies').replace(':count', remainingCount)}</button>`;
+                    loadMoreWrapper.className = 'load-more-replies-wrapper mt-2';
+                    loadMoreWrapper.innerHTML = `<button class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline" onclick="loadMoreReplies(this, ${commentData.id})">${(window.translations.view_more_replies_text || 'View :count more replies').replace(':count', remainingCount)}</button>`;
                     repliesContainer.appendChild(loadMoreWrapper);
                 }
             }
@@ -1096,8 +1088,7 @@ ${canDeleteComment(commentData) ? `
                     buttonElement.title = window.translations.like_comment_title || 'Like';
                 }
                 likesCountSpan.textContent = data.likes_count;
-                likesCountSpan.className = `ml-1.5 comment-likes-count font-medium tabular-nums ${parseInt(data.likes_count) === 0 ? 'text-gray-400' : 'text-gray-700'}`;
-
+                likesCountSpan.className = `ml-1.5 comment-likes-count font-medium tabular-nums ${parseInt(data.likes_count) === 0 ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'}`;
 
                 if (window.showToast && data.message_user) {
                     // window.showToast(data.message_user, 'success');
@@ -1122,7 +1113,7 @@ ${canDeleteComment(commentData) ? `
                     buttonElement.title = window.translations.like_comment_title || 'Like';
                 }
                 likesCountSpan.textContent = originalLikesCount;
-                likesCountSpan.className = `ml-1.5 comment-likes-count font-medium tabular-nums ${originalLikesCount === 0 ? 'text-gray-400' : 'text-gray-700'}`;
+                likesCountSpan.className = `ml-1.5 comment-likes-count font-medium tabular-nums ${originalLikesCount === 0 ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'}`;
             } finally {
                 buttonElement.disabled = false;
                 buttonElement.classList.remove('processing-like');
@@ -1255,7 +1246,8 @@ ${canDeleteComment(commentData) ? `
                     overlay.style.left = '0';
                     overlay.style.right = '0';
                     overlay.style.bottom = '0';
-                    overlay.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+                    const isDarkMode = document.documentElement.classList.contains('dark');
+                    overlay.style.backgroundColor = isDarkMode ? 'rgba(17, 24, 39, 0.5)' : 'rgba(255, 255, 255, 0.5)';
                     overlay.style.zIndex = '10';
                     overlay.style.transition = 'opacity 0.2s ease';
                     const commentsListContainer = commentsSection.querySelector('.comments-list');
@@ -1591,24 +1583,21 @@ ${canDeleteComment(commentData) ? `
             const optionTwoButton = postElement.querySelector('button.vote-button[data-option="option_two"]');
 
             if (optionOneButton && optionTwoButton) {
-                const highlightClasses = ['bg-blue-800', 'text-white'];
-                const defaultClasses = ['bg-white', 'border', 'border-gray-300'];
+                const highlightClasses = ['bg-blue-800', 'dark:bg-blue-600', 'text-white'];
+                const defaultClasses = ['bg-white', 'dark:bg-gray-700', 'border', 'border-gray-300', 'dark:border-gray-600'];
+                const allPossibleClasses = [...highlightClasses, ...defaultClasses, 'hover:bg-gray-50', 'dark:hover:bg-gray-600'];
 
                 [optionOneButton, optionTwoButton].forEach(button => {
-                    button.classList.remove(...highlightClasses, ...defaultClasses, 'hover:bg-gray-50');
+                    button.classList.remove(...allPossibleClasses);
                 });
 
                 if (userVotedOption === 'option_one') {
                     optionOneButton.classList.add(...highlightClasses);
-                    optionTwoButton.classList.add(...defaultClasses);
+                    optionTwoButton.classList.add(...defaultClasses, 'hover:bg-gray-50', 'dark:hover:bg-gray-600');
                 } else if (userVotedOption === 'option_two') {
                     optionTwoButton.classList.add(...highlightClasses);
-                    optionOneButton.classList.add(...defaultClasses);
+                    optionOneButton.classList.add(...defaultClasses, 'hover:bg-gray-50', 'dark:hover:bg-gray-600');
                 }
-
-                // const votesLabel = window.translations.js_votes_label || 'votes';
-                // optionOneButton.title = `${optionOneVotes} ${votesLabel}`;
-                // optionTwoButton.title = `${optionTwoVotes} ${votesLabel}`;
             }
         }
     // }
