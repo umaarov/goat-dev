@@ -38,32 +38,32 @@
 @section('content')
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <header class="mb-8 text-center">
-            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">{{ __('messages.ratings.main_title') }}</h1>
-            <p class="mt-1 text-md text-gray-500">{{ __('messages.ratings.subtitle') }}</p>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">{{ __('messages.ratings.main_title') }}</h1>
+            <p class="mt-1 text-md text-gray-500 dark:text-gray-400">{{ __('messages.ratings.subtitle') }}</p>
         </header>
 
         <div x-data="{ tab: 'post_votes', isLoading: true }" x-init="setTimeout(() => isLoading = false, 500)">
             {{-- Tabs --}}
             <div class="mb-6">
-                <div class="bg-gray-200/75 rounded-lg p-1">
+                <div class="bg-gray-200/75 dark:bg-gray-800 rounded-lg p-1">
                     <div class="flex flex-wrap justify-center gap-1">
                         <button @click.prevent="tab = 'post_votes'"
-                                :class="tab === 'post_votes' ? 'bg-white' : 'text-gray-600 hover:bg-white/70'"
+                                :class="tab === 'post_votes' ? 'bg-white dark:bg-gray-600 text-gray-800 dark:text-gray-50' : 'text-gray-600 dark:text-gray-300 hover:bg-white/70 dark:hover:bg-gray-700'"
                                 class="flex-grow text-center whitespace-nowrap py-2 px-3 rounded-md font-medium text-sm transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
                             {{ __('messages.ratings.tabs.top_post_votes') }}
                         </button>
                         <button @click.prevent="tab = 'post_count'"
-                                :class="tab === 'post_count' ? 'bg-white' : 'text-gray-600 hover:bg-white/70'"
+                                :class="tab === 'post_count' ? 'bg-white dark:bg-gray-600 text-gray-800 dark:text-gray-50' : 'text-gray-600 dark:text-gray-300 hover:bg-white/70 dark:hover:bg-gray-700'"
                                 class="flex-grow text-center whitespace-nowrap py-2 px-3 rounded-md font-medium text-sm transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
                             {{ __('messages.ratings.tabs.top_post_creators') }}
                         </button>
                         <button @click.prevent="tab = 'comment_likes'"
-                                :class="tab === 'comment_likes' ? 'bg-white' : 'text-gray-600 hover:bg-white/70'"
+                                :class="tab === 'comment_likes' ? 'bg-white dark:bg-gray-600 text-gray-800 dark:text-gray-50' : 'text-gray-600 dark:text-gray-300 hover:bg-white/70 dark:hover:bg-gray-700'"
                                 class="flex-grow text-center whitespace-nowrap py-2 px-3 rounded-md font-medium text-sm transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
                             {{ __('messages.ratings.tabs.top_comment_likes') }}
                         </button>
                         <button @click.prevent="tab = 'comment_count'"
-                                :class="tab === 'comment_count' ? 'bg-white' : 'text-gray-600 hover:bg-white/70'"
+                                :class="tab === 'comment_count' ? 'bg-white dark:bg-gray-600 text-gray-800 dark:text-gray-50' : 'text-gray-600 dark:text-gray-300 hover:bg-white/70 dark:hover:bg-gray-700'"
                                 class="flex-grow text-center whitespace-nowrap py-2 px-3 rounded-md font-medium text-sm transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
                             {{ __('messages.ratings.tabs.top_commentators') }}
                         </button>
@@ -123,12 +123,31 @@
     </div>
 @endsection
 
+
 @push('styles')
     <style>
-        [x-cloak] { display: none !important; }
-        .podium-1 { color: #FFD700; }
-        .podium-2 { color: #C0C0C0; }
-        .podium-3 { color: #CD7F32; }
+        [x-cloak] {
+            display: none !important;
+        }
+
+        .podium-1 {
+            color: #FFD700;
+        }
+
+        /* Gold */
+        .podium-2 {
+            color: #C0C0C0;
+        }
+
+        /* Silver */
+        .podium-3 {
+            color: #CD7F32;
+        }
+
+        /* Bronze */
+        .dark .podium-2 {
+            color: #d1d5db;
+        }
 
         .shimmer-bg {
             animation-duration: 1.5s;
@@ -142,9 +161,18 @@
             background-size: 200% 100%;
         }
 
+        .dark .shimmer-bg {
+            background-color: #374151;
+            background-image: linear-gradient(to right, #374151 0%, #4b5563 50%, #374151 100%);
+        }
+
         @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
         }
     </style>
 @endpush
