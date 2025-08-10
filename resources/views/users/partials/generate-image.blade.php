@@ -1,9 +1,9 @@
-<div class="mt-8 border-t border-gray-200 pt-8">
+<div class="mt-8 border-t border-gray-200 dark:border-gray-700 pt-8">
     <div>
-        <h3 class="text-lg font-semibold leading-6 text-gray-900">
+        <h3 class="text-lg font-semibold leading-6 text-gray-900 dark:text-gray-100">
             Generate Profile Picture with AI
         </h3>
-        <p class="mt-1 text-sm text-gray-500">
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Describe the profile picture you want, and our AI will create it for you. Be creative!
         </p>
     </div>
@@ -20,17 +20,17 @@
     @endphp
 
     <div class="mt-6">
-        <label for="ai-prompt" class="block text-sm font-medium text-gray-700">Prompt</label>
+        <label for="ai-prompt" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Prompt</label>
         <div class="mt-1">
             <textarea id="ai-prompt" name="ai_prompt" rows="3"
-                      class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                      class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-900 dark:text-gray-50 dark:placeholder-gray-400"
                       placeholder="A majestic lion wearing a crown, studio lighting, hyperrealistic..."></textarea>
         </div>
     </div>
 
     <div class="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <button type="button" id="generate-ai-image-btn"
-                class="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-800 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-800 dark:bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-900 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 @if($monthlyRemaining <= 0 || $dailyRemaining <= 0) disabled @endif>
             <svg id="generate-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20"
                  fill="currentColor">
@@ -45,14 +45,14 @@
             </svg>
             <span id="generate-text">Generate Image</span>
         </button>
-        <div class="text-sm text-gray-600">
+        <div class="text-sm text-gray-600 dark:text-gray-400">
             <p>Limits:
                 <span id="daily-remaining" class="font-medium">{{ $dailyRemaining }}</span> Today,
                 <span id="monthly-remaining" class="font-medium">{{ $monthlyRemaining }}</span> This Month
             </p>
         </div>
     </div>
-    <div id="ai-error-message" class="mt-2 text-sm font-medium text-red-600"></div>
+    <div id="ai-error-message" class="mt-2 text-sm font-medium text-red-600 dark:text-red-400"></div>
 </div>
 
 @push('scripts')
