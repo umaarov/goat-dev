@@ -423,6 +423,8 @@ return [
         'personal_header' => 'Mening ogohlantirishlarim',
         'cannot_send' => 'Sizda bildirishnoma yuborish uchun ruxsat yo‘q.',
         'sent_successfully' => 'Bildirishnoma muvaffaqiyatli yuborildi!',
+        'liked_your_comment' => 'sizning izohingizga layk bosdi',
+        'replied_to_your_comment' => 'sizning izohingizga javob berdi',
     ],
 
     'ratings' => [

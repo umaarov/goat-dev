@@ -422,6 +422,8 @@ return [
         'personal_header' => 'Мои оповещения',
         'cannot_send' => 'У вас нет прав для отправки уведомлений.',
         'sent_successfully' => 'Уведомление успешно отправлено!',
+        'liked_your_comment' => 'понравился ваш комментарий',
+        'replied_to_your_comment' => 'ответил на ваш комментарий',
     ],
 
     'ratings' => [
