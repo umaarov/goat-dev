@@ -76,11 +76,11 @@
                     name="q"
                     value="{{ old('q', $queryTerm) }}"
                     placeholder="{{ __('messages.search_results.placeholder') }}"
-                    class="w-full pl-10 pr-4 py-2 border-1 border-gray-300 rounded-2xl transition duration-150 ease-in-out"
+                    class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-2xl transition duration-150 ease-in-out dark:bg-gray-800 dark:text-gray-50 dark:placeholder-gray-400"
                     autocomplete="off"
                 />
                 <button type="submit"
-                        class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-600">
+                        class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
                     <svg class="w-5 h-5" viewBox="0 -0.5 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path fill-rule="evenodd" clip-rule="evenodd"
                               d="M5.5 11.1455C5.49956 8.21437 7.56975 5.69108 10.4445 5.11883C13.3193 4.54659 16.198 6.08477 17.32 8.79267C18.4421 11.5006 17.495 14.624 15.058 16.2528C12.621 17.8815 9.37287 17.562 7.3 15.4895C6.14763 14.3376 5.50014 12.775 5.5 11.1455Z"
@@ -109,16 +109,16 @@
                                 $isVerified = in_array($user->username, ['goat', 'umarov']);
                             @endphp
                             <a href="{{ route('profile.show', ['username' => $user->username]) }}"
-                               class="flex items-center p-3 bg-white border-1 border-gray-200 rounded-lg hover:border-blue-500 transition duration-200">
+                               class="flex items-center p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-500 transition duration-200">
 
                                 <img src="{{ $profilePic }}"
                                      alt="{{ __('messages.profile.alt_profile_picture', ['username' => $user->username]) }}"
-                                     class="h-12 w-12 rounded-full object-cover border-1 border-gray-200 cursor-pointer zoomable-image flex-shrink-0"
+                                     class="h-12 w-12 rounded-full object-cover border border-gray-200 dark:border-gray-600 cursor-pointer zoomable-image flex-shrink-0"
                                      data-full-src="{{ $profilePic }}">
 
                                 <div class="ml-4 flex-1 min-w-0">
                                     <div class="flex items-center">
-                                        <p class="text-md font-semibold text-gray-900 truncate"
+                                        <p class="text-md font-semibold text-gray-900 dark:text-gray-100 truncate"
                                            title="{{ $user->first_name }}">
                                             {{ $user->first_name }}
                                         </p>
@@ -126,7 +126,8 @@
                                         @if($isVerified)
                                             <span class="ml-1 flex-shrink-0"
                                                   title="{{ __('messages.profile.verified_account') }}">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" viewBox="0 0 20 20"
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500"
+                                                     viewBox="0 0 20 20"
                                                      fill="currentColor">
                                                     <path fill-rule="evenodd"
                                                           d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -135,7 +136,8 @@
                                             </span>
                                         @endif
                                     </div>
-                                    <p class="text-sm text-gray-600 truncate" title="{{ $user->username }}">
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 truncate"
+                                       title="{{ $user->username }}">
                                         {{ $user->username }}
                                     </p>
                                 </div>
@@ -154,14 +156,22 @@
                                 @if (($loop->iteration % 6) == 0)
                                     <div class="w-full mb-4">
                                         <script async
-                                                src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
+                                                src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2889575196315667"
                                                 crossorigin="anonymous"></script>
                                         <ins class="adsbygoogle"
                                              style="display:block"
                                              data-ad-format="fluid"
                                              data-ad-layout-key="-6t+ed+2i-1n-4w"
-                                             data-ad-client="ca-pub-2989575196315667"
+                                             data-ad-client="ca-pub-2889575196315667"
                                              data-ad-slot="7674157999"></ins>
+                                        <script>
+                                            (function () {
+                                                const adIns = document.currentScript.previousElementSibling;
+                                                const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+                                                adIns.setAttribute('data-ad-ui-theme', theme);
+                                                (adsbygoogle = window.adsbygoogle || []).push({});
+                                            })();
+                                        </script>
                                     </div>
                                 @endif
                             @endforeach
@@ -184,14 +194,14 @@
                 @endif
 
                 @if ($users->isEmpty() && $posts->isEmpty())
-                    <div class="text-center mt-2 mb-8">
+                    <div class="text-center mt-2 mb-8 text-gray-600 dark:text-gray-400">
                         <p>{{ __('messages.search_results.no_results_found', ['queryTerm' => e($queryTerm)]) }}</p>
                         <p>{{ __('messages.search_results.try_different_keywords') }}</p>
                     </div>
                 @endif
             </div>
         @else
-            <p class="mt-2 mb-8 text-center">{{ __('messages.search_results.enter_term_prompt') }}</p>
+            <p class="mt-2 mb-8 text-center text-gray-600 dark:text-gray-400">{{ __('messages.search_results.enter_term_prompt') }}</p>
         @endif
     </div>
 @endsection
@@ -217,13 +227,15 @@
 
             function loadVisibleAds() {
                 let adSlots = document.querySelectorAll('ins.adsbygoogle:not([data-ad-status="filled"])');
-                if (adSlots.length > 0) {
+                adSlots.forEach(adIns => {
+                    const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+                    adIns.setAttribute('data-ad-ui-theme', theme);
                     try {
                         (adsbygoogle = window.adsbygoogle || []).push({});
                     } catch (e) {
                         console.error("AdSense push error: ", e);
                     }
-                }
+                });
             }
 
             const loadMorePosts = async () => {
