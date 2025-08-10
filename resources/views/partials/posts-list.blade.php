@@ -18,6 +18,14 @@
                  data-ad-layout-key="-6t+ed+2i-1n-4w"
                  data-ad-client="ca-pub-2989575196315667"
                  data-ad-slot="7674157999"></ins>
+            <script>
+                (function () {
+                    const adIns = document.currentScript.previousElementSibling;
+                    const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+                    adIns.setAttribute('data-ad-ui-theme', theme);
+                    (adsbygoogle = window.adsbygoogle || []).push({});
+                })();
+            </script>
         </div>
     @endif
 @endforeach

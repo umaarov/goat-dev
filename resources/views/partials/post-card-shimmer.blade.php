@@ -28,6 +28,27 @@
         overflow: hidden;
     }
 
+    .shimmer-divider {
+        border-bottom-width: 1px;
+        border-color: #e5e7eb;
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    .dark .shimmer-bg {
+        background-color: #374151;
+        background-image: linear-gradient(to right, #374151 0%, #4b5563 50%, #374151 100%);
+    }
+
+    .dark .shimmer-card {
+        background-color: rgb(31 41 55);
+        box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.1);
+    }
+
+    .dark .shimmer-divider {
+        border-color: #4b5563;
+    }
+
     .shimmer-content {
         padding: 1rem;
     }
@@ -59,13 +80,6 @@
 
     .shimmer-line-subheader {
         height: 0.75rem;
-    }
-
-    .shimmer-divider {
-        border-bottom-width: 1px;
-        border-color: #e5e7eb;
-        width: 100%;
-        margin-top: 1rem;
     }
 
     .shimmer-question {
