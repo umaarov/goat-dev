@@ -441,6 +441,8 @@ return [
         'personal_header' => 'My Alerts',
         'cannot_send' => 'You do not have permission to send notifications.',
         'sent_successfully' => 'Notification sent successfully!',
+        'liked_your_comment' => 'liked your comment',
+        'replied_to_your_comment' => 'replied to your comment',
     ],
 
     'ratings' => [

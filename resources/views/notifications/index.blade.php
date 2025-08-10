@@ -6,19 +6,16 @@
     <div class="container mb-4 mx-auto px-4">
 
         <div class="max-w-3xl mx-auto">
-            {{--            <h1 class="text-2xl font-bold text-gray-800 mb-6">{{ __('messages.notifications.page_title') ?? 'Notifications' }}</h1>--}}
-
-            <div class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)]">
-                <ul class="divide-y divide-gray-200">
+            <div
+                class="bg-white dark:bg-gray-800 rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] dark:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)]">
+                <ul class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse ($notifications as $notification)
-                        <li class="p-4 hover:bg-gray-50 transition-colors duration-150
-                        {{ is_null($notification->read_at) ? 'bg-blue-50' : '' }}">
+                        <li class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150
+                        {{ is_null($notification->read_at) ? 'bg-blue-50 dark:bg-blue-900/50' : '' }}">
                             @php
                                 $notificationType = class_basename($notification->type);
                                 $data = $notification->data;
-
                                 $commentId = $data['comment_id'] ?? $data['reply_id'] ?? 0;
-
                                 $postUrl = route('posts.show', [
                                     'post' => $data['post_id'] ?? 0,
                                     '#comment-' . $commentId
@@ -27,6 +24,7 @@
 
                             <div class="flex items-start space-x-4">
                                 <div class="flex-shrink-0">
+                                    {{-- Icons have vibrant colors that work well on both themes --}}
                                     @if($notificationType === 'CommentLiked')
                                         <svg class="h-6 w-6 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd"
@@ -49,22 +47,26 @@
                                 </div>
 
                                 <div class="flex-grow">
-                                    <p class="text-sm text-gray-800">
+                                    <p class="text-sm text-gray-800 dark:text-gray-200">
                                         @if($notificationType === 'CommentLiked')
                                             <a href="{{ route('profile.show', $data['liker_name']) }}"
                                                class="font-bold hover:underline">{{ $data['liker_name'] }}</a>
-                                            liked your comment: "{{ $data['comment_content'] }}"
+                                            {{ __('messages.notifications.liked_your_comment') }}:
+                                            "{{ Str::limit($data['comment_content'], 50) }}"
                                         @elseif($notificationType === 'NewReplyToYourComment')
                                             <a href="{{ route('profile.show', $data['replier_name']) }}"
                                                class="font-bold hover:underline">{{ $data['replier_name'] }}</a>
-                                            replied to your comment: "{{ $data['reply_content'] }}"
+                                            {{ __('messages.notifications.replied_to_your_comment') }}:
+                                            "{{ Str::limit($data['reply_content'], 50) }}"
                                         @elseif($notificationType === 'YouWereMentioned')
                                             <a href="{{ route('profile.show', $data['mentioner_name']) }}"
                                                class="font-bold hover:underline">{{ $data['mentioner_name'] }}</a>
-                                            mentioned you in a comment: "{{ $data['comment_content'] }}"
+                                            {{ __('messages.notifications.mentioned_you_in_comment') }}:
+                                            "{{ Str::limit($data['comment_content'], 50) }}"
                                         @endif
                                     </p>
-                                    <a href="{{ $postUrl }}" class="text-xs text-blue-600 hover:underline">
+                                    <a href="{{ $postUrl }}"
+                                       class="text-xs text-blue-600 dark:text-blue-400 hover:underline">
                                         {{ $notification->created_at->diffForHumans() }}
                                     </a>
                                 </div>
@@ -72,7 +74,7 @@
                         </li>
                     @empty
                         <li class="p-6 text-center">
-                            <p class="text-gray-500">{{ __('messages.notifications.no_personal_notifications_placeholder') ?? 'You have no notifications yet.' }}</p>
+                            <p class="text-gray-500 dark:text-gray-400">{{ __('messages.notifications.no_personal_notifications_placeholder') ?? 'You have no notifications yet.' }}</p>
                         </li>
                     @endforelse
                 </ul>
