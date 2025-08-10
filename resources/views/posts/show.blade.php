@@ -44,7 +44,7 @@
     ]
 },
 {
-    "@@type": "SocialMediaPosting",
+    "@@type": "Article",
     "headline": {!! json_encode($post->question) !!},
         @if($post->ai_generated_context)
             "description": {!! json_encode(Str::limit($post->ai_generated_context, 160)) !!},

@@ -4,6 +4,20 @@
 @section('meta_description', __('messages.home.meta_description'))
 
 @push('schema')
+    <script type="speculationrules">
+        {
+          "prerender": [
+            {
+              "source": "document",
+              "where": {
+                "selector_matches": ".post-link-for-prerender"
+              },
+              "eagerness": "moderate"
+            }
+          ]
+        }
+    </script>
+
     @if ($posts->isNotEmpty())
         <script type="application/ld+json">
             {

@@ -191,52 +191,56 @@
     {{-- Main Image Display --}}
     <div class="grid grid-cols-2 gap-4 p-4">
         {{-- OPTION ONE IMAGE --}}
-        <div class="relative image-loader-container aspect-square rounded-md overflow-hidden bg-gray-100 bg-cover bg-center {{ $hasVoted && $currentViewerVote !== 'option_one' ? 'is-monochrome' : '' }}"
-             data-image-option="option_one"
-             @if($post->option_one_image_lqip) style="background-image: url('{{ $post->option_one_image_lqip }}');" @endif>
+        <a href="{{ $postUrl }}" class="block post-link-for-prerender">
+            <div class="relative image-loader-container aspect-square rounded-md overflow-hidden bg-gray-100 bg-cover bg-center {{ $hasVoted && $currentViewerVote !== 'option_one' ? 'is-monochrome' : '' }}"
+                 data-image-option="option_one"
+                 @if($post->option_one_image_lqip) style="background-image: url('{{ $post->option_one_image_lqip }}');" @endif>
 
-            @if($post->option_one_image)
-                <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-                     data-src="{{ asset('storage/' . $post->option_one_image) }}"
-                     alt="{{ $post->question }} - {{ $post->option_one_title }}"
-                     class="progressive-image h-full w-full object-cover object-center cursor-pointer zoomable-image transition-all duration-300"
-                     decoding="async">
-            @else
-                <div class="bg-gray-200 rounded-full p-2">
-                    <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                @if($post->option_one_image)
+                    <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                         data-src="{{ asset('storage/' . $post->option_one_image) }}"
+                         alt="{{ $post->question }} - {{ $post->option_one_title }}"
+                         class="progressive-image h-full w-full object-cover object-center cursor-pointer zoomable-image transition-all duration-300"
+                         decoding="async">
+                @else
+                    <div class="bg-gray-200 rounded-full p-2">
+                        <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    </div>
+                @endif
+
+                {{-- Vote Result Overlay --}}
+                <div class="vote-result-overlay absolute inset-0 flex items-center justify-center pointer-events-none {{ $hasVoted ? 'opacity-100' : 'opacity-0' }} transition-opacity duration-300">
+                    <div class="water-fill absolute bottom-0 left-0 w-full bg-blue-800 bg-opacity-70 transition-all duration-700 ease-in-out" style="height: {{ $hasVoted ? $percentOne : 0 }}%;"></div>
+                    <span class="vote-percentage-text relative text-white text-4xl font-bold" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.7);">{{ $hasVoted ? "{$percentOne}%" : '0%' }}</span>
                 </div>
-            @endif
-
-            {{-- Vote Result Overlay --}}
-            <div class="vote-result-overlay absolute inset-0 flex items-center justify-center pointer-events-none {{ $hasVoted ? 'opacity-100' : 'opacity-0' }} transition-opacity duration-300">
-                <div class="water-fill absolute bottom-0 left-0 w-full bg-blue-800 bg-opacity-70 transition-all duration-700 ease-in-out" style="height: {{ $hasVoted ? $percentOne : 0 }}%;"></div>
-                <span class="vote-percentage-text relative text-white text-4xl font-bold" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.7);">{{ $hasVoted ? "{$percentOne}%" : '0%' }}</span>
             </div>
-        </div>
+        </a>
 
         {{-- OPTION TWO IMAGE --}}
-        <div class="relative image-loader-container aspect-square rounded-md overflow-hidden bg-gray-100 bg-cover bg-center {{ $hasVoted && $currentViewerVote !== 'option_two' ? 'is-monochrome' : '' }}"
-             data-image-option="option_two"
-             @if($post->option_two_image_lqip) style="background-image: url('{{ $post->option_two_image_lqip }}');" @endif>
+        <a href="{{ $postUrl }}" class="block post-link-for-prerender">
+            <div class="relative image-loader-container aspect-square rounded-md overflow-hidden bg-gray-100 bg-cover bg-center {{ $hasVoted && $currentViewerVote !== 'option_two' ? 'is-monochrome' : '' }}"
+                 data-image-option="option_two"
+                 @if($post->option_two_image_lqip) style="background-image: url('{{ $post->option_two_image_lqip }}');" @endif>
 
-            @if($post->option_two_image)
-                <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-                     data-src="{{ asset('storage/' . $post->option_two_image) }}"
-                     alt="{{ $post->question }} - {{ $post->option_two_title }}"
-                     class="progressive-image h-full w-full object-cover object-center cursor-pointer zoomable-image transition-all duration-300"
-                     decoding="async">
-            @else
-                <div class="bg-gray-200 rounded-full p-2">
-                    <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                @if($post->option_two_image)
+                    <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                         data-src="{{ asset('storage/' . $post->option_two_image) }}"
+                         alt="{{ $post->question }} - {{ $post->option_two_title }}"
+                         class="progressive-image h-full w-full object-cover object-center cursor-pointer zoomable-image transition-all duration-300"
+                         decoding="async">
+                @else
+                    <div class="bg-gray-200 rounded-full p-2">
+                        <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    </div>
+                @endif
+
+                {{-- Vote Result Overlay --}}
+                <div class="vote-result-overlay absolute inset-0 flex items-center justify-center pointer-events-none {{ $hasVoted ? 'opacity-100' : 'opacity-0' }} transition-opacity duration-300">
+                    <div class="water-fill absolute bottom-0 left-0 w-full bg-blue-800 bg-opacity-70 transition-all duration-700 ease-in-out" style="height: {{ $hasVoted ? $percentTwo : 0 }}%;"></div>
+                    <span class="vote-percentage-text relative text-white text-4xl font-bold" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.7);">{{ $hasVoted ? "{$percentTwo}%" : '0%' }}</span>
                 </div>
-            @endif
-
-            {{-- Vote Result Overlay --}}
-            <div class="vote-result-overlay absolute inset-0 flex items-center justify-center pointer-events-none {{ $hasVoted ? 'opacity-100' : 'opacity-0' }} transition-opacity duration-300">
-                <div class="water-fill absolute bottom-0 left-0 w-full bg-blue-800 bg-opacity-70 transition-all duration-700 ease-in-out" style="height: {{ $hasVoted ? $percentTwo : 0 }}%;"></div>
-                <span class="vote-percentage-text relative text-white text-4xl font-bold" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.7);">{{ $hasVoted ? "{$percentTwo}%" : '0%' }}</span>
             </div>
-        </div>
+        </a>
     </div>
 
 
