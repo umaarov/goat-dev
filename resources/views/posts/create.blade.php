@@ -3,10 +3,11 @@
 @section('title', __('messages.create_post.title'))
 
 @section('content')
-    <div class="max-w-md mx-auto bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4">
+    <div
+        class="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] dark:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)] overflow-hidden mb-4">
         <div class="p-6">
-            <h5 class="text-lg font-semibold mb-1">{{ __('messages.create_post.ask_unique_question') }}</h5>
-            <p class="text-gray-600 text-sm mb-4">{{ __('messages.create_post.choose_titles_images_categories') }}</p>
+            <h5 class="text-lg font-semibold mb-1 text-gray-900 dark:text-gray-100">{{ __('messages.create_post.ask_unique_question') }}</h5>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">{{ __('messages.create_post.choose_titles_images_categories') }}</p>
 
             <form method="POST" action="{{ route('posts.store') }}" enctype="multipart/form-data"
                   id="createPostForm">
@@ -15,13 +16,13 @@
                 {{-- Question Input --}}
                 <div class="mb-4">
                     <input type="text"
-                           class="w-full px-3 py-2 border @error('question') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           class="w-full px-3 py-2 border @error('question') border-red-500 dark:border-red-400 @else border-gray-300 dark:border-gray-600 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-gray-50 dark:placeholder-gray-400"
                            id="question" name="question"
                            placeholder="{{ __('messages.create_post.question_placeholder') }}"
                            value="{{ old('question', isset($post) ? $post->question : '') }}"
                            maxlength="255">
                     @error('question')
-                    <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
+                    <span class="text-red-500 dark:text-red-400 text-sm mt-1">{{ $message }}</span>
                     @enderror
                 </div>
 
@@ -30,9 +31,11 @@
                     <div>
                         <label for="option_one_image_trigger" class="block mb-2 cursor-pointer">
                             <div id="option_one_preview"
-                                 class="aspect-square bg-gray-100 rounded-md flex items-center justify-center border-2 border-dashed @error('option_one_image') border-red-500 @else border-gray-300 @enderror hover:border-blue-500">
-                                <div id="option_one_placeholder" class="text-center text-gray-500 p-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400"
+                                 class="aspect-square bg-gray-100 dark:bg-gray-700/50 rounded-md flex items-center justify-center border-2 border-dashed @error('option_one_image') border-red-500 dark:border-red-400 @else border-gray-300 dark:border-gray-600 @enderror hover:border-blue-500 dark:hover:border-blue-400">
+                                <div id="option_one_placeholder"
+                                     class="text-center text-gray-500 dark:text-gray-400 p-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                         class="h-10 w-10 mx-auto text-gray-400 dark:text-gray-500"
                                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                               d="M12 4v16m8-8H4"/>
@@ -50,28 +53,29 @@
                         <input type="file" name="option_one_image" id="option_one_image_final" class="hidden">
 
                         @error('option_one_image')
-                        <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
+                        <span class="text-red-500 dark:text-red-400 text-sm mt-1">{{ $message }}</span>
                         @enderror
 
                         <input type="text"
-                               class="mt-2 w-full px-3 py-2 border @error('option_one_title') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               class="mt-2 w-full px-3 py-2 border @error('option_one_title') border-red-500 dark:border-red-400 @else border-gray-300 dark:border-gray-600 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-gray-50 dark:placeholder-gray-400"
                                id="option_one_title" name="option_one_title"
                                placeholder="{{ __('messages.create_post.subject_1_placeholder') }}"
                                value="{{ old('option_one_title', isset($post) ? $post->option_one_title : '') }}"
                                maxlength="40">
                         @error('option_one_title')
-                        <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
+                        <span class="text-red-500 dark:text-red-400 text-sm mt-1">{{ $message }}</span>
                         @enderror
                     </div>
 
                     {{-- Option 2 --}}
                     <div>
                         <label for="option_two_image_trigger" class="block mb-2 cursor-pointer">
-                            {{-- MODIFIED LINE BELOW --}}
                             <div id="option_two_preview"
-                                 class="aspect-square bg-gray-100 rounded-md flex items-center justify-center border-2 border-dashed @error('option_two_image') border-red-500 @else border-gray-300 @enderror hover:border-blue-500">
-                                <div id="option_two_placeholder" class="text-center text-gray-500 p-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400"
+                                 class="aspect-square bg-gray-100 dark:bg-gray-700/50 rounded-md flex items-center justify-center border-2 border-dashed @error('option_two_image') border-red-500 dark:border-red-400 @else border-gray-300 dark:border-gray-600 @enderror hover:border-blue-500 dark:hover:border-blue-400">
+                                <div id="option_two_placeholder"
+                                     class="text-center text-gray-500 dark:text-gray-400 p-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                         class="h-10 w-10 mx-auto text-gray-400 dark:text-gray-500"
                                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                               d="M12 4v16m8-8H4"/>
@@ -89,17 +93,17 @@
                         <input type="file" name="option_two_image" id="option_two_image_final" class="hidden">
 
                         @error('option_two_image')
-                        <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
+                        <span class="text-red-500 dark:text-red-400 text-sm mt-1">{{ $message }}</span>
                         @enderror
 
                         <input type="text"
-                               class="mt-2 w-full px-3 py-2 border @error('option_two_title') border-red-500 @else border-gray-300 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               class="mt-2 w-full px-3 py-2 border @error('option_two_title') border-red-500 dark:border-red-400 @else border-gray-300 dark:border-gray-600 @enderror rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-gray-50 dark:placeholder-gray-400"
                                id="option_two_title" name="option_two_title"
                                placeholder="{{ __('messages.create_post.subject_2_placeholder') }}"
                                value="{{ old('option_two_title', isset($post) ? $post->option_two_title : '') }}"
                                maxlength="40">
                         @error('option_two_title')
-                        <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
+                        <span class="text-red-500 dark:text-red-400 text-sm mt-1">{{ $message }}</span>
                         @enderror
                     </div>
                 </div>
@@ -107,7 +111,7 @@
                 {{-- Submit Button --}}
                 <div class="mt-6">
                     <button type="submit" id="createPostSubmitButton"
-                            class="w-full bg-blue-800 text-white py-3 rounded-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-150 flex items-center justify-center">
+                            class="w-full bg-blue-800 dark:bg-blue-600 text-white py-3 rounded-md hover:bg-blue-900 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-150 flex items-center justify-center">
 
                         <svg id="buttonSpinner" class="animate-spin h-5 w-5 text-white mr-3 hidden"
                              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -118,20 +122,21 @@
                         </svg>
                         <span id="buttonText">{{ __('messages.create_post.submit_button') }}</span>
                     </button>
-                    <p id="moderationMessage" class="text-center text-gray-500 text-sm mt-2 hidden">
+                    <p id="moderationMessage" class="text-center text-gray-500 dark:text-gray-400 text-sm mt-2 hidden">
                         {{ __('messages.create_post.js.moderation_in_progress', ['default' => 'Please wait a moment. We are checking your post to ensure it meets our community guidelines.']) }}
                     </p>
                 </div>
 
                 {{-- Template Selector --}}
                 <div class="mt-4">
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div
+                        class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-700">
                         <div class="flex-grow pr-4">
-                            <p class="text-sm font-semibold text-gray-800">{{ __('messages.create_post.template_title', ['default' => 'Quick Start']) }}</p>
-                            <p class="text-xs text-gray-500">{{ __('messages.create_post.template_description', ['default' => 'Use a predefined "Yes / No" template.']) }}</p>
+                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('messages.create_post.template_title', ['default' => 'Quick Start']) }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('messages.create_post.template_description', ['default' => 'Use a predefined "Yes / No" template.']) }}</p>
                         </div>
                         <button type="button" id="yesNoTemplateBtn"
-                                class="flex-shrink-0 px-4 py-2 bg-white text-blue-800 border border-blue-800 text-xs font-bold rounded-md hover:bg-blue-800 hover:text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                class="flex-shrink-0 px-4 py-2 bg-white text-blue-800 border border-blue-800 text-xs font-bold rounded-md hover:bg-blue-800 hover:text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-transparent dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-400 dark:hover:text-gray-900 dark:focus:ring-offset-gray-800">
                             {{ __('messages.create_post.apply_template_button', ['default' => 'Apply']) }}
                         </button>
                     </div>
@@ -239,7 +244,7 @@
                 const dataTransfer = new DataTransfer();
                 dataTransfer.items.add(file);
                 finalInput.files = dataTransfer.files;
-                previewContainer?.classList.remove('border-red-500');
+                previewContainer?.classList.remove('border-red-500', 'dark:border-red-400');
             }
         }
 
@@ -297,19 +302,20 @@
     <div id="submissionOverlay"
          class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-75 hidden"
          style="backdrop-filter: blur(4px);">
-        <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4 text-center">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 max-w-md w-full mx-4 text-center">
             <div class="mb-4">
-                <svg class="animate-spin h-12 w-12 text-blue-800 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none"
+                <svg class="animate-spin h-12 w-12 text-blue-800 dark:text-blue-500 mx-auto"
+                     xmlns="http://www.w3.org/2000/svg" fill="none"
                      viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor"
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
             </div>
-            <h3 class="text-xl font-semibold text-gray-800 mb-2">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">
                 {{ __('messages.create_post.js.overlay.title', ['default' => 'Finalizing Your Post...']) }}
             </h3>
-            <p class="text-gray-600">
+            <p class="text-gray-600 dark:text-gray-300">
                 {{ __('messages.create_post.js.overlay.message', ['default' => 'We\'re running a quick automated check to ensure everything meets our community standards. This usually takes just a few seconds. Thanks for your patience!']) }}
             </p>
         </div>
