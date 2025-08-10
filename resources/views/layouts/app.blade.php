@@ -19,6 +19,16 @@
           href="{{ asset('opensearch.xml') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @stack('styles')
+    <script>
+        (function () {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     {{--    @vite(['resources/css/posts.css'])--}}
     {{--    <link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}" media="print"--}}
@@ -31,13 +41,13 @@
     {{--    <link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}" media="print" onload="this.media='all'">--}}
     {{--    <noscript><link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}"></noscript>--}}
 
-{{--    <script src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false"></script>--}}
-{{--    <script src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false"></script>--}}
+    {{--    <script src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false"></script>--}}
+    {{--    <script src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false"></script>--}}
     {{--    <script async src="//www.ezojs.com/ezoic/sa.min.js"></script>--}}
-{{--    <script>--}}
-{{--        window.ezstandalone = window.ezstandalone || {};--}}
-{{--        ezstandalone.cmd = ezstandalone.cmd || [];--}}
-{{--    </script>--}}
+    {{--    <script>--}}
+    {{--        window.ezstandalone = window.ezstandalone || {};--}}
+    {{--        ezstandalone.cmd = ezstandalone.cmd || [];--}}
+    {{--    </script>--}}
 
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="style"
@@ -178,19 +188,19 @@
         };
     </script>
 </head>
-<body class="flex flex-col min-h-screen bg-gray-100">
+<body class="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
 <nav
-    class="fixed top-0 left-0 right-0 bg-white rounded-b-xl shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] z-50 h-16 flex items-center px-4 max-w-[450px] mx-auto">
+    class="fixed top-0 left-0 right-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-b-xl shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] dark:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)] z-50 h-16 flex items-center px-4 max-w-[450px] mx-auto">
     <div class="w-full max-w-md mx-auto flex items-center justify-between">
         <div class="w-6"></div>
         <a href="{{route('home')}}">
             <img src="{{ asset('images/main_logo.png') }}" alt="{{ __('messages.app.logo_alt') }}"
-                 class="h-23 w-23 cursor-pointer" width="92" height="92">
+                 class="h-23 w-23 cursor-pointer dark:invert" width="92" height="92">
         </a>
         <div>
             @auth
                 <a href="{{ route('notifications.index') }}" title="Notifications"
-                   class="relative inline-block text-black">
+                   class="relative inline-block text-black dark:text-gray-200">
 
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                          stroke="currentColor" stroke-width="2">
@@ -206,7 +216,7 @@
 
                 </a>
             @else
-                <a href="{{ route('login') }}" title="Login Button" class="text-black">
+                <a href="{{ route('login') }}" title="Login Button" class="text-black dark:text-gray-200">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                          stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -248,9 +258,9 @@
     {{--    @endif--}}
 
     @yield('content')
-    <footer class="mb-8 text-center text-gray-700 text-xs leading-relaxed px-4">
+    <footer class="mb-8 text-center text-gray-700 dark:text-gray-400 text-xs leading-relaxed px-4">
         <div class="space-y-4">
-            <div class="flex flex-wrap justify-center gap-4 text-sm text-blue-800">
+            <div class="flex flex-wrap justify-center gap-4 text-sm text-blue-800 dark:text-blue-400">
                 <a href="{{ route('about') }}" class="hover:underline">{{ __('messages.about_us_nav') }}</a>
                 <a href="{{ route('privacy') }}"
                    class="hover:underline">{{ __('messages.privacy_policy.title_nav') }}</a>
@@ -266,7 +276,8 @@
                 <a href="https://buymeacoffee.com/umarov" target="_blank" rel="noopener noreferrer"
                    title="Support this project with a coffee"
                    class="inline-block transition-transform duration-200 hover:scale-105">
-                    <img src="{{ asset('images/bmc-logo-no-background.png') }}" alt="Buy Me A Coffee" class="h-4 w-auto"
+                    <img src="{{ asset('images/bmc-logo-no-background.png') }}" alt="Buy Me A Coffee"
+                         class="h-4 w-auto dark:invert"
                          loading="lazy">
                 </a>
             </div>
@@ -277,10 +288,10 @@
 
 
 <nav
-    class="fixed bottom-0 left-0 right-0 bg-white shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] rounded-t-xl z-10 h-20 max-w-[450px] mx-auto">
+    class="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] dark:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)] rounded-t-xl z-10 h-20 max-w-[450px] mx-auto">
     <div class="w-full max-w-md mx-auto flex items-center justify-around h-full">
         <a href="{{ route('home') }}" title="{{ __('messages.home') }}"
-           class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-800">
+           class="flex flex-col items-center justify-center text-gray-700  hover:text-blue-800 dark:text-gray-300 dark:hover:text-blue-400">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -289,7 +300,7 @@
             <span class="text-xs mt-1">{{ __('messages.home') }}</span>
         </a>
         <a href="{{ route('search') }}" title="{{ __('messages.search') }}"
-           class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-800">
+           class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-800 dark:text-gray-300 dark:hover:text-blue-400">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -298,7 +309,7 @@
             <span class="text-xs mt-1">{{ __('messages.search') }}</span>
         </a>
         <a href="{{ route('posts.create') }}" title="{{ __('messages.post') }}"
-           class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-800">
+           class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-800 dark:text-gray-300 dark:hover:text-blue-400">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -308,7 +319,7 @@
         @auth
             <a href="{{ route('profile.show', ['username' => Auth::user()->username]) }}"
                title="{{ __('messages.account') }}"
-               class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-800">
+               class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-800 dark:text-gray-300 dark:hover:text-blue-400">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                      stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -318,7 +329,7 @@
             </a>
         @else
             <a href="{{ route('login') }}" title="{{ __('messages.account') }}"
-               class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-800">
+               class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-800 dark:text-gray-300 dark:hover:text-blue-400">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                      stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -347,19 +358,19 @@
         }
 
         const modalHTML = `
-            <div id="imageCropModalGlobal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 hidden">
-                <div class="bg-white p-4 sm:p-6 rounded-lg shadow-xl w-11/12 max-w-lg">
-                    <h3 class="text-xl font-semibold mb-3 text-gray-800">${window.translations.cropperModalTitle}</h3>
-                    <div class="mb-4" style="max-height: 60vh; overflow: hidden;">
-                        <img id="imageToCropGlobal" src="#" alt="Image to crop" style="max-width: 100%;" loading="lazy">
-                    </div>
-                    <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
-                        <button type="button" id="cancelCropGlobal" class="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">${window.translations.cancelButton}</button>
-                        <button type="button" id="applyCropGlobal" class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">${window.translations.applyCropButton}</button>
-                    </div>
+        <div id="imageCropModalGlobal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 hidden">
+            <div class="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-xl w-11/12 max-w-lg">
+                <h3 class="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-200">${window.translations.cropperModalTitle}</h3>
+                <div class="mb-4" style="max-height: 60vh; overflow: hidden;">
+                    <img id="imageToCropGlobal" src="#" alt="Image to crop" style="max-width: 100%;" loading="lazy">
+                </div>
+                <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
+                    <button type="button" id="cancelCropGlobal" class="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">${window.translations.cancelButton}</button>
+                    <button type="button" id="applyCropGlobal" class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">${window.translations.applyCropButton}</button>
                 </div>
             </div>
-        `;
+        </div>
+    `;
         document.body.insertAdjacentHTML('beforeend', modalHTML);
 
         const modal = document.getElementById('imageCropModalGlobal');
@@ -381,8 +392,6 @@
         applyCropBtn.addEventListener('click', () => {
             if (currentCropperInstance && currentOriginalFile) {
                 const canvas = currentCropperInstance.getCroppedCanvas({
-                    // minWidth: 256, minHeight: 256,
-                    // maxWidth: 1024, maxHeight: 1024,
                     imageSmoothingQuality: 'medium',
                 });
                 canvas.toBlob((blob) => {
@@ -495,7 +504,8 @@
 
 @stack('scripts')
 <script src="{{ asset('js/toast.js') }}"></script>
-<div id="voteCountTooltip" class="fixed hidden bg-gray-700 text-white text-xs px-2 py-1 rounded-md shadow-lg z-[10001]"
+<div id="voteCountTooltip"
+     class="fixed hidden bg-gray-700 text-white text-xs px-2 py-1 rounded-md shadow-lg z-[10001] dark:bg-black dark:border dark:border-gray-600"
      style="pointer-events: none; white-space: nowrap;">
 </div>
 <div id="imageViewerModal"
@@ -851,12 +861,15 @@
 
         if (urlFragment.startsWith('tgAuthResult=')) {
             document.documentElement.style.visibility = 'hidden';
-            // document.documentElement.style.backgroundColor = '#f9fafb';
-            // document.body.style.display = 'none';
 
+            const isDarkMode = document.documentElement.classList.contains('dark');
             const loader = document.createElement('div');
             loader.textContent = 'Authenticating...';
-            loader.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background-color: #f9fafb; font-size: 1.25rem; color: #4b5563; font-family: sans-serif; z-index: 9999;';
+
+            const bgColor = isDarkMode ? '#111827' : '#f9fafb';
+            const textColor = isDarkMode ? '#d1d5db' : '#4b5563';
+
+            loader.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background-color: ${bgColor}; font-size: 1.25rem; color: ${textColor}; font-family: sans-serif; z-index: 9999;`;
             document.body.appendChild(loader);
 
             try {
