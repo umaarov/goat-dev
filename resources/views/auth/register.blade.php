@@ -3,14 +3,15 @@
 @section('title', __('messages.register'))
 
 @section('content')
-    <div class="max-w-md mx-auto bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] overflow-hidden mb-4">
+    <div
+        class="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] dark:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)] overflow-hidden mb-4">
         <div class="p-6 relative ">
             @if(isset($available_locales) && is_array($available_locales) && count($available_locales) > 1)
-                <div class="absolute top-6 right-6 z-auto">
+                <div class="absolute top-6 right-6 z-10">
                     <div class="relative">
                         <select onchange="window.location.href=this.value;"
                                 aria-label="{{ __('messages.select_language_label') ?? 'Select Language' }}"
-                                class="block appearance-none w-auto bg-white border border-gray-300 hover:border-gray-400 px-3 py-1.5 pr-7 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-xs text-gray-700"> {{-- Compact styling --}}
+                                class="block appearance-none w-auto bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:border-gray-400 px-3 py-1.5 pr-7 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-xs text-gray-700 dark:text-gray-300">
                             @foreach($available_locales as $localeKey => $localeName)
                                 <option
                                     value="{{ route('language.set', $localeKey) }}" {{ ($current_locale ?? app()->getLocale()) == $localeKey ? 'selected' : '' }}>
@@ -19,86 +20,91 @@
                             @endforeach
                         </select>
                         <div
-                            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-gray-700">
+                            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-gray-700 dark:text-gray-400">
                             <svg class="fill-current h-3 w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                                 <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-                            </svg> {{-- Smaller icon --}}
+                            </svg>
                         </div>
                     </div>
                 </div>
             @endif
 
-            <h2 class="text-2xl font-semibold mb-4 text-blue-800">{{ __('messages.register') }}</h2>
+            <h2 class="text-2xl font-semibold mb-4 text-blue-800 dark:text-blue-400">{{ __('messages.register') }}</h2>
             <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data">
                 @csrf
 
                 <div class="mb-4">
                     <label for="first_name"
-                           class="block text-gray-700 mb-2">{{ __('messages.first_name_label') }}</label>
+                           class="block text-gray-700 dark:text-gray-300 mb-2">{{ __('messages.first_name_label') }}</label>
                     <input id="first_name" type="text" name="first_name" value="{{ old('first_name') }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500"
                            required autofocus>
                     @error('first_name')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                    <span class="text-red-500 dark:text-red-400 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
 
                 <div class="mb-4">
-                    <label for="last_name" class="block text-gray-700 mb-2">{{ __('messages.last_name_label') }}</label>
+                    <label for="last_name"
+                           class="block text-gray-700 dark:text-gray-300 mb-2">{{ __('messages.last_name_label') }}</label>
                     <input id="last_name" type="text" name="last_name" value="{{ old('last_name') }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500">
                     @error('last_name')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                    <span class="text-red-500 dark:text-red-400 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
 
                 <div class="mb-4">
-                    <label for="username" class="block text-gray-700 mb-2">{{ __('messages.username_label') }}</label>
+                    <label for="username"
+                           class="block text-gray-700 dark:text-gray-300 mb-2">{{ __('messages.username_label') }}</label>
                     <input id="username" type="text" name="username" value="{{ old('username') }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500"
                            required>
                     @error('username')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                    <span class="text-red-500 dark:text-red-400 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
 
                 <div class="mb-4">
-                    <label for="email" class="block text-gray-700 mb-2">{{ __('messages.auth.email') }}</label>
+                    <label for="email"
+                           class="block text-gray-700 dark:text-gray-300 mb-2">{{ __('messages.auth.email') }}</label>
                     <input id="email" type="email" name="email" value="{{ old('email') }}"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500"
                            required>
                     @error('email')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                    <span class="text-red-500 dark:text-red-400 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
 
                 <div class="mb-4">
-                    <label for="password" class="block text-gray-700 mb-2">{{ __('messages.auth.password') }}</label>
+                    <label for="password"
+                           class="block text-gray-700 dark:text-gray-300 mb-2">{{ __('messages.auth.password') }}</label>
                     <input id="password" type="password" name="password"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500"
                            required>
                     @error('password')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                    <span class="text-red-500 dark:text-red-400 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
 
                 <div class="mb-4">
                     <label for="password-confirm"
-                           class="block text-gray-700 mb-2">{{ __('messages.auth.confirm_password') }}</label>
+                           class="block text-gray-700 dark:text-gray-300 mb-2">{{ __('messages.auth.confirm_password') }}</label>
                     <input id="password-confirm" type="password" name="password_confirmation"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-50 placeholder-gray-400 dark:placeholder-gray-500"
                            required>
                 </div>
 
                 <div class="mb-6">
-                    <label for="profile_picture"
-                           class="block text-gray-700 mb-2">{{ __('messages.auth.profile_picture_optional') }}</label>
-                    <div class="relative border border-gray-300 rounded-md p-2">
+                    <label for="profile_picture_label"
+                           class="block text-gray-700 dark:text-gray-300 mb-2">{{ __('messages.auth.profile_picture_optional') }}</label>
+                    <div id="profile_picture_label"
+                         class="relative border border-gray-300 dark:border-gray-600 rounded-md p-2">
                         <div class="flex items-center">
                             <div id="profile_picture_preview"
-                                 class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none"
-                                     viewBox="0 0 24 24" stroke="currentColor">
+                                 class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mr-3 overflow-hidden">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600 dark:text-gray-400"
+                                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                 </svg>
@@ -106,9 +112,9 @@
                             <div class="flex-1">
                                 <div class="flex items-center justify-between">
                                     <span
-                                        class="text-sm text-gray-500">{{ __('messages.auth.upload_profile_picture_cta') }}</span>
+                                        class="text-sm text-gray-500 dark:text-gray-400">{{ __('messages.auth.upload_profile_picture_cta') }}</span>
                                     <button type="button" onclick="document.getElementById('profile_picture').click()"
-                                            class="text-sm text-blue-800 hover:underline">
+                                            class="text-sm text-blue-800 dark:text-blue-400 hover:underline">
                                         {{ __('messages.choose_file_button') }}
                                     </button>
                                 </div>
@@ -119,39 +125,40 @@
                                onchange="previewProfilePicture(this)">
                     </div>
                     @error('profile_picture')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                    <span class="text-red-500 dark:text-red-400 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
 
                 <div class="mb-4">
                     <button type="submit"
-                            class="w-full bg-blue-800 text-white py-3 rounded-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            class="w-full bg-blue-800 dark:bg-blue-600 text-white py-3 rounded-md hover:bg-blue-900 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         {{ __('messages.register') }}
                     </button>
                 </div>
                 <div class="mb-4">
                     <label for="terms" class="flex items-center">
                         <input type="checkbox" name="terms" id="terms"
-                               class="rounded border-gray-300 text-blue-800 focus:ring-blue-500" required>
-                        <span class="ml-2 text-gray-700">{{ __('messages.auth.i_agree_to') }} <a
+                               class="rounded border-gray-300 dark:border-gray-500 dark:bg-gray-600 text-blue-800 dark:text-blue-500 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+                               required>
+                        <span class="ml-2 text-gray-700 dark:text-gray-300">{{ __('messages.auth.i_agree_to') }} <a
                                 href="{{ route('terms') }}"
-                                class="text-blue-800 hover:underline">{{ __('messages.terms_of_use_nav') }}</a></span>
+                                class="text-blue-800 dark:text-blue-400 hover:underline">{{ __('messages.terms_of_use_nav') }}</a></span>
                     </label>
                     @error('terms')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                    <span class="text-red-500 dark:text-red-400 text-sm">{{ $message }}</span>
                     @enderror
                 </div>
             </form>
 
             <div class="flex items-center justify-center mt-4 mb-6">
-                <span class="border-t border-gray-300 flex-grow mr-3"></span>
-                <span class="text-gray-500 text-sm">{{ __('messages.auth.or') }}</span>
-                <span class="border-t border-gray-300 flex-grow ml-3"></span>
+                <span class="border-t border-gray-300 dark:border-gray-600 flex-grow mr-3"></span>
+                <span class="text-gray-500 dark:text-gray-400 text-sm">{{ __('messages.auth.or') }}</span>
+                <span class="border-t border-gray-300 dark:border-gray-600 flex-grow ml-3"></span>
             </div>
 
             <div class="space-y-3">
                 <a href="{{ route('auth.google') }}"
-                   class="w-full flex items-center justify-center bg-white border border-gray-300 text-gray-700 py-2.5 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors">
+                   class="w-full flex items-center justify-center bg-white dark:bg-gray-200 border border-gray-300 dark:border-gray-200 text-gray-700 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors">
                     <svg class="h-5 w-5 mr-2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path
                             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -166,10 +173,10 @@
                             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                             fill="#EA4335"/>
                     </svg>
-                    <span class="font-medium text-sm">{{ __('messages.auth.signup_with_google') }}</span>
+                    <span class="font-medium text-sm text-gray-800">{{ __('messages.auth.signup_with_google') }}</span>
                 </a>
                 <a href="{{ route('auth.x') }}"
-                   class="w-full flex items-center justify-center bg-black text-white py-2.5 rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors">
+                   class="w-full flex items-center justify-center bg-black text-white py-2.5 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors">
                     <svg class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
                         <path
                             d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
@@ -186,23 +193,24 @@
                 </a>
             </div>
 
-            <div class="mt-6 p-4 text-sm bg-indigo-50 border border-indigo-200 rounded-lg">
+            <div
+                class="mt-6 p-4 text-sm bg-indigo-50 dark:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800 rounded-lg">
                 <div class="flex items-start">
-                    <svg class="w-6 h-6 mr-3 flex-shrink-0 text-indigo-500" fill="none" stroke="currentColor"
-                         viewBox="0 0 24 24" stroke-width="1.5">
+                    <svg class="w-6 h-6 mr-3 flex-shrink-0 text-indigo-500 dark:text-indigo-400" fill="none"
+                         stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 15"></path>
                     </svg>
                     <div>
-                        <h4 class="font-bold text-indigo-800">{{ __('messages.auth.github_developer_perks_title') }}</h4>
-                        <p class="mt-1 text-indigo-700">{{ __('messages.auth.github_developer_perks_desc') }}</p>
+                        <h4 class="font-bold text-indigo-800 dark:text-indigo-300">{{ __('messages.auth.github_developer_perks_title') }}</h4>
+                        <p class="mt-1 text-indigo-700 dark:text-indigo-400">{{ __('messages.auth.github_developer_perks_desc') }}</p>
                     </div>
                 </div>
             </div>
 
             <div class="mt-3">
                 <button type="button" id="github-auth-btn"
-                        class="w-full flex items-center justify-center bg-gray-800 text-white py-2.5 rounded-lg hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 transition-colors">
+                        class="w-full flex items-center justify-center bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-800 py-2.5 rounded-lg hover:bg-gray-900 dark:hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-700 dark:focus:ring-gray-400 transition-colors">
                     <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                         <path fill-rule="evenodd"
                               d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.168 6.839 9.492.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.031-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.03 1.595 1.03 2.688 0 3.848-2.338 4.695-4.566 4.942.359.308.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.003 10.003 0 0022 12c0-5.523-4.477-10-10-10z"
@@ -212,10 +220,10 @@
                 </button>
             </div>
 
-            <p class="text-center text-gray-600 mt-4">
+            <p class="text-center text-gray-600 dark:text-gray-400 mt-4">
                 {{ __('messages.auth.already_have_account') }}
                 <a href="{{ route('login') }}"
-                   class="text-blue-800 hover:underline">{{ __('messages.auth.login_here') }}</a>
+                   class="text-blue-800 dark:text-blue-400 hover:underline">{{ __('messages.auth.login_here') }}</a>
             </p>
         </div>
     </div>
@@ -345,13 +353,13 @@
                     })
                     .then(data => {
                         if (data.available) {
-                            statusElement.className = 'mt-1 text-sm text-green-600';
+                            statusElement.className = 'mt-1 text-sm text-green-600 dark:text-green-400';
                             statusElement.textContent = data.message || usernameValidationMessages.available;
                             usernameInput.classList.remove('border-red-500');
                             usernameInput.classList.add('border-green-500');
                             lastCheckedUsername = username;
                         } else {
-                            statusElement.className = 'mt-1 text-sm text-red-600';
+                            statusElement.className = 'mt-1 text-sm text-red-600 dark:text-red-400';
                             statusElement.textContent = data.message || usernameValidationMessages.taken;
                             usernameInput.classList.remove('border-green-500');
                             usernameInput.classList.add('border-red-500');
@@ -360,7 +368,7 @@
                     })
                     .catch(error => {
                         console.error('Error checking username:', error);
-                        statusElement.className = 'mt-1 text-sm text-red-600';
+                        statusElement.className = 'mt-1 text-sm text-red-600 dark:text-red-400';
                         statusElement.textContent = usernameValidationMessages.could_not_verify;
                         usernameInput.classList.remove('border-green-500');
                         usernameInput.classList.add('border-red-500');
