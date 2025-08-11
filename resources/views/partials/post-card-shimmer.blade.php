@@ -28,11 +28,14 @@
         overflow: hidden;
     }
 
+    .shimmer-content {
+        padding: 1rem;
+    }
+
     .shimmer-divider {
         border-bottom-width: 1px;
         border-color: #e5e7eb;
         width: 100%;
-        margin-top: 1rem;
     }
 
     .dark .shimmer-bg {
@@ -49,10 +52,6 @@
         border-color: #4b5563;
     }
 
-    .shimmer-content {
-        padding: 1rem;
-    }
-
     .shimmer-header {
         display: flex;
         align-items: center;
@@ -62,6 +61,7 @@
         height: 2.5rem;
         width: 2.5rem;
         border-radius: 9999px;
+        flex-shrink: 0;
     }
 
     .shimmer-info {
@@ -82,16 +82,38 @@
         height: 0.75rem;
     }
 
-    .shimmer-question {
+    /* Question & AI */
+    .shimmer-question-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
         margin: 1rem auto 0 auto;
+    }
+
+    .shimmer-question-text {
         height: 1.25rem;
     }
 
+    .shimmer-ai-icon {
+        height: 1.25rem;
+        width: 1.25rem;
+        border-radius: 9999px;
+    }
+
+    .shimmer-ai-panel {
+        height: 4.5rem;
+        border-radius: 0.375rem;
+        margin-top: 1rem;
+        width: 100%;
+    }
+
+    /* Images */
     .shimmer-images-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 1rem;
-        padding: 1rem;
+        margin-top: 1rem;
     }
 
     .shimmer-image-placeholder {
@@ -100,11 +122,12 @@
         width: 100%;
     }
 
+    /* Buttons */
     .shimmer-buttons-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 1rem;
-        padding: 0 1rem 1rem 1rem;
+        margin-top: 1rem;
     }
 
     .shimmer-button-placeholder {
@@ -113,11 +136,31 @@
         border-radius: 0.375rem;
     }
 
+    /* Tags */
+    .shimmer-tags-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding-bottom: 0.75rem;
+    }
+
+    .shimmer-tag {
+        height: 1.5rem;
+        width: 5rem;
+        border-radius: 9999px;
+    }
+
+    /* Footer */
+    .shimmer-footer-wrapper {
+        padding: 0.75rem 2rem;
+    }
+
     .shimmer-footer {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0.75rem 2rem;
     }
 
     .shimmer-footer-item {
@@ -135,13 +178,13 @@
 
     .shimmer-footer-text {
         height: 0.75rem;
-        width: 2rem;
+        width: 2.5rem;
         margin-top: 0.25rem;
     }
 </style>
 
 <article class="shimmer-card">
-    <div class="shimmer-content">
+    <div class="p-4">
         <header class="shimmer-header">
             <div class="shimmer-pfp shimmer-bg"></div>
             <div class="shimmer-info">
@@ -149,10 +192,17 @@
                 <div class="shimmer-line shimmer-line-subheader shimmer-bg" style="width: 25%;"></div>
             </div>
         </header>
+    </div>
 
-        <div class="shimmer-divider"></div>
+    <div class="shimmer-divider"></div>
 
-        <div class="shimmer-line shimmer-question shimmer-bg" style="width: 83%;"></div>
+    <div class="p-4">
+        <div class="shimmer-question-wrapper">
+            <div class="shimmer-line shimmer-question-text shimmer-bg" style="width: 80%;"></div>
+            <div class="shimmer-ai-icon shimmer-bg"></div>
+        </div>
+
+        <div class="shimmer-ai-panel shimmer-bg"></div>
 
         <div class="shimmer-images-grid">
             <div class="shimmer-image-placeholder shimmer-bg"></div>
@@ -164,21 +214,30 @@
             <div class="shimmer-button-placeholder shimmer-bg"></div>
         </div>
 
-        <div class="shimmer-divider"></div>
+        <div class="shimmer-tags-container">
+            <div class="shimmer-tag shimmer-bg"></div>
+            <div class="shimmer-tag shimmer-bg" style="width: 4rem;"></div>
+            <div class="shimmer-tag shimmer-bg" style="width: 5.5rem;"></div>
+            <div class="shimmer-tag shimmer-bg" style="width: 3.5rem;"></div>
+        </div>
+    </div>
 
-        <div class="shimmer-footer">
+    <div class="shimmer-divider"></div>
+
+    <div class="shimmer-footer-wrapper">
+        <footer class="shimmer-footer">
             <div class="shimmer-footer-item">
                 <div class="shimmer-footer-icon shimmer-bg"></div>
-                <div class="shimmer-footer-text shimmer-bg" style="width: 1.25rem;"></div>
+                <div class="shimmer-footer-text shimmer-bg" style="width: 1.5rem;"></div>
             </div>
             <div class="shimmer-footer-item">
-                <div class="shimmer-line shimmer-bg" style="height: 1.5rem; width: 2.5rem;"></div>
+                <div class="shimmer-line shimmer-bg" style="height: 1.5rem; width: 3rem;"></div>
                 <div class="shimmer-footer-text shimmer-bg"></div>
             </div>
             <div class="shimmer-footer-item">
                 <div class="shimmer-footer-icon shimmer-bg"></div>
-                <div class="shimmer-footer-text shimmer-bg" style="width: 1.25rem;"></div>
+                <div class="shimmer-footer-text shimmer-bg" style="width: 1.5rem;"></div>
             </div>
-        </div>
+        </footer>
     </div>
 </article>
