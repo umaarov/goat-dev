@@ -85,7 +85,7 @@
                                 <img src="{{ asset('images/main_logo.png') }}" width="120" alt="GOAT.uz Logo"
                                      class="logo-light"
                                      style="border: 0; max-width: 100%; vertical-align: middle; line-height: 100%;">
-                                <img src="{{ asset('images/main_logo.png') }}" width="120" alt="GOAT.uz Logo"
+                                <img src="{{ asset('images/main_logo_white.png') }}" width="120" alt="GOAT.uz Logo"
                                      class="logo-dark"
                                      style="display: none; border: 0; max-width: 100%; vertical-align: middle; line-height: 100%;">
                             </a>
@@ -114,17 +114,17 @@
                                             style="margin: 0 0 16px; font-size: 20px; font-weight: 700; color: #111827;">{{ $mainPostData['question'] }}</h2>
                                         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                                             <tr>
-                                                <td style="padding-right: 8px;">
+                                                <td width="50%" valign="top" style="width: 50%; padding-right: 8px;">
                                                     <a href="{{ $mainPostData['url'] }}"><img
                                                             src="{{ $mainPostData['option_one_image'] }}"
-                                                            alt="{{ $mainPostData['option_one_title'] }}" width="100%"
-                                                            style="border-radius: 6px; display: block; border: 0; max-width: 100%; vertical-align: middle; line-height: 100%;"></a>
+                                                            alt="{{ $mainPostData['option_one_title'] }}"
+                                                            style="width: 100%; max-width: 100%; border-radius: 6px; display: block; border: 0; vertical-align: middle; line-height: 100%;"></a>
                                                 </td>
-                                                <td style="padding-left: 8px;">
+                                                <td width="50%" valign="top" style="width: 50%; padding-left: 8px;">
                                                     <a href="{{ $mainPostData['url'] }}"><img
                                                             src="{{ $mainPostData['option_two_image'] }}"
-                                                            alt="{{ $mainPostData['option_two_title'] }}" width="100%"
-                                                            style="border-radius: 6px; display: block; border: 0; max-width: 100%; vertical-align: middle; line-height: 100%;"></a>
+                                                            alt="{{ $mainPostData['option_two_title'] }}"
+                                                            style="width: 100%; max-width: 100%; border-radius: 6px; display: block; border: 0; vertical-align: middle; line-height: 100%;"></a>
                                                 </td>
                                             </tr>
                                         </table>
@@ -194,11 +194,11 @@
                                             @foreach(array_chunk($gridPostsData, 2) as $chunk)
                                                 <tr>
                                                     @foreach($chunk as $post)
-                                                        <td width="50%" valign="top" style="padding: 0 8px 16px;">
+                                                        <td width="50%" valign="top"
+                                                            style="width: 50%; padding: 0 8px 16px;">
                                                             <a href="{{ $post['url'] }}"><img
                                                                     src="{{ $post['option_one_image'] }}" alt=""
-                                                                    width="100%"
-                                                                    style="border-radius: 6px; margin-bottom: 8px; aspect-ratio: 1/1; object-fit: cover; border: 0; max-width: 100%; vertical-align: middle; line-height: 100%;"></a>
+                                                                    style="width: 100%; max-width: 100%; border-radius: 6px; margin-bottom: 8px; aspect-ratio: 1/1; object-fit: cover; border: 0; vertical-align: middle; line-height: 100%;"></a>
                                                             <a href="{{ $post['url'] }}" class="dark-text-white"
                                                                style="text-decoration: none; font-size: 14px; font-weight: 600; color: #1f2937;">{{ Str::limit($post['question'], 50) }}</a>
                                                         </td>
