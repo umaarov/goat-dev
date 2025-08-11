@@ -19,6 +19,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request as FacadeRequest;
@@ -256,16 +257,14 @@ class UserController extends Controller
 
     final public function terminateSession(string $sessionId): RedirectResponse
     {
-        DB::table('sessions')
-            ->where('user_id', Auth::id())
-            ->where('id', $sessionId)
-            ->delete();
+        $session = DB::table('sessions')->find($sessionId);
+
+        Gate::authorize('delete', $session);
+
+        DB::table('sessions')->where('id', $sessionId)->delete();
 
         Log::channel('audit_trail')->info('User terminated a session.', [
-            'user_id' => Auth::id(),
-            'username' => Auth::user()->username,
-            'terminated_session_id' => $sessionId,
-            'ip_address' => FacadeRequest::ip(),
+            'user_id' => Auth::id(), 'username' => Auth::user()->username, 'terminated_session_id' => $sessionId, 'ip_address' => FacadeRequest::ip(),
         ]);
 
         return redirect()->route('profile.edit')->with('success', __('messages.session_terminated_successfully'));
