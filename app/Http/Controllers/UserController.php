@@ -713,14 +713,14 @@ class UserController extends Controller
         Log::info('UserController@update: Process finished. Redirecting...');
         Log::info('--------------------------------------------------');
 
-        Log::info('Attempting to update user ' . $user->id . ' with data:', $data);
+//        Log::info('Attempting to update user ' . $user->id . ' with data:', $data);
 
-        try {
-            $user->update($data);
-        } catch (Exception $e) {
-            Log::error('Error updating user profile: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'An error occurred while updating the profile.')->withInput();
-        }
+//        try {
+//            $user->update($data);
+//        } catch (Exception $e) {
+//            Log::error('Error updating user profile: ' . $e->getMessage());
+//            return redirect()->back()->with('error', 'An error occurred while updating the profile.')->withInput();
+//        }
 
         return redirect()->route('profile.edit')->with('success', __('messages.profile_updated_success'));
     }

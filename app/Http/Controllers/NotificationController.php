@@ -37,7 +37,6 @@ class NotificationController extends Controller
     public function unsubscribe(Request $request, string $token): JsonResponse
     {
         $tokenRecord = DB::table('unsubscribe_tokens')->where('token', $token)->first();
-
         if (!$tokenRecord || Carbon::parse($tokenRecord->expires_at)->isPast()) {
             if ($tokenRecord) {
                 DB::table('unsubscribe_tokens')->where('id', $tokenRecord->id)->delete();
@@ -50,19 +49,30 @@ class NotificationController extends Controller
 
         $user = User::find($tokenRecord->user_id);
 
-        if ($user && $user->receives_notifications) {
-            $user->update(['receives_notifications' => false]);
-            Mail::to($user)->queue(new UnsubscribedNotification($user, $request->ip()));
-            Log::info("User {$user->id} successfully unsubscribed.");
-        } else {
-            Log::warning("Unsubscribe attempt for user {$user->id} who was already unsubscribed or not found.");
+        if (!$user) {
+            DB::table('unsubscribe_tokens')->where('id', $tokenRecord->id)->delete();
+            Log::warning("Unsubscribe attempt for non-existent user. Token ID: {$tokenRecord->id}");
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User associated with this link not found.'
+            ], 404);
         }
+        $user->receives_notifications = false;
+        if ($user->save()) {
+            Mail::to($user)->queue(new UnsubscribedNotification($user, $request->ip()));
+            DB::table('unsubscribe_tokens')->where('id', $tokenRecord->id)->delete();
+            Log::info("User {$user->id} successfully unsubscribed via link.");
 
-        DB::table('unsubscribe_tokens')->where('id', $tokenRecord->id)->delete();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'You have been successfully unsubscribed. A confirmation email has been sent.'
-        ]);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'You have been successfully unsubscribed. A confirmation email has been sent.'
+            ]);
+        } else {
+            Log::error("Failed to save user model for user_id {$user->id} during unsubscribe process.");
+            return response()->json([
+                'status' => 'error',
+                'message' => 'We could not process your request at this time. Please try again.'
+            ], 500);
+        }
     }
 }
