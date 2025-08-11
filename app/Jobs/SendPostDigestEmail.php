@@ -24,7 +24,14 @@ class SendPostDigestEmail implements ShouldQueue
 
     public function handle(): void
     {
-        $since = $this->user->last_notified_at ?? Carbon::now()->subDays(2);
+        $user = User::find($this->user->id);
+
+        if (!$user || !$user->receives_notifications) {
+            Log::info("Skipping post digest for user {$this->user->id} because they have unsubscribed or were deleted.");
+            return;
+        }
+
+        $since = $user->last_notified_at ?? Carbon::now()->subDays(2);
         $newPosts = Post::where('created_at', '>', $since)->latest()->get();
 
         if ($newPosts->isEmpty()) {
@@ -35,12 +42,12 @@ class SendPostDigestEmail implements ShouldQueue
         $gridPosts = $newPosts->where('id', '!=', $mainPost->id)->take(4);
 
         try {
-            Mail::to($this->user)->send(new NewPostsNotification($this->user, $mainPost, $gridPosts));
+            Mail::to($user)->send(new NewPostsNotification($user, $mainPost, $gridPosts));
 
-            $this->user->last_notified_at = Carbon::now();
-            $this->user->save();
+            $user->last_notified_at = Carbon::now();
+            $user->save();
         } catch (Exception $e) {
-            Log::error("Failed to queue post digest for user {$this->user->id}: " . $e->getMessage());
+            Log::error("Failed to queue post digest for user {$user->id}: " . $e->getMessage());
             $this->release(300);
         }
     }

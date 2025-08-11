@@ -16,7 +16,7 @@ class SchedulePostNotificationsListener implements ShouldQueue
 //        $alreadyScheduledUserIds = NotificationSchedule::whereIn('user_id', $subscribedUserIds)
 //            ->pluck('user_id');
 ////
-        $subscribedUserIds = User::where('email', 'hs.umarov21@gmail.com')->pluck('id');
+        $subscribedUserIds = User::where('email', 'fantasy.hate17@gmail.com')->pluck('id');
 
         $alreadyScheduledUserIds = NotificationSchedule::whereIn('user_id', $subscribedUserIds)
             ->pluck('user_id');
