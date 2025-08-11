@@ -237,7 +237,7 @@
 
         <button
             class="vote-button p-2 text-[16px] text-center rounded-md relative
-                   {{ $highlightOptionForViewer === 'option_one' ? 'bg-blue-800 dark:bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600' }}
+                   {{ $highlightOptionForViewer === 'option_one' ? 'bg-blue-800 dark:bg-blue-600 text-white dark:text-white' : 'bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 dark:text-white' }}
                    {{ $isNotLoggedIn ? 'opacity-75 cursor-not-allowed' : '' }}"
             onclick="voteForOption('{{ $post->id }}', 'option_one')"
             data-option="option_one"
@@ -261,7 +261,7 @@
 
         <button
             class="vote-button p-2 text-[16px] text-center rounded-md relative
-                   {{ $highlightOptionForViewer === 'option_two' ? 'bg-blue-800 dark:bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600' }}
+                   {{ $highlightOptionForViewer === 'option_two' ? 'bg-blue-800 dark:bg-blue-600 text-white dark:text-white' : 'bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 dark:text-white' }}
                    {{ $isNotLoggedIn ? 'opacity-75 cursor-not-allowed' : '' }}"
             onclick="voteForOption('{{ $post->id }}', 'option_two')"
             data-option="option_two"
