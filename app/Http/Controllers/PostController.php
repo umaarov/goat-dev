@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\PostCreated;
 use App\Jobs\PingSearchEngines;
 use App\Jobs\SharePostToSocialMedia;
 use App\Models\Post;
@@ -291,6 +292,7 @@ class PostController extends Controller
 
         PingSearchEngines::dispatch();
         GoogleIndexingService::submitSitemap();
+        PostCreated::dispatch($post);
         return redirect()->route('home')->with('success', __('messages.post_created_successfully'));
     }
 
@@ -1015,7 +1017,6 @@ class PostController extends Controller
             'queryTerm' => $queryTerm
         ]);
     }
-
 
 
     final public function loadMorePosts(Request $request): JsonResponse

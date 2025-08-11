@@ -157,6 +157,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->dailyAt('02:00');
             $schedule->command('app:send-post-notifications')
                 ->hourly();
+            $schedule->command('app:process-notification-schedules')->everyMinute();
         }
     )
     ->withProviders([

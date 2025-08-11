@@ -37,6 +37,7 @@ class User extends Authenticatable
         'ai_generations_monthly_count',
         'ai_generations_daily_count',
         'last_ai_generation_date',
+        'last_notified_at',
     ];
 
     protected $hidden = [
