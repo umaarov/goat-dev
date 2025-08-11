@@ -1,5 +1,4 @@
 <?php
-// app/Jobs/SendPostDigestEmail.php
 namespace App\Jobs;
 
 use App\Mail\NewPostsNotification;
