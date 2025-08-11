@@ -16,7 +16,7 @@
 //    $postSlug = Str::slug($post->question, '-', 'en');
 //    $postUrl = route('posts.show', ['post' => $post, 'slug' => $postSlug]);
     $postUrl = route('posts.show.user-scoped', ['username' => $post->user->username, 'post' => $post->id]);
-    $insightPreference = Auth::user()->ai_insight_preference ?? 'expanded';
+    $insightPreference = Auth::user()->ai_insight_preference ?? 'less';
 
     $totalVotes = $post->total_votes;
     $optionOneVotes = $post->option_one_votes;
