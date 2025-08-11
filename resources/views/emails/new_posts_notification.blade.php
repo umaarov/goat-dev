@@ -219,19 +219,18 @@
                     {{-- FOOTER --}}
                     <tr>
                         <td class="email-footer" style="padding: 24px; text-align: center; background-color: #f8fafc;">
-                            <p class="text-gray"
-                               style="margin: 0 0 12px; font-size: 12px; line-height: 16px; color: #6b7280;">You
-                                received this email because you opted in for updates. Manage your preferences or
-                                unsubscribe below.</p>
+                            <p class="text-gray" style="margin: 0 0 12px; font-size: 12px; line-height: 16px; color: #6b7280;">
+                                You received this email because you opted in for updates.
+                            </p>
                             <p style="margin: 0; font-size: 12px;">
-                                <a href="#" class="hover-text-indigo-500"
+                                <a href="{{ route('notifications.unsubscribe', ['token' => $unsubscribeToken]) }}" class="hover-text-indigo-500"
                                    style="text-decoration: none; color: #6366f1;">Unsubscribe</a> &bull;
-                                <a href="#" class="hover-text-indigo-500"
+                                <a href="{{ route('profile.edit') }}" class="hover-text-indigo-500"
                                    style="text-decoration: none; color: #6366f1;">Email Preferences</a>
                             </p>
-                            <p class="text-gray"
-                               style="margin: 12px 0 0; font-size: 12px; line-height: 16px; color: #6b7280;">GOAT.uz,
-                                Sergeli, Tashkent, 100022, Uzbekistan</p>
+                            <p class="text-gray" style="margin: 12px 0 0; font-size: 12px; line-height: 16px; color: #6b7280;">
+                                GOAT.uz, Sergeli, Tashkent, 100022, Uzbekistan
+                            </p>
                         </td>
                     </tr>
                 </table>

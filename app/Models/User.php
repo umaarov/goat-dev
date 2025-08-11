@@ -53,6 +53,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'last_notified_at' => 'datetime',
         'password' => 'hashed',
+        'receives_notifications' => 'boolean',
         'show_voted_posts_publicly' => 'boolean',
         'external_links' => 'array',
         'is_developer' => 'boolean',

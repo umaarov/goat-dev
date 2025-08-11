@@ -67,6 +67,10 @@ Route::view('ads', 'ads')->name('ads')->middleware('cache.response:1440');
 Route::view('contribution', 'contribution')->name('contribution')->middleware('cache.response:1440');
 Route::view('privacy-policy', 'privacy')->name('privacy')->middleware('cache.response:1440');
 
+Route::get('/notifications/unsubscribe/{token}', [NotificationController::class, 'unsubscribe'])
+    ->name('notifications.unsubscribe');
+
+
 //Route::get('/sss', SssController::class)->name('sss.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
