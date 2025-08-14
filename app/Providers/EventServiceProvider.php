@@ -2,20 +2,17 @@
 
 namespace App\Providers;
 
-use App\Events\UserRegistered;
-use App\Listeners\SendWelcomeMessage;
+use App\Models\Comment;
+use App\Observers\CommentObserver;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
 {
-    protected $listen = [
-//        UserRegistered::class => [
-//            SendWelcomeMessage::class,
-//        ],
-    ];
+    protected $listen = [];
+
     public function boot(): void
     {
-        parent::boot();
+        Comment::observe(CommentObserver::class);
     }
 
     public function shouldDiscoverEvents(): bool

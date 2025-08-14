@@ -25,27 +25,26 @@ class CommentController extends Controller
 {
     public function index(Request $request, Post $post): JsonResponse
     {
-        $perPage = $request->input('per_page', 10);
+        $perPage = $request->input('per_page', 15);
         $userId = Auth::id();
 
         $commentsQuery = Comment::where('post_id', $post->id)
             ->whereNull('parent_id')
-            ->withCount(['flatReplies as replies_count'])
+            ->withCount(['likes', 'replies'])
             ->with([
                 'user:id,username,profile_picture',
                 'flatReplies' => function ($query) use ($userId) {
-                    $query
-//                        ->withCount('likes')
-                        ->with('user:id,username,profile_picture')
-                        ->with('parent:id,user_id', 'parent.user:id,username')
-                        ->orderBy('created_at', 'desc')
-                        ->limit(3);
+                    $query->withCount('likes')
+                        ->with('user:id,username,profile_picture', 'parent:id,user_id', 'parent.user:id,username')
+                        ->orderBy('score', 'desc')
+                        ->orderBy('created_at', 'asc');
 
                     if ($userId) {
                         $query->with(['likes' => fn($q) => $q->where('user_id', $userId)]);
                     }
                 },
             ])
+            ->orderBy('score', 'desc')
             ->orderBy('created_at', 'desc');
 
         if ($userId) {
@@ -56,7 +55,10 @@ class CommentController extends Controller
 
         $comments->getCollection()->each(function ($comment) {
             $comment->is_liked_by_current_user = $comment->likes->isNotEmpty();
-            $comment->setRelation('flatReplies', $comment->flatReplies->reverse()->values());
+
+            $initialReplies = $comment->flatReplies->take(3);
+            $comment->setRelation('flatReplies', $initialReplies->reverse()->values());
+
             $comment->flatReplies->each(function ($reply) {
                 $reply->is_liked_by_current_user = $reply->likes->isNotEmpty();
                 unset($reply->likes);
@@ -423,7 +425,7 @@ class CommentController extends Controller
 
         try {
             broadcast(new NewCommentPosted($comment))->toOthers();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Broadcasting NewCommentPosted failed: ' . $e->getMessage());
         }
 

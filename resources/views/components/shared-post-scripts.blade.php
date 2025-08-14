@@ -187,33 +187,61 @@
             });
         }
 
+    function insertSorted(container, element, isReply = false) {
+        const newScore = parseFloat(element.dataset.score || 0);
+        const existingComments = container.querySelectorAll(':scope > .comment');
+        let inserted = false;
 
-        function addNewCommentToUI(commentData, postId) {
-            const commentElement = createCommentElement(commentData, postId, !!commentData.parent_id);
-            const isReply = !!commentData.parent_id;
+        for (const existingComment of existingComments) {
+            const existingScore = parseFloat(existingComment.dataset.score || 0);
 
-            if (isReply) {
-                const rootCommentId = commentData.root_comment_id;
-                const repliesContainer = document.querySelector(`#comment-${rootCommentId} .replies-container`);
-                if (repliesContainer) {
-                    repliesContainer.appendChild(commentElement);
-                    updateParentUIAfterReply(rootCommentId);
-                }
-            } else {
-                const commentsContainer = document.querySelector(`#comments-section-${postId} .comments-list`);
-                if(commentsContainer){
-                    const noCommentsMessage = commentsContainer.querySelector('p.text-center');
-                    if (noCommentsMessage) noCommentsMessage.remove();
-                    commentsContainer.insertBefore(commentElement, commentsContainer.firstChild);
-                }
+            if (newScore > existingScore) {
+                container.insertBefore(element, existingComment);
+                inserted = true;
+                break;
             }
-
-            commentElement.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
-            setTimeout(() => {
-                commentElement.classList.add('visible');
-                commentElement.style.backgroundColor = '';
-            }, 10);
         }
+
+        if (!inserted) {
+            const loadMoreButton = isReply
+                ? container.querySelector('.load-more-replies-wrapper')
+                : container.querySelector('.load-more-comments-wrapper');
+
+            if (loadMoreButton) {
+                container.insertBefore(element, loadMoreButton);
+            } else {
+                container.appendChild(element);
+            }
+        }
+    }
+
+    function addNewCommentToUI(commentData, postId) {
+        const commentElement = createCommentElement(commentData, postId, !!commentData.parent_id);
+        const isReply = !!commentData.parent_id;
+
+        if (isReply) {
+            const rootCommentId = commentData.root_comment_id;
+            const repliesContainer = document.querySelector(`#comment-${rootCommentId} .replies-container`);
+            if (repliesContainer) {
+                insertSorted(repliesContainer, commentElement, true);
+                updateParentUIAfterReply(rootCommentId);
+            }
+        } else {
+            const commentsContainer = document.querySelector(`#comments-section-${postId} .comments-list`);
+            if (commentsContainer) {
+                const noCommentsMessage = commentsContainer.querySelector('p.text-center');
+                if (noCommentsMessage) noCommentsMessage.remove();
+
+                insertSorted(commentsContainer, commentElement, false);
+            }
+        }
+
+        commentElement.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+        setTimeout(() => {
+            commentElement.classList.add('visible');
+            commentElement.style.backgroundColor = '';
+        }, 10);
+    }
 
 
     function updateCommentFormState() {
@@ -640,7 +668,8 @@
         function createCommentElement(commentData, postId, isReply = false) {
             const commentDiv = document.createElement('div');
             // commentDiv.className = 'comment py-3 border-b border-gray-200';
-            commentDiv.className = 'comment';
+            commentDiv.className = 'comment'
+            commentDiv.dataset.score = commentData.score || 0;;
 
             // if (!isReply) {
             //     commentDiv.classList.add('border-b', 'border-gray-200');

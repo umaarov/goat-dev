@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Models\Comment;
+use App\Services\CommentScoringService;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -33,8 +34,13 @@ class NewCommentPosted implements ShouldBroadcast
 
     public function broadcastWith(): array
     {
+        $this->comment->load('user:id,username,profile_picture', 'post:id,user_id', 'parent.user');
+        $this->comment->loadCount(['likes', 'replies']);
+        $scoringService = new CommentScoringService();
+        $this->comment->score = $scoringService->calculateScore($this->comment);
+
         return [
-            'comment' => $this->comment->load('user:id,username,profile_picture', 'parent.user'),
+            'comment' => $this->comment,
         ];
     }
 }
