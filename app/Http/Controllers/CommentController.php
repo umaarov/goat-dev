@@ -31,19 +31,7 @@ class CommentController extends Controller
         $commentsQuery = Comment::where('post_id', $post->id)
             ->whereNull('parent_id')
             ->withCount(['likes', 'replies'])
-            ->with([
-                'user:id,username,profile_picture',
-                'flatReplies' => function ($query) use ($userId) {
-                    $query->withCount('likes')
-                        ->with('user:id,username,profile_picture', 'parent:id,user_id', 'parent.user:id,username')
-                        ->orderBy('score', 'desc')
-                        ->orderBy('created_at', 'asc');
-
-                    if ($userId) {
-                        $query->with(['likes' => fn($q) => $q->where('user_id', $userId)]);
-                    }
-                },
-            ])
+            ->with('user:id,username,profile_picture')
             ->orderBy('score', 'desc')
             ->orderBy('created_at', 'desc');
 
@@ -53,17 +41,28 @@ class CommentController extends Controller
 
         $comments = $commentsQuery->paginate($perPage);
 
-        $comments->getCollection()->each(function ($comment) {
+        $comments->getCollection()->each(function ($comment) use ($userId) {
             $comment->is_liked_by_current_user = $comment->likes->isNotEmpty();
+            unset($comment->likes);
 
-            $initialReplies = $comment->flatReplies->take(3);
-            $comment->setRelation('flatReplies', $initialReplies->reverse()->values());
+            $initialRepliesQuery = $comment->flatReplies()
+                ->withCount('likes')
+                ->with('user:id,username,profile_picture', 'parent:id,user_id', 'parent.user:id,username')
+                ->orderBy('created_at', 'asc')
+                ->limit(3);
 
-            $comment->flatReplies->each(function ($reply) {
+            if ($userId) {
+                $initialRepliesQuery->with(['likes' => fn($q) => $q->where('user_id', $userId)]);
+            }
+
+            $initialReplies = $initialRepliesQuery->get();
+
+            $processedReplies = $initialReplies->each(function ($reply) {
                 $reply->is_liked_by_current_user = $reply->likes->isNotEmpty();
                 unset($reply->likes);
             });
-            unset($comment->likes);
+
+            $comment->setRelation('flatReplies', $processedReplies->reverse()->values());
         });
 
         return response()->json(['comments' => $comments]);
