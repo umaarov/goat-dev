@@ -18,25 +18,25 @@
 @push('schema')
     <script type="application/ld+json">
         {
-            "@context": "https://schema.org",
-    "@graph": [
+            "@@context": "https://schema.org",
+    "@@graph": [
         {
-            "@type": "BreadcrumbList",
+            "@@type": "BreadcrumbList",
             "itemListElement": [
                 {
-                    "@type": "ListItem",
+                    "@@type": "ListItem",
                     "position": 1,
                     "name": "Home",
                     "item": "{{ route('home') }}"
                 },
                 {
-                    "@type": "ListItem",
+                    "@@type": "ListItem",
                     "position": 2,
                     "name": "{{ '@' . $post->user->username }}",
                     "item": "{{ route('profile.show', $post->user->username) }}"
                 },
                 {
-                    "@type": "ListItem",
+                    "@@type": "ListItem",
                     "position": 3,
                     "name": {!! json_encode(Str::limit($post->question, 50)) !!},
                     "item": "{{ $postUrl }}"
@@ -44,7 +44,7 @@
             ]
         },
         {
-            "@type": "Question",
+            "@@type": "Question",
             "name": {!! json_encode($post->question) !!},
             "upvoteCount": {{ $post->total_votes }},
             "answerCount": 2,
@@ -53,12 +53,12 @@
         @endif
         "dateCreated": "{{ $post->created_at->toIso8601String() }}",
             "author": {
-                "@type": "Person",
+                "@@type": "Person",
                 "name": "{{ '@' . $post->user->username }}",
                 "url": "{{ route('profile.show', $post->user->username) }}"
             },
             "suggestedAnswer": {
-                "@type": "Answer",
+                "@@type": "Answer",
                 "text": {!! json_encode($post->option_one_text) !!},
                 "upvoteCount": {{ $post->option_one_votes }},
                 "url": "{{ $postUrl }}#option1"
@@ -68,7 +68,7 @@
         @endif
         },
         "acceptedAnswer": {
-            "@type": "Answer",
+            "@@type": "Answer",
             "text": {!! json_encode($post->option_two_text) !!},
                 "upvoteCount": {{ $post->option_two_votes }},
                 "url": "{{ $postUrl }}#option2"
@@ -79,12 +79,12 @@
         },
         "interactionStatistic": [
             {
-                "@type": "InteractionCounter",
-                "interactionType": { "@type": "CommentAction" },
+                "@@type": "InteractionCounter",
+                "interactionType": { "@@type": "CommentAction" },
                 "userInteractionCount": {{ $post->comments_count }}
         }
     ],
-    "publisher": {"@id": "https://www.goat.uz#organization"}
+    "publisher": {"@@id": "https://www.goat.uz#organization"}
 }
 ]
 }
