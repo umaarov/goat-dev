@@ -141,28 +141,35 @@
         {
             "@@context": "https://schema.org",
             "@@type": "WebSite",
-            "@@id": "https://goat.uz#website",
+            "@@id": "https://www.goat.uz#website",
             "name": "GOAT.uz",
-            "url": "https://goat.uz",
+            "url": "https://www.goat.uz",
             "alternateName": "GOAT",
             "potentialAction": {
                 "@@type": "SearchAction",
                 "target": {
                     "@@type": "EntryPoint",
-                    "urlTemplate": "https://goat.uz/search?q={search_term_string}"
+                    "urlTemplate": "https://www.goat.uz/search?q={search_term_string}"
                 },
                 "query-input": "required name=search_term_string"
             },
             "publisher": {
                 "@@type": "Organization",
+                "@@id": "https://www.goat.uz#organization",
                 "name": "GOAT.uz",
-                "url": "https://goat.uz",
+                "url": "https://www.goat.uz",
                 "logo": {
                     "@@type": "ImageObject",
-                    "url": "https://goat.uz/images/icons/icon-512x512.png"
-                }
+                    "url": "https://www.goat.uz/images/icons/icon-512x512.png"
+                },
+                "sameAs": [
+                    "https://github.com/umaarov/goat-dev",
+                    "https://www.instagram.com/voteongoat",
+                    "https://www.twitter.com/voteongoat",
+                    "https://t.me/voteongoat"
+                ]
             },
-            "logo": "https://goat.uz/images/icons/icon-512x512.png",
+            "logo": "https://www.goat.uz/images/icons/icon-512x512.png",
             "founder": {
                 "@@type": "Person",
                 "name": "Ismoiljon Umarov"

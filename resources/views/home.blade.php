@@ -25,12 +25,17 @@
                 "@@type": "ItemList",
                 "name": "Trending Polls",
                 "description": "The latest and most popular polls on GOAT.uz.",
+                "isPartOf": {"@@id": "https://www.goat.uz#website"},
                 "itemListElement": [
             @foreach($posts as $post)
                 {
                     "@@type": "ListItem",
                     "position": {{ $loop->iteration }},
-                    "url": "{{ route('posts.show.user-scoped', ['username' => $post->user->username, 'post' => $post->id]) }}"
+                    "item": {
+                        "@@type": "Question",
+                        "name": {!! json_encode($post->question) !!},
+                        "url": "{{ route('posts.show.user-scoped', ['username' => $post->user->username, 'post' => $post->id]) }}"
+                    }
                 }
                 {{ !$loop->last ? ',' : '' }}
             @endforeach

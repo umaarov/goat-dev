@@ -563,5 +563,5 @@ return [
     'yes' => 'Yes',
     'no' => 'No',
 
-
+    'profile.meta_description_dynamic' => 'Просмотрите профиль @:username на GOAT.uz. Изучите их :post_count опросов, которые собрали :total_votes голосов. Присоединяйтесь к обсуждению и проголосуйте.',
 ];

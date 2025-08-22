@@ -53,7 +53,6 @@ return [
     'profile.upload_custom_background_label' => 'Upload Custom Background',
     'profile.remove_header_background_label' => 'Remove current header background',
     'profile.alt_header_background' => ':username\'s profile header background',
-    // END: New translations
 
     'post_card.option_1_image_alt' => 'Image for option 1',
     'post_card.option_2_image_alt' => 'Image for option 2',
@@ -583,4 +582,6 @@ return [
 
     'yes' => 'Yes',
     'no' => 'No',
+
+    'profile.meta_description_dynamic' => 'View the profile of @:username on GOAT.uz. Explore their :post_count polls which have gathered :total_votes votes. Join the discussion and cast your vote.',
 ];

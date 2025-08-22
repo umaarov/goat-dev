@@ -18,78 +18,75 @@
 @push('schema')
     <script type="application/ld+json">
         {
-            "@@context": "https://schema.org",
-            "@@graph": [
+            "@context": "https://schema.org",
+    "@graph": [
+        {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
                 {
-                    "@@type": "BreadcrumbList",
-                    "itemListElement": [
-                        {
-                            "@@type": "ListItem",
-                            "position": 1,
-                            "name": "Home",
-                            "item": "{{ route('home') }}"
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Home",
+                    "item": "{{ route('home') }}"
                 },
                 {
-                    "@@type": "ListItem",
+                    "@type": "ListItem",
                     "position": 2,
                     "name": "{{ '@' . $post->user->username }}",
                     "item": "{{ route('profile.show', $post->user->username) }}"
                 },
                 {
-                    "@@type": "ListItem",
+                    "@type": "ListItem",
                     "position": 3,
-                    "name": {!! json_encode(Str::limit($post->question, 50)) !!}
+                    "name": {!! json_encode(Str::limit($post->question, 50)) !!},
                     "item": "{{ $postUrl }}"
-        }
-    ]
-},
-{
-    "@@type": "Article",
-    "headline": {!! json_encode($post->question) !!},
+                }
+            ]
+        },
+        {
+            "@type": "Question",
+            "name": {!! json_encode($post->question) !!},
+            "upvoteCount": {{ $post->total_votes }},
+            "answerCount": 2,
         @if($post->ai_generated_context)
-            "description": {!! json_encode(Str::limit($post->ai_generated_context, 160)) !!},
-                "articleBody": {!! json_encode($post->ai_generated_context) !!},
+            "text": {!! json_encode($post->ai_generated_context) !!},
         @endif
-        @if(!empty($post->ai_generated_tags))
-            "keywords": {!! json_encode($post->ai_generated_tags) !!},
-        @endif
-        "url": "{{ $postUrl }}",
-            "datePublished": "{{ $post->created_at->toIso8601String() }}",
+        "dateCreated": "{{ $post->created_at->toIso8601String() }}",
             "author": {
-                "@@type": "Person",
+                "@type": "Person",
                 "name": "{{ '@' . $post->user->username }}",
                 "url": "{{ route('profile.show', $post->user->username) }}"
             },
-        @if($post->option_one_image || $post->option_two_image)
-            @php
-                $images = [];
-                if($post->option_one_image) $images[] = asset('storage/' . $post->option_one_image);
-                if($post->option_two_image) $images[] = asset('storage/' . $post->option_two_image);
-            @endphp
-            "image": {!! json_encode($images, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!},
+            "suggestedAnswer": {
+                "@type": "Answer",
+                "text": {!! json_encode($post->option_one_text) !!},
+                "upvoteCount": {{ $post->option_one_votes }},
+                "url": "{{ $postUrl }}#option1"
+        @if($post->option_one_image)
+            ,
+            "image": "{{ asset('storage/' . $post->option_one_image) }}"
         @endif
+        },
+        "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {!! json_encode($post->option_two_text) !!},
+                "upvoteCount": {{ $post->option_two_votes }},
+                "url": "{{ $postUrl }}#option2"
+        @if($post->option_two_image)
+            ,
+            "image": "{{ asset('storage/' . $post->option_two_image) }}"
+        @endif
+        },
         "interactionStatistic": [
             {
-                "@@type": "InteractionCounter",
-                "interactionType": { "@@type": "CommentAction" },
+                "@type": "InteractionCounter",
+                "interactionType": { "@type": "CommentAction" },
                 "userInteractionCount": {{ $post->comments_count }}
-        },
-        {
-            "@@type": "InteractionCounter",
-            "interactionType": { "@@type": "LikeAction" },
-            "userInteractionCount": {{ $post->total_votes }}
         }
     ],
-    "publisher": {
-        "@@type": "Organization",
-        "name": "GOAT.uz",
-        "logo": {
-            "@@type": "ImageObject",
-            "url": "{{ asset('images/icons/icon-512x512.png') }}"
-                }
-            }
-        }
-    ]
+    "publisher": {"@id": "https://www.goat.uz#organization"}
+}
+]
 }
     </script>
 @endpush

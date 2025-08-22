@@ -60,10 +60,17 @@ class UserController extends Controller
 
     final public function showProfile(string $username): View
     {
+//        $user = User::withTrashed()
+//            ->where('username', $username)
+//            ->withCount('posts')
+//            ->firstOrFail();
+
         $user = User::withTrashed()
             ->where('username', $username)
             ->withCount('posts')
+            ->withSum('posts', 'total_votes')
             ->firstOrFail();
+
 
         $headerBackgroundUrl = null;
         if ($user->header_background) {
@@ -75,16 +82,25 @@ class UserController extends Controller
         }
 
         $isOwnProfile = Auth::check() && Auth::id() === $user->id;
-        $totalVotesOnUserPosts = $user->posts()->sum('total_votes');
+//        $totalVotesOnUserPosts = $user->posts()->sum('total_votes');
+        $totalVotesOnUserPosts = $user->posts_sum_total_votes ?? 0;
 
         $userBadges = $this->ratingService->getUserBadges($user);
+
+        $postCount = $user->posts_count;
+        $metaDescription = __('messages.profile.meta_description_dynamic', [
+            'username' => $user->username,
+            'post_count' => $postCount,
+            'total_votes' => number_format($totalVotesOnUserPosts),
+        ]);
 
         return view('users.profile', compact(
             'user',
             'isOwnProfile',
             'totalVotesOnUserPosts',
             'headerBackgroundUrl',
-            'userBadges'
+            'userBadges',
+            'metaDescription',
         ));
     }
 

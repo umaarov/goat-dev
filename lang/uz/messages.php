@@ -564,4 +564,5 @@ return [
     'yes' => 'Yes',
     'no' => 'No',
 
+    'profile.meta_description_dynamic' => '@:username ning GOAT.uz profilini ko‘ring. Ularning :post_count ta so‘rovnomalarini o‘rganing, bu so‘rovnomalarda jami :total_votes ovoz to‘plangan. Munozaraga qo‘shiling va ovozingizni bering.',
 ];

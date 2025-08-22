@@ -5,7 +5,8 @@
 @extends('layouts.app')
 
 @section('title', __('messages.profile.title', ['username' => $user->username]))
-@section('meta_description', __('messages.profile.meta_description', ['username' => $user->username]))
+{{--@section('meta_description', __('messages.profile.meta_description', ['username' => $user->username]))--}}
+@section('meta_description', $metaDescription)
 
 @section('content')
     <div class="max-w-3xl mx-auto">
