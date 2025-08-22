@@ -8,7 +8,7 @@
     ])
 
     @if ((($postCounter + $loop->iteration) % 6) == 1)
-        <div class="w-full">
+        <div class="mb-4 w-full">
             <script async
                     src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
                     crossorigin="anonymous"></script>
