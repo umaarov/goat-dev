@@ -674,7 +674,7 @@
                     const response = await fetch('{{ route("notifications.unread.count") }}', {
                         headers: {
                             'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
+                            'X-Requested-With': 'XMLHttpRequest',
                         }
                     });
 
