@@ -456,3 +456,12 @@
         opacity: 1;
     }
 }
+
+.adsbygoogle {
+    min-width: 250px !important;
+    width: 100% !important;
+}
+
+.w-full {
+    width: 100% !important;
+}

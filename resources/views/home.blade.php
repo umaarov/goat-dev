@@ -62,30 +62,18 @@
             @endfor
         </div>
 
-
         <div id="posts-container" class="hidden">
             @if ($posts->count() > 0)
                 @foreach($posts as $post)
                     @include('partials.post-card', ['post' => $post])
                     @if (($loop->iteration % 6) == 0)
-                        <div class="w-full mb-4">
-                            <script async
-                                    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
-                                    crossorigin="anonymous"></script>
+                        <div class="w-full mb-4 min-w-[250px]">
                             <ins class="adsbygoogle"
-                                 style="display:block"
+                                 style="display:block; min-width: 250px; width: 100%;"
                                  data-ad-format="fluid"
                                  data-ad-layout-key="-6t+ed+2i-1n-4w"
                                  data-ad-client="ca-pub-2989575196315667"
                                  data-ad-slot="7674157999"></ins>
-                            <script>
-                                (function () {
-                                    const adIns = document.currentScript.previousElementSibling;
-                                    const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-                                    adIns.setAttribute('data-ad-ui-theme', theme);
-                                    (adsbygoogle = window.adsbygoogle || []).push({});
-                                })();
-                            </script>
                         </div>
                     @endif
                 @endforeach
@@ -113,17 +101,40 @@
         document.addEventListener('DOMContentLoaded', function () {
             const shimmer = document.getElementById('posts-loading-shimmer');
             const container = document.getElementById('posts-container');
+            const postContainer = document.getElementById('posts-container');
+            const trigger = document.getElementById('infinite-scroll-trigger');
+            const loadingIndicator = document.getElementById('loading-indicator');
             const noPostsMessage = '{{ $posts->isEmpty() }}';
 
-            function loadVisibleAds() {
-                let adSlots = document.querySelectorAll('ins.adsbygoogle:not([data-ad-status="filled"])');
+            let nextPage = 2;
+            let isLoading = false;
+            let hasMorePages = {{ $posts->hasMorePages() ? 'true' : 'false' }};
+
+            function loadNewAds(container) {
+                let adSlots = container.querySelectorAll('ins.adsbygoogle:not([data-ad-status]):not([data-ad-processing])');
+
                 adSlots.forEach(adIns => {
+                    const containerWidth = adIns.offsetWidth || adIns.parentElement?.offsetWidth || 0;
+
+                    if (containerWidth < 250) {
+                        console.warn('Skipping ad: too narrow or hidden (width =', containerWidth, 'px)');
+                        adIns.setAttribute('data-ad-status', 'skipped');
+                        return;
+                    }
+
+                    adIns.setAttribute('data-ad-processing', 'true');
+
                     const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
                     adIns.setAttribute('data-ad-ui-theme', theme);
+
                     try {
                         (adsbygoogle = window.adsbygoogle || []).push({});
-                    } catch (e) {
-                        console.error("AdSense push error: ", e);
+                        adIns.setAttribute('data-ad-status', 'filled');
+                    } catch (error) {
+                        console.error("AdSense push error: ", error);
+                        adIns.setAttribute('data-ad-status', 'error');
+                    } finally {
+                        adIns.removeAttribute('data-ad-processing');
                     }
                 });
             }
@@ -136,18 +147,10 @@
                     setTimeout(() => {
                         shimmer.style.display = 'none';
                         container.classList.remove('hidden');
-                        loadVisibleAds();
+                        setTimeout(() => loadNewAds(container), 150);
                     }, 250);
                 }
             }
-
-            const postContainer = document.getElementById('posts-container');
-            const trigger = document.getElementById('infinite-scroll-trigger');
-            const loadingIndicator = document.getElementById('loading-indicator');
-
-            let nextPage = 2;
-            let isLoading = false;
-            let hasMorePages = {{ $posts->hasMorePages() ? 'true' : 'false' }};
 
             if (!hasMorePages) {
                 trigger.style.display = 'none';
@@ -163,89 +166,8 @@
                 const url = `{{ route('posts.load_more') }}?page=${nextPage}${filter ? '&filter=' + filter : ''}`;
 
                 try {
-                    const response = await fetch(url, {headers: {'X-Requested-With': 'XMLHttpRequest'}});
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-                    const data = await response.json();
-                    if (data.html.trim().length > 0) {
-                        postContainer.insertAdjacentHTML('beforeend', data.html);
-
-                        loadVisibleAds();
-
-                        document.dispatchEvent(new Event('posts-loaded'));
-                        nextPage++;
-                        hasMorePages = data.hasMorePages;
-                        if (!hasMorePages) trigger.style.display = 'none';
-                    } else {
-                        hasMorePages = false;
-                        trigger.style.display = 'none';
-                    }
-                } catch (error) {
-                    console.error('Error loading more posts:', error);
-                    trigger.style.display = 'none';
-                } finally {
-                    isLoading = false;
-                    loadingIndicator.classList.add('hidden');
-                }
-            };
-
-            const observer = new IntersectionObserver((entries) => {
-                if (entries[0].isIntersecting) {
-                    loadMorePosts();
-                }
-            }, {rootMargin: '200px'});
-
-            if (hasMorePages) {
-                observer.observe(trigger);
-            }
-        });
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const shimmer = document.getElementById('posts-loading-shimmer');
-            const container = document.getElementById('posts-container');
-            const noPostsMessage = '{{ $posts->isEmpty() }}';
-
-            if (shimmer && container) {
-                if (noPostsMessage) {
-                    shimmer.style.display = 'none';
-                    container.classList.remove('hidden');
-                } else {
-                    setTimeout(() => {
-                        shimmer.style.display = 'none';
-                        container.classList.remove('hidden');
-                    }, 250);
-                }
-            }
-
-            const postContainer = document.getElementById('posts-container');
-            const trigger = document.getElementById('infinite-scroll-trigger');
-            const loadingIndicator = document.getElementById('loading-indicator');
-
-            let nextPage = 2;
-            let isLoading = false;
-            let hasMorePages = {{ $posts->hasMorePages() ? 'true' : 'false' }};
-
-            if (!hasMorePages) {
-                trigger.style.display = 'none';
-            }
-
-            const loadMorePosts = async () => {
-                if (isLoading || !hasMorePages) {
-                    return;
-                }
-
-                isLoading = true;
-                loadingIndicator.classList.remove('hidden');
-
-                const filter = new URLSearchParams(window.location.search).get('filter') || '';
-                const url = `{{ route('posts.load_more') }}?page=${nextPage}${filter ? '&filter=' + filter : ''}`;
-
-                try {
                     const response = await fetch(url, {
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
+                        headers: {'X-Requested-With': 'XMLHttpRequest'}
                     });
 
                     if (!response.ok) {
@@ -257,8 +179,11 @@
                     if (data.html.trim().length > 0) {
                         postContainer.insertAdjacentHTML('beforeend', data.html);
 
-                        document.dispatchEvent(new Event('posts-loaded'));
+                        setTimeout(() => {
+                            loadNewAds(postContainer);
+                        }, 100);
 
+                        document.dispatchEvent(new Event('posts-loaded'));
                         nextPage++;
                         hasMorePages = data.hasMorePages;
 
@@ -282,9 +207,7 @@
                 if (entries[0].isIntersecting) {
                     loadMorePosts();
                 }
-            }, {
-                rootMargin: '200px',
-            });
+            }, {rootMargin: '200px'});
 
             if (hasMorePages) {
                 observer.observe(trigger);
