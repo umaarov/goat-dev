@@ -129,8 +129,8 @@
     @if(isset($defaultHreflangUrl))
         <link rel="alternate" hreflang="x-default" href="{{ $defaultHreflangUrl }}"/>
     @endif
-    {{--    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"--}}
-    {{--            crossorigin="anonymous"></script>--}}
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
+                crossorigin="anonymous"></script>
     {{--    <script src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false"></script>--}}
     {{--    <script src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false"></script>--}}
     {{--    <script async src="//www.ezojs.com/ezoic/sa.min.js"></script>--}}
@@ -707,17 +707,17 @@
     </script>
 @endauth
 
-<script>
-    function loadGoogleAds() {
-        const adScript = document.createElement('script');
-        adScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667';
-        adScript.async = true;
-        adScript.crossOrigin = 'anonymous';
-        document.body.appendChild(adScript);
-    }
+{{--<script>--}}
+{{--    function loadGoogleAds() {--}}
+{{--        const adScript = document.createElement('script');--}}
+{{--        adScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667';--}}
+{{--        adScript.async = true;--}}
+{{--        adScript.crossOrigin = 'anonymous';--}}
+{{--        document.body.appendChild(adScript);--}}
+{{--    }--}}
 
-    window.addEventListener('load', loadGoogleAds);
-</script>
+{{--    window.addEventListener('load', loadGoogleAds);--}}
+{{--</script>--}}
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
