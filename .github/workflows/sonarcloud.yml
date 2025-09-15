@@ -48,7 +48,7 @@ jobs:
     name: Create GitHub Issues for Findings
     runs-on: ubuntu-latest
     needs: sonar-scan
-    if: failure()
+    if: always()
     steps:
       - name: Create issues for new bugs and vulnerabilities
         env:
