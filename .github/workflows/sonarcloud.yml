@@ -22,29 +22,57 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_PROJECT_KEY: 'umaarov_goat-dev'
+          SONAR_ORGANIZATION_KEY: 'umaarov'
         run: |
-          echo "Fetching all unresolved issues from SonarCloud..."
+          echo "Fetching all unresolved issues and hotspots from SonarCloud..."
 
-          # MODIFIED: Removed branch filter and 'sinceLeakPeriod=true' to get ALL issues
-          API_URL="https://sonarcloud.io/api/issues/search?componentKeys=${SONAR_PROJECT_KEY}&s=FILE_LINE&resolved=false&ps=500&types=BUG,VULNERABILITY,SECURITY_HOTSPOT"
+          ISSUES_API_URL="https://sonarcloud.io/api/issues/search?componentKeys=${SONAR_PROJECT_KEY}&s=FILE_LINE&resolved=false&ps=500&types=BUG,VULNERABILITY"
+          issues_json=$(curl -s -u "${SONAR_TOKEN}:" "${ISSUES_API_URL}")
 
-          issues=$(curl -s -u "${SONAR_TOKEN}:" "${API_URL}")
-          issue_count=$(echo "$issues" | jq '.total')
+          HOTSPOTS_API_URL="https://sonarcloud.io/api/hotspots/search?projectKey=${SONAR_PROJECT_KEY}&status=TO_REVIEW&p=1&ps=500"
+          hotspots_json=$(curl -s -u "${SONAR_TOKEN}:" "${HOTSPOTS_API_URL}")
+
+          combined_issues=$(jq -c '
+            (.issues | map({
+              key: .key,
+              message: .message,
+              component: .component,
+              line: .line,
+              type: "issue"
+            }))
+            +
+            (.hotspots | map({
+              key: .key,
+              message: .message,
+              component: .component,
+              line: .line,
+              type: "hotspot"
+            }))
+          ' --argjson issues "$issues_json" --argjson hotspots "$hotspots_json" <<<"{}")
+
+          issue_count=$(echo "$combined_issues" | jq 'length')
 
           if [ "$issue_count" -eq 0 ]; then
-            echo "No unresolved issues found on SonarCloud."
+            echo "No unresolved issues or hotspots found on SonarCloud."
             exit 0
           fi
 
-          echo "Found $issue_count total issues. This may take a while. Creating corresponding GitHub Issues..."
+          echo "Found $issue_count total items. Creating GitHub Issues..."
 
-          echo "$issues" | jq -c '.issues[]' | while read -r issue; do
-            title=$(echo "$issue" | jq -r '.message')
-            component=$(echo "$issue" | jq -r '.component')
-            line=$(echo "$issue" | jq -r '.line')
-            issue_key=$(echo "$issue" | jq -r '.key')
+          echo "$combined_issues" | jq -c '.[]' | while read -r item; do
+            title=$(echo "$item" | jq -r '.message')
+            component=$(echo "$item" | jq -r '.component')
+            line=$(echo "$item" | jq -r '.line')
+            key=$(echo "$item" | jq -r '.key')
+            type=$(echo "$item" | jq -r '.type')
 
-            sonar_url="https://sonarcloud.io/project/issues?id=${SONAR_PROJECT_KEY}&issues=${issue_key}&open=${issue_key}"
+            if [[ "$type" == "hotspot" ]]; then
+              sonar_url="https://sonarcloud.io/project/hotspots?id=${SONAR_PROJECT_KEY}&hotspot=${key}"
+              label="security,sonar-hotspot,legacy-import"
+            else
+              sonar_url="https://sonarcloud.io/project/issues?id=${SONAR_PROJECT_KEY}&issues=${key}&open=${key}"
+              label="bug,sonar-issue,legacy-import"
+            fi
 
             body="**🚨 SonarCloud Finding (Legacy)**
 
@@ -52,8 +80,6 @@ jobs:
             - **Line:** $line
             - **Full Report:** [View on SonarCloud]($sonar_url)"
 
-            # Using gh cli to create the issue
-            gh issue create --title "SonarCloud: $title" --body "$body" --label "bug,sonarcloud,legacy-import"
-            # Adding a small sleep to avoid hitting GitHub API rate limits
+            gh issue create --title "SonarCloud: $title" --body "$body" --label "$label"
             sleep 2
           done
