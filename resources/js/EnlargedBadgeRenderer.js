@@ -72,7 +72,7 @@ export class EnlargedBadgeRenderer {
             texture.dispose();
             pmremGenerator.dispose();
         } catch (e) {
-            console.error("❌ Failed to load HDRI environment:", e);
+            console.error('❌ Failed to load HDRI environment:', e);
         }
     }
 
@@ -145,7 +145,7 @@ export class EnlargedBadgeRenderer {
     }
 
     updateMouseLight(event) {
-        if (!this.lights.point) return;
+        if (!this.lights.point) {return;}
         const mouseX = (event.clientX / window.innerWidth) * 2 - 1;
         const mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
         const vector = new THREE.Vector3(mouseX, mouseY, 0.5).unproject(this.camera);
@@ -156,13 +156,13 @@ export class EnlargedBadgeRenderer {
     }
 
     show(badgeKey) {
-        if (this.currentBadge) this.cleanup();
+        if (this.currentBadge) {this.cleanup();}
         this.onResize();
         window.addEventListener('resize', this.onResize);
 
         if (this.isDebug) {
-            if (this.gui) this.gui.show();
-            if (this.stats) this.stats.dom.style.display = 'block';
+            if (this.gui) {this.gui.show();}
+            if (this.stats) {this.stats.dom.style.display = 'block';}
         }
 
         this.currentBadge = BadgeFactory.create(badgeKey, { glowOpacity: 0.1 });
@@ -185,14 +185,14 @@ export class EnlargedBadgeRenderer {
                 this.passes.ssr.selects = reflectiveMeshes;
             }
         }
-        if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
+        if (this.animationFrameId) {cancelAnimationFrame(this.animationFrameId);}
         this.animate();
     }
 
     animate() {
         this.animationFrameId = requestAnimationFrame(this.animate.bind(this));
 
-        if (this.isDebug && this.stats) this.stats.begin();
+        if (this.isDebug && this.stats) {this.stats.begin();}
 
         const time = this.clock.getElapsedTime();
         if (this.currentBadge?.update) {
@@ -200,7 +200,7 @@ export class EnlargedBadgeRenderer {
         }
         this.composer.render();
 
-        if (this.isDebug && this.stats) this.stats.end();
+        if (this.isDebug && this.stats) {this.stats.end();}
         if (this.isDebug && this.gui) {
             this.perf.FPS = Math.round(1 / this.clock.getDelta());
             this.perf['Draw Calls'] = this.renderer.info.render.calls;
@@ -233,8 +233,8 @@ export class EnlargedBadgeRenderer {
         window.removeEventListener('resize', this.onResize);
 
         if (this.isDebug) {
-            if (this.gui) this.gui.hide();
-            if (this.stats) this.stats.dom.style.display = 'none';
+            if (this.gui) {this.gui.hide();}
+            if (this.stats) {this.stats.dom.style.display = 'none';}
         }
 
         this.cleanup();

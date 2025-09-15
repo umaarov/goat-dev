@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import * as THREE from 'three';
 import heartVertexShader from '../shaders/likes_badge/vertex.glsl?raw';
 import heartFragmentShader from '../shaders/likes_badge/fragment.glsl?raw';
 import inkblotVertexShader from '../shaders/ink_blot/vertex.glsl?raw';
@@ -170,7 +170,7 @@ export class BadgeFactory {
     }
 
     static createCommentatorsBadge(options) {
-        if (!wasmModule) return new THREE.Group();
+        if (!wasmModule) {return new THREE.Group();}
         const group = new THREE.Group();
         const weaverMat = new THREE.MeshPhysicalMaterial({
             color: 0x777799, metalness: 1.0, roughness: 0.25, emissive: 0x5555ff, emissiveIntensity: 0.1

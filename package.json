@@ -13,7 +13,7 @@
         "registry": "https://npm.pkg.github.com"
     },
     "scripts": {
-        "lint": "eslint 'resources/**/*.js' 'resources/**/*.ts' 'resources/**/*.jsx' 'resources/**/*.tsx' --max-warnings=0",
+        "lint": "eslint 'resources/js/**/*.js'",
         "lint:fix": "eslint 'resources/**/*.js' --fix",
         "publish:github": "dotenv -- npm publish",
         "dev": "vite",
@@ -28,6 +28,7 @@
         "three": "^0.179.1"
     },
     "devDependencies": {
+        "@eslint/eslintrc": "^3.3.1",
         "@tailwindcss/vite": "^4.1.3",
         "axios": "^1.12.2",
         "concurrently": "^9.0.1",

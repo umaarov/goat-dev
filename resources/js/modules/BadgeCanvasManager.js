@@ -84,33 +84,33 @@ class BadgeCanvasManager {
             'votes': {
                 title: 'The Gilded Horn',
                 glowClass: 'glow-yellow',
-                context: "Awarded for exceptional community acclaim.",
-                description: "This emblem is granted to members whose posts have garnered the highest esteem, representing a voice that resonates powerfully within the community.",
-                stats: {rarity: "Legendary", origin: "Community Vote", type: "Recognition"}
+                context: 'Awarded for exceptional community acclaim.',
+                description: 'This emblem is granted to members whose posts have garnered the highest esteem, representing a voice that resonates powerfully within the community.',
+                stats: {rarity: 'Legendary', origin: 'Community Vote', type: 'Recognition'}
             }, 'likes': {
                 title: 'Heart of the Community',
                 glowClass: 'glow-pink',
-                context: "Awarded for positive and impactful engagement.",
-                description: "Forged in the spirit of connection, this badge is granted to those whose comments consistently receive widespread appreciation and foster a positive environment.",
-                stats: {rarity: "Epic", origin: "Peer Appreciation", type: "Engagement"}
+                context: 'Awarded for positive and impactful engagement.',
+                description: 'Forged in the spirit of connection, this badge is granted to those whose comments consistently receive widespread appreciation and foster a positive environment.',
+                stats: {rarity: 'Epic', origin: 'Peer Appreciation', type: 'Engagement'}
             }, 'posters': {
                 title: 'The Creator\'s Quill',
                 glowClass: 'glow-silver',
-                context: "Awarded for prolific and insightful contribution.",
-                description: "A symbol of dedicated creation, this badge recognizes the platform's most active and influential posters, whose contributions form the backbone of the community.",
-                stats: {rarity: "Epic", origin: "Activity Metric", type: "Contribution"}
+                context: 'Awarded for prolific and insightful contribution.',
+                description: 'A symbol of dedicated creation, this badge recognizes the platform\'s most active and influential posters, whose contributions form the backbone of the community.',
+                stats: {rarity: 'Epic', origin: 'Activity Metric', type: 'Contribution'}
             }, 'commentators': {
                 title: 'The Dialogue Weaver',
                 glowClass: 'glow-purple',
-                context: "Awarded for mastery of conversation.",
-                description: "This badge signifies a member's vital role in sparking and sustaining the most engaging discussions, skillfully weaving threads of dialogue throughout the platform.",
-                stats: {rarity: "Rare", origin: "Discourse Analysis", type: "Communication"}
+                context: 'Awarded for mastery of conversation.',
+                description: 'This badge signifies a member\'s vital role in sparking and sustaining the most engaging discussions, skillfully weaving threads of dialogue throughout the platform.',
+                stats: {rarity: 'Rare', origin: 'Discourse Analysis', type: 'Communication'}
             }
         };
         this.worker = new RendererWorker();
         this.activeBadgeIndex = -1;
         this.worker.onerror = (error) => {
-            console.error("An error occurred in the renderer worker:", error.message, error);
+            console.error('An error occurred in the renderer worker:', error.message, error);
         };
         this.worker.onmessage = (event) => {
             if (event.data.type === 'ready') {
@@ -197,7 +197,7 @@ class BadgeCanvasManager {
     }
 
     showEnlargedBadge(badgeKey) {
-        if (!this.enlargedRenderer) return;
+        if (!this.enlargedRenderer) {return;}
         const details = this.badgeDetails[badgeKey] || {};
         this.enlargedBadgeName.textContent = details.title || 'Badge';
         this.enlargedBadgeName.className = '';
@@ -219,7 +219,7 @@ class BadgeCanvasManager {
     }
 
     hideEnlargedBadge() {
-        if (!this.enlargedRenderer) return;
+        if (!this.enlargedRenderer) {return;}
         this.enlargedContainer.classList.remove('visible');
         setTimeout(() => {
             this.enlargedContainer.style.display = 'none';
