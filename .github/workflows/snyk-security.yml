@@ -51,6 +51,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: snyk-node.sarif
+          category: snyk-node
 
       - name: Set up PHP
         if: matrix.language == 'php'
@@ -90,3 +91,4 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: snyk-php.sarif
+          category: snyk-php
