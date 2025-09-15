@@ -1,4 +1,3 @@
-# SonarCloud Scan for PHP/Laravel
 name: SonarCloud - Import All Issues
 
 permissions:
@@ -24,38 +23,33 @@ jobs:
           echo "Fetching all unresolved issues and hotspots from SonarCloud..."
 
           ISSUES_API_URL="https://sonarcloud.io/api/issues/search?componentKeys=${SONAR_PROJECT_KEY}&s=FILE_LINE&resolved=false&ps=500&types=BUG,VULNERABILITY"
-          echo "::debug::Issues API URL: $ISSUES_API_URL"
           issues_json=$(curl -s -u "${SONAR_TOKEN}:" "${ISSUES_API_URL}")
-          echo "::debug::Issues API Response: $issues_json"
-
-          if echo "$issues_json" | jq -e '.errors' > /dev/null; then
-            echo "::error::Error received from SonarCloud Issues API: $(echo "$issues_json" | jq '.errors')"
-            exit 1
-          fi
 
           HOTSPOTS_API_URL="https://sonarcloud.io/api/hotspots/search?projectKey=${SONAR_PROJECT_KEY}&status=TO_REVIEW&p=1&ps=500"
-          echo "::debug::Hotspots API URL: $HOTSPOTS_API_URL"
           hotspots_json=$(curl -s -u "${SONAR_TOKEN}:" "${HOTSPOTS_API_URL}")
-          echo "::debug::Hotspots API Response: $hotspots_json"
 
-          if echo "$hotspots_json" | jq -e '.errors' > /dev/null; then
-            echo "::error::Error received from SonarCloud Hotspots API: $(echo "$hotspots_json" | jq '.errors')"
+          if echo "$issues_json" | jq -e '.errors' > /dev/null; then
+            echo "::error::Error from SonarCloud Issues API: $(echo "$issues_json" | jq '.errors')"
+            exit 1
+          fi
+           if echo "$hotspots_json" | jq -e '.errors' > /dev/null; then
+            echo "::error::Error from SonarCloud Hotspots API: $(echo "$hotspots_json" | jq '.errors')"
             exit 1
           fi
 
           combined_issues=$(jq -c '
-            (.issues | map({
+            (.issues // [] | map({
               key: .key, message: .message, component: .component, line: .line, type: "issue"
             })) +
-            (.hotspots | map({
+            (.hotspots // [] | map({
               key: .key, message: .message, component: .component, line: .line, type: "hotspot"
             }))
-          ' --argjson issues "$issues_json" --argjson hotspots "$hotspots_json" <<<"{}")
+          ' --argjson issues "${issues_json:-null}" --argjson hotspots "${hotspots_json:-null}" <<<"{}")
 
           issue_count=$(echo "$combined_issues" | jq 'length')
 
           if [ "$issue_count" -eq 0 ]; then
-            echo "No unresolved issues or hotspots found on SonarCloud."
+            echo "No unresolved issues or hotspots found. This could be due to permissions in SonarCloud or no issues exist."
             exit 0
           fi
 
