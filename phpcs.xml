@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<ruleset name="GOAT">
+    <description>PHP code style and quality rules for GOAT.uz project</description>
+    <file>app</file>
+    <file>tests</file>
+    <file>database</file>
+    <file>routes</file>
+    <rule ref="PSR12"/>
+    <rule ref="Generic.Files.LineLength">
+        <properties>
+            <property name="lineLimit" value="120"/>
+            <property name="absoluteLineLimit" value="150"/>
+        </properties>
+    </rule>
+
+    <rule ref="SlevomatCodingStandard.TypeHints.TypeHintDeclaration"/>
+    <rule ref="Generic.Metrics.UnusedLocalVariable"/>
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/storage/*</exclude-pattern>
+    <logging>
+        <log type="checkstyle" target="storage/logs/phpcs-checkstyle.xml"/>
+        <log type="summary" target="storage/logs/phpcs-summary.txt"/>
+    </logging>
+</ruleset>
