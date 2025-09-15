@@ -60,7 +60,7 @@ jobs:
           echo "Waiting 30 seconds for SonarCloud analysis to be processed..."
           sleep 30
 
-          API_URL="https://sonarcloud.io/api/issues/search?componentKeys=${SONAR_PROJECT_KEY}&s=FILE_LINE&resolved=false&ps=100&branch=${{ github.ref_name }}&types=BUG,VULNERABILITY,SECURITY_HOTSPOT"
+          API_URL="https://sonarcloud.io/api/issues/search?componentKeys=${SONAR_PROJECT_KEY}&s=FILE_LINE&resolved=false&ps=100&branch=${{ github.ref_name }}&types=BUG,VULNERABILITY,SECURITY_HOTSPOT&sinceLeakPeriod=true"
           issues=$(curl -s -u "${SONAR_TOKEN}:" "${API_URL}")
           issue_count=$(echo "$issues" | jq '.total')
 
