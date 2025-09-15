@@ -7,12 +7,12 @@ class BadgeCanvasManager {
         this.container = document.getElementById('badge-container');
         this.canvas = document.getElementById('badge-canvas');
 
-        if (!this.container || !this.canvas) return;
+        if (!this.container || !this.canvas) {return;}
 
         let earnedBadges = [];
         try {
             const earnedBadgesData = this.container.dataset.earnedBadges;
-            if (earnedBadgesData) earnedBadges = JSON.parse(earnedBadgesData);
+            if (earnedBadgesData) {earnedBadges = JSON.parse(earnedBadgesData);}
         } catch (e) {
             console.error('Could not parse earned badges data:', e);
             earnedBadges = [];
@@ -88,15 +88,15 @@ class BadgeCanvasManager {
                 {rarity: 'Epic', origin: 'Peer Appreciation', type: 'Engagement'}
             ),
             posters: createBadgeDetail(
-                "The Creator's Quill", 'glow-silver',
+                'The Creator\'s Quill', 'glow-silver',
                 'Awarded for prolific and insightful contribution.',
-                "A symbol of dedicated creation, this badge recognizes the platform's most active and influential posters, whose contributions form the backbone of the community.",
+                'A symbol of dedicated creation, this badge recognizes the platform\'s most active and influential posters, whose contributions form the backbone of the community.',
                 {rarity: 'Epic', origin: 'Activity Metric', type: 'Contribution'}
             ),
             commentators: createBadgeDetail(
                 'The Dialogue Weaver', 'glow-purple',
                 'Awarded for mastery of conversation.',
-                "This badge signifies a member's vital role in sparking and sustaining the most engaging discussions, skillfully weaving threads of dialogue throughout the platform.",
+                'This badge signifies a member\'s vital role in sparking and sustaining the most engaging discussions, skillfully weaving threads of dialogue throughout the platform.',
                 {rarity: 'Rare', origin: 'Discourse Analysis', type: 'Communication'}
             )
         };
@@ -190,12 +190,12 @@ class BadgeCanvasManager {
     }
 
     showEnlargedBadge(badgeKey) {
-        if (!this.enlargedRenderer) return;
+        if (!this.enlargedRenderer) {return;}
 
         const details = this.badgeDetails[badgeKey] || {};
         this.enlargedBadgeName.textContent = details.title || 'Badge';
         this.enlargedBadgeName.className = '';
-        if (details.glowClass) this.enlargedBadgeName.classList.add(details.glowClass);
+        if (details.glowClass) {this.enlargedBadgeName.classList.add(details.glowClass);}
 
         this.enlargedBadgeContext.textContent = details.context || '';
         this.enlargedBadgeDescription.textContent = details.description || '';
@@ -212,7 +212,7 @@ class BadgeCanvasManager {
     }
 
     hideEnlargedBadge() {
-        if (!this.enlargedRenderer) return;
+        if (!this.enlargedRenderer) {return;}
         this.enlargedContainer.classList.remove('visible');
         setTimeout(() => {
             this.enlargedContainer.style.display = 'none';
