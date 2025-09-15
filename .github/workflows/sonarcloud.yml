@@ -8,7 +8,7 @@ on:
       - 'release/*'
       - 'feature/*'
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [ opened, synchronize, reopened, ready_for_review ]
 
 permissions:
   contents: read
@@ -67,7 +67,6 @@ jobs:
         run: |
           if command -v composer >/dev/null 2>&1; then
             composer audit --format=json > composer-audit.json || true
-            # fail if high/critical vulnerabilities exist
             jq -e '.advisories[] | select(.advisory.severity == "high" or .advisory.severity == "critical")' composer-audit.json >/dev/null && (echo "High/Critical composer vulnerability found" && exit 1) || echo "No high/critical composer vulnerabilities"
           fi
 
@@ -100,21 +99,23 @@ jobs:
 
       - name: Prepare test DB (Laravel)
         run: |
+          if [ ! -f .env ]; then
+            cp .env.example .env
+          fi
+
           php artisan key:generate --force
-          # create sqlite DB if tests use it; adjust if you have docker/mysql
+
           if [ ! -f database/database.sqlite ]; then
             mkdir -p database
             touch database/database.sqlite
           fi
+
           php artisan migrate --force --no-interaction || true
 
       - name: Run PHP unit tests with coverage (Clover)
         id: phpunit
         run: |
-          # ensure directories exist
           mkdir -p storage/logs
-          # If phpunit.xml exists and defines coverage, phpunit will create clover automatically.
-          # Otherwise explicitly request clover output
           if [ -f vendor/bin/phpunit ]; then
             vendor/bin/phpunit --configuration phpunit.xml --coverage-clover=${PHPUNIT_COVERAGE_PATH} || true
           else
@@ -127,7 +128,7 @@ jobs:
         with:
           name: test-reports
           path: |
-            ${ { env.PHPUNIT_COVERAGE_PATH } }
+            ${{ env.PHPUNIT_COVERAGE_PATH }}
             junit.xml
             storage/logs/clover.xml
 
