@@ -1,90 +1,176 @@
-name: SonarCloud - Full Scan and Import
+name: CI — SonarCloud Full Scan
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'main'
+      - 'release/*'
+      - 'feature/*'
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
-  issues: write
-
-on:
-  workflow_dispatch:
+  packages: read
+  id-token: write
 
 jobs:
-  scan-and-import:
-    name: SonarCloud Full Scan and Import
+  sonarcloud:
+    name: Build → Test → SonarCloud
     runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+      SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+      PHPUNIT_COVERAGE_PATH: "storage/logs/clover.xml"
+      NODE_VERSION: 20
+
     steps:
-      - name: Checkout repository
+      - name: Checkout (full history)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Run SonarCloud Analysis
-        uses: SonarSource/sonarcloud-github-action@v2
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Cache - Composer vendor & cache
+        uses: actions/cache@v4
+        id: composer-cache
         with:
-          args: >
-            -Dsonar.projectKey=umaarov_goat-dev
-            -Dsonar.organization=umaarov
-            -Dsonar.sources=app,config,routes
-            -Dsonar.tests=tests
-            -Dsonar.exclusions=**/vendor/**,**/public/**,**/database/**
+          path: |
+            ~/.composer/cache
+            vendor
+          key: composer-${{ runner.os }}-${{ hashFiles('**/composer.lock') }}-${{ hashFiles('composer.json') }}
+          restore-keys: |
+            composer-${{ runner.os }}-${{ hashFiles('**/composer.lock') }}-
+            composer-${{ runner.os }}-
 
-      - name: Wait for SonarCloud analysis to be processed
-        uses: SonarSource/sonar-quality-gate-check-action@v2
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://sonarcloud.io
-        continue-on-error: true
+      - name: Setup PHP 8.3 with required extensions
+        uses: shivammathur/setup-php@v3
+        with:
+          php-version: 8.3
+          extensions: curl, fileinfo, gd, xml
+          ini-values: post_max_size=256M, memory_limit=2G
+          coverage: xdebug
 
-      - name: Import All Issues from Report
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          SONAR_PROJECT_KEY: 'umaarov_goat-dev'
+      - name: Validate composer.json (security → static)
         run: |
-          echo "Fetching all unresolved issues and hotspots from the latest report..."
+          php -v
+          composer validate --strict --no-check-publish
 
-          ISSUES_API_URL="https://sonarcloud.io/api/issues/search?componentKeys=${SONAR_PROJECT_KEY}&s=FILE_LINE&resolved=false&ps=500&types=BUG,VULNERABILITY"
-          issues_json=$(curl -s -u "${SONAR_TOKEN}:" "${ISSUES_API_URL}")
+      - name: Install PHP deps (composer)
+        run: |
+          composer install --no-interaction --no-progress --prefer-dist --optimize-autoloader
+        env:
+          COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
 
-          HOTSPOTS_API_URL="https://sonarcloud.io/api/hotspots/search?projectKey=${SONAR_PROJECT_KEY}&status=TO_REVIEW&p=1&ps=500"
-          hotspots_json=$(curl -s -u "${SONAR_TOKEN}:" "${HOTSPOTS_API_URL}")
-
-          combined_issues=$(jq -c '
-            (.issues // [] | map({
-              key: .key, message: .message, component: .component, line: .line, type: "issue"
-            })) +
-            (.hotspots // [] | map({
-              key: .key, message: .message, component: .component, line: .line, type: "hotspot"
-            }))
-          ' --argjson issues "${issues_json:-null}" --argjson hotspots "${hotspots_json:-null}" <<<"{}")
-
-          issue_count=$(echo "$combined_issues" | jq 'length')
-
-          if [ "$issue_count" -eq 0 ]; then
-            echo "::warning::Scan complete, but API returned zero issues. Please check SonarCloud permissions and ensure the project has issues."
-            exit 0
+      - name: Composer Audit (fail on vulnerabilities)
+        run: |
+          if command -v composer >/dev/null 2>&1; then
+            composer audit --format=json > composer-audit.json || true
+            # fail if high/critical vulnerabilities exist
+            jq -e '.advisories[] | select(.advisory.severity == "high" or .advisory.severity == "critical")' composer-audit.json >/dev/null && (echo "High/Critical composer vulnerability found" && exit 1) || echo "No high/critical composer vulnerabilities"
           fi
 
-          echo "Found $issue_count total items. Creating GitHub Issues..."
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-          echo "$combined_issues" | jq -c '.[]' | while read -r item; do
-            title=$(echo "$item" | jq -r '.message')
-            component=$(echo "$item" | jq -r '.component')
-            line=$(echo "$item" | jq -r '.line')
-            key=$(echo "$item" | jq -r '.key')
-            type=$(echo "$item" | jq -r '.type')
+      - name: Cache npm (node_modules + npm cache)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json','**/package.json') }}
+          restore-keys: |
+            npm-${{ runner.os }}-
 
-            if [[ "$type" == "hotspot" ]]; then
-              sonar_url="https://sonarcloud.io/project/hotspots?id=${SONAR_PROJECT_KEY}&hotspot=${key}"
-              label="security,sonar-hotspot,legacy-import"
-            else
-              sonar_url="https://sonarcloud.io/project/issues?id=${SONAR_PROJECT_KEY}&issues=${key}&open=${key}"
-              label="bug,sonar-issue,legacy-import"
-            fi
+      - name: Install JS deps
+        run: npm ci
 
-            body="**🚨 SonarCloud Finding (Legacy)**\n\n- **File:** \`$component\`\n- **Line:** $line\n- **Full Report:** [View on SonarCloud]($sonar_url)"
-            gh issue create --title "SonarCloud: $title" --body "$body" --label "$label"
-            sleep 2
-          done
+      - name: Run JS audit (fail on high vuln)
+        run: |
+          npm audit --audit-level=high || (echo "High severity npm vulnerabilities found" && exit 1)
+
+      - name: Build frontend (production)
+        run: |
+          npm run build --if-present
+
+      - name: Prepare test DB (Laravel)
+        run: |
+          php artisan key:generate --force
+          # create sqlite DB if tests use it; adjust if you have docker/mysql
+          if [ ! -f database/database.sqlite ]; then
+            mkdir -p database
+            touch database/database.sqlite
+          fi
+          php artisan migrate --force --no-interaction || true
+
+      - name: Run PHP unit tests with coverage (Clover)
+        id: phpunit
+        run: |
+          # ensure directories exist
+          mkdir -p storage/logs
+          # If phpunit.xml exists and defines coverage, phpunit will create clover automatically.
+          # Otherwise explicitly request clover output
+          if [ -f vendor/bin/phpunit ]; then
+            vendor/bin/phpunit --configuration phpunit.xml --coverage-clover=${PHPUNIT_COVERAGE_PATH} || true
+          else
+            php artisan test --parallel --coverage --coverage-clover=${PHPUNIT_COVERAGE_PATH} || true
+          fi
+
+      - name: Collect test reports (if generated)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            ${ { env.PHPUNIT_COVERAGE_PATH } }
+            junit.xml
+            storage/logs/clover.xml
+
+      - name: Run optional static analyzers (phpstan/psalm) if present
+        run: |
+          if [ -f vendor/bin/phpstan ]; then
+            vendor/bin/phpstan analyze -c phpstan.neon --error-format=github || true
+          fi
+          if [ -f vendor/bin/psalm ]; then
+            vendor/bin/psalm --output-format=github || true
+          fi
+
+      - name: Find LCOV (JS) if present
+        id: lcov
+        run: |
+          if [ -f coverage/lcov.info ]; then
+            echo "lcov=coverage/lcov.info" >> $GITHUB_OUTPUT
+          else
+            echo "lcov=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: SonarCloud Scan
+        id: sonar
+        uses: SonarSource/sonarqube-scan-action@master
+        with:
+          args: >
+            -Dsonar.organization=${{ env.SONAR_ORGANIZATION }}
+            -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }}
+            -Dsonar.sources=.
+            -Dsonar.tests=tests
+            -Dsonar.php.coverage.reportPaths=${{ env.PHPUNIT_COVERAGE_PATH }}
+            -Dsonar.javascript.lcov.reportPaths=${{ steps.lcov.outputs.lcov }}
+            -Dsonar.exclusions=**/node_modules/**,**/vendor/**,**/storage/**,**/public/**,**/*.min.js
+            -Dsonar.coverage.exclusions=**/resources/**,**/public/**,**/routes/**,**/database/**
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.pullrequest.key=${{ github.event.number || '' }}
+            -Dsonar.pullrequest.branch=${{ github.head_ref || github.ref_name }}
+            -Dsonar.pullrequest.base=${{ github.base_ref || github.event.pull_request.base.ref || 'master' }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Fail when Sonar Quality Gate fails
+        if: steps.sonar.outcome != 'success'
+        run: |
+          echo "SonarCloud analysis failed or Quality Gate blocked the merge."
+          exit 1
