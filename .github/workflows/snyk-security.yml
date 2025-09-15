@@ -44,7 +44,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --all-projects --sarif-file-output=snyk-node.sarif
+          args: --sarif-file-output=snyk-node.sarif
 
       - name: Upload Node.js SARIF
         if: matrix.language == 'node'
@@ -84,7 +84,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --all-projects --sarif-file-output=snyk-php.sarif
+          args: --sarif-file-output=snyk-php.sarif
 
       - name: Upload PHP SARIF
         if: matrix.language == 'php'
