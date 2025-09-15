@@ -27,7 +27,13 @@ jobs:
         uses: zricethezav/gitleaks-action@v2
         continue-on-error: true
         with:
-          args: detect --source . --no-git --report-format sarif --report-path gitleaks.sarif
+          args: detect --source . --report-format sarif --report-path gitleaks.sarif
+
+      - name: Ensure SARIF file exists
+        run: test -f gitleaks.sarif || echo '{"version":"2.1.0","runs":[]}' > gitleaks.sarif
+
+      - name: Debug SARIF output
+        run: cat gitleaks.sarif
 
       - name: Upload SARIF report
         uses: github/codeql-action/upload-sarif@v3
