@@ -15,6 +15,6 @@ public:
 private:
     std::unordered_map<std::string, std::vector<std::pair<int, int>>> index;
     std::unordered_map<int, int> docLengths;
-    double avgDocLength;
     double k1, b;
+    double avgDocLength;
 };

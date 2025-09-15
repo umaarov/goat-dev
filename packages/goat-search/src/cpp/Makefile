@@ -2,7 +2,7 @@ CXX = g++
 CXXFLAGS = -std=c++17 -O3 -pthread -Wall
 LDFLAGS =
 
-SRCS = src/BM25Index.cpp src/VectorIndex.cpp src/HybridSearcher.cpp src/main.cpp
+SRCS = BM25Index.cpp VectorIndex.cpp HybridSearcher.cpp main.cpp
 OBJS = $(SRCS:.cpp=.o)
 TARGET = build/engine
 

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <vector>
 #include <functional>
+#include <numeric>
 
 std::vector<float> VectorIndex::generateEmbedding(const std::vector<std::string>& tokens) const {
     std::vector<float> vec(VECTOR_DIMENSION, 0.0f);
