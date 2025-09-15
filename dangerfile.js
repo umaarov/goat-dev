@@ -1,5 +1,6 @@
-import { danger, warn, fail, message, github } from "danger";
-const { execSync } = require("child_process");
+import {danger, fail, message, warn} from "danger";
+
+const {execSync} = require("child_process");
 
 const added = danger.github.pr.additions;
 const deleted = danger.github.pr.deletions;
@@ -14,7 +15,7 @@ danger.git.commits.forEach(c => {
 const jsFiles = danger.git.modified_files.filter(f => f.endsWith(".js") || f.endsWith(".ts"));
 if (jsFiles.length) {
     try {
-        execSync(`npx eslint ${jsFiles.join(" ")} --max-warnings=0`, { stdio: "inherit" });
+        execSync(`npx eslint ${jsFiles.join(" ")} --max-warnings=0`, {stdio: "inherit"});
     } catch {
         fail("ESLint errors detected!");
     }
@@ -23,7 +24,7 @@ if (jsFiles.length) {
 const phpFiles = danger.git.modified_files.filter(f => f.endsWith(".php"));
 if (phpFiles.length) {
     try {
-        execSync(`vendor/bin/phpstan analyse ${phpFiles.join(" ")}`, { stdio: "inherit" });
+        execSync(`vendor/bin/phpstan analyse ${phpFiles.join(" ")}`, {stdio: "inherit"});
     } catch {
         fail("PHPStan errors detected!");
     }

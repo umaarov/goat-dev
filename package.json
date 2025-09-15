@@ -13,7 +13,7 @@
         "registry": "https://npm.pkg.github.com"
     },
     "scripts": {
-        "lint": "eslint 'resources/**/*.js' 'resources/**/*.ts' 'resources/**/*.jsx' 'resources/**/*.tsx'",
+        "lint": "eslint 'resources/**/*.js' 'resources/**/*.ts' 'resources/**/*.jsx' 'resources/**/*.tsx' --max-warnings=0",
         "lint:fix": "eslint 'resources/**/*.js' --fix",
         "publish:github": "dotenv -- npm publish",
         "dev": "vite",
@@ -33,6 +33,7 @@
         "concurrently": "^9.0.1",
         "danger": "^13.0.4",
         "dotenv-cli": "^10.0.0",
+        "eslint": "^9.35.0",
         "laravel-echo": "^2.1.7",
         "laravel-vite-plugin": "^1.2.0",
         "probot": "^14.0.2",
