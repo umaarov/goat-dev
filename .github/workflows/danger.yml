@@ -1,0 +1,21 @@
+name: Danger
+
+on:
+  pull_request:
+    branches: ["main", "develop"]
+
+jobs:
+  danger:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+      - name: Run Danger.js
+        uses: danger/danger-js@10
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}

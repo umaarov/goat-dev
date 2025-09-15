@@ -23,6 +23,12 @@ ignoreErrors:
     - '#Unsafe usage of reflection#'
 
 parameters:
+    level: max
+    paths:
+        - app
+        - database
+    ignoreErrors:
+        - '#Some known issue#'
     reportUnreachable: true
     reportFormat: "junit"
     reportFile: "storage/logs/phpstan-report.xml"
