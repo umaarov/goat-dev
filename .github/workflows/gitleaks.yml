@@ -48,7 +48,7 @@ jobs:
                 }
               ]
             }
-            EOF
+          EOF
           fi
 
       - name: Debug SARIF output
