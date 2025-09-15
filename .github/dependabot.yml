@@ -28,6 +28,9 @@ updates:
         exclude-patterns:
           - "laravel/*"
           - "spatie/*"
+    ignore:
+      - dependency-name: "phpunit/phpunit"
+        update-types: [ "version-update:semver-major" ]
 
   - package-ecosystem: "npm"
     directory: "/"
@@ -83,7 +86,3 @@ updates:
       docker:
         patterns:
           - "*"
-
-ignore:
-  - dependency-name: "phpunit/phpunit"
-    update-types: [ "version-update:semver-major" ]
