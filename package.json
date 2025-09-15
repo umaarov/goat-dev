@@ -11,13 +11,13 @@
         "@types/stats.js": "^0.17.4",
         "lil-gui": "^0.20.0",
         "stats.js": "^0.17.0",
-        "three": "^0.179.1"
+        "three": "^0.180.0"
     },
     "devDependencies": {
-        "@tailwindcss/vite": "^4.1.3",
+        "@tailwindcss/vite": "^4.1.13",
         "axios": "^1.12.2",
-        "concurrently": "^9.0.1",
-        "laravel-echo": "^2.1.7",
+        "concurrently": "^9.2.1",
+        "laravel-echo": "^2.2.0",
         "laravel-vite-plugin": "^1.2.0",
         "pusher-js": "^8.4.0",
         "tailwindcss": "^4.1.3",
