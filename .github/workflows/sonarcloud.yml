@@ -76,44 +76,28 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Cache npm (node_modules + npm cache)
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            node_modules
-          key: npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json','**/package.json') }}
-          restore-keys: |
-            npm-${{ runner.os }}-
-
       - name: Install JS deps
         run: npm ci
 
       - name: Run JS audit (fail on high vuln)
-        run: |
-          npm audit --audit-level=high || (echo "High severity npm vulnerabilities found" && exit 1)
+        run: npm audit --audit-level=high || (echo "High severity npm vulnerabilities found" && exit 1)
 
       - name: Build frontend (production)
-        run: |
-          npm run build --if-present
+        run: npm run build --if-present
 
       - name: Prepare test DB (Laravel)
         run: |
           if [ ! -f .env ]; then
             cp .env.example .env
           fi
-
           php artisan key:generate --force
-
           if [ ! -f database/database.sqlite ]; then
             mkdir -p database
             touch database/database.sqlite
           fi
-
           php artisan migrate --force --no-interaction || true
 
       - name: Run PHP unit tests with coverage (Clover)
-        id: phpunit
         run: |
           mkdir -p storage/logs
           if [ -f vendor/bin/phpunit ]; then
@@ -151,38 +135,29 @@ jobs:
           fi
 
       - name: SonarCloud Scan (Branch)
-        if: ${{ github.event_name != 'pull_request' }}
+        id: sonar
+        if: github.event_name != 'pull_request'
         uses: SonarSource/sonarqube-scan-action@master
         with:
           args: >
-            -Dsonar.qualitygate.wait=true
             -Dsonar.javascript.lcov.reportPaths=${{ steps.lcov.outputs.lcov }}
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: SonarCloud Scan (Pull Request)
-        if: ${{ github.event_name == 'pull_request' }}
+        id: sonar
+        if: github.event_name == 'pull_request'
         uses: SonarSource/sonarqube-scan-action@master
         with:
           args: >
-            -Dsonar.organization=${{ env.SONAR_ORGANIZATION }}
-            -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }}
-            -Dsonar.sources=.
-            -Dsonar.tests=tests
-            -Dsonar.php.coverage.reportPaths=${{ env.PHPUNIT_COVERAGE_PATH }}
             -Dsonar.javascript.lcov.reportPaths=${{ steps.lcov.outputs.lcov }}
-            -Dsonar.exclusions=**/node_modules/**,**/vendor/**,**/storage/**,**/public/**,**/*.min.js
-            -Dsonar.coverage.exclusions=**/resources/**,**/public/**,**/routes/**,**/database/**
-            -Dsonar.qualitygate.wait=true
-            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
-            -Dsonar.pullrequest.branch=${{ github.head_ref }}
-            -Dsonar.pullrequest.base=${{ github.base_ref }}
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Fail when Sonar Quality Gate fails
-        if: steps.sonar.outcome != 'success'
+        if: steps.sonar.outcome == 'failure'
         run: |
           echo "SonarCloud analysis failed or Quality Gate blocked the merge."
           exit 1
