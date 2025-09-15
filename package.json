@@ -13,6 +13,8 @@
         "registry": "https://npm.pkg.github.com"
     },
     "scripts": {
+        "lint": "eslint 'resources/**/*.js' 'resources/**/*.ts' 'resources/**/*.jsx' 'resources/**/*.tsx'",
+        "lint:fix": "eslint 'resources/**/*.js' --fix",
         "publish:github": "dotenv -- npm publish",
         "dev": "vite",
         "build": "vite build",
