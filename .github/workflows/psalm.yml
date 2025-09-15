@@ -1,0 +1,49 @@
+name: Psalm Static Analysis
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  schedule:
+    - cron: "30 3 * * 6"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  psalm:
+    name: Run Psalm (PHP Static Analysis)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, dom, curl
+          tools: composer, psalm
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Run Psalm
+        run: psalm --output-format=github --report=psalm-results.sarif
+        continue-on-error: true
+
+      - name: Upload Psalm SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: psalm-results.sarif
+          category: psalm
