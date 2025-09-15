@@ -3,4 +3,87 @@ updates:
   - package-ecosystem: "composer"
     directory: "/"
     schedule:
+      interval: "daily"
+      time: "04:00"
+    open-pull-requests-limit: 15
+    labels:
+      - "dependencies"
+      - "php"
+      - "laravel"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    versioning-strategy: widen
+    rebase-strategy: auto
+    groups:
+      laravel:
+        patterns:
+          - "laravel/*"
+      spatie:
+        patterns:
+          - "spatie/*"
+      php-libs:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "laravel/*"
+          - "spatie/*"
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "04:15"
+    open-pull-requests-limit: 15
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "vite"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    versioning-strategy: increase
+    rebase-strategy: auto
+    groups:
+      frontend-core:
+        patterns:
+          - "vite"
+          - "tailwindcss"
+          - "laravel-vite-plugin"
+      frontend-utils:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
       interval: "weekly"
+    labels:
+      - "ci"
+      - "dependencies"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "docker"
+      - "dependencies"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    groups:
+      docker:
+        patterns:
+          - "*"
+
+ignore:
+  - dependency-name: "phpunit/phpunit"
+    update-types: [ "version-update:semver-major" ]
