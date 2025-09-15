@@ -2,6 +2,10 @@
     "name": "@umaarov/goat-dev",
     "version": "1.0.1",
     "type": "module",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/umaarov/goat-dev.git"
+    },
     "files": [
         "README.md"
     ],
