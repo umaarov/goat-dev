@@ -71,7 +71,7 @@ jobs:
           echo "$combined_issues" | jq -c '.[]' | while read -r item; do
             title=$(echo "$item" | jq -r '.message')
             component=$(echo "$item" | jq -r '.component')
-            line=$(echo "$item" | jq -r '.line')
+            line=$(echo "$item" | jq-r '.line')
             key=$(echo "$item" | jq -r '.key')
             type=$(echo "$item" | jq -r '.type')
 
