@@ -30,7 +30,26 @@ jobs:
           args: detect --source . --report-format sarif --report-path gitleaks.sarif
 
       - name: Ensure SARIF file exists
-        run: test -f gitleaks.sarif || echo '{"version":"2.1.0","runs":[]}' > gitleaks.sarif
+        run: |
+          if [ ! -f gitleaks.sarif ] || [ ! -s gitleaks.sarif ]; then
+            cat > gitleaks.sarif <<'EOF'
+            {
+              "version": "2.1.0",
+              "runs": [
+                {
+                  "tool": {
+                    "driver": {
+                      "name": "gitleaks",
+                      "informationUri": "https://github.com/zricethezav/gitleaks",
+                      "rules": []
+                    }
+                  },
+                  "results": []
+                }
+              ]
+            }
+            EOF
+          fi
 
       - name: Debug SARIF output
         run: cat gitleaks.sarif
