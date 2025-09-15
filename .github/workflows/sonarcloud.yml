@@ -1,15 +1,18 @@
-name: SonarCloud - Full Scan and Import
-
-permissions:
-  contents: read
-  issues: write
+name: SonarCloud Analysis
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
 
 jobs:
-  scan-and-import:
-    name: SonarCloud Full Scan and Import
+  sonar-scan:
+    name: SonarCloud Scan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -21,69 +24,8 @@ jobs:
         uses: SonarSource/sonarcloud-github-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
           args: >
             -Dsonar.projectKey=umaarov_goat-dev
             -Dsonar.organization=umaarov
-            -Dsonar.sources=app,config,routes
-            -Dsonar.tests=tests
-            -Dsonar.exclusions=**/vendor/**,**/public/**,**/database/**
-
-      - name: Wait for SonarCloud analysis to be processed
-        uses: SonarSource/sonar-quality-gate-check-action@v2
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://sonarcloud.io
-
-      - name: Import All Issues from Report
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_PROJECT_KEY: 'umaarov_goat-dev'
-        run: |
-          echo "Fetching all unresolved issues and hotspots from the latest report..."
-
-          ISSUES_API_URL="https://sonarcloud.io/api/issues/search?componentKeys=${SONAR_PROJECT_KEY}&s=FILE_LINE&resolved=false&ps=500&types=BUG,VULNERABILITY"
-          issues_json=$(curl -s -u "${SONAR_TOKEN}:" "${ISSUES_API_URL}")
-
-          HOTSPOTS_API_URL="https://sonarcloud.io/api/hotspots/search?projectKey=${SONAR_PROJECT_KEY}&status=TO_REVIEW&p=1&ps=500"
-          hotspots_json=$(curl -s -u "${SONAR_TOKEN}:" "${HOTSPOTS_API_URL}")
-
-          combined_issues=$(jq -c '
-            (.issues // [] | map({
-              key: .key, message: .message, component: .component, line: .line, type: "issue"
-            })) +
-            (.hotspots // [] | map({
-              key: .key, message: .message, component: .component, line: .line, type: "hotspot"
-            }))
-          ' --argjson issues "${issues_json:-null}" --argjson hotspots "${hotspots_json:-null}" <<<"{}")
-
-          issue_count=$(echo "$combined_issues" | jq 'length')
-
-          if [ "$issue_count" -eq 0 ]; then
-            echo "::error::Scan complete, but API still returns zero issues. Please check the SonarCloud project dashboard directly."
-            exit 1
-          fi
-
-          echo "Found $issue_count total items. Creating GitHub Issues..."
-
-          echo "$combined_issues" | jq -c '.[]' | while read -r item; do
-            title=$(echo "$item" | jq -r '.message')
-            component=$(echo "$item" | jq -r '.component')
-            line=$(echo "$item" | jq -r '.line')
-            key=$(echo "$item" | jq -r '.key')
-            type=$(echo "$item" | jq -r '.type')
-
-            if [[ "$type" == "hotspot" ]]; then
-              sonar_url="https://sonarcloud.io/project/hotspots?id=${SONAR_PROJECT_KEY}&hotspot=${key}"
-              label="security,sonar-hotspot,legacy-import"
-            else
-              sonar_url="https://sonarcloud.io/project/issues?id=${SONAR_PROJECT_KEY}&issues=${key}&open=${key}"
-              label="bug,sonar-issue,legacy-import"
-            fi
-
-            body="**🚨 SonarCloud Finding (Legacy)**\n\n- **File:** \`$component\`\n- **Line:** $line\n- **Full Report:** [View on SonarCloud]($sonar_url)"
-            gh issue create --title "SonarCloud: $title" --body "$body" --label "$label"
-            sleep 2
-          done

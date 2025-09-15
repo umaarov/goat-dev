@@ -108,6 +108,9 @@ return Application::configure(basePath: dirname(__DIR__))
             Request::HEADER_X_FORWARDED_PORT |
             Request::HEADER_X_FORWARDED_PROTO
         );
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/sonar',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (Throwable $e, \Illuminate\Http\Request $request) {

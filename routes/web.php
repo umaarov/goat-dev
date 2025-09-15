@@ -216,3 +216,5 @@ Route::get('/__netdebug', function (): JsonResponse {
         'scheme' => request()->getScheme(),
     ]);
 });
+
+Route::post('/webhooks/sonar', [SonarWebhookController::class, 'handle'])->name('webhooks.sonar');
