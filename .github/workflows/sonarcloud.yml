@@ -155,17 +155,11 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@master
         with:
           args: >
-            -Dsonar.organization=${{ env.SONAR_ORGANIZATION }}
-            -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }}
-            -Dsonar.sources=.
-            -Dsonar.tests=tests
-            -Dsonar.php.coverage.reportPaths=${{ env.PHPUNIT_COVERAGE_PATH }}
-            -Dsonar.javascript.lcov.reportPaths=${{ steps.lcov.outputs.lcov }}
-            -Dsonar.exclusions=**/node_modules/**,**/vendor/**,**/storage/**,**/public/**,**/*.min.js
-            -Dsonar.coverage.exclusions=**/resources/**,**/public/**,**/routes/**,**/database/**
             -Dsonar.qualitygate.wait=true
+            -Dsonar.javascript.lcov.reportPaths=${{ steps.lcov.outputs.lcov }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: SonarCloud Scan (Pull Request)
         if: ${{ github.event_name == 'pull_request' }}
