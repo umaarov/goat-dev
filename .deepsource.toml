@@ -1,1 +1,63 @@
 version = 1
+
+# ========================
+# Enable analyzers
+# ========================
+[[analyzers]]
+name = "php"
+enabled = true
+
+[analyzers.meta]
+runtime_version = "8.3"
+ruleset = "psr12,strict,security"
+
+[analyzers.settings]
+exclude_dirs = ["vendor", "node_modules", "public/assets/wasm"]
+
+auto_fix = true
+
+[[analyzers]]
+name = "javascript"
+enabled = true
+
+[analyzers.meta]
+runtime_version = "18"
+ruleset = "eslint:recommended,airbnb"
+
+[analyzers.settings]
+exclude_dirs = ["node_modules", "public", "vendor"]
+auto_fix = true
+
+[[analyzers]]
+name = "shell"
+enabled = true
+
+[analyzers.settings]
+exclude_dirs = ["vendor", "node_modules", "public"]
+auto_fix = true
+
+[[analyzers]]
+name = "terraform"
+enabled = false
+
+# ========================
+# Code filters
+# ========================
+[[filters]]
+name = "exclude-tests-and-assets"
+paths = ["tests/*", "public/*", "database/*"]
+exclude = true
+
+# ========================
+# Auto-fix on commit
+# ========================
+[auto_fix]
+enabled = true
+exclude = ["node_modules", "vendor"]
+
+# ========================
+# Issue reporting
+# ========================
+[report]
+format = "json"
+send_email_notifications = true
