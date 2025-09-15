@@ -135,7 +135,7 @@ jobs:
           fi
 
       - name: SonarCloud Scan (Branch)
-        id: sonar
+        id: sonar-branch
         if: github.event_name != 'pull_request'
         uses: SonarSource/sonarqube-scan-action@master
         with:
@@ -146,7 +146,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: SonarCloud Scan (Pull Request)
-        id: sonar
+        id: sonar-pr
         if: github.event_name == 'pull_request'
         uses: SonarSource/sonarqube-scan-action@master
         with:
@@ -157,7 +157,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Fail when Sonar Quality Gate fails
-        if: steps.sonar.outcome == 'failure'
+        if: steps.sonar-branch.outcome == 'failure' || steps.sonar-pr.outcome == 'failure'
         run: |
           echo "SonarCloud analysis failed or Quality Gate blocked the merge."
           exit 1
