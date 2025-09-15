@@ -150,8 +150,8 @@ jobs:
             echo "lcov=" >> $GITHUB_OUTPUT
           fi
 
-      - name: SonarCloud Scan
-        id: sonar
+      - name: SonarCloud Scan (Branch)
+        if: ${{ github.event_name != 'pull_request' }}
         uses: SonarSource/sonarqube-scan-action@master
         with:
           args: >
@@ -164,9 +164,26 @@ jobs:
             -Dsonar.exclusions=**/node_modules/**,**/vendor/**,**/storage/**,**/public/**,**/*.min.js
             -Dsonar.coverage.exclusions=**/resources/**,**/public/**,**/routes/**,**/database/**
             -Dsonar.qualitygate.wait=true
-            -Dsonar.pullrequest.key=${{ github.event.number || '' }}
-            -Dsonar.pullrequest.branch=${{ github.head_ref || github.ref_name }}
-            -Dsonar.pullrequest.base=${{ github.base_ref || github.event.pull_request.base.ref || 'master' }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: SonarCloud Scan (Pull Request)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: SonarSource/sonarqube-scan-action@master
+        with:
+          args: >
+            -Dsonar.organization=${{ env.SONAR_ORGANIZATION }}
+            -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }}
+            -Dsonar.sources=.
+            -Dsonar.tests=tests
+            -Dsonar.php.coverage.reportPaths=${{ env.PHPUNIT_COVERAGE_PATH }}
+            -Dsonar.javascript.lcov.reportPaths=${{ steps.lcov.outputs.lcov }}
+            -Dsonar.exclusions=**/node_modules/**,**/vendor/**,**/storage/**,**/public/**,**/*.min.js
+            -Dsonar.coverage.exclusions=**/resources/**,**/public/**,**/routes/**,**/database/**
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+            -Dsonar.pullrequest.branch=${{ github.head_ref }}
+            -Dsonar.pullrequest.base=${{ github.base_ref }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
