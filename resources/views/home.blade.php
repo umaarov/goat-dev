@@ -67,7 +67,7 @@
                 @foreach($posts as $post)
                     @include('partials.post-card', ['post' => $post])
                     @if (($loop->iteration % 6) == 0)
-                        <div class="w-full mb-4 min-w-[250px]">
+                        <div class="w-full min-w-[250px]">
                             <ins class="adsbygoogle"
                                  style="display:block; min-width: 250px; width: 100%;"
                                  data-ad-format="fluid"
