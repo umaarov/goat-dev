@@ -15,10 +15,7 @@
 
 name: 'DCO Sign-Off Check'
 
-on:
-  pull_request:
-    branches: [ 'master', 'main', 'develop' ]
-    types: [ opened, synchronize, reopened, ready_for_review ]
+on: [push, pull_request]
 
 # Declare default permissions as read-only for security best practices.
 permissions:
