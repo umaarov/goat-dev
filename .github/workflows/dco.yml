@@ -22,14 +22,11 @@ jobs:
     runs-on: ubuntu-latest
 
     # This condition prevents the job from running for commits made by Dependabot.
-    # This is the modern replacement for the old 'allow-bots' parameter.
     if: github.actor != 'dependabot[bot]'
 
     steps:
       - name: 'Check for DCO Sign-Off on all commits'
-        # This is the new, maintained action for DCO checks.
-        # It's simpler and officially supported by the DCO app.
         uses: tisonkun/actions-dco@v1.0
         with:
-          # The GITHUB_TOKEN is automatically available to the workflow.
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # This is the corrected line. The action requires 'repo-token'.
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
