@@ -29,7 +29,7 @@ jobs:
       - name: 'Check for DCO Sign-Off on all commits'
         # This is the new, maintained action for DCO checks.
         # It's simpler and officially supported by the DCO app.
-        uses: rob-derosa/dco-action@v1
+        uses: tisonkun/actions-dco@v1.0
         with:
           # The GITHUB_TOKEN is automatically available to the workflow.
           github-token: ${{ secrets.GITHUB_TOKEN }}
