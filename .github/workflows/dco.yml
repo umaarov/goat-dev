@@ -1,0 +1,82 @@
+#
+# Developer Certificate of Origin (DCO) Enforcement
+#
+# This workflow ensures that every commit in a pull request is signed off
+# with a `Signed-off-by:` trailer, certifying the contributor's right
+# to submit the code.
+#
+# Why this is important:
+# The DCO is a lightweight yet crucial legal safeguard for the project,
+# protecting both the contributors and the project maintainers by ensuring
+# a clear chain of provenance for all contributions.
+#
+# For more details, see the project's CONTRIBUTING.md file.
+#
+
+name: 'DCO Sign-Off Check'
+
+on:
+  pull_request:
+    branches: [ 'master', 'main', 'develop' ]
+    types: [ opened, synchronize, reopened, ready_for_review ]
+
+# Declare default permissions as read-only for security best practices.
+permissions:
+  contents: read
+
+# Concurrency control ensures that for any given pull request, only the latest
+# run of this workflow will proceed, cancelling any older, in-progress runs.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  dco-verification:
+    name: 'Verify DCO Sign-Off'
+    runs-on: ubuntu-latest
+
+    # Grant write permission for commit statuses to allow the action to post
+    # a "pending/success/failure" status back to the pull request.
+    permissions:
+      statuses: write
+
+    # Set a reasonable timeout to prevent stalled jobs from consuming resources.
+    timeout-minutes: 5
+
+    steps:
+      - name: 'Check for DCO Sign-Off on all commits'
+        # Uses a trusted and widely-adopted action for DCO checks.
+        # Pinning to a specific version ensures stability and predictability.
+        uses: pro-vision/dco-check-action@v1.0.1
+        with:
+          # A list of GitHub usernames for bots that are exempt from the DCO check.
+          # This is essential for automated dependency updates (e.g., Dependabot).
+          allow-bots: 'dependabot[bot],renovate[bot]'
+
+          # A custom, detailed failure message provides clear instructions to contributors,
+          # reducing friction and support overhead for maintainers.
+          custom-failure-message: |
+            ## ❌ DCO Sign-Off Check Failed
+
+            Every commit in this pull request must be signed off.
+
+            **Why?** The Developer Certificate of Origin (DCO) is a safeguard for this project.
+            By signing off, you certify that you wrote or have the right to contribute this code.
+            Please review our [Contributing Guidelines](https://github.com/${{ github.repository }}/blob/main/CONTRIBUTING.md) for more details.
+
+            **How to fix this:**
+
+            1.  **If you are the original author of these commits,** you can fix them locally:
+                - **Option A (Recommended): Amend and Force-Push**
+                  - Run `git rebase -i --signoff HEAD~${{ github.event.pull_request.commits }}`.
+                  - This will open an interactive rebase. You don't need to change anything; just save and close the editor. Git will add the sign-off to each commit.
+                  - Then, force-push your changes: `git push --force-with-lease`
+
+                - **Option B: Amend the Last Commit**
+                  - If you only have one commit to fix, run: `git commit --amend --signoff`
+                  - Then, force-push your changes: `git push --force-with-lease`
+
+            2.  **If you are not the original author,** you cannot sign off on their behalf.
+                Please ask the original author(s) to sign off their commits.
+
+            Once you have force-pushed the signed-off commits, this check will re-run automatically.

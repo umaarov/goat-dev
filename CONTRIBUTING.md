@@ -23,6 +23,26 @@ First and foremost, thank you for considering contributing to GOAT. Your interes
 
 This project and everyone participating in it is governed by the [Project GOAT Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to the project maintainers.
 
+## Developer Certificate of Origin (DCO)
+
+To ensure the legal clarity and longevity of this project, we use a **Developer Certificate of Origin (DCO)** for all contributions. This is a lightweight and widely-used agreement that certifies you wrote or otherwise have the right to submit the code you are contributing.
+
+By contributing, you agree to this certificate. You formally state your agreement by "signing off" on every one of your git commits.
+
+### How to Sign Off Your Commits
+
+Signing off is simple. Just add the `-s` or `--signoff` flag to your `git commit` command:
+
+```bash
+git commit -s -m "feat(auth): add password reset functionality"
+```
+This will automatically add a Signed-off-by line to the end of your commit message with your name and email, which must match your git configuration:
+```Signed-off-by: Your Name <your.email@example.com>```
+
+All commits in a pull request must be signed off.
+
+A GitHub Action will automatically check this.
+
 ## How to Contribute
 
 We welcome several forms of contribution, each valuable to the project.
