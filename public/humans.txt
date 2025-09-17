@@ -1,0 +1,14 @@
+/* TEAM */
+Lead Developer: Ismoiljon Umarov
+Contact: hs.umarov21@gmail.com
+Telegram: @dribbblxr
+From: Tashkent, Uzbekistan
+
+/* THANKS */
+Framework: Laravel
+CSS: TailwindCSS
+Server: FrankenPHP
+
+/* SITE */
+Last update: 2025-09-17
+Language: English / Uzbek / Russian

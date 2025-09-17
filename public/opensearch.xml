@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/"
+                       xmlns:moz="http://www.mozilla.org/2006/browser/search/">
     <ShortName>GOAT.uz</ShortName>
     <Description>Search for polls and users on GOAT.uz</Description>
     <InputEncoding>UTF-8</InputEncoding>
+
+    <Image height="16" width="16" type="image/x-icon">{{ asset('favicon.ico') }}</Image>
+
     <Url type="text/html" template="https://goat.uz/search?q={searchTerms}"/>
+
+    <moz:SearchForm>https://goat.uz/search</moz:SearchForm>
+    <Contact>info@goat.uz</Contact>
 </OpenSearchDescription>
