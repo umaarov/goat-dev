@@ -15,6 +15,26 @@
     <link rel="manifest" href="{{ asset('images/site.webmanifest') }}">
     <meta name="msapplication-TileColor" content="#1f2937">
     <meta name="msapplication-config" content="/browserconfig.xml">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="color-scheme" content="light dark">
+    <script type="speculationrules">
+        {
+          "prerender": [
+            {
+              "source": "document",
+              "where": {
+                "and": [
+                  { "href_matches": "/*" },
+                  { "not": { "href_matches": ["/logout", "/profile/edit"] } },
+                  { "not": { "selector_matches": [".no-prerender"] } },
+                  { "not": { "href_matches": [".pdf", ".jpg", ".zip"] } }
+                ]
+              },
+              "eagerness": "moderate"
+            }
+          ]
+        }
+    </script>
     <link rel="search" type="application/opensearchdescription+xml" title="GOAT.uz"
           href="{{ asset('opensearch.xml') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
