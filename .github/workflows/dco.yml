@@ -2,16 +2,15 @@
 # Developer Certificate of Origin (DCO) Enforcement
 #
 # This workflow ensures that every commit is signed off with a
-# `Signed-off-by:` trailer, certifying the contributor's right
-# to submit the code.
+# `Signed-off-by:` trailer, using a robust manual script that
+# works for both push and pull_request events.
 #
 
 name: 'DCO Sign-Off Check'
 
 on: [push, pull_request]
 
-# Concurrency control ensures that for any given pull request, only the latest
-# run of this workflow will proceed, cancelling any older, in-progress runs.
+# Concurrency control to cancel older runs.
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
@@ -25,8 +24,49 @@ jobs:
     if: github.actor != 'dependabot[bot]'
 
     steps:
-      - name: 'Check for DCO Sign-Off on all commits'
-        uses: tisonkun/actions-dco@v1.0
+      - name: 'Checkout repository with full history'
+        # We need to fetch the full history to compare commit ranges.
+        uses: actions/checkout@v4
         with:
-          # This is the corrected line. The action requires 'repo-token'.
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: 'Verify DCO on all commits'
+        run: |
+          # The commit range depends on whether the event is a push or a pull request.
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # For PRs, compare the base and head of the PR.
+            COMMIT_RANGE="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          else
+            # For pushes, compare the 'before' and 'after' SHAs from the push payload.
+            COMMIT_RANGE="${{ github.event.before }}..${{ github.event.after }}"
+          fi
+
+          echo "Checking for DCO in commit range: $COMMIT_RANGE"
+
+          # Get the total number of commits in the specified range.
+          COMMIT_COUNT=$(git rev-list --count "$COMMIT_RANGE")
+
+          # If there are no new commits, the check is successful.
+          if [ "$COMMIT_COUNT" -eq 0 ]; then
+            echo "No new commits to check. DCO check passed."
+            exit 0
+          fi
+
+          # Get the number of commits that contain the "Signed-off-by:" trailer.
+          DCO_COUNT=$(git log "$COMMIT_RANGE" --format=%B | grep -c "Signed-off-by:")
+
+          echo "Found $DCO_COUNT signed-off commits out of $COMMIT_COUNT total commits."
+
+          if [ "$COMMIT_COUNT" -ne "$DCO_COUNT" ]; then
+            echo "=================================================================================="
+            echo "❌ ERROR: DCO Sign-Off Check Failed."
+            echo "Not all commits in this push are signed off."
+            echo "Please amend your commits to include a DCO sign-off."
+            echo "You can do this locally with:"
+            echo "  git rebase -i --signoff HEAD~$COMMIT_COUNT"
+            echo "Then force-push your changes."
+            echo "=================================================================================="
+            exit 1
+          else
+            echo "✅ All $COMMIT_COUNT commits are properly signed off. DCO check passed."
+          fi
