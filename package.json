@@ -34,7 +34,7 @@
         "concurrently": "^9.2.1",
         "danger": "^13.0.4",
         "dotenv-cli": "^10.0.0",
-        "eslint": "^9.35.0",
+        "eslint": "^9.36.0",
         "laravel-echo": "^2.2.0",
         "laravel-vite-plugin": "^2.0.1",
         "probot": "^14.0.2",
