@@ -26,7 +26,7 @@ jobs:
     steps:
       - name: 'Checkout repository with full history'
         # We need to fetch the full history to compare commit ranges.
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
