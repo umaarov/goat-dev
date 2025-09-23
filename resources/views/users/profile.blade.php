@@ -113,29 +113,29 @@
                             </p>
 
                             {{-- START: "Last Active" method --}}
-                            @if (!$isDeactivated && !is_null($user->last_active_at))
-                                @php
-                                    $lastActive = Carbon::parse($user->last_active_at);
-                                    $isOnline = $lastActive->diffInMinutes(now()) < 5;
-                                @endphp
-                                <div
-                                    class="flex items-center text-xs mt-1.5 {{ $hasBackground ? 'text-gray-400' : 'text-gray-500 dark:text-gray-400' }}">
-                                    @if ($isOnline)
-                                        <span class="flex h-2 w-2 relative mr-2">
-                                            <span
-                                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                            <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                                        </span>
-                                        <span>{{ __('messages.profile.online') }}</span>
-                                    @else
-                                        <span class="flex h-2 w-2 relative mr-2">
-                                             <span
-                                                 class="relative inline-flex rounded-full h-2 w-2 bg-gray-400 dark:bg-gray-500"></span>
-                                        </span>
-                                        <span>{{ __('messages.profile.last_seen', ['time' => $lastActive->diffForHumans()]) }}</span>
-                                    @endif
-                                </div>
-                            @endif
+{{--                            @if (!$isDeactivated && !is_null($user->last_active_at))--}}
+{{--                                @php--}}
+{{--                                    $lastActive = Carbon::parse($user->last_active_at);--}}
+{{--                                    $isOnline = $lastActive->diffInMinutes(now()) < 5;--}}
+{{--                                @endphp--}}
+{{--                                <div--}}
+{{--                                    class="flex items-center text-xs mt-1.5 {{ $hasBackground ? 'text-gray-400' : 'text-gray-500 dark:text-gray-400' }}">--}}
+{{--                                    @if ($isOnline)--}}
+{{--                                        <span class="flex h-2 w-2 relative mr-2">--}}
+{{--                                            <span--}}
+{{--                                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>--}}
+{{--                                            <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>--}}
+{{--                                        </span>--}}
+{{--                                        <span>{{ __('messages.profile.online') }}</span>--}}
+{{--                                    @else--}}
+{{--                                        <span class="flex h-2 w-2 relative mr-2">--}}
+{{--                                             <span--}}
+{{--                                                 class="relative inline-flex rounded-full h-2 w-2 bg-gray-400 dark:bg-gray-500"></span>--}}
+{{--                                        </span>--}}
+{{--                                        <span>{{ __('messages.profile.last_seen', ['time' => $lastActive->diffForHumans()]) }}</span>--}}
+{{--                                    @endif--}}
+{{--                                </div>--}}
+{{--                            @endif--}}
                             {{-- END: "Last Active" method --}}
 
                         </div>
