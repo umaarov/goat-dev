@@ -1,5 +1,5 @@
 @php
-    use Illuminate\Support\Str;
+    use Illuminate\Support\Carbon;use Illuminate\Support\Str;
     use Illuminate\Support\Facades\Storage;
 @endphp
 @extends('layouts.app')
@@ -30,17 +30,19 @@
         @endphp
 
         @if ($isDeactivated)
-            <div class="bg-yellow-100 dark:bg-yellow-900/50 border-l-4 border-yellow-500 dark:border-yellow-600 text-yellow-700 dark:text-yellow-300 p-4 mb-6 rounded-md" role="alert">
+            <div
+                class="bg-yellow-100 dark:bg-yellow-900/50 border-l-4 border-yellow-500 dark:border-yellow-600 text-yellow-700 dark:text-yellow-300 p-4 mb-6 rounded-md"
+                role="alert">
                 <p class="font-bold dark:text-yellow-200">{{ __('messages.profile.deactivated_title') }}</p>
                 <p>{{ __('messages.profile.deactivated_message') }}</p>
             </div>
         @endif
 
         <div
-{{--            class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] border border-gray-100 overflow-hidden mb-6">--}}
-                class="relative rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] dark:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)] border border-gray-100 dark:border-gray-700 overflow-hidden mb-6 @if(!$hasBackground) bg-white dark:bg-gray-800 @endif">
+            {{--            class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] border border-gray-100 overflow-hidden mb-6">--}}
+            class="relative rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] dark:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)] border border-gray-100 dark:border-gray-700 overflow-hidden mb-6 @if(!$hasBackground) bg-white dark:bg-gray-800 @endif">
 
-        {{-- Background Image & Gradient Overlay Layer --}}
+            {{-- Background Image & Gradient Overlay Layer --}}
             @if($hasBackground)
                 <div class="absolute inset-0 z-0">
                     <img src="{{ $headerBackgroundUrl }}"
@@ -71,10 +73,10 @@
                                 <canvas id="badge-canvas"></canvas>
                             </div>
                         @endif
-                            <img src="{{ $profilePic }}"
-                                 alt="{{ __('messages.profile.alt_profile_picture', ['username' => $user->username]) }}"
-                                 class="h-24 w-24 rounded-full object-cover border-2 {{ $hasBackground ? 'border-white/50' : 'border-gray-200 dark:border-gray-700' }} {{ !$isDeactivated ? 'cursor-pointer zoomable-image' : '' }}"
-                                 @if(!$isDeactivated) data-full-src="{{ $profilePic }}" @endif>
+                        <img src="{{ $profilePic }}"
+                             alt="{{ __('messages.profile.alt_profile_picture', ['username' => $user->username]) }}"
+                             class="h-24 w-24 rounded-full object-cover border-2 {{ $hasBackground ? 'border-white/50' : 'border-gray-200 dark:border-gray-700' }} {{ !$isDeactivated ? 'cursor-pointer zoomable-image' : '' }}"
+                             @if(!$isDeactivated) data-full-src="{{ $profilePic }}" @endif>
                     </div>
 
                     {{-- Info Block --}}
@@ -83,16 +85,21 @@
                             {{-- Name, Verified, and Moderator Badge --}}
                             <div class="flex flex-wrap items-center gap-y-1">
                                 <div class="flex items-center">
-                                    <h1 class="text-2xl font-semibold {{ $hasBackground ? 'text-white' : 'text-gray-800 dark:text-gray-100' }}" style="font-size: 1.5rem; line-height: 2rem; font-weight: 600;">{{ $displayName }}</h1>
+                                    <h1 class="text-2xl font-semibold {{ $hasBackground ? 'text-white' : 'text-gray-800 dark:text-gray-100' }}"
+                                        style="font-size: 1.5rem; line-height: 2rem; font-weight: 600;">{{ $displayName }}</h1>
                                     @if($isVerified && !$isDeactivated)
                                         <span class="ml-1.5" title="{{ __('messages.profile.verified_account') }}">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500"
+                                                 viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd"
+                                                                                               d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                                                               clip-rule="evenodd"/></svg>
                                         </span>
                                     @endif
                                 </div>
 
                                 @if($user->username === 'goat' && !$isDeactivated)
-                                    <span class="ml-2 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold {{ $hasBackground ? 'bg-green-400/25 text-green-300' : 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' }}">Moderator</span>
+                                    <span
+                                        class="ml-2 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold {{ $hasBackground ? 'bg-green-400/25 text-green-300' : 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' }}">Moderator</span>
                                 @endif
                             </div>
 
@@ -100,9 +107,38 @@
                             @if($showSubUsername)
                                 <p class="{{ $hasBackground ? 'text-gray-300' : 'text-gray-600 dark:text-gray-400' }} text-sm mt-1.5">{{ "@".$user->username }}</p>
                             @endif
-                            <p class="{{ $hasBackground ? 'text-gray-400' : 'text-gray-500 dark:text-gray-400' }} text-xs mt-1">{{ __('messages.profile.joined_label') }} <time datetime="{{ $user->created_at->toIso8601String() }}">{{ $user->created_at->format('M d, Y') }}</time></p>
-                        </div>
+                            <p class="{{ $hasBackground ? 'text-gray-400' : 'text-gray-500 dark:text-gray-400' }} text-xs mt-1">{{ __('messages.profile.joined_label') }}
+                                <time
+                                    datetime="{{ $user->created_at->toIso8601String() }}">{{ $user->created_at->format('M d, Y') }}</time>
+                            </p>
 
+                            {{-- START: "Last Active" method --}}
+                            @if (!$isDeactivated && !is_null($user->last_active_at))
+                                @php
+                                    $lastActive = Carbon::parse($user->last_active_at);
+                                    $isOnline = $lastActive->diffInMinutes(now()) < 5;
+                                @endphp
+                                <div
+                                    class="flex items-center text-xs mt-1.5 {{ $hasBackground ? 'text-gray-400' : 'text-gray-500 dark:text-gray-400' }}">
+                                    @if ($isOnline)
+                                        <span class="flex h-2 w-2 relative mr-2">
+                                            <span
+                                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                            <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                        </span>
+                                        <span>{{ __('messages.profile.online') }}</span>
+                                    @else
+                                        <span class="flex h-2 w-2 relative mr-2">
+                                             <span
+                                                 class="relative inline-flex rounded-full h-2 w-2 bg-gray-400 dark:bg-gray-500"></span>
+                                        </span>
+                                        <span>{{ __('messages.profile.last_seen', ['time' => $lastActive->diffForHumans()]) }}</span>
+                                    @endif
+                                </div>
+                            @endif
+                            {{-- END: "Last Active" method --}}
+
+                        </div>
 
 
                         {{-- Rank Badge Logic & Display --}}
@@ -110,9 +146,12 @@
                             @if (!empty($userBadges))
                                 <div class="mt-3 flex flex-wrap items-center gap-2">
                                     @foreach ($userBadges as $badge)
-                                        <span title="{{ $badge['name'] }} - Rank: #{{ $badge['rank'] }}" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border {{ $badge['classes'] }}">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5 -ml-1" viewBox="0 0 20 20" fill="currentColor">
-                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                        <span title="{{ $badge['name'] }} - Rank: #{{ $badge['rank'] }}"
+                                              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border {{ $badge['classes'] }}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5 -ml-1"
+                                                 viewBox="0 0 20 20" fill="currentColor">
+                                                <path
+                                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                                             </svg>
                                             <span>{{ $badge['name'] }}</span>
                                         </span>
@@ -121,19 +160,23 @@
                             @endif
 
                             {{-- Stats Section --}}
-                                <div class="mt-3 flex items-center space-x-6 text-sm">
-                                    <div>
-                                        <span class="font-semibold {{ $hasBackground ? 'text-white' : 'text-gray-800 dark:text-gray-100' }}">{{ number_format($user->posts_count) }}</span>
-                                        <span class="{{ $hasBackground ? 'text-gray-300' : 'text-gray-500 dark:text-gray-400' }}">{{ trans_choice('messages.profile.posts_stat_label', $user->posts_count) }}</span>
-                                    </div>
-                                    <div>
-                                        <span class="font-semibold {{ $hasBackground ? 'text-white' : 'text-gray-800 dark:text-gray-100' }}">{{ number_format($totalVotesOnUserPosts) }}</span>
-                                        <span class="{{ $hasBackground ? 'text-gray-300' : 'text-gray-500 dark:text-gray-400' }}">{{ trans_choice('messages.profile.votes_collected_stat_label', $totalVotesOnUserPosts) }}</span>
-                                    </div>
+                            <div class="mt-3 flex items-center space-x-6 text-sm">
+                                <div>
+                                    <span
+                                        class="font-semibold {{ $hasBackground ? 'text-white' : 'text-gray-800 dark:text-gray-100' }}">{{ number_format($user->posts_count) }}</span>
+                                    <span
+                                        class="{{ $hasBackground ? 'text-gray-300' : 'text-gray-500 dark:text-gray-400' }}">{{ trans_choice('messages.profile.posts_stat_label', $user->posts_count) }}</span>
                                 </div>
+                                <div>
+                                    <span
+                                        class="font-semibold {{ $hasBackground ? 'text-white' : 'text-gray-800 dark:text-gray-100' }}">{{ number_format($totalVotesOnUserPosts) }}</span>
+                                    <span
+                                        class="{{ $hasBackground ? 'text-gray-300' : 'text-gray-500 dark:text-gray-400' }}">{{ trans_choice('messages.profile.votes_collected_stat_label', $totalVotesOnUserPosts) }}</span>
+                                </div>
+                            </div>
 
                             {{-- External Links Section --}}
-                                @if(!empty($user->external_links) && count(array_filter($user->external_links)) > 0)
+                            @if(!empty($user->external_links) && count(array_filter($user->external_links)) > 0)
                                 <div class="mt-3">
                                     <div class="flex flex-wrap gap-2 items-center">
                                         @foreach($user->external_links as $link_url)
@@ -173,7 +216,8 @@
                                                         $displayText = Str::limit($cleanedHost, 30);
                                                     }
                                                 @endphp
-                                                <a href="{{ $link_url }}" target="_blank" rel="noopener noreferrer nofollow"
+                                                <a href="{{ $link_url }}" target="_blank"
+                                                   rel="noopener noreferrer nofollow"
                                                    title="{{ $displayText }} - {{ $link_url }}"
                                                    class="inline-flex items-center justify-center w-9 h-9 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 p-2 rounded-full transition-colors duration-150 shadow-sm border border-gray-200 dark:border-gray-600">
                                                     {!! $iconSvgHtml !!}
@@ -184,14 +228,14 @@
                                 </div>
                             @endif
 
-                                @if ($isOwnProfile)
-                                    <div class="mt-4">
-                                        <a href="{{ route('profile.edit') }}"
-                                           class="inline-block px-4 py-2 rounded-md focus:outline-none focus:ring-2 text-sm font-semibold {{ $hasBackground ? 'bg-white/90 text-black hover:bg-white focus:ring-blue-300' : 'bg-blue-800 text-white hover:bg-blue-900 dark:bg-blue-600 dark:hover:bg-blue-700 focus:ring-blue-500' }}">
-                                            {{ __('messages.profile.edit_profile_button') }}
-                                        </a>
-                                    </div>
-                                @endif
+                            @if ($isOwnProfile)
+                                <div class="mt-4">
+                                    <a href="{{ route('profile.edit') }}"
+                                       class="inline-block px-4 py-2 rounded-md focus:outline-none focus:ring-2 text-sm font-semibold {{ $hasBackground ? 'bg-white/90 text-black hover:bg-white focus:ring-blue-300' : 'bg-blue-800 text-white hover:bg-blue-900 dark:bg-blue-600 dark:hover:bg-blue-700 focus:ring-blue-500' }}">
+                                        {{ __('messages.profile.edit_profile_button') }}
+                                    </a>
+                                </div>
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -205,21 +249,26 @@
                 <button id="load-my-posts" data-url="{{ route('profile.posts.data', $user->username) }}"
                         class="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 hover:text-blue-800 dark:hover:text-blue-400 focus:outline-none relative">
                     {{ $isOwnProfile ? __('messages.profile.my_posts_tab') : __('messages.profile.users_posts_tab', ['username' => $user->username]) }}
-                    <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-800 dark:bg-blue-400 transition-all duration-300" id="my-posts-indicator"></span>
+                    <span
+                        class="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-800 dark:bg-blue-400 transition-all duration-300"
+                        id="my-posts-indicator"></span>
                 </button>
 
                 @if ($isOwnProfile || $user->show_voted_posts_publicly)
                     <button id="load-voted-posts" data-url="{{ route('profile.voted.data', $user->username) }}"
                             class="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 hover:text-blue-800 dark:hover:text-blue-400 focus:outline-none relative">
                         {{ __('messages.profile.voted_posts_tab') }}
-                        <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-transparent transition-all duration-300" id="voted-posts-indicator"></span>
+                        <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-transparent transition-all duration-300"
+                              id="voted-posts-indicator"></span>
                     </button>
                 @endif
 
                 <a href="{{ route('rating.index') }}"
                    class="px-6 py-3 font-medium text-gray-700 dark:text-gray-300 hover:text-blue-800 dark:hover:text-blue-400 focus:outline-none relative flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5 text-amber-500" viewBox="0 0 20 20"
+                         fill="currentColor">
+                        <path
+                            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                     </svg>
                     <span>{{ __('messages.ratings.nav_title') }}</span>
                 </a>
@@ -281,7 +330,7 @@
 
         window.profileUsername = '{{ addslashes($user->username) }}';
     </script>
-    <x-shared-post-scripts />
+    <x-shared-post-scripts/>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             @if(session('scrollToPost'))
@@ -321,7 +370,7 @@
             let currentPage = {};
             let isLoading = {};
             let hasMorePages = {};
-            let activeTabData = { url: null, type: null };
+            let activeTabData = {url: null, type: null};
             let observer;
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
@@ -343,7 +392,7 @@
                 if (activeButton) {
                     activeButton.classList.remove('text-gray-700', 'dark:text-gray-300');
                     activeButton.classList.add('font-semibold');
-                    if(isDarkMode) {
+                    if (isDarkMode) {
                         activeButton.classList.add('text-blue-400');
                     } else {
                         activeButton.classList.add('text-blue-800');
@@ -354,7 +403,7 @@
 
                     if (activeIndicator) {
                         activeIndicator.classList.remove('bg-transparent');
-                        if(isDarkMode) {
+                        if (isDarkMode) {
                             activeIndicator.classList.add('bg-blue-400');
                         } else {
                             activeIndicator.classList.add('bg-blue-800');
@@ -383,7 +432,7 @@
                             observer.unobserve(image);
                         }
                     });
-                }, { rootMargin: '0px 0px 200px 0px' });
+                }, {rootMargin: '0px 0px 200px 0px'});
 
                 imagesToLoad.forEach(img => imageObserver.observe(img));
             }
@@ -398,8 +447,10 @@
                     currentPage[type] = 1;
                     hasMorePages[type] = true;
                     postsContainer.innerHTML = shimmerHTML;
-                    Object.keys(isLoading).forEach(key => { if (key !== type) isLoading[key] = false; });
-                    activeTabData = { url, type };
+                    Object.keys(isLoading).forEach(key => {
+                        if (key !== type) isLoading[key] = false;
+                    });
+                    activeTabData = {url, type};
                     if (observer) observer.unobserve(scrollTrigger);
                 } else {
                     currentPage[type]++;
@@ -411,7 +462,7 @@
 
                 try {
                     const response = await fetch(fetchUrl, {
-                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                        headers: {'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json'},
                     });
 
                     if (response.status === 401) {
@@ -451,7 +502,7 @@
 
                     if (postsContainer.children.length === 0 || (postsContainer.children.length === 1 && postsContainer.children[0].tagName === 'P')) {
                         postsContainer.innerHTML = `<p class="text-gray-500 dark:text-gray-400 text-center py-8">${noPostsMessage}</p>`;
-                        if(observer) observer.unobserve(scrollTrigger);
+                        if (observer) observer.unobserve(scrollTrigger);
                     }
 
                 } catch (error) {

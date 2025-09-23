@@ -1070,4 +1070,22 @@ class UserController extends Controller
 
         return redirect('/')->with('error', 'This account is already active.');
     }
+
+    final public function heartbeat(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $user->last_active_at = now();
+        $user->save();
+
+        return response()->json(['status' => 'ok']);
+    }
+
+    final public function logoff(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $user->last_active_at = now()->subMinutes(6);
+        $user->save();
+
+        return response()->json(['status' => 'logged_off']);
+    }
 }

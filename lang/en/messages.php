@@ -584,4 +584,7 @@ return [
     'no' => 'No',
 
     'profile.meta_description_dynamic' => 'View the profile of @:username on GOAT.uz. Explore their :post_count polls which have gathered :total_votes votes. Join the discussion and cast your vote.',
+
+    'profile.online' => 'Online',
+    'profile.last_seen' => 'Last seen :time',
 ];

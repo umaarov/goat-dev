@@ -86,6 +86,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/profile/generate-picture', 'generateProfilePicture')->name('profile.picture.generate');
     });
 
+    Route::post('/heartbeat', [UserController::class, 'heartbeat'])->name('user.heartbeat');
+    Route::post('/logoff', [UserController::class, 'logoff'])->name('user.logoff');
+
     Route::delete('profile/deactivate', [UserController::class, 'deactivate'])
         ->middleware(['auth', 'password.confirm'])
         ->name('profile.deactivate');

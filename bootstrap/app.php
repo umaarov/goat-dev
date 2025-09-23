@@ -6,6 +6,7 @@ use App\Console\Commands\SendPostNotifications;
 use App\Http\Middleware\EnsurePasswordIsSet;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\UpdateLastActiveTimestamp;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Foundation\Application;
@@ -35,6 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             SetLocale::class,
 //            AddCspHeaders::class,
+            UpdateLastActiveTimestamp::class,
         ]);
         $middleware->trustProxies(
             at: [
