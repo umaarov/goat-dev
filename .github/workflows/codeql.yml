@@ -1,12 +1,10 @@
-# GitHub Action for CodeQL Analysis
-# Scans JavaScript. C++ analysis is disabled due to a tool incompatibility.
 name: CodeQL Security Analysis
 
 on:
   push:
-    branches: ["master", "develop"]
+    branches: [ "master" ]
   pull_request:
-    branches: ["master", "develop"]
+    branches: [ "master" ]
   schedule:
     - cron: '0 4 * * 0'
 
@@ -23,22 +21,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Running JavaScript only, as C++ analysis is not compatible.
-        language: ['javascript']
+        language: [ 'javascript' ]
 
     steps:
-      # Step 1: Check out the repository's code.
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      # Step 2: Initialize CodeQL to start tracing.
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
 
-      # Step 3: Perform the final CodeQL analysis.
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{matrix.language}}"

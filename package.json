@@ -1,7 +1,21 @@
 {
-    "private": true,
+    "name": "@umaarov/goat-dev",
+    "version": "1.0.2",
     "type": "module",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/umaarov/goat-dev.git"
+    },
+    "files": [
+        "README.md"
+    ],
+    "publishConfig": {
+        "registry": "https://npm.pkg.github.com"
+    },
     "scripts": {
+        "lint": "eslint 'resources/js/**/*.js'",
+        "lint:fix": "eslint 'resources/**/*.js' --fix",
+        "publish:github": "dotenv -- npm publish",
         "dev": "vite",
         "build": "vite build",
         "build:watch": "vite build --watch",
@@ -9,18 +23,23 @@
     },
     "dependencies": {
         "@types/stats.js": "^0.17.4",
-        "lil-gui": "^0.20.0",
+        "lil-gui": "^0.21.0",
         "stats.js": "^0.17.0",
-        "three": "^0.178.0"
+        "three": "^0.180.0"
     },
     "devDependencies": {
-        "@tailwindcss/vite": "^4.1.3",
-        "axios": "^1.11.0",
-        "concurrently": "^9.0.1",
-        "laravel-echo": "^2.1.7",
-        "laravel-vite-plugin": "^1.2.0",
+        "@eslint/eslintrc": "^3.3.1",
+        "@tailwindcss/vite": "^4.1.14",
+        "axios": "^1.12.2",
+        "concurrently": "^9.2.1",
+        "danger": "^13.0.4",
+        "dotenv-cli": "^10.0.0",
+        "eslint": "^9.37.0",
+        "laravel-echo": "^2.2.4",
+        "laravel-vite-plugin": "^2.0.1",
+        "probot": "^14.1.0",
         "pusher-js": "^8.4.0",
-        "tailwindcss": "^4.1.3",
-        "vite": "^6.2.4"
+        "tailwindcss": "^4.1.14",
+        "vite": "^7.1.9"
     }
 }

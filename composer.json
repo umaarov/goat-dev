@@ -10,7 +10,6 @@
         "ext-curl": "*",
         "ext-fileinfo": "*",
         "ext-gd": "*",
-        "ext-http": "*",
         "abraham/twitteroauth": "^7.0",
         "google/apiclient": "^2.18",
         "intervention/image": "^3.11",
@@ -36,7 +35,7 @@
         "laravel/sail": "^1.41",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
-        "phpunit/phpunit": "^11.5.3"
+        "phpunit/phpunit": "^12.3.11"
     },
     "autoload": {
         "psr-4": {

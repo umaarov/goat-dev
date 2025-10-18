@@ -15,6 +15,26 @@
     <link rel="manifest" href="{{ asset('images/site.webmanifest') }}">
     <meta name="msapplication-TileColor" content="#1f2937">
     <meta name="msapplication-config" content="/browserconfig.xml">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="color-scheme" content="light dark">
+    <script type="speculationrules">
+        {
+          "prerender": [
+            {
+              "source": "document",
+              "where": {
+                "and": [
+                  { "href_matches": "/*" },
+                  { "not": { "href_matches": ["/logout", "/profile/edit"] } },
+                  { "not": { "selector_matches": [".no-prerender"] } },
+                  { "not": { "href_matches": [".pdf", ".jpg", ".zip"] } }
+                ]
+              },
+              "eagerness": "moderate"
+            }
+          ]
+        }
+    </script>
     <link rel="search" type="application/opensearchdescription+xml" title="GOAT.uz"
           href="{{ asset('opensearch.xml') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -232,7 +252,7 @@
         };
     </script>
 </head>
-<body class="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">
+<body class="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900" @auth data-user-is-authenticated="true" @endauth>
 <nav
     class="fixed top-0 left-0 right-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-b-xl shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] dark:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)] z-50 h-16 flex items-center px-4 max-w-[450px] mx-auto">
     <div class="w-full max-w-md mx-auto flex items-center justify-between">
@@ -771,6 +791,35 @@
             }
         }
     })();
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const isUserAuthenticated = document.body.dataset.userIsAuthenticated === 'true';
+
+        if (isUserAuthenticated) {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            const heartbeat = () => {
+                fetch('{{ route("user.heartbeat") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                }).catch(error => console.error('Heartbeat failed:', error));
+            };
+
+            setInterval(heartbeat, 45000);
+
+            window.addEventListener('beforeunload', () => {
+                if (navigator.sendBeacon) {
+                    const data = new Blob([JSON.stringify({})], { type: 'application/json' });
+                    navigator.sendBeacon('{{ route("user.logoff") }}?_token=' + csrfToken, data);
+                }
+            });
+        }
+    });
 </script>
 </body>
 </html>

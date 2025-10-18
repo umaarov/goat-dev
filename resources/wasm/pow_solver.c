@@ -35,11 +35,20 @@ char* solve(const char* input_text, int difficulty) {
     char hex_hash[65];
 
     while (1) {
-        sprintf(buffer, "%s:%u", input_text, nonce);
+        int length = snprintf(buffer, sizeof(buffer), "%s:%u", input_text, nonce);
+
+        if (length < 0) {
+            continue;
+        }
+
+        if (length >= sizeof(buffer)) {
+            fprintf(stderr, "Input too long, result is truncated!\n");
+        }
 
         SHA256_CTX ctx;
         sha256_init(&ctx);
-        sha256_update(&ctx, (uint8_t*)buffer, strlen(buffer));
+//        sha256_update(&ctx, (uint8_t*)buffer, strlen(buffer));
+        sha256_update(&ctx, (uint8_t*)buffer, length);
         sha256_final(&ctx, hash_result);
 
         for (int i = 0; i < 32; i++) {

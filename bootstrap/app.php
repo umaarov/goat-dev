@@ -6,6 +6,7 @@ use App\Console\Commands\SendPostNotifications;
 use App\Http\Middleware\EnsurePasswordIsSet;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\UpdateLastActiveTimestamp;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Foundation\Application;
@@ -35,6 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             SetLocale::class,
 //            AddCspHeaders::class,
+            UpdateLastActiveTimestamp::class,
         ]);
         $middleware->trustProxies(
             at: [
@@ -108,6 +110,9 @@ return Application::configure(basePath: dirname(__DIR__))
             Request::HEADER_X_FORWARDED_PORT |
             Request::HEADER_X_FORWARDED_PROTO
         );
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/sonar',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (Throwable $e, \Illuminate\Http\Request $request) {

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import {BadgeFactory} from '../modules/BadgeFactory.js';
 
 let renderer, scene, pointLight;
-let badges = [];
+const badges = [];
 let wasmModule;
 let activeBadgeIndex = -1;
 
@@ -73,7 +73,7 @@ function setupLighting() {
 }
 
 function updateMouseLight({mouseX, mouseY}) {
-    if (!pointLight) return;
+    if (!pointLight) {return;}
     const targetX = mouseX * 5;
     const targetY = mouseY * 5;
     const targetPosition = new THREE.Vector3(targetX, targetY, 5);

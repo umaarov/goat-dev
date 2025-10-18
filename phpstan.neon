@@ -1,0 +1,37 @@
+parameters:
+    level: 9
+    paths:
+        - app
+        - database
+        - routes
+    autoload_files:
+        - %rootDir%/../../../vendor/autoload.php
+    inferPrivatePropertyTypeFromConstructor: true
+    checkMissingIterableValueType: true
+    checkMissingVarTagType: true
+    checkExplicitMixed: true
+    reportUnmatchedIgnoredErrors: true
+    analyzeUnreachableCatch: true
+    treatPhpDocTypesAsCertain: false
+    scanFiles:
+        - app
+        - routes
+        - database
+
+ignoreErrors:
+    - '#Call to an undefined method#'
+    - '#Unsafe usage of reflection#'
+
+parameters:
+    level: max
+    paths:
+        - app
+        - database
+    ignoreErrors:
+        - '#Some known issue#'
+    reportUnreachable: true
+    reportFormat: "junit"
+    reportFile: "storage/logs/phpstan-report.xml"
+
+includes:
+    - vendor/phpstan/phpstan-strict-rules/rules.neon

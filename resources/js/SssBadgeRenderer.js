@@ -4,7 +4,7 @@ import {BadgeFactory} from './modules/BadgeFactory.js';
 class SssBadgeRenderer {
     constructor() {
         this.canvases = document.querySelectorAll('.badge-showcase-canvas');
-        if (this.canvases.length === 0) return;
+        if (this.canvases.length === 0) {return;}
 
         this.scenes = [];
         this.clock = new THREE.Clock();
@@ -17,7 +17,7 @@ class SssBadgeRenderer {
     _initAll() {
         this.canvases.forEach(canvas => {
             const badgeKey = canvas.dataset.badgeKey;
-            if (!badgeKey) return;
+            if (!badgeKey) {return;}
 
             const scene = new THREE.Scene();
             const renderer = new THREE.WebGLRenderer({

@@ -38,6 +38,7 @@ class User extends Authenticatable
         'ai_generations_daily_count',
         'last_ai_generation_date',
         'last_notified_at',
+        'last_active_at',
     ];
 
     protected $hidden = [
@@ -52,6 +53,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'last_notified_at' => 'datetime',
+        'last_active_at' => 'datetime',
         'password' => 'hashed',
         'receives_notifications' => 'boolean',
         'show_voted_posts_publicly' => 'boolean',

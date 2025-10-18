@@ -1,0 +1,38 @@
+version = 1
+
+[[analyzers]]
+name = "php"
+enabled = true
+
+[analyzers.settings]
+exclude_dirs = ["vendor", "node_modules", "public/assets/wasm"]
+auto_fix = true
+
+[[analyzers]]
+name = "javascript"
+enabled = true
+
+[analyzers.settings]
+exclude_dirs = ["node_modules", "public", "vendor"]
+auto_fix = true
+
+[[analyzers]]
+name = "shell"
+enabled = true
+
+[analyzers.settings]
+exclude_dirs = ["vendor", "node_modules", "public"]
+auto_fix = true
+
+[[filters]]
+name = "exclude-tests-and-assets"
+paths = ["tests/*", "public/*", "database/*"]
+exclude = true
+
+[auto_fix]
+enabled = true
+exclude = ["node_modules", "vendor"]
+
+[report]
+format = "json"
+send_email_notifications = true

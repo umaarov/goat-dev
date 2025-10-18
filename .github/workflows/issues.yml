@@ -1,0 +1,117 @@
+name: Issue Creation
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  schedule:
+    - cron: "0 2 * * 1"
+
+permissions:
+  contents: read
+  issues: write
+  security-events: write
+
+jobs:
+  generate-issues:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, dom, curl
+          tools: composer, psalm
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Install Dependencies
+        run: |
+          composer install --prefer-dist --no-progress
+          npm ci
+
+      - name: Run Psalm
+        run: psalm --output-format=json --report=psalm-results.json || true
+
+      - name: Run Gitleaks
+        uses: zricethezav/gitleaks-action@v2
+        continue-on-error: true
+        with:
+          args: detect --source . --report-format json --report-path gitleaks.json
+
+      - name: Run PHPMD
+        run: phpmd . json codesize > phpmd.json || true
+
+      - name: Run Snyk Node
+        run: snyk test --all-projects --json > snyk-node.json || true
+
+      - name: Run Snyk PHP
+        run: snyk test --all-projects --json > snyk-php.json || true
+
+      - name: Generate Issues from Findings
+        run: |
+          generate_issue() {
+            local title="$1"
+            local body="$2"
+            local labels="$3"
+            local assignees="$4"
+            gh issue create \
+              --title "$title" \
+              --body "$body" \
+              --label "$labels" \
+              --assignee "$assignees"
+          }
+
+          if [ -f psalm-results.json ]; then
+            jq -c '.issues[] | select(.severity=="error" or .severity=="critical")' psalm-results.json | while read -r issue; do
+              file=$(echo "$issue" | jq -r .file)
+              line=$(echo "$issue" | jq -r .line)
+              message=$(echo "$issue" | jq -r .message)
+              title="Psalm Critical: $file:$line"
+              body="**File:** $file\n**Line:** $line\n**Message:** $message"
+              assignee=$(git blame -L $line,$line $file | head -1 | awk '{print $2}') || assignee=""
+              generate_issue "$title" "$body" "security,psalm" "$assignee"
+            done
+          fi
+
+          if [ -f gitleaks.json ]; then
+            jq -c '.Leaks[]' gitleaks.json | while read -r leak; do
+              file=$(echo "$leak" | jq -r .file)
+              line=$(echo "$leak" | jq -r .line)
+              description=$(echo "$leak" | jq -r .Description)
+              title="Gitleaks Secret: $file:$line"
+              body="**File:** $file\n**Line:** $line\n**Secret:** $description"
+              generate_issue "$title" "$body" "security,gitleaks" ""
+            done
+          fi
+
+          if [ -f phpmd.json ]; then
+            jq -c '.files[]?.violations[]' phpmd.json | while read -r violation; do
+              file=$(echo "$violation" | jq -r .file)
+              rule=$(echo "$violation" | jq -r .rule)
+              description=$(echo "$violation" | jq -r .description)
+              title="PHPMD Issue: $file"
+              body="**File:** $file\n**Rule:** $rule\n**Description:** $description"
+              generate_issue "$title" "$body" "code-quality,phpmd" ""
+            done
+          fi
+
+          for f in snyk-node.json snyk-php.json; do
+            if [ -f "$f" ]; then
+              jq -c '.vulnerabilities[] | select(.severity=="high" or .severity=="critical")' "$f" | while read -r vuln; do
+                package=$(echo "$vuln" | jq -r .packageName)
+                version=$(echo "$vuln" | jq -r .version)
+                severity=$(echo "$vuln" | jq -r .severity)
+                title="Snyk $f Vulnerability: $package@$version"
+                body="**Package:** $package\n**Version:** $version\n**Severity:** $severity\n**Description:** $(echo "$vuln" | jq -r .title)"
+                generate_issue "$title" "$body" "security,snyk" ""
+              done
+            fi
+          done

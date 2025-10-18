@@ -3,6 +3,7 @@
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="vendor/autoload.php"
          colors="true"
+         stopOnFailure="false"
 >
     <testsuites>
         <testsuite name="Unit">
@@ -12,6 +13,15 @@
             <directory>tests/Feature</directory>
         </testsuite>
     </testsuites>
+    <logging>
+        <log type="junit" target="junit.xml" />
+        <log type="coverage-clover" target="storage/logs/clover.xml"/>
+    </logging>
+    <coverage processUncoveredFiles="true">
+        <include>
+            <directory>./app</directory>
+        </include>
+    </coverage>
     <source>
         <include>
             <directory>app</directory>

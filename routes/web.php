@@ -8,6 +8,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\RatingController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\SonarWebhookController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
@@ -84,6 +85,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/@{username}/voted-data', 'getUserVotedPosts')->name('profile.voted.data');
         Route::post('/profile/generate-picture', 'generateProfilePicture')->name('profile.picture.generate');
     });
+
+    Route::post('/heartbeat', [UserController::class, 'heartbeat'])->name('user.heartbeat');
+    Route::post('/logoff', [UserController::class, 'logoff'])->name('user.logoff');
 
     Route::delete('profile/deactivate', [UserController::class, 'deactivate'])
         ->middleware(['auth', 'password.confirm'])
@@ -216,3 +220,5 @@ Route::get('/__netdebug', function (): JsonResponse {
         'scheme' => request()->getScheme(),
     ]);
 });
+
+Route::post('/webhooks/sonar', [SonarWebhookController::class, 'handle'])->name('webhooks.sonar');
