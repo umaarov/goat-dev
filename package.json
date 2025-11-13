@@ -39,7 +39,7 @@
         "laravel-vite-plugin": "^2.0.1",
         "probot": "^14.1.0",
         "pusher-js": "^8.4.0",
-        "tailwindcss": "^4.1.15",
-        "vite": "^7.1.11"
+        "tailwindcss": "^4.1.17",
+        "vite": "^7.2.2"
     }
 }
