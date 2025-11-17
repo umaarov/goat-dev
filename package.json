@@ -35,11 +35,23 @@
         "danger": "^13.0.4",
         "dotenv-cli": "^10.0.0",
         "eslint": "^9.37.0",
+        "husky": "^9.1.7",
         "laravel-echo": "^2.2.4",
         "laravel-vite-plugin": "^2.0.1",
+        "lint-staged": "^16.2.6",
         "probot": "^14.1.0",
         "pusher-js": "^8.4.0",
         "tailwindcss": "^4.1.15",
         "vite": "^7.1.11"
+    },
+    "lint-staged": {
+        "*.php": "composer pint",
+        "resources/js/**/*.js": "npm run lint:fix"
+    },
+    "husky": {
+        "hooks": {
+            "pre-commit": "npx lint-staged",
+            "pre-push": "php artisan test"
+        }
     }
 }
