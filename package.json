@@ -25,7 +25,7 @@
         "@types/stats.js": "^0.17.4",
         "lil-gui": "^0.21.0",
         "stats.js": "^0.17.0",
-        "three": "^0.180.0"
+        "three": "^0.181.1"
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3.3.1",
@@ -33,7 +33,7 @@
         "axios": "^1.12.2",
         "concurrently": "^9.2.1",
         "danger": "^13.0.4",
-        "dotenv-cli": "^10.0.0",
+        "dotenv-cli": "^11.0.0",
         "eslint": "^9.37.0",
         "husky": "^9.1.7",
         "laravel-echo": "^2.2.4",
