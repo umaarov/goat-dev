@@ -10,7 +10,7 @@
         "ext-curl": "*",
         "ext-fileinfo": "*",
         "ext-gd": "*",
-        "abraham/twitteroauth": "^7.0",
+        "abraham/twitteroauth": "^7.0 || ^8.0",
         "google/apiclient": "^2.18",
         "intervention/image": "^3.11",
         "jenssegers/agent": "^2.6",
