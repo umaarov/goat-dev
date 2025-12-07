@@ -11,6 +11,7 @@
 [![Status](https://img.shields.io/badge/Status-Active_Development-success)]()
 
 *
+
 *[Live Demo](https://www.goat.uz) • [Documentation](docs/goat_doc_en.pdf) • [Report Bug](https://github.com/umaarov/goat-dev/issues)
 **
 
@@ -61,13 +62,13 @@ rendering) are offloaded to **Web Workers** and **WebAssembly (C/C++)** modules 
 
 ## 🛠️ Technology Stack
 
-| Domain | Technologies |
-| :--- | :--- |
-| **Backend** | PHP 8.3+, Laravel 12, MariaDB, Redis, FrankenPHP (Caddy) |
-| **Frontend** | Alpine.js, Tailwind CSS, Three.js, Blade Templates, Vite |
-| **System** | Docker, Supervisor, WebAssembly (Emscripten), C/C++, GLSL |
-| **AI Services** | Google Gemini API, Stable Diffusion (Cloudflare Workers) |
-| **Realtime** | Pusher (WebSockets), Laravel Echo |
+| Domain          | Technologies                                              |
+|:----------------|:----------------------------------------------------------|
+| **Backend**     | PHP 8.3+, Laravel 12, MariaDB, Redis, FrankenPHP (Caddy)  |
+| **Frontend**    | Alpine.js, Tailwind CSS, Three.js, Blade Templates, Vite  |
+| **System**      | Docker, Supervisor, WebAssembly (Emscripten), C/C++, GLSL |
+| **AI Services** | Google Gemini API, Stable Diffusion (Cloudflare Workers)  |
+| **Realtime**    | Pusher (WebSockets), Laravel Echo                         |
 
 ---
 
@@ -75,27 +76,27 @@ rendering) are offloaded to **Web Workers** and **WebAssembly (C/C++)** modules 
 
 ```mermaid
 graph TD
-    User["End User (Browser/PWA)"] -->|HTTP/3| Cloudflare["Cloudflare Edge Layer"]
-    Cloudflare -->|" Secure Origin "| Server["Web Server & Process Manager"]
+    User["Client Presentation Layer (PWA / Alpine.js)"] -->|HTTP/3 QUIC + TLS 1 . 3| Cloudflare["Edge Network (CDN / WAF / DDoS)"]
+    Cloudflare -->|" Strict SSL Upstream "| Server["Runtime Environment (FrankenPHP / Caddy)"]
 
-    subgraph "Application Host"
-        Server["Caddy with FrankenPHP"] -->|FastCGI| App["Laravel 12 Application Core"]
+    subgraph "Application Host Container"
+        Server -->|" Direct SAPI / Worker Mode "| App["Monolithic Core (Laravel 12 / Service Container)"]
     end
 
-    subgraph "Data & Async Layer"
-        App -->|Queries| DB[("MariaDB")]
-        App -->|" Cache/Session "| Redis[("Redis")]
-        Redis -->|Jobs| Workers["Supervisor & Queue Workers"]
+    subgraph "Persistence & State Layer"
+        App -->|" Eloquent ORM / SQL "| DB[("Primary Persistence (MariaDB)")]
+        App -->|" Atomic I/O Operations "| Redis[("In-Memory State (Redis)")]
+        Redis -->|" Event Bus / Job Queue "| Workers["Asynchronous Workers (Supervisor)"]
     end
 
-    subgraph "External Services"
-        App -->|API| AI["Google Gemini & Cloudflare AI"]
-        App -->|Auth| Social["Social OAuth Providers"]
+    subgraph "External Integration Interface"
+        App -->|" Inference Request (REST) "| AI["Generative AI Gateway (Gemini / Cloudflare)"]
+        App -->|" OIDC / OAuth2 Flow "| Social["Identity Providers (GitHub / Google)"]
     end
 
-    subgraph "Client Side Optimization"
-        User -->|" Off-Main Thread "| WebWorker["Web Workers"]
-        WebWorker -->|Compute| WASM["WebAssembly C++"]
+    subgraph "Client-Side Compute Offload"
+        User -->|" Async Message Passing "| WebWorker["Parallel Threading (Web Workers)"]
+        WebWorker -->|" Binary Execution (FFI) "| WASM["Native Compute Modules (C++ / WASM)"]
     end
 ```
 
@@ -158,12 +159,12 @@ graph TD
 
 The application relies on several external services. Ensure these are set in your `.env` file:
 
-| Variable | Description |
-| :--- | :--- |
-| `GEMINI_API_KEY` | Required for AI moderation and chat features. |
+| Variable               | Description                                          |
+|:-----------------------|:-----------------------------------------------------|
+| `GEMINI_API_KEY`       | Required for AI moderation and chat features.        |
 | `CLOUDFLARE_API_TOKEN` | Required for AI image generation (Stable Diffusion). |
-| `GOOGLE_CLIENT_ID` | OAuth Client ID for Google Login. |
-| `PUSHER_APP_KEY` | Required for real-time notifications/broadcasting. |
+| `GOOGLE_CLIENT_ID`     | OAuth Client ID for Google Login.                    |
+| `PUSHER_APP_KEY`       | Required for real-time notifications/broadcasting.   |
 
 *See `.env.example` for the full list of available variables.*
 
