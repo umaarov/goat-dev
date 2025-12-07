@@ -1,241 +1,212 @@
-# GOAT: The Next-Generation Social Debate Platform
+# GOAT - Social Debate Platform
 
-![GOAT Banner](./public/images/preview.png)
+![GOAT Banner](public/images/preview.png)
 
-### [Live Demo: goat.uz](https://www.goat.uz)
+<div align="center">
 
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support%20us-orange?style=for-the-badge&logo=buy-me-a-coffee)](https://www.buymeacoffee.com/umarov)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![PHP Version](https://img.shields.io/badge/PHP-8.3%2B-777BB4?logo=php&logoColor=white)](https://php.net/)
+[![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?logo=laravel&logoColor=white)](https://laravel.com)
+[![FrankenPHP](https://img.shields.io/badge/FrankenPHP-HTTP%2F3-purple)](https://frankenphp.dev/)
+[![Status](https://img.shields.io/badge/Status-Active_Development-success)]()
 
-**GOAT** is a hyper-performance, feature-rich social debate application engineered on **Laravel 12**. Designed for scalability and security, it provides a robust platform for intelligent, user-driven discussions. The architecture leverages a modern, containerized stack with **Docker** and **FrankenPHP**, and integrates a suite of cutting-edge technologies, including a hybrid AI strategy for content moderation and generation, and a high-fidelity real-time 3D engine for a uniquely engaging user experience.
+*
+*[Live Demo](https://www.goat.uz) • [Documentation](docs/goat_doc_en.pdf) • [Report Bug](https://github.com/umaarov/goat-dev/issues)
+**
 
----
-
-## Table of Contents
-
-- [Key Features & Technical Highlights](#key-features--technical-highlights)
-- [Technology Stack](#technology-stack)
-- [Getting Started: Local Development](#getting-started-local-development)
-    - [Prerequisites](#prerequisites)
-    - [Recommended: Docker Installation](#recommended-docker-installation)
-    - [Manual Installation](#manual-installation)
-- [Environment Configuration](#environment-configuration)
-- [Artisan Command Suite](#artisan-command-suite)
-- [Show Your Support](#show-your-support)
-- [Contributing](#contributing)
-- [License](#license)
+</div>
 
 ---
 
-## Key Features & Technical Highlights
+## 📖 Introduction
 
-GOAT is built with a focus on enterprise-grade performance, security, and a premium, responsive user experience.
+**GOAT** is a mission-critical, open-source social platform engineered from the ground up for structured, high-quality
+debate. Unlike traditional social media, it focuses on intelligent discourse, utilizing a hybrid architecture to solve
+common problems like low-quality content and ineffective discovery.
 
-* **Advanced Hybrid Search Engine**
-  A sophisticated search system powered by a hybrid algorithm combining **BM25** full-text relevance, **Vector** similarity search, **Levenshtein distance** for fuzzy matching, and **Soundex** phonetic analysis. This delivers exceptionally accurate and relevant results for both platform content and users.
-
-* **Multi-Provider Generative AI Suite**
-    * **Content Moderation:** A robust pipeline leveraging **Google's Gemini Pro API** for real-time analysis of all user-generated content, augmented by a local keyword filter.
-    * **Dynamic Asset Generation:** Empowers users to generate unique profile pictures from text prompts using a **Stable Diffusion AI** model, served via the **Cloudflare AI Workers API**.
-
-* **High-Fidelity 3D Rendering Engine**
-  A sophisticated **Three.js/WebGL** engine renders interactive 3D achievement badges in a dedicated **Web Worker**, offloading heavy computation from the main thread. The engine features advanced post-processing effects (**Bloom, SSR, SSAO, God Rays**), **HDRI lighting**, and `ACESFilmicToneMapping` for photorealistic visuals.
-
-* **WebAssembly (WASM) & C++ Optimization**
-  Performance-critical geometry calculations for the 3D engine are handled by **C/C++ modules compiled to WebAssembly** via Emscripten. This delivers near-native speed for complex computations directly in the browser, ensuring a smooth UI.
-
-* **Progressive Web App (PWA)**
-  Fully installable as a PWA for an app-like experience on desktop and mobile, with offline access capabilities and enhanced performance thanks to service worker caching.
-
-* **Hardened Security & Authentication**
-    * **Multi-Provider OAuth2:** Secure login via local credentials, **Google, GitHub, X (Twitter), and Telegram**.
-    * **Robust Auth System:** Implements a **Refresh Token** system using **Laravel Sanctum** for persistent, secure sessions.
-    * **Best Practices:** Enforces a strict **Content Security Policy (CSP)**, HSTS, and other security headers. Protected against common vulnerabilities with rate limiting, signed URLs, and `Bcrypt` hashing.
-    * **Static Analysis:** Continuously scanned for vulnerabilities and code quality issues using **SonarCloud, Snyk, and Trivy**.
-
-* **Performance-Optimized Architecture**
-    * **Server:** Built to run on high-performance servers like **FrankenPHP** (with **Caddy**) for HTTP/2 & HTTP/3 support, or traditional stacks like Nginx/Apache with Supervisor.
-    * **Caching:** Leverages **Redis** for application caching, queues, and session storage. Uses **Spatie ResponseCache** for intelligent full-page caching.
-    * **Frontend:** Delivers a lightning-fast experience with **Initial Server-Side Render (SSR) with Client-side Hydration**, LQIP (Low-Quality Image Placeholders) with shimmer effects, asynchronous CSS loading, and asset preloading.
-
-* **DevOps & Automation**
-    * **Containerized Environment:** Ships with a full **Docker Compose** setup including multi-stage builds for lightweight production images.
-    * **CI/CD Ready:** Includes a `Makefile` for streamlined build, test, and deployment automation.
-    * **Feature Flags:** Utilizes a custom **GitHub-based feature flag system** to safely roll out new functionality in production.
-
-* **Advanced SEO & Monetization**
-    * **Deep SEO Integration:** Automated sitemap generation (including Google Image Sitemaps) with ping submissions to Google/Bing. Implements structured data (JSON-LD), `hreflang` tags, and canonical URLs. Integrates with the **Google Search Console (GSC) API**.
-    * **Monetization Ready:** Pre-configured for **Google AdSense** and **Ezoic**, with an integrated **Consent Management Platform (CMP)** for GDPR compliance.
-
-* **Comprehensive Admin Toolkit**
-  Includes a suite of custom Artisan commands for database cleanup, sitemap generation, image optimization, and `netdebug` for API health checks. Also features an advanced, filterable command-line log viewer.
+Under the hood, GOAT is a high-performance monolith built on **Laravel 12** and **FrankenPHP**, utilizing **HTTP/3** for
+speed. It features a rich frontend with **Alpine.js** and **Three.js**, where computationally expensive tasks (like 3D
+rendering) are offloaded to **Web Workers** and **WebAssembly (C/C++)** modules to ensure a fluid 60fps experience.
 
 ---
 
-## Technology Stack
+## 🚀 Key Features & Technical Highlights
 
-The project is implemented using a curated selection of modern, powerful, and scalable technologies.
+### Core Platform
 
-* **Core Backend:** PHP 8.3+, Laravel 12, MariaDB, Redis
-* **Core Frontend:** JavaScript (ES6+), Three.js (WebGL), Alpine.js, Tailwind CSS, Vite
-* **High-Performance & Interop:** C/C++ compiled to WebAssembly (WASM), GLSL
-* **Server & Deployment:** **FrankenPHP (Caddy)**, **Docker**, Docker Compose, Supervisor, Nginx/Apache
-* **APIs & Services:** Google (Gemini, OAuth, AdSense, GSC), Cloudflare AI, Social APIs (X, Instagram, Telegram), Ezoic
-* **Key Libraries:** GuzzleHttp, Intervention Image, Predis, Spatie Packages (CSP, ResponseCache, Sitemap), nlohmann/json
-* **Tooling & Quality:** Composer, npm, Git, Makefile, **SonarCloud**, **Snyk**, **Trivy**, ESLint, Barryvdh Debugbar, Laravel Pulse
+* **Hybrid Search Engine:** A sophisticated search system combining **BM25**, **Vector Similarity**, **Levenshtein
+  distance**, and **Soundex** to understand user intent and deliver accurate results.
+* **Structured Debates:** Asynchronous, text-based debate system with nested arguments and rate-limited voting to ensure
+  fair participation.
+* **Gamification:** Unique interactive 3D achievement badges rendered in real-time via WebGL/Three.js.
+
+### 🤖 AI Integration
+
+* **Content Moderation:** Powered by **Google Gemini Pro**. Automatically detects spam, toxicity, and low-effort
+  content.
+* **Generative Assets:** Users can generate custom profile pictures using text prompts via **Stable Diffusion** (powered
+  by Cloudflare AI Workers).
+* **Smart Insights:** AI-generated summaries and context for complex debate threads.
+
+### ⚡ Performance Engineering
+
+* **FrankenPHP & HTTP/3:** Runs as a persistent application server using Caddy with FrankenPHP for high-throughput and
+  native HTTP/3 support.
+* **WASM & C++:** Performance-critical geometry calculations for the 3D engine are handled by **C/C++ modules compiled
+  to WebAssembly**.
+* **Edge Security:** Integrated with Cloudflare for DDoS mitigation, WAF, and global CDN asset caching.
+* **PWA Ready:** Fully installable Progressive Web App for a seamless desktop and mobile experience.
 
 ---
 
-## Getting Started: Local Development
+## 🛠️ Technology Stack
+
+| Domain | Technologies |
+| :--- | :--- |
+| **Backend** | PHP 8.3+, Laravel 12, MariaDB, Redis, FrankenPHP (Caddy) |
+| **Frontend** | Alpine.js, Tailwind CSS, Three.js, Blade Templates, Vite |
+| **System** | Docker, Supervisor, WebAssembly (Emscripten), C/C++, GLSL |
+| **AI Services** | Google Gemini API, Stable Diffusion (Cloudflare Workers) |
+| **Realtime** | Pusher (WebSockets), Laravel Echo |
+
+---
+
+## 🧩 System Architecture
+
+```mermaid
+graph TD
+    User["End User (Browser/PWA)"] -->|HTTP/3| Cloudflare["Cloudflare Edge Layer"]
+    Cloudflare -->|" Secure Origin "| Server["Web Server & Process Manager"]
+
+    subgraph "Application Host"
+        Server["Caddy with FrankenPHP"] -->|FastCGI| App["Laravel 12 Application Core"]
+    end
+
+    subgraph "Data & Async Layer"
+        App -->|Queries| DB[("MariaDB")]
+        App -->|" Cache/Session "| Redis[("Redis")]
+        Redis -->|Jobs| Workers["Supervisor & Queue Workers"]
+    end
+
+    subgraph "External Services"
+        App -->|API| AI["Google Gemini & Cloudflare AI"]
+        App -->|Auth| Social["Social OAuth Providers"]
+    end
+
+    subgraph "Client Side Optimization"
+        User -->|" Off-Main Thread "| WebWorker["Web Workers"]
+        WebWorker -->|Compute| WASM["WebAssembly C++"]
+    end
+```
+
+## ⚡ Getting Started
 
 ### Prerequisites
 
 * **Docker & Docker Compose** (Recommended)
-* OR a manual setup with:
-    * PHP >= 8.3
-    * Composer
-    * Node.js & npm
-    * MariaDB (or MySQL)
-    * Redis
-    * **Emscripten SDK**: Required for compiling the C++ to WASM module. Follow the [official installation guide](https://emscripten.org/docs/getting_started/downloads.html).
+* **Node.js** & **NPM**
+* **Emscripten SDK** (Only required if re-compiling C++ WASM modules)
 
-### Recommended: Docker Installation
+### Installation (Docker)
 
-This is the fastest way to get a consistent development environment up and running.
+1. **Clone the repository**
+   ```bash
+   git clone [https://github.com/umaarov/goat-dev.git](https://github.com/umaarov/goat-dev.git)
+   cd goat-dev
+   ```
 
-1.  **Clone the repository:**
-    ```sh
-    git clone [https://github.com/umaarov/goat-dev.git](https://github.com/umaarov/goat-dev.git)
-    cd goat-dev
-    ```
-2.  **Set up your environment:**
-    ```sh
-    cp .env.example .env
-    ```
-    * *Update the `.env` file with your API keys and configuration (see table below).*
+2. **Configure Environment**
+   ```bash
+   cp .env.example .env
+   ```
+   *Update `.env` with your database credentials and API keys (Google, Cloudflare, etc).*
 
-3.  **Build and run the containers:**
-    ```sh
-    docker-compose up -d --build
-    ```
-4.  **Finalize installation:**
-    ```sh
-    docker-compose exec app composer install
-    docker-compose exec app php artisan key:generate
-    docker-compose exec app php artisan migrate
-    docker-compose exec app npm install
-    docker-compose exec app bash build.sh # Compile WASM
-    docker-compose exec app npm run build
-    ```
-5.  Your application is now running! Access it at `http://localhost`.
+3. **Start Application**
+   ```bash
+   docker-compose up -d --build
+   ```
 
-### Manual Installation
+4. **Install Dependencies & Setup**
+   ```bash
+   # Install PHP dependencies
+   docker-compose exec app composer install
 
-1.  **Clone the repository** and `cd` into it.
-2.  **Install PHP dependencies:** `composer install`
-3.  **Install Node.js dependencies:** `npm install`
-4.  **Set up your environment:** `cp .env.example .env` then `php artisan key:generate`
-5.  **Configure `.env`:** Add your database, Redis, API keys, etc.
-6.  **Run migrations:** `php artisan migrate`
-7.  **Compile WASM:** Activate Emscripten SDK and run `bash build.sh`
-8.  **Build frontend assets:** `npm run build`
-9.  **Run development servers:**
-    * `php artisan serve` (or configure FrankenPHP/Nginx)
-    * `npm run dev` (for Vite HMR)
-10. **Configure Task Scheduler (Production):**
-    ```sh
-    * * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1
-    ```
+   # Generate Key & Migrate
+   docker-compose exec app php artisan key:generate
+   docker-compose exec app php artisan migrate --seed
+
+   # Install Node dependencies
+   docker-compose exec app npm install
+   ```
+
+5. **Compile Assets & WASM**
+   ```bash
+   # Build Frontend
+   docker-compose exec app npm run build
+
+   # Compile C++ to WASM (requires Emscripten environment)
+   # Ensure source variables are set if running manually
+   docker-compose exec app bash build.sh
+   ```
+
+6. **Access the App**
+    * Open `http://localhost:8000` (or your configured port).
 
 ---
 
-## Environment Configuration
+## ⚙️ Environment Configuration
 
-The following `.env` variables are critical for the application's full functionality.
+The application relies on several external services. Ensure these are set in your `.env` file:
 
-| Variable | Description | Required |
-|---|---|:---:|
-| `DB_CONNECTION` | The database driver (e.g., `mysql`). | ✅ |
-| `DB_HOST` | The database host. | ✅ |
-| `DB_PORT` | The database port. | ✅ |
-| `DB_DATABASE` | The database schema name. | ✅ |
-| `DB_USERNAME` | The database user. | ✅ |
-| `DB_PASSWORD` | The database user's password. | ✅ |
-| `REDIS_HOST` | The Redis server host. | ✅ |
-| `REDIS_PASSWORD` | The Redis password. | |
-| `REDIS_PORT` | The Redis port. | ✅ |
-| `GOOGLE_CLIENT_ID` | OAuth Client ID from Google Cloud. | ✅ |
-| `GOOGLE_CLIENT_SECRET` | OAuth Client Secret from Google Cloud. | ✅ |
-| `GEMINI_API_KEY` | API key for the Google Gemini AI service. | ✅ |
-| `CLOUDFLARE_ACCOUNT_ID`| Cloudflare Account ID for AI services. | ✅ |
-| `CLOUDFLARE_API_TOKEN` | Cloudflare API Token with AI Workers permissions.| ✅ |
-| `GITHUB_CLIENT_ID` | OAuth Client ID from GitHub. | |
-| `GITHUB_CLIENT_SECRET` | OAuth Client Secret from GitHub. | |
-| `X_CLIENT_ID` | OAuth Client ID from X (Twitter). | |
-| `X_CLIENT_SECRET` | OAuth Client Secret from X (Twitter). | |
-| `TELEGRAM_BOT_TOKEN` | Your Telegram Bot token for login/API. | |
-| `MAIL_MAILER` | The mail driver (e.g., `smtp`). | ✅ |
-| `MAIL_HOST` | The SMTP server host. | ✅ |
-| `MAIL_USERNAME` | The SMTP username for authentication. | ✅ |
-| `MAIL_PASSWORD` | The SMTP password for authentication. | ✅ |
+| Variable | Description |
+| :--- | :--- |
+| `GEMINI_API_KEY` | Required for AI moderation and chat features. |
+| `CLOUDFLARE_API_TOKEN` | Required for AI image generation (Stable Diffusion). |
+| `GOOGLE_CLIENT_ID` | OAuth Client ID for Google Login. |
+| `PUSHER_APP_KEY` | Required for real-time notifications/broadcasting. |
+
+*See `.env.example` for the full list of available variables.*
 
 ---
 
-## Artisan Command Suite
+## 💻 Artisan Command Suite
 
-The application provides a powerful set of custom commands for system administration and maintenance.
+The project includes custom commands for maintenance and administration:
 
-### `users:cleanup-unverified`
-Deletes unverified user accounts after a configured timeframe (default: 1 hour).
-* **Usage**: `php artisan users:cleanup-unverified`
-* **Schedule**: Runs every ten minutes.
-
-### `sitemap:generate`
-Generates a fresh `sitemap.xml` (with image extensions) and pings Google/Bing.
-* **Usage**: `php artisan sitemap:generate`
-* **Schedule**: Runs daily at 02:00.
-
-### `images:optimize`
-Batch-processes existing JPEG/PNG images, converting them to the high-efficiency WebP format.
-* **Usage**: `php artisan images:optimize`
-
-### `app:show-logs`
-An advanced, interactive terminal log viewer.
-* **Usage**: `php artisan app:show-logs [options]`
-* **Options**: `--lines`, `--channel`, `--date`, `--grep`, `--tail`
-
-### `app:netdebug`
-A network utility to diagnose connectivity issues with external APIs (e.g., Google, Cloudflare).
-* **Usage**: `php artisan app:netdebug`
+* `php artisan users:cleanup-unverified` - Removes stale user accounts.
+* `php artisan sitemap:generate` - Rebuilds SEO sitemaps and pings search engines.
+* `php artisan images:optimize` - Converts uploaded assets to WebP.
+* `php artisan app:netdebug` - Diagnoses connectivity to external APIs.
 
 ---
 
-## Show Your Support
+## 📚 Documentation
 
-If you find this project useful, please consider giving it a star on GitHub!
+Detailed documentation is available in the `docs/` directory:
 
-[![Star History Chart](https://api.star-history.com/svg?repos=umaarov/goat-dev&type=Date)](https://star-history.com/#umaarov/goat-dev)
-
----
-
-## Contributing
-
-Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-1.  Fork the Project.
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`).
-3.  Commit your Changes (`git commit -m 'feat: Add some AmazingFeature'`). We follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
-4.  Push to the Branch (`git push origin feature/AmazingFeature`).
-5.  Open a Pull Request.
+* [**Project Documentation**](docs/goat_doc_en.pdf) - Full system overview and specs.
+* [**UI/UX Design**](docs/goat_ui.pdf) - Visual mockups and flow.
+* [**Database Schema**](docs/goat_db.pdf) - ER diagrams and table structures.
 
 ---
 
-## Documentation
-* The main project documentation for GOAT can be found at [/docs/goat_doc_en.pdf](https://github.com/umaarov/goat-dev/blob/master/docs/goat_doc_en.pdf).
-* The full User Interface mockups and design specifications for the platform can be found at [/docs/goat_ui.pdf](https://github.com/umaarov/goat-dev/blob/master/docs/goat_ui.pdf).
-* The complete, advanced database schema for the application is detailed in [/docs/goat_db.pdf](https://github.com/umaarov/goat-dev/blob/master/docs/goat_db.pdf).
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+Distributed under the **MIT License**. See `LICENSE` for more information.
+
+## 🌟 Support
+
+If you find this project useful, please give it a Star! ⭐
 
 ---
-
-## License
-
-This project is open-source software distributed under the MIT License. See `LICENSE` for more information.
+*Lead Developer: [Ismoiljon Umarov](https://linkedin.com/in/umaarov)*
