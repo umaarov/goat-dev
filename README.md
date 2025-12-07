@@ -10,11 +10,8 @@
 [![FrankenPHP](https://img.shields.io/badge/FrankenPHP-HTTP%2F3-purple)](https://frankenphp.dev/)
 [![Status](https://img.shields.io/badge/Status-Active_Development-success)]()
 
-*
 
-*[Live Demo](https://www.goat.uz) • [Documentation](docs/goat_doc_en.pdf) • [Report Bug](https://github.com/umaarov/goat-dev/issues)
-**
-
+**[Live Demo](https://www.goat.uz) • [Documentation](docs/goat_doc_en.pdf) • [Report Bug](https://github.com/umaarov/goat-dev/issues)**
 </div>
 
 ---
