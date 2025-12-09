@@ -15,9 +15,9 @@ FROM composer:2 AS backend_builder
 WORKDIR /app
 
 COPY composer.json composer.lock ./
+COPY app ./app
+COPY database ./database
 RUN composer install --no-dev --ignore-platform-reqs --no-interaction --prefer-dist --optimize-autoloader
-
-# Production Runtime
 FROM dunglas/frankenphp:php8.3-alpine
 
 RUN install-php-extensions \
