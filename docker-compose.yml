@@ -1,16 +1,45 @@
 services:
+    traefik:
+        image: traefik:v3.0
+        restart: always
+        command:
+            - "--api.insecure=true"
+            - "--providers.docker=true"
+            - "--providers.docker.exposedbydefault=false"
+            - "--entrypoints.web.address=:80"
+            - "--entrypoints.websecure.address=:443"
+            # - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+            # - "--certificatesresolvers.myresolver.acme.email=hs.umarov21@gmail.com"
+            # - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+        ports:
+            - "80:80"
+            - "443:443"
+            - "8080:8080"
+        volumes:
+            - "/var/run/docker.sock:/var/run/docker.sock:ro"
+            - "./letsencrypt:/letsencrypt"
+        networks:
+            - goat-network
     app:
         build:
             context: .
             dockerfile: Dockerfile
         image: goat-app:latest
-        ports:
-            - "8000:80"
-            - "443:443"
-            - "443:443/udp"
+        restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    cpus: '1.0'
+                    memory: 1G
+#        ports:
+#            - "8000:80"
+#            - "443:443"
+#            - "443:443/udp"
         environment:
             APP_ENV: production
             APP_DEBUG: false
+            SERVER_NAME: ":80"
+            TRUSTED_PROXIES: "*"
             APP_KEY: ${APP_KEY}
             DB_CONNECTION: mysql
             DB_HOST: db
@@ -35,6 +64,12 @@ services:
             - redis
         networks:
             - goat-network
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.app.rule=Host(`localhost`) || Host(`goat.uz`)"
+            - "traefik.http.routers.app.entrypoints=web"
+            # - "traefik.http.routers.app.entrypoints=websecure"
+            # - "traefik.http.routers.app.tls.certresolver=myresolver"
         healthcheck:
             test: [ "CMD", "curl", "-f", "http://localhost:80/up" ]
             interval: 30s
