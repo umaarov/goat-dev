@@ -1,1 +1,12 @@
+.git
+.idea
+.vscode
+node_modules
+vendor
+public/build
 public/storage
+.env
+docker-compose.yml
+Dockerfile
+bootstrap/cache/*.php
+storage/framework/views/*.php

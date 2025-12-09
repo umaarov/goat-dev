@@ -9,8 +9,8 @@ services:
             - "443:443"
             - "443:443/udp"
         environment:
-            APP_ENV: local
-            APP_DEBUG: true
+            APP_ENV: production
+            APP_DEBUG: false
             APP_KEY: ${APP_KEY}
             DB_CONNECTION: mysql
             DB_HOST: db
@@ -22,10 +22,10 @@ services:
             CACHE_STORE: redis
             SESSION_DRIVER: redis
             QUEUE_CONNECTION: redis
-        volumes:
-            - ./:/app
-            - /app/node_modules
-            - /app/vendor
+#        volumes:
+#            - ./:/app
+#            - /app/node_modules
+#            - /app/vendor
         depends_on:
             - db
             - redis

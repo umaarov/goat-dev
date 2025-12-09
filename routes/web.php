@@ -161,9 +161,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('profile.sessions.terminate_all')
         ->middleware('password.confirm');
 
-    Route::delete('/profile/password', [UserController::class, 'removePassword'])
-        ->name('profile.password.remove')
-        ->middleware('password.confirm');
+//    Route::delete('/profile/password', [UserController::class, 'removePassword'])
+//        ->name('profile.password.remove')
+//        ->middleware('password.confirm');
 
 });
 

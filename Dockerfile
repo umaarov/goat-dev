@@ -17,7 +17,8 @@ WORKDIR /app
 COPY composer.json composer.lock ./
 COPY app ./app
 COPY database ./database
-RUN composer install --no-dev --ignore-platform-reqs --no-interaction --prefer-dist --optimize-autoloader
+RUN #composer install --no-dev --ignore-platform-reqs --no-interaction --prefer-dist --optimize-autoloader
+RUN composer install --no-dev --ignore-platform-reqs --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 FROM dunglas/frankenphp:php8.3-alpine
 
 RUN install-php-extensions \
@@ -40,6 +41,8 @@ ENV SERVER_NAME=":80"
 
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
+
+RUN rm -f /app/bootstrap/cache/*.php
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]
