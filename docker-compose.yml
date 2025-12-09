@@ -35,6 +35,12 @@ services:
             - redis
         networks:
             - goat-network
+        healthcheck:
+            test: [ "CMD", "curl", "-f", "http://localhost:80/up" ]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 10s
 
     worker:
         image: goat-app:latest
@@ -80,6 +86,11 @@ services:
     db:
         image: mysql:8.0
         restart: always
+        deploy:
+            resources:
+                limits:
+                    cpus: '1.0'
+                    memory: 1G
         ports:
             - "${DB_PORT}:3306"
         environment:
@@ -102,6 +113,22 @@ services:
         command: redis-server --appendonly yes
         volumes:
             - goat-redis-data:/data
+        networks:
+            - goat-network
+
+    pulse:
+        image: goat-app:latest
+        restart: unless-stopped
+        command: php artisan pulse:check
+        environment:
+            APP_ENV: production
+            DB_CONNECTION: mysql
+            DB_HOST: db
+            REDIS_HOST: redis
+            REDIS_CLIENT: phpredis
+        depends_on:
+            - db
+            - redis
         networks:
             - goat-network
 
