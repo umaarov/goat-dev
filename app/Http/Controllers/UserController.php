@@ -650,18 +650,18 @@ class UserController extends Controller
                 }
             }
             $data['profile_picture'] = $this->avatarService->generateInitialsAvatar(
+                $user->id,
                 $data['first_name'],
                 $data['last_name'] ?? '',
-                $user->id
             );
         } elseif ($nameChanged && (!$user->profile_picture || str_contains($user->profile_picture, 'initial_'))) {
             if ($user->profile_picture && !filter_var($user->profile_picture, FILTER_VALIDATE_URL) && Storage::disk('public')->exists($user->profile_picture)) {
                 Storage::disk('public')->delete($user->profile_picture);
             }
             $data['profile_picture'] = $this->avatarService->generateInitialsAvatar(
+                $user->id,
                 $data['first_name'],
                 $data['last_name'] ?? '',
-                $user->id
             );
         }
 
