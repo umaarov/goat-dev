@@ -3,6 +3,7 @@
 use App\Console\Commands\CleanupUnverifiedUsers;
 use App\Console\Commands\GenerateSitemap;
 use App\Console\Commands\SendPostNotifications;
+use App\Http\Middleware\CheckRefreshToken;
 use App\Http\Middleware\EnsurePasswordIsSet;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
@@ -34,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
 //        $middleware->prepend(EnsureEmailIsVerified::class);
         $middleware->append(SecurityHeaders::class);
         $middleware->web(append: [
+            CheckRefreshToken::class,
             SetLocale::class,
 //            AddCspHeaders::class,
             UpdateLastActiveTimestamp::class,
