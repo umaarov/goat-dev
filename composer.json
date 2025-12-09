@@ -25,7 +25,8 @@
         "spatie/laravel-csp": "^3.13",
         "spatie/laravel-responsecache": "^7.7",
         "spatie/laravel-sitemap": "^7.3",
-        "ext-redis": "*"
+        "ext-redis": "*",
+        "ext-pdo": "*"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.15",

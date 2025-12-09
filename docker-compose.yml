@@ -179,21 +179,32 @@ services:
         networks:
             - goat-network
 
-#    pulse:
-#        image: goat-app:latest
-#        restart: unless-stopped
-#        command: php artisan pulse:check
-#        environment:
-#            APP_ENV: production
-#            DB_CONNECTION: mysql
-#            DB_HOST: db
-#            REDIS_HOST: redis
-#            REDIS_CLIENT: phpredis
-#        depends_on:
-#            - db
-#            - redis
-#        networks:
-#            - goat-network
+    #    pulse:
+    #        image: goat-app:latest
+    #        restart: unless-stopped
+    #        command: php artisan pulse:check
+    #        environment:
+    #            APP_ENV: production
+    #            DB_CONNECTION: mysql
+    #            DB_HOST: db
+    #            REDIS_HOST: redis
+    #            REDIS_CLIENT: phpredis
+    #        depends_on:
+    #            - db
+    #            - redis
+    #        networks:
+    #            - goat-network
+    goat-search:
+        build:
+            context: ./packages/goat-search
+            dockerfile: Dockerfile
+        restart: unless-stopped
+        ports:
+            - "9999:9999"
+        networks:
+            - goat-network
+        volumes:
+            - goat-search-data:/app
 
 networks:
     goat-network:
@@ -202,3 +213,4 @@ networks:
 volumes:
     goat-db-data:
     goat-redis-data:
+    goat-search-data:

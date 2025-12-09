@@ -151,7 +151,7 @@ return [
             'persistent' => env('REDIS_PERSISTENT', false),
 //            'serializer' => Redis::SERIALIZER_IGBINARY,
             'serializer' => Redis::SERIALIZER_PHP,
-            'compression' => Redis::COMPRESSION_LZ4,
+            'compression' => Redis::COMPRESSION_NONE,
         ],
 
         'default' => [

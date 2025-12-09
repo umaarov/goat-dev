@@ -8,6 +8,7 @@ use App\Jobs\SharePostToSocialMedia;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\Vote;
+use App\Services\GoatSearchClient;
 use App\Services\GoogleIndexingService;
 use App\Services\LevenshteinService;
 use Exception;
@@ -44,10 +45,13 @@ class PostController extends Controller
     private const MAX_POST_IMAGE_SIZE_MB = self::MAX_POST_IMAGE_SIZE_KB / 1024;
 
     private LevenshteinService $levenshteinService;
+    private GoatSearchClient $searchEngine;
 
-    public function __construct(LevenshteinService $levenshteinService)
+    public function __construct(LevenshteinService $levenshteinService, GoatSearchClient $searchEngine)
     {
         $this->levenshteinService = $levenshteinService;
+        $this->searchEngine = $searchEngine;
+
     }
 
     final public function index(Request $request): View|JsonResponse
@@ -264,6 +268,17 @@ class PostController extends Controller
 
             if ($post->isDirty('ai_generated_context') || $post->isDirty('ai_generated_tags')) {
                 $post->save();
+            }
+            try {
+                $searchContent = $post->question . ' ' .
+                    $post->option_one_title . ' ' .
+                    $post->option_two_title . ' ' .
+                    ($post->ai_generated_tags ?? '');
+
+                $this->searchEngine->index($post->id, $searchContent);
+                // $this->searchEngine->save();
+            } catch (Exception $e) {
+                Log::error("Failed to index post ID {$post->id}: " . $e->getMessage());
             }
 
             $post->refresh();
@@ -951,55 +966,77 @@ class PostController extends Controller
         }
 
         $soundexCode = soundex($queryTerm);
-
-        // --- 1. GET CANDIDATE RESULTS ---
-        $candidatePosts = Post::query()->withPostData()
-            ->where(function (Builder $subQuery) use ($queryTerm, $soundexCode) {
-                $subQuery->where('question', 'LIKE', "%{$queryTerm}%")
-                    ->orWhereRaw('SOUNDEX(question) = ?', [$soundexCode])
-                    ->orWhere('option_one_title', 'LIKE', "%{$queryTerm}%")
-                    ->orWhereRaw('SOUNDEX(option_one_title) = ?', [$soundexCode])
-                    ->orWhere('option_two_title', 'LIKE', "%{$queryTerm}%")
-                    ->orWhereRaw('SOUNDEX(option_two_title) = ?', [$soundexCode])
-                    ->orWhere('ai_generated_tags', 'LIKE', "%{$queryTerm}%")
-                    ->orWhereHas('user', fn(Builder $q) => $q->where('username', 'LIKE', "%{$queryTerm}%"));
-            })
-            ->latest()
-            ->limit(200)
-            ->get();
+        $users = collect();
+        $posts = null;
 
         $candidateUsers = User::query()
             ->where(function (Builder $subQuery) use ($queryTerm, $soundexCode) {
                 $subQuery->where('username', 'LIKE', "%{$queryTerm}%")
-                    ->orWhereRaw('SOUNDEX(username) = ?', [$soundexCode]) // Check phonetic match
+                    ->orWhereRaw('SOUNDEX(username) = ?', [$soundexCode])
                     ->orWhere('first_name', 'LIKE', "%{$queryTerm}%")
                     ->orWhereRaw('SOUNDEX(first_name) = ?', [$soundexCode]);
             })
             ->limit(50)
             ->get();
 
-        $sortedPostsCollection = $this->levenshteinService->findBestMatches(
-            $queryTerm,
-            $candidatePosts,
-            ['question', 'option_one_title', 'option_two_title', 'ai_generated_tags', 'user.username']
-        );
-
         $sortedUsers = $this->levenshteinService->findBestMatches(
             $queryTerm,
             $candidateUsers,
             ['username', 'first_name', 'last_name']
         );
+        $users = $sortedUsers->take(10);
 
-        $currentPage = Paginator::resolveCurrentPage('page');
-        $currentPagePosts = $sortedPostsCollection->slice(($currentPage - 1) * $perPage, $perPage);
+        // GOAT ENGINE
+        try {
+            $ids = $this->searchEngine->search($queryTerm);
 
-        $posts = new \Illuminate\Pagination\LengthAwarePaginator(
-            $currentPagePosts,
-            $sortedPostsCollection->count(),
-            $perPage,
-            $currentPage,
-            ['path' => Paginator::resolveCurrentPath(), 'query' => $request->query()]
-        );
+            if (!empty($ids)) {
+                $idsString = implode(',', $ids);
+
+                $posts = Post::query()->withPostData()
+                    ->whereIn('id', $ids)
+                    ->orderByRaw("FIELD(id, $idsString)")
+                    ->paginate($perPage);
+            }
+        } catch (Exception $e) {
+            Log::error("Goat Engine Search Failed: " . $e->getMessage());
+        }
+
+        // SQL + Levenshtein
+        if (!$posts || $posts->isEmpty()) {
+
+            $candidatePosts = Post::query()->withPostData()
+                ->where(function (Builder $subQuery) use ($queryTerm, $soundexCode) {
+                    $subQuery->where('question', 'LIKE', "%{$queryTerm}%")
+                        ->orWhereRaw('SOUNDEX(question) = ?', [$soundexCode])
+                        ->orWhere('option_one_title', 'LIKE', "%{$queryTerm}%")
+                        ->orWhereRaw('SOUNDEX(option_one_title) = ?', [$soundexCode])
+                        ->orWhere('option_two_title', 'LIKE', "%{$queryTerm}%")
+                        ->orWhereRaw('SOUNDEX(option_two_title) = ?', [$soundexCode])
+                        ->orWhere('ai_generated_tags', 'LIKE', "%{$queryTerm}%")
+                        ->orWhereHas('user', fn(Builder $q) => $q->where('username', 'LIKE', "%{$queryTerm}%"));
+                })
+                ->latest()
+                ->limit(200)
+                ->get();
+
+            $sortedPostsCollection = $this->levenshteinService->findBestMatches(
+                $queryTerm,
+                $candidatePosts,
+                ['question', 'option_one_title', 'option_two_title', 'ai_generated_tags', 'user.username']
+            );
+
+            $currentPage = Paginator::resolveCurrentPage('page');
+            $currentPagePosts = $sortedPostsCollection->slice(($currentPage - 1) * $perPage, $perPage);
+
+            $posts = new \Illuminate\Pagination\LengthAwarePaginator(
+                $currentPagePosts,
+                $sortedPostsCollection->count(),
+                $perPage,
+                $currentPage,
+                ['path' => Paginator::resolveCurrentPath(), 'query' => $request->query()]
+            );
+        }
 
         $this->attachUserVoteStatus($posts);
 
@@ -1013,7 +1050,7 @@ class PostController extends Controller
 
         return view('search.results', [
             'posts' => $posts,
-            'users' => $sortedUsers->take(10),
+            'users' => $users,
             'queryTerm' => $queryTerm
         ]);
     }

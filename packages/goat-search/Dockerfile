@@ -1,13 +1,14 @@
-# ---- Stage 1: The Builder ----
-FROM gcc:latest AS builder
-WORKDIR /app
-COPY ./packages/goat-search/src/cpp/ .
-RUN curl -L -o json.hpp https://github.com/nlohmann/json/releases/latest/download/json.hpp
+FROM alpine:3.19 AS builder
+RUN apk add --no-cache g++ make musl-dev
+
+WORKDIR /source
+COPY src/cpp/ .
 RUN make
 
-# ---- Stage 2: The Final Image ----
-FROM alpine:latest
+FROM alpine:3.19
 WORKDIR /app
-COPY --from=builder /app/build/engine .
+COPY --from=builder /source/build/engine /app/goat-engine
+
 EXPOSE 9999
-CMD ["./engine"]
+
+CMD ["/app/goat-engine"]
