@@ -24,7 +24,8 @@
         "pusher/pusher-php-server": "^7.2",
         "spatie/laravel-csp": "^3.13",
         "spatie/laravel-responsecache": "^7.7",
-        "spatie/laravel-sitemap": "^7.3"
+        "spatie/laravel-sitemap": "^7.3",
+        "ext-redis": "*"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.15",
