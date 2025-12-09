@@ -132,9 +132,9 @@ class AuthController extends Controller
             $profilePicturePath = $request->file('profile_picture')->store('profile_pictures', 'public');
         } else {
             $profilePicturePath = $this->avatarService->generateInitialsAvatar(
+                $user->id,
                 $user->first_name,
-                $user->last_name ?? '',
-                $user->id
+                $user->last_name ?? ''
             );
         }
 
@@ -490,9 +490,9 @@ class AuthController extends Controller
             $user->profile_picture = $googleUser->getAvatar();
         } else {
             $profilePicturePath = $this->avatarService->generateInitialsAvatar(
+                $user->id,
                 $user->first_name,
                 $user->last_name ?? '',
-                $user->id
             );
             $user->profile_picture = $profilePicturePath;
         }
@@ -1080,9 +1080,9 @@ class AuthController extends Controller
             $user->profile_picture = $xUser->getAvatar();
         } else {
             $profilePicturePath = $this->avatarService->generateInitialsAvatar(
+                $user->id,
                 $user->first_name,
                 $user->last_name ?? '',
-                $user->id
             );
             $user->profile_picture = $profilePicturePath;
         }

@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RefreshToken extends Model
 {
-    use HasFactory;
+    use HasFactory, Prunable;
 
     protected $fillable = [
         'user_id',
@@ -27,6 +28,11 @@ class RefreshToken extends Model
     final function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function prunable()
+    {
+        return static::where('expires_at', '<=', now()->subDay());
     }
 
     // final function isExpired(): bool
