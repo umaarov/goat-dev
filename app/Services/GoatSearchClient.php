@@ -37,8 +37,19 @@ class GoatSearchClient
 
     public function search(string $query): array
     {
+        $start = microtime(true);
+
         $payload = json_encode(['query' => $this->sanitize($query)]);
         $response = $this->send("SEARCH $payload");
+
+        $duration = round((microtime(true) - $start) * 1000, 2);
+        $count = is_array($response) ? count($response) : 0;
+
+        if ($count > 0) {
+            Log::channel('single')->info("GOAT ENGINE HIT: Found $count results for '$query' in {$duration}ms");
+        } else {
+            Log::channel('single')->warning("GOAT ENGINE MISS: No results for '$query' ({$duration}ms)");
+        }
 
         return $response ?? [];
     }

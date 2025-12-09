@@ -18,6 +18,11 @@ void handle_connection(int client_socket) {
     read(client_socket, buffer, 8192);
     std::string command_str(buffer);
 
+    if (!command_str.empty()) {
+            std::string log_preview = command_str.substr(0, 50);
+            std::cout << "[ACCESS] Received: " << log_preview << "..." << std::endl;
+        }
+
     std::string response;
     try {
         size_t first_space = command_str.find(' ');
