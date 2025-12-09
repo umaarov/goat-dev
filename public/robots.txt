@@ -1,6 +1,5 @@
 User-agent: *
 
-# Block access to authentication, password reset, and verification routes
 Disallow: /login
 Disallow: /register
 Disallow: /logout
@@ -12,16 +11,10 @@ Disallow: /confirm-password
 
 Disallow: /posts/create
 Disallow: /*/edit$
-
 Disallow: /notifications
-#Disallow: /@{username}/posts-data
-#Disallow: /@{username}/voted-data
-
 Disallow: /check-username
 Disallow: /load-more-posts
 Disallow: /__netdebug
-
-Disallow: /*?*
 
 Allow: /
 
