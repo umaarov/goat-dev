@@ -1,0 +1,204 @@
+services:
+#  traefik:
+#    image: traefik:v3.0
+#    restart: always
+#    command:
+#      - "--api.insecure=true"
+#      - "--providers.docker=true"
+#      - "--providers.docker.exposedbydefault=false"
+#      - "--entrypoints.web.address=:80"
+#      - "--entrypoints.websecure.address=:443"
+#      # - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+#      # - "--certificatesresolvers.myresolver.acme.email=hs.umarov21@gmail.com"
+#      # - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+#    ports:
+#      - "80:80"
+#      - "443:443"
+#      - "8080:8080"
+#    volumes:
+#      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+#      - "./letsencrypt:/letsencrypt"
+#    networks:
+#      - goat-network
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: goat-app:latest
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+    ports:
+      - "8000:80"
+      - "443:443/udp"
+    environment:
+      APP_ENV: production
+      APP_DEBUG: false
+      SERVER_NAME: ":80"
+      TRUSTED_PROXIES: "*"
+      APP_KEY: ${APP_KEY}
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_CLIENT: phpredis
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+    volumes:
+      - ./:/app
+      #            - /app/node_modules
+      #            - /app/vendor
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile
+      - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
+    depends_on:
+      - db
+      - redis
+    networks:
+      - goat-network
+#    labels:
+#      - "traefik.enable=true"
+#      - "traefik.http.routers.app.rule=Host(`localhost`) || Host(`goat.uz`)"
+#      - "traefik.http.routers.app.entrypoints=web"
+#      - "traefik.http.services.app.loadbalancer.server.port=80"
+#      # - "traefik.http.routers.app.entrypoints=websecure"
+#      # - "traefik.http.routers.app.tls.certresolver=myresolver"
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:80/up || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  worker:
+    image: goat-app:latest
+    restart: unless-stopped
+    command: php artisan queue:work --tries=3 --timeout=90
+    healthcheck:
+      disable: true
+      test: [ "CMD-SHELL", "pgrep -f 'php artisan queue:work' || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    environment:
+      APP_ENV: production
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      REDIS_HOST: redis
+      REDIS_CLIENT: phpredis
+      QUEUE_CONNECTION: redis
+      CACHE_STORE: redis
+    volumes:
+      - ./:/app
+      - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
+    depends_on:
+      - db
+      - redis
+    networks:
+      - goat-network
+
+  scheduler:
+    image: goat-app:latest
+    restart: unless-stopped
+    command: php artisan schedule:work
+    healthcheck:
+      disable: true
+      test: [ "CMD-SHELL", "pgrep -f 'php artisan schedule:work' || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+    environment:
+      APP_ENV: production
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      REDIS_HOST: redis
+      REDIS_CLIENT: phpredis
+      QUEUE_CONNECTION: redis
+      CACHE_STORE: redis
+    volumes:
+      - ./:/app
+      - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
+    depends_on:
+      - db
+      - redis
+    networks:
+      - goat-network
+  db:
+    image: mysql:8.0
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+    ports:
+      - "${DB_PORT}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
+      MYSQL_DATABASE: "${DB_DATABASE}"
+      MYSQL_USER: "${DB_USERNAME}"
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
+    volumes:
+      - goat-db-data:/var/lib/mysql
+    networks:
+      - goat-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
+
+  redis:
+    image: redis:alpine
+    restart: always
+    command: redis-server --appendonly yes
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    volumes:
+      - goat-redis-data:/data
+    networks:
+      - goat-network
+
+#    pulse:
+#        image: goat-app:latest
+#        restart: unless-stopped
+#        command: php artisan pulse:check
+#        environment:
+#            APP_ENV: production
+#            DB_CONNECTION: mysql
+#            DB_HOST: db
+#            REDIS_HOST: redis
+#            REDIS_CLIENT: phpredis
+#        depends_on:
+#            - db
+#            - redis
+#        networks:
+#            - goat-network
+
+networks:
+  goat-network:
+    driver: bridge
+
+volumes:
+  goat-db-data:
+  goat-redis-data:
