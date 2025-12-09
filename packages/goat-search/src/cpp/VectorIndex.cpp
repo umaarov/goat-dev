@@ -37,7 +37,7 @@ std::vector<std::pair<int, double>> VectorIndex::search(const std::vector<float>
         return a.second > b.second;
     });
 
-    if (allScores.size() > k) {
+    if (allScores.size() > (size_t)k) {
         allScores.resize(k);
     }
     return allScores;
