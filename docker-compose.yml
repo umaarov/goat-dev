@@ -26,16 +26,60 @@ services:
             QUEUE_CONNECTION: redis
         volumes:
             - ./:/app
-            - /app/node_modules
-            - /app/vendor
+            #            - /app/node_modules
+            #            - /app/vendor
+            - ./docker/Caddyfile:/etc/caddy/Caddyfile
+            - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
         depends_on:
             - db
             - redis
         networks:
             - goat-network
 
+    worker:
+        image: goat-app:latest
+        restart: unless-stopped
+        command: php artisan queue:work --tries=3 --timeout=90
+        environment:
+            APP_ENV: production
+            DB_CONNECTION: mysql
+            DB_HOST: db
+            REDIS_HOST: redis
+            REDIS_CLIENT: phpredis
+            QUEUE_CONNECTION: redis
+            CACHE_STORE: redis
+        volumes:
+            - ./:/app
+            - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
+        depends_on:
+            - db
+            - redis
+        networks:
+            - goat-network
+
+    scheduler:
+        image: goat-app:latest
+        restart: unless-stopped
+        command: php artisan schedule:work
+        environment:
+            APP_ENV: production
+            DB_CONNECTION: mysql
+            DB_HOST: db
+            REDIS_HOST: redis
+            REDIS_CLIENT: phpredis
+            QUEUE_CONNECTION: redis
+            CACHE_STORE: redis
+        volumes:
+            - ./:/app
+            - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
+        depends_on:
+            - db
+            - redis
+        networks:
+            - goat-network
     db:
         image: mysql:8.0
+        restart: always
         ports:
             - "${DB_PORT}:3306"
         environment:
@@ -54,6 +98,8 @@ services:
 
     redis:
         image: redis:alpine
+        restart: always
+        command: redis-server --appendonly yes
         volumes:
             - goat-redis-data:/data
         networks:

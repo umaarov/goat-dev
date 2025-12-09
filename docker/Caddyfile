@@ -1,0 +1,21 @@
+{
+    frankenphp
+    order php_server before file_server
+}
+
+:80 {
+    root * /app/public
+    encode zstd gzip
+
+    php_server {
+                   resolve_root_symlink
+               }
+
+    @static {
+                file
+                path *.ico *.css *.js *.gif *.jpg *.jpeg *.png *.svg *.woff *.woff2
+            }
+    header @static Cache-Control "max-age=31536000"
+
+    file_server
+}
