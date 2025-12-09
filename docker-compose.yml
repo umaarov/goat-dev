@@ -1,85 +1,66 @@
 services:
-    # 1. The Application
     app:
         build:
             context: .
-            dockerfile: docker/app/Dockerfile
-            args:
-                PUID: ${PUID:-1000}
-                PGID: ${PGID:-1000}
-        container_name: goat-app
-        restart: unless-stopped
+            dockerfile: Dockerfile
+        image: goat-app:latest
+        ports:
+            - "8000:80"
+            - "443:443"
+            - "443:443/udp"
         environment:
-            SERVER_NAME: ${APP_URL}
-            OCTANE_SERVER: frankenphp
+            APP_ENV: local
+            APP_DEBUG: true
+            APP_KEY: ${APP_KEY}
+            DB_CONNECTION: mysql
+            DB_HOST: db
+            DB_PORT: 3306
+            DB_DATABASE: ${DB_DATABASE}
+            DB_USERNAME: ${DB_USERNAME}
+            DB_PASSWORD: ${DB_PASSWORD}
+            REDIS_HOST: redis
+            CACHE_STORE: redis
+            SESSION_DRIVER: redis
+            QUEUE_CONNECTION: redis
         volumes:
             - ./:/app
-            - ./docker/app/Caddyfile:/etc/caddy/Caddyfile
-#            - ./caddy_data:/data
-            - caddy_data:/data
-            - caddy_config:/config
-        ports:
-            - "80:80"
-            - "8443:443"
-            - "443:443/udp"
-#        networks:
-#            - goat-network
+            - /app/node_modules
+            - /app/vendor
         depends_on:
             - db
             - redis
+        networks:
+            - goat-network
 
-    # 2. The Database
     db:
-        image: mariadb:10.8
-        container_name: goat-db
-        restart: unless-stopped
-        command: --default-authentication-plugin=mysql_native_password
+        image: mysql:8.0
+        ports:
+            - "${DB_PORT}:3306"
         environment:
-            MARIADB_DATABASE: ${DB_DATABASE}
-            MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
-            MARIADB_USER: ${DB_USERNAME}
-            MARIADB_PASSWORD: ${DB_PASSWORD}
+            MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
+            MYSQL_DATABASE: "${DB_DATABASE}"
+            MYSQL_USER: "${DB_USERNAME}"
+            MYSQL_PASSWORD: "${DB_PASSWORD}"
         volumes:
-            - db_data:/var/lib/mysql
-#        networks:
-#            - goat-network
+            - goat-db-data:/var/lib/mysql
+        networks:
+            - goat-network
+        healthcheck:
+            test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+            timeout: 20s
+            retries: 10
 
-    # 3. Redis
     redis:
-        image: redis:7-alpine
-        container_name: goat-redis
-        restart: unless-stopped
+        image: redis:alpine
         volumes:
-            - redis_data:/data
-#        networks:
-#            - goat-network
+            - goat-redis-data:/data
+        networks:
+            - goat-network
 
-    # 4. The Queue Worker with Supervisor
-    queue:
-        build:
-            context: .
-            dockerfile: docker/queue/Dockerfile
-            args:
-                PUID: ${PUID:-1000}
-                PGID: ${PGID:-1000}
-        container_name: goat-queue
-        restart: unless-stopped
-        command: supervisord -c /etc/supervisor/conf.d/supervisor.conf
-        volumes:
-            - ./:/app
-#        networks:
-#            - goat-network
-        depends_on:
-            - app
-            - redis
-
-# Networks and Volumes
-#networks:
-#    goat-network:
-#        driver: bridge
+networks:
+    goat-network:
+        driver: bridge
 
 volumes:
-    db_data:
-    redis_data:
-    caddy_data:
-    caddy_config:
+    goat-db-data:
+    goat-redis-data:
