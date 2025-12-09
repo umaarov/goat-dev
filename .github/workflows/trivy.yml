@@ -10,7 +10,7 @@ on:
   push:
     branches: ["master"]
     paths:
-      - 'docker-compose.yml'
+      - '../../docker-compose.backup.yml'
       - '**/Dockerfile'
 
 jobs:

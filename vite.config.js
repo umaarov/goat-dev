@@ -13,14 +13,17 @@ export default defineConfig({
     server: {
         // port: 5175,
         server: {
-            origin: 'http://127.0.0.1:8000',
-
-            host: 'localhost',
+            // origin: 'http://127.0.0.1:8000',
+            host: '0.0.0.0',
             port: 5173,
         },
         hmr: {
-            overlay: false
+            // overlay: false,
+            host: 'localhost'
         },
+        watch: {
+            usePolling: true
+        }
     },
     worker: {
         format: 'es',
