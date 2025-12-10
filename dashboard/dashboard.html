@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GOAT Algorithm Inspector</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #fff;
+            color: #333;
+            padding: 40px;
+        }
+
+        h1 {
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 40px;
+        }
+
+        .panel {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 4px;
+        }
+
+        .label {
+            font-weight: bold;
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .value {
+            font-size: 18px;
+            font-family: monospace;
+            font-weight: bold;
+            color: #000;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        th {
+            text-align: left;
+            border-bottom: 2px solid #000;
+            padding: 10px 5px;
+        }
+
+        td {
+            border-bottom: 1px solid #ddd;
+            padding: 10px 5px;
+            vertical-align: top;
+        }
+
+        .score-bar {
+            background: #eee;
+            height: 4px;
+            width: 50px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+
+        .score-fill {
+            background: #000;
+            height: 100%;
+        }
+
+        /* Mermaid Graph Container */
+        #graph-container {
+            text-align: center;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+
+<h1>GOAT Engine // Algorithmic Inspector</h1>
+
+<div class="container">
+    <div class="panel">
+        <span class="label">Query Processing Tree</span>
+        <div id="graph-container">Waiting for query...</div>
+    </div>
+
+    <div>
+        <div class="panel" style="margin-bottom: 20px;">
+            <span class="label">Last Query</span>
+            <div class="value" id="q-term">--</div>
+            <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                Processing Time: <span id="q-latency" style="color: #000; font-weight: bold;">--</span>
+            </div>
+        </div>
+
+        <div class="panel">
+            <span class="label">Matched Documents</span>
+            <table id="results-table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Score</th>
+                    <th>Content Snippet</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    mermaid.initialize({startOnLoad: true, theme: 'neutral'});
+
+    async function fetchTelemetry() {
+        try {
+            // Fetch the detailed JSON
+            const response = await fetch('telemetry_latest.json?nocache=' + new Date().getTime());
+            const data = await response.json();
+
+            // 1. Update Basic Stats
+            document.getElementById('q-term').innerText = data.query;
+            document.getElementById('q-latency').innerText = data.latency_ms.toFixed(3) + " ms";
+
+            // 2. Build the Tree Graph Definition for Mermaid
+            // We construct a flowchart: Query -> Tokens -> Trigrams
+            let graphDef = "graph TD\n";
+            graphDef += `Q[Query: "${data.query}"] --> T{Tokenize}\n`;
+
+            // Add tokens
+            data.debug_tree.tokens.forEach((token, i) => {
+                let nodeId = `TOK${i}`;
+                graphDef += `T --> ${nodeId}["${token}"]\n`;
+
+                // Add N-Grams for this token
+                // (Simple visualization: just link all ngrams to the first token for simplicity in demo)
+                data.debug_tree.ngrams.forEach((gram, j) => {
+                    // Only show ngrams relevant to this token to avoid graph explosion
+                    if (token.includes(gram)) {
+                        graphDef += `${nodeId} -.-> G${j}(${gram})\n`;
+                    }
+                });
+            });
+
+            // Style the graph
+            graphDef += "style Q fill:#f9f,stroke:#333,stroke-width:2px\n";
+            graphDef += "style T fill:#fff,stroke:#333\n";
+
+            // Render the graph
+            const graphContainer = document.getElementById('graph-container');
+            graphContainer.removeAttribute('data-processed'); // Force redraw
+            graphContainer.innerHTML = graphDef;
+            await mermaid.run({nodes: [graphContainer]});
+
+            // 3. Update Results Table
+            const tbody = document.querySelector('#results-table tbody');
+            tbody.innerHTML = '';
+
+            if (data.results.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#999">No significant matches found (Threshold < 0.25)</td></tr>';
+            } else {
+                data.results.forEach(res => {
+                    const width = Math.min(res.score * 100, 100);
+                    const row = `
+                            <tr>
+                                <td><b>#${res.id}</b></td>
+                                <td>
+                                    <div class="score-bar"><div class="score-fill" style="width:${width}%"></div></div>
+                                    ${res.score.toFixed(3)}
+                                </td>
+                                <td style="color:#555; font-family:serif; font-style:italic;">"${res.snippet}"</td>
+                            </tr>
+                        `;
+                    tbody.innerHTML += row;
+                });
+            }
+
+        } catch (e) {
+            console.log("Waiting for engine data...");
+        }
+    }
+
+    setInterval(fetchTelemetry, 2000);
+    fetchTelemetry();
+</script>
+</body>
+</html>

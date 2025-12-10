@@ -210,6 +210,7 @@ services:
             - goat-network
         volumes:
             - goat-search-data:/app
+            - ./dashboard:/app
 
 networks:
     goat-network:

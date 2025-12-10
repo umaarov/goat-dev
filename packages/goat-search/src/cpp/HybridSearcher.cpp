@@ -1,8 +1,20 @@
 #include "HybridSearcher.h"
 #include "Logger.h"
+#include "Telemetry.h"
 #include <map>
 #include <sstream>
 #include <iomanip>
+#include <algorithm>
+#include <set>
+
+std::set<std::string> debug_get_ngrams(const std::string& text, int n = 3) {
+    std::set<std::string> ngrams;
+    if (text.length() < (size_t)n) return ngrams;
+    for (size_t i = 0; i <= text.length() - n; ++i) {
+        ngrams.insert(text.substr(i, n));
+    }
+    return ngrams;
+}
 
 HybridSearcher::HybridSearcher() {}
 
@@ -12,33 +24,42 @@ void HybridSearcher::addDocument(const InputDocument& doc) {
     tokenize(doc.text, p_doc.tokens);
     p_doc.length = p_doc.tokens.size();
 
-    // Log
-     std::ostringstream oss;
-     oss << "Tokenized Doc " << doc.id << " (" << p_doc.length << " tokens)";
-     Logger::log(DEBUG, oss.str());
+    documentCache[doc.id] = doc.text;
+
+    Logger::log(DEBUG, "Indexing Doc " + std::to_string(doc.id));
 
     bm25Index.addDocument(p_doc);
     std::vector<float> vec = vectorIndex.generateEmbedding(p_doc.tokens);
     vectorIndex.addVector(doc.id, vec);
+    Telemetry::instance().updateSystemStats(doc.id, doc.id);
+}
+
+std::string HybridSearcher::getDocumentText(int id) {
+    if (documentCache.find(id) != documentCache.end()) {
+        return documentCache[id];
+    }
+    return "[Text not found in cache]";
 }
 
 std::vector<int> HybridSearcher::search(const std::string& query, int topK) {
+    auto start = std::chrono::high_resolution_clock::now();
+
     std::vector<std::string> tokens;
     tokenize(query, tokens);
 
-    auto bm25_results = bm25Index.search(tokens);
-    Logger::log(BRAIN, "BM25 Candidate Count: " + std::to_string(bm25_results.size()));
+    std::vector<std::string> breakdown_ngrams;
+    for(const auto& t : tokens) {
+        auto grams = debug_get_ngrams(t, 3);
+        breakdown_ngrams.insert(breakdown_ngrams.end(), grams.begin(), grams.end());
+    }
 
+    auto bm25_results = bm25Index.search(tokens);
     std::vector<float> query_vec = vectorIndex.generateEmbedding(tokens);
     auto vec_results = vectorIndex.search(query_vec, topK);
-    Logger::log(BRAIN, "Vector Candidate Count: " + std::to_string(vec_results.size()));
 
     std::map<int, double> final_scores;
-
     double bm25Weight = bm25_results.empty() ? 0.0 : 0.7;
     double vectorWeight = bm25_results.empty() ? 1.0 : 0.3;
-
-    Logger::log(BRAIN, "Merging... (BM25 Weight: " + std::to_string(bm25Weight) + ")");
 
     for(const auto& res : bm25_results) final_scores[res.first] += res.second * bm25Weight;
     for(const auto& res : vec_results) final_scores[res.first] += res.second * vectorWeight;
@@ -48,10 +69,22 @@ std::vector<int> HybridSearcher::search(const std::string& query, int topK) {
         return a.second > b.second;
     });
 
+    std::vector<std::tuple<int, double, std::string>> rich_results;
     std::vector<int> final_ids;
+
     for (int i = 0; i < std::min((int)sorted_final.size(), topK); ++i) {
-        final_ids.push_back(sorted_final[i].first);
+        int id = sorted_final[i].first;
+        double score = sorted_final[i].second;
+        final_ids.push_back(id);
+
+        rich_results.push_back({id, score, getDocumentText(id)});
     }
+
+    auto end = std::chrono::high_resolution_clock::now();
+    double duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0;
+
+    Telemetry::instance().recordQuery(query, tokens, breakdown_ngrams, rich_results, duration);
+
     return final_ids;
 }
 

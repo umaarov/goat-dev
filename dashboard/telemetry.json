@@ -1,0 +1,36 @@
+{
+    "latency": [
+        0.044,
+        0.267,
+        0.297
+    ],
+    "queries": [
+        {
+            "count": 0,
+            "latency": 0.297,
+            "term": "nigga",
+            "time": "08:50:57",
+            "top_matches": []
+        },
+        {
+            "count": 0,
+            "latency": 0.267,
+            "term": "nigga",
+            "time": "08:50:55",
+            "top_matches": []
+        },
+        {
+            "count": 0,
+            "latency": 0.044,
+            "term": "nigga",
+            "time": "08:42:40",
+            "top_matches": []
+        }
+    ],
+    "system": {
+        "docs_indexed": 138,
+        "status": "OPERATIONAL",
+        "total_queries": 3,
+        "vector_nodes": 138
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "debug_tree": {
+        "ngrams": [
+            "gga",
+            "igg",
+            "nig"
+        ],
+        "tokens": [
+            "nigga"
+        ]
+    },
+    "latency_ms": 0.129,
+    "query": "nigga",
+    "results": [],
+    "timestamp": "08:54:01"
+}
