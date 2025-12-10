@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <set>
+#include <fstream>
 
 std::set<std::string> debug_get_ngrams(const std::string& text, int n = 3) {
     std::set<std::string> ngrams;
@@ -46,7 +47,6 @@ std::vector<int> HybridSearcher::search(const std::string& query, int topK) {
 
     std::vector<std::string> tokens;
     tokenize(query, tokens);
-
     std::vector<std::string> breakdown_ngrams;
     for(const auto& t : tokens) {
         auto grams = debug_get_ngrams(t, 3);
@@ -90,9 +90,53 @@ std::vector<int> HybridSearcher::search(const std::string& query, int topK) {
 
 bool HybridSearcher::save(const std::string& bm25Path, const std::string& vecPath) {
     bm25Index.finalize();
-    return bm25Index.save(bm25Path) && vectorIndex.save(vecPath);
+
+    bool indexSaved = bm25Index.save(bm25Path) && vectorIndex.save(vecPath);
+    if (!indexSaved) return false;
+
+    std::ofstream docFile("index.docs", std::ios::binary);
+    if (!docFile) return false;
+
+    size_t cacheSize = documentCache.size();
+    docFile.write(reinterpret_cast<const char*>(&cacheSize), sizeof(cacheSize));
+
+    for (const auto& pair : documentCache) {
+        int id = pair.first;
+        size_t len = pair.second.size();
+        docFile.write(reinterpret_cast<const char*>(&id), sizeof(id));
+        docFile.write(reinterpret_cast<const char*>(&len), sizeof(len));
+        docFile.write(pair.second.c_str(), len);
+    }
+
+    Logger::log(INFO, "Saved " + std::to_string(cacheSize) + " documents to index.docs");
+    return true;
 }
 
 bool HybridSearcher::load(const std::string& bm25Path, const std::string& vecPath) {
-    return bm25Index.load(bm25Path) && vectorIndex.load(vecPath);
+    if (!bm25Index.load(bm25Path) || !vectorIndex.load(vecPath)) {
+        return false;
+    }
+
+    std::ifstream docFile("index.docs", std::ios::binary);
+    if (docFile) {
+        size_t cacheSize;
+        docFile.read(reinterpret_cast<char*>(&cacheSize), sizeof(cacheSize));
+
+        for (size_t i = 0; i < cacheSize; ++i) {
+            int id;
+            size_t len;
+            docFile.read(reinterpret_cast<char*>(&id), sizeof(id));
+            docFile.read(reinterpret_cast<char*>(&len), sizeof(len));
+
+            std::string text(len, ' ');
+            docFile.read(&text[0], len);
+
+            documentCache[id] = text;
+        }
+        Logger::log(INFO, "Loaded " + std::to_string(cacheSize) + " documents from index.docs");
+    } else {
+        Logger::log(WARN, "Could not load index.docs (Cache empty)");
+    }
+
+    return true;
 }

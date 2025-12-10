@@ -6,20 +6,53 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
-        mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+
+        mermaid.initialize({startOnLoad: false, theme: 'neutral'});
         window.mermaid = mermaid;
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-        body { background-color: #fafafa; color: #171717; font-family: 'JetBrains Mono', monospace; }
-        .panel { background: white; border: 1px solid #e5e5e5; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border-radius: 8px; }
-        .label { font-size: 0.75rem; font-weight: 700; color: #737373; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; display: block; }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #a3a3a3; }
+        body {
+            background-color: #fafafa;
+            color: #171717;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .panel {
+            background: white;
+            border: 1px solid #e5e5e5;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+        }
+
+        .label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #737373;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d4d4d4;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a3a3a3;
+        }
     </style>
 </head>
 <body class="p-8 h-screen flex flex-col gap-6">
@@ -42,7 +75,8 @@
 
     <div class="panel col-span-2 p-6 flex flex-col">
         <span class="label">Query Execution Tree (N-Gram Decomposition)</span>
-        <div class="flex-1 overflow-auto bg-slate-50 rounded border border-slate-200 p-4 flex items-center justify-center relative">
+        <div
+            class="flex-1 overflow-auto bg-slate-50 rounded border border-slate-200 p-4 flex items-center justify-center relative">
             <div id="graph-container" class="w-full text-center">
                 <span class="text-gray-400 animate-pulse">Waiting for next query...</span>
             </div>
@@ -99,23 +133,16 @@
             if (!response.ok) throw new Error("File not ready");
             const data = await response.json();
 
-            // Only redraw if data changed
             if (data.timestamp === lastTimestamp) return;
             lastTimestamp = data.timestamp;
 
-            // 1. Update Vitals
             document.getElementById('last-update').innerText = "Last synced: " + data.timestamp;
             document.getElementById('q-term').innerText = `"${data.query}"`;
             document.getElementById('q-latency').innerText = data.latency_ms.toFixed(3) + " ms";
-
-            // 2. Draw Mermaid Graph (The Tree)
             renderGraph(data);
-
-            // 3. Render Results Table
             renderTable(data.results);
 
         } catch (e) {
-            // Console log silence is golden
         }
     }
 
@@ -123,22 +150,17 @@
         const container = document.getElementById('graph-container');
         const safeQuery = data.query.replace(/["<>&]/g, ''); // Sanitize
 
-        // Build Mermaid Definition
         let graph = "graph TD\n";
         graph += `  Q["Query: '${safeQuery}'"]:::query --> T{{"Tokenize"}}:::proc\n`;
 
-        // Build Token Nodes
         data.debug_tree.tokens.forEach((token, i) => {
             const tokId = `TOK${i}`;
             const safeToken = token.replace(/["<>&]/g, '');
             graph += `  T --> ${tokId}("${safeToken}"):::token\n`;
 
-            // Build N-Gram Leaves
-            // Filter ngrams that belong to this token
             const relevantGrams = data.debug_tree.ngrams.filter(g => token.includes(g));
 
             if (relevantGrams.length > 0) {
-                // Create a subgraph for visual grouping
                 graph += `  subgraph SG_${i} [ ]\n`;
                 relevantGrams.forEach((gram, j) => {
                     const gramId = `G_${i}_${j}`;
@@ -149,16 +171,14 @@
             }
         });
 
-        // Styling
         graph += `  classDef query fill:#1e293b,stroke:#000,color:#fff,stroke-width:2px;\n`;
         graph += `  classDef proc fill:#e2e8f0,stroke:#64748b,stroke-width:1px,stroke-dasharray: 5 5;\n`;
         graph += `  classDef token fill:#fff,stroke:#2563eb,stroke-width:2px;\n`;
         graph += `  classDef gram fill:#f8fafc,stroke:#94a3b8,color:#64748b,stroke-width:1px;\n`;
-        graph += `  style SG_0 fill:none,stroke:none;\n`; // Hide subgraph borders
+        graph += `  style SG_0 fill:none,stroke:none;\n`;
 
-        // Render
         container.innerHTML = `<pre class="mermaid">${graph}</pre>`;
-        await window.mermaid.run({ nodes: [container.querySelector('.mermaid')] });
+        await window.mermaid.run({nodes: [container.querySelector('.mermaid')]});
     }
 
     function renderTable(results) {
@@ -196,7 +216,6 @@
         });
     }
 
-    // Poll for updates every 1.5 seconds
     setInterval(fetchTelemetry, 1500);
     fetchTelemetry();
 </script>
