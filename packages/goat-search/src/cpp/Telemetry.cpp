@@ -7,6 +7,11 @@
 
 using json = nlohmann::json;
 
+Telemetry& Telemetry::instance() {
+    static Telemetry instance;
+    return instance;
+}
+
 std::string Telemetry::getCurrentTime() {
     auto now = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(now);
@@ -24,10 +29,6 @@ void Telemetry::recordQuery(
 ) {
     std::lock_guard<std::mutex> lock(dataMutex);
 
-    totalQueries++;
-    latencyHistory.push_back(ms);
-    if (latencyHistory.size() > 50) latencyHistory.pop_front();
-
     json j;
     j["timestamp"] = getCurrentTime();
     j["query"] = query;
@@ -37,9 +38,12 @@ void Telemetry::recordQuery(
     j["debug_tree"]["ngrams"] = ngrams;
 
     j["results"] = json::array();
+
+    int count = 0;
     for(const auto& res : results) {
+        if(count++ > 50) break;
         std::string fullText = std::get<2>(res);
-        std::string snippet = fullText.length() > 600 ? fullText.substr(0, 600) + "..." : fullText;
+        std::string snippet = fullText.length() > 100 ? fullText.substr(0, 100) + "..." : fullText;
 
         j["results"].push_back({
             {"id", std::get<0>(res)},
@@ -51,8 +55,6 @@ void Telemetry::recordQuery(
     std::ofstream ofs("telemetry_latest.json");
     ofs << j.dump(4);
     ofs.close();
-
-    writeDashboardData();
 }
 
 void Telemetry::updateSystemStats(size_t docs, size_t vecs) {

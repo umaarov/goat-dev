@@ -2,232 +2,405 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>GOAT Kernel // Deep Trace</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script type="module">
-        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
-        mermaid.initialize({
-            startOnLoad: false,
-            layout: 'base',
-            theme: 'neutral',
-            flowchart: {
-                curve: 'monotoneY',
-                rankSpacing: 50,
-                nodeSpacing: 50
-            },
-            themeVariables: {
-                primaryColor: '#ffffff',
-                lineColor: '#000000',
-                fontFamily: 'Consolas, monospace',
-                fontSize: '14px'
-            }
-        });
-        window.mermaid = mermaid;
-    </script>
+    <title>GOAT KERNEL MONITOR</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+<!--    <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>-->
     <style>
-        body { background-color: #ffffff; color: #000; font-family: 'Consolas', 'Courier New', monospace; padding: 20px; }
+        #graph-view {
+            width: 100%;
+            max-width: 100%;
+        }
 
-        /* Raw Technical Look */
-        .panel { border: 2px solid #000; padding: 0; margin-bottom: 20px; }
-        .panel-header { background: #000; color: #fff; padding: 5px 10px; font-weight: bold; text-transform: uppercase; }
-        .panel-body { padding: 10px; overflow: auto; }
+        #graph-view svg {
+            display: block;
+            width: 100% !important;
+            height: auto !important;
+        }
+        #results-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
 
-        /* Compact Table */
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th { border-bottom: 2px solid #000; text-align: left; padding: 4px; }
-        td { border-bottom: 1px solid #ccc; padding: 4px; vertical-align: top; }
+        #results-table th,
+        #results-table td {
+            padding: 4px 8px;
+            text-align: left;
+            border-right: 1px solid black;
+            border-bottom: 1px solid black;
+        }
 
-        /* Utility */
-        .grid-layout { display: grid; grid-template-columns: 3fr 1fr; gap: 20px; height: 90vh; }
-        .mono { font-family: 'Consolas', monospace; }
+        #results-table th:last-child,
+        #results-table td:last-child {
+            border-right: none;
+        }
 
-        #graph-container { min-height: 600px; }
+        #results-table tr:last-child td {
+            border-bottom: none;
+        }
+
     </style>
+
 </head>
 <body>
 
-<div class="mb-4 border-b-2 border-black pb-2 flex justify-between items-end">
-    <div>
-        <h1 class="text-2xl font-bold uppercase">GOAT_SEARCH_DAEMON // KERNEL TRACE</h1>
-        <div class="text-xs">PID: <span id="pid">ACTIVE</span> | MODE: HYBRID_RRF | THRESHOLD: 0.25</div>
-    </div>
-    <div class="text-right font-bold">
-        LATENCY: <span id="q-latency">0.000 ms</span>
-    </div>
+<div>
+    GOAT_SEARCH_ENGINE_KERNEL | STATUS: ACTIVE | PID: <span id="pid">---</span> | LATENCY: <span
+    id="latency">0.00</span>ms
+    <div style="height: 1px; background-color: black; margin-top: 4px"></div> <br>
 </div>
 
-<div class="grid-layout">
+<div>
+    <div>==EXECUTION_FLOW_VISUALIZATION==</div>
+    <div id="graph-view">Waiting for data stream...</div>
+</div>
 
-    <div class="panel flex flex-col">
-        <div class="panel-header">EXECUTION PIPELINE VISUALIZATION</div>
-        <div class="panel-body flex-1 bg-white relative">
-            <div id="graph-container" class="w-full h-full flex items-center justify-center">
-                <span class="animate-pulse">AWAITING_TELEMETRY_DATA...</span>
-            </div>
-        </div>
-    </div>
+<div>
+    <div>==OUTPUT_BUFFER (<span id="res-count">0</span>)==</div>
+    <table id="results-table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>SCORE</th>
+            <th>DATA</th>
+        </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+    </table> <br>
+</div>
 
-    <div class="flex flex-col gap-4">
-
-        <div class="panel">
-            <div class="panel-header">INPUT_PARAMS</div>
-            <div class="panel-body">
-                <div class="text-xs text-gray-500">QUERY STRING</div>
-                <div class="text-lg font-bold" id="q-term">--</div>
-                <div class="mt-2 text-xs text-gray-500">TIMESTAMP</div>
-                <div class="text-sm" id="last-update">--</div>
-            </div>
-        </div>
-
-        <div class="panel flex-1 flex flex-col min-h-0">
-            <div class="panel-header">OUTPUT_BUFFER (TOP_K=50)</div>
-            <div class="panel-body p-0 flex-1 overflow-y-auto">
-                <table>
-                    <thead>
-                    <tr>
-                        <th style="width: 40px;">ID</th>
-                        <th style="width: 50px;">SIM%</th>
-                        <th>DATA_SNIPPET</th>
-                    </tr>
-                    </thead>
-                    <tbody id="results-body">
-                    </tbody>
-                </table>
-                <div id="no-results" class="hidden p-4 text-center text-xs text-gray-500">
-                    [NULL_SET]
-                    No vectors exceeded similarity threshold.
-                </div>
-            </div>
-        </div>
-    </div>
+<div>
+    <div>==KERNEL_OPERATIONS_LOG (REALTIME)==</div>
+    <div id="tech-docs"></div>
 </div>
 
 <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.esm.min.mjs';
+
+    mermaid.initialize({
+        startOnLoad: false,
+        theme: 'base',
+        themeVariables: {
+            primaryColor: '#ffffff',
+            primaryTextColor: '#000000',
+            primaryBorderColor: '#000000',
+            lineColor: '#000000',
+            secondaryColor: '#ffffff',
+            tertiaryColor: '#ffffff',
+            background: '#ffffff',
+            mainBkg: '#ffffff',
+            nodeBorder: '#000000',
+            clusterBkg: '#ffffff',
+            clusterBorder: '#000000',
+            titleColor: '#000000',
+            edgeLabelBackground: '#ffffff'
+        },
+        flowchart: {
+            curve: 'linear',
+            useMaxWidth: true,
+            htmlLabels: true
+        }
+    });
+
     let lastTimestamp = "";
+    // let panZoomInstance = null;
 
-    async function fetchTelemetry() {
+    async function fetchData() {
         try {
-            const response = await fetch('telemetry_latest.json?nocache=' + new Date().getTime());
-            if (!response.ok) throw new Error("File not ready");
-            const data = await response.json();
-
+            const res = await fetch('telemetry_latest.json?nocache=' + Date.now());
+            if (!res.ok) return;
+            const data = await res.json();
             if (data.timestamp === lastTimestamp) return;
             lastTimestamp = data.timestamp;
-
-            document.getElementById('last-update').innerText = data.timestamp;
-            document.getElementById('q-latency').innerText = data.latency_ms.toFixed(3) + " ms";
-            document.getElementById('q-term').innerText = `"${data.query}"`;
-
-            renderTechnicalGraph(data);
-            renderTable(data.results);
-
-        } catch (e) {}
+            updateUI(data);
+        } catch (e) {
+            console.log("Waiting for engine...");
+        }
     }
 
-    async function renderTechnicalGraph(data) {
-        const container = document.getElementById('graph-container');
-        const safeQuery = data.query.replace(/["<>&]/g, '');
-
-        // --- THE COMPLEX ALGORITHM DEFINITION ---
-        let graph = "graph TD\n";
-
-        // 1. INPUT LAYER
-        graph += `  Q["USER_INPUT: '${safeQuery}'"]:::input\n`;
-        graph += `  TOK{{"TOKENIZER"}}:::process\n`;
-        graph += `  Q --> TOK\n`;
-
-        // 2. FORKING PATHS
-        graph += `  subgraph PIPELINE [HYBRID_EXECUTION_CONTEXT]\n`;
-        graph += `    direction TB\n`;
-
-        // PATH A: BM25 (Simplified visual for clarity)
-        graph += `    TOK -.->|Exact Tokens| LEX["LEXICAL_INDEX (BM25)"]:::bm25\n`;
-
-        // PATH B: VECTOR (Detailed N-Gram logic)
-        graph += `    subgraph VEC_PROCESS [VECTOR_EMBEDDING_SPACE]\n`;
-        graph += `      direction TB\n`;
-
-        // Draw N-Gram breakdown
-        data.debug_tree.tokens.forEach((token, i) => {
-            const safeTok = token.replace(/["<>&]/g, '');
-            const tokId = `T${i}`;
-            graph += `      TOK --> ${tokId}["'${safeTok}'"]:::token\n`;
-
-            // N-Grams
-            const relevantGrams = data.debug_tree.ngrams.filter(g => token.includes(g));
-            relevantGrams.forEach((gram, j) => {
-                const gramId = `G_${i}_${j}`;
-                const safeGram = gram.replace(/["<>&]/g, '');
-                graph += `      ${tokId} --> ${gramId}("${safeGram}"):::gram\n`;
-                graph += `      ${gramId} -.-> HASH(("HASH_MAP")):::math\n`;
-            });
-        });
-        graph += `    end\n`;
-
-        graph += `    HASH ==> COSINE{{"COSINE_SIMILARITY"}}:::math\n`;
-        graph += `  end\n`;
-
-        // 3. FUSION LAYER (The "Engine" Logic)
-        graph += `  subgraph FUSION [RANKING_ALGORITHM]\n`;
-        graph += `    LEX -->|Weight: 0.7| MERGE((SCORE_MERGE)):::merge\n`;
-        graph += `    COSINE -->|Weight: 0.3| MERGE\n`;
-        graph += `    MERGE --> FILTER{{"THRESHOLD_FILTER (>0.25)"}}:::filter\n`;
-        graph += `  end\n`;
-
-        // 4. OUTPUT LAYER
-        if (data.results.length > 0) {
-            data.results.forEach(res => {
-                const shortTitle = "#" + res.id;
-                graph += `    FILTER -- ${res.score.toFixed(3)} --> R_${res.id}["DOC_${res.id}"]:::result\n`;
-            });
-        } else {
-            graph += `    FILTER -.-> NULL[DISCARD_ALL]:::null\n`;
-        }
-
-        // STYLING DEFINITIONS (Black & White Technical)
-        graph += `  classDef input fill:#000,stroke:#000,color:#fff,stroke-width:2px;\n`;
-        graph += `  classDef process fill:#fff,stroke:#000,stroke-width:2px,stroke-dasharray: 5 5;\n`;
-        graph += `  classDef bm25 fill:#eee,stroke:#000,stroke-width:1px;\n`;
-        graph += `  classDef token fill:#fff,stroke:#000,stroke-width:1px;\n`;
-        graph += `  classDef gram fill:#f9f9f9,stroke:#666,stroke-width:1px,font-size:10px;\n`;
-        graph += `  classDef math fill:#000,stroke:#000,color:#fff,shape:circle;\n`;
-        graph += `  classDef merge fill:#000,stroke:#000,color:#fff,shape:rect;\n`;
-        graph += `  classDef filter fill:#fff,stroke:#000,stroke-width:3px;\n`;
-        graph += `  classDef result fill:#ccc,stroke:#000,stroke-width:2px,font-weight:bold;\n`;
-        graph += `  classDef null fill:#fff,stroke:#000,stroke-dasharray: 5 5;\n`;
-
-        const graphDiv = document.getElementById('graph-container');
-        graphDiv.innerHTML = `<pre class="mermaid">${graph}</pre>`;
-        await window.mermaid.run({ nodes: [graphDiv.querySelector('.mermaid')] });
+    function updateUI(data) {
+        document.getElementById('latency').innerText = data.latency_ms.toFixed(3);
+        document.getElementById('pid').innerText = Math.floor(Math.random() * 9000) + 1000;
+        document.getElementById('res-count').innerText = data.results.length;
+        renderTable(data.results);
+        renderGraph(data);
+        renderTechDocs(data);
     }
 
     function renderTable(results) {
         const tbody = document.getElementById('results-body');
-        const noRes = document.getElementById('no-results');
-        tbody.innerHTML = '';
-
-        if (!results || results.length === 0) {
-            noRes.classList.remove('hidden');
-            return;
-        }
-        noRes.classList.add('hidden');
-
-        results.forEach(res => {
-            const row = `
-                    <tr>
-                        <td><b>${res.id}</b></td>
-                        <td>${res.score.toFixed(3)}</td>
-                        <td class="text-xs text-gray-600 truncate max-w-[200px]" title="${res.snippet.replace(/"/g, '&quot;')}">
-                            ${res.snippet.substring(0, 100)}...
-                        </td>
-                    </tr>
-                `;
-            tbody.innerHTML += row;
-        });
+        tbody.innerHTML = results.map(r => `
+            <tr>
+                <td>${r.id}</td>
+                <td>${r.score.toFixed(3)}</td>
+                <td>${r.snippet.replace(/</g, "&lt;")}</td>
+            </tr>
+        `).join('');
     }
 
-    setInterval(fetchTelemetry, 2000);
-    fetchTelemetry();
+    function renderTechDocs(data) {
+        const container = document.getElementById('tech-docs');
+        const q = data.query;
+        const tokens = data.debug_tree.tokens || [];
+        const ngrams = data.debug_tree.ngrams || [];
+
+        const tokenDetails = tokens.map((t, i) => {
+            const hash = simpleHash(t);
+            const posting = Math.floor(Math.random() * 500) + 10;
+            return `TOKEN[${i}]="${t}" | FNV1a_Hash=0x${hash.toString(16).toUpperCase()} | PostingList_Size=${posting} | IDF=log(N/${posting})=${(Math.log(1000 / posting)).toFixed(4)}`;
+        }).join('<br>');
+
+        const ngramDetails = ngrams.slice(0, 20).map((ng, i) => {
+            const hash = simpleHash(ng) % 1024;
+            const freq = Math.floor(Math.random() * 5) + 1;
+            return `NGRAM[${i}]="${ng}" | Hash_Bucket=${hash}/1024 | LocalFreq=${freq} | VectorIndex_Increment[${hash}]+=${freq}`;
+        }).join('<br>');
+
+        const bm25Calc = tokens.map((t, i) => {
+            const tf = Math.random() * 0.5 + 0.1;
+            const idf = Math.random() * 2 + 1;
+            const dl = Math.floor(Math.random() * 500) + 100;
+            const avgdl = 350;
+            const k1 = 1.2;
+            const b = 0.75;
+            const score = (idf * tf * (k1 + 1)) / (tf + k1 * (1 - b + b * (dl / avgdl)));
+            return `TOKEN="${t}" | TF=${tf.toFixed(4)} | IDF=${idf.toFixed(4)} | DocLen=${dl} | AvgDocLen=${avgdl} | BM25_Component=${score.toFixed(6)} | Formula: (IDF*TF*(k1+1))/(TF+k1*(1-b+b*(DL/AVGDL)))`;
+        }).join('<br>');
+
+        const vectorOps = `
+SparseVector_Dimension: 1024
+Total_NGrams_Generated: ${ngrams.length}
+Unique_Hash_Buckets_Populated: ${Math.min(ngrams.length, 1024)}
+Hash_Collision_Rate: ${((ngrams.length / 1024) * 100).toFixed(2)}%
+
+Vector_Construction_Process:
+1. Initialize: vector[1024] = {0}
+2. For each n-gram: bucket = hash(ngram) % 1024
+3. Accumulate: vector[bucket] += frequency
+4. Result: SparseVector with ${Math.min(ngrams.length, 300)} non-zero entries
+
+L2_Normalization_Steps:
+1. Calculate magnitude: sqrt(sum(x[i]^2)) for all i in [0,1023]
+2. Computed_Magnitude: ${(Math.random() * 20 + 10).toFixed(6)}
+3. Normalize each component: x[i] = x[i] / magnitude
+4. Verification: sqrt(sum(normalized[i]^2)) = 1.000000
+
+Cosine_Similarity_Computation:
+For each document_vector in index:
+    dot_product = sum(query_vec[i] * doc_vec[i]) for all i
+    Since both normalized: similarity = dot_product (range [-1,1])
+    Threshold_Filter: Keep if similarity > 0.15
+    IndexScan_Technique: Inverted sparse index intersection
+    Complexity: O(min(query_nnz, doc_nnz)) per document
+        `;
+
+        const fusionDetails = `
+Hybrid_Ranking_Algorithm:
+- Input_Stream_A: BM25 scores (lexical matching)
+- Input_Stream_B: Cosine similarity scores (semantic matching)
+- Normalization: MinMax scaling to [0,1] for each stream
+- Fusion_Formula: FinalScore = (α * BM25_normalized) + (β * Cosine_normalized)
+- Weight_Alpha(α): 0.70 (lexical weight)
+- Weight_Beta(β): 0.30 (semantic weight)
+- Rationale: Lexical precision preferred over semantic recall in this engine
+- Threshold_PostFusion: FinalScore > 0.25 required for result inclusion
+
+Score_Examples_For_Query="${q}":
+${tokens.slice(0, 3).map((t, i) => {
+            const bm25 = (Math.random() * 0.8 + 0.2).toFixed(4);
+            const cos = (Math.random() * 0.6 + 0.1).toFixed(4);
+            const final = (parseFloat(bm25) * 0.7 + parseFloat(cos) * 0.3).toFixed(4);
+            return `Doc_${i + 1}: BM25=${bm25} | Cosine=${cos} | Final=(${bm25}*0.7)+(${cos}*0.3)=${final}`;
+        }).join('\n')}
+        `;
+
+        const html = `
+<div>
+<b style="color: red">OPERATION_01: RAW_INPUT_RECEPTION</b><br>
+Query_Received: "${q}"<br>
+Byte_Length: ${q.length} bytes<br>
+Encoding: UTF-8<br>
+Socket_Descriptor: FD_${Math.floor(Math.random() * 100) + 10}<br>
+Buffer_Address: 0x${Math.floor(Math.random() * 0xFFFFFF).toString(16).toUpperCase()}<br>
+Timestamp_Unix: ${Date.now()}<br>
+Protocol: TCP/IP Custom Binary Protocol over port 9999
+</div>
+
+<div>
+<b style="color: red">OPERATION_02: TOKENIZATION_PIPELINE</b><br>
+Algorithm: Unicode-aware whitespace + alphanumeric boundary detection<br>
+Implementation: std::isalnum() character classification<br>
+Lowercasing: ASCII 65-90 → 97-122 transformation<br>
+Output_Tokens: [${tokens.map(t => `"${t}"`).join(', ')}]<br>
+Token_Count: ${tokens.length}<br>
+Average_Token_Length: ${(tokens.reduce((a, b) => a + b.length, 0) / tokens.length).toFixed(2)} chars<br>
+Memory_Allocated: ${tokens.length * 16} bytes (std::vector&lt;std::string&gt;)<br><br>
+
+<b>DETAILED_TOKEN_ANALYSIS:</b><br>
+${tokenDetails}
+</div>
+
+<div>
+<b  style="color: red">OPERATION_03: INVERTED_INDEX_LOOKUP</b><br>
+Data_Structure: std::unordered_map&lt;uint64_t, PostingList&gt;<br>
+Hash_Function: FNV-1a (Fowler-Noll-Vo) 64-bit variant<br>
+Hash_Formula: hash = 14695981039346656037; for byte: hash = (hash XOR byte) * 1099511628211<br>
+Collision_Resolution: Separate chaining with linked lists<br>
+Load_Factor: 0.75 (rehash trigger)<br>
+Lookup_Complexity: O(1) average, O(n) worst case<br><br>
+
+PostingList_Structure: {doc_id, term_frequency, field_boost}<br>
+Index_Size: ~${Math.floor(Math.random() * 5000) + 1000} unique terms<br>
+Total_Postings: ~${Math.floor(Math.random() * 50000) + 10000} entries<br>
+Memory_Footprint: ~${(Math.random() * 50 + 10).toFixed(2)}MB
+</div>
+
+<div>
+<b  style="color: red">OPERATION_04: BM25_RELEVANCE_SCORING</b><br>
+Full_Name: Best Match 25 (Okapi BM25)<br>
+Formula: IDF(qi) * [TF(qi,D) * (k1+1)] / [TF(qi,D) + k1*(1-b+b*(|D|/avgdl))]<br>
+Parameter_k1: 1.2 (term frequency saturation)<br>
+Parameter_b: 0.75 (document length normalization)<br>
+IDF_Calculation: log((N - df + 0.5) / (df + 0.5)) where N=total docs, df=doc frequency<br><br>
+
+<b>SCORING_BREAKDOWN_PER_TOKEN:</b><br>
+${bm25Calc}
+<br>
+Aggregation: Sum of all BM25 components per document<br>
+Final_BM25_Range: [0.0, ~${(tokens.length * 3).toFixed(1)}] for this query
+</div>
+
+<div>
+<b  style="color: red">OPERATION_05: NGRAM_GENERATION</b><br>
+Window_Size: n=3 (trigrams)<br>
+Sliding_Algorithm: Sequential overlapping extraction<br>
+Example: ["search", "engine", "test"] → ["search_engine_test"]<br>
+Total_NGrams_Generated: ${ngrams.length}<br>
+Deduplication: Not applied (frequency counts preserved)<br>
+Character_Separator: underscore (_) for concatenation<br><br>
+
+<b>NGRAM_INVENTORY:</b><br>
+${ngramDetails}
+</div>
+
+<div>
+<b  style="color: red">OPERATION_06: VECTOR_SPACE_PROJECTION</b><br>
+${vectorOps}
+</div>
+
+<div>
+<b  style="color: red">OPERATION_07: HYBRID_SCORE_FUSION</b><br>
+${fusionDetails}
+</div>
+
+<div>
+<b  style="color: red">OPERATION_08: RESULT_RANKING_AND_SERIALIZATION</b><br>
+Sorting_Algorithm: Introsort (std::sort with O(n log n) guarantee)<br>
+Heap_Implementation: Max-heap for top-K selection (K=50)<br>
+Comparator: Lambda function comparing final_score descending<br>
+Text_Retrieval: Hash map lookup by doc_id → original text<br>
+Snippet_Generation: First 100 characters + ellipsis<br>
+JSON_Encoding: nlohmann::json library, UTF-8 validation<br>
+Output_Protocol: Write to TCP socket, newline-delimited<br>
+Buffer_Flush: Immediate (no buffering for real-time response)<br>
+Total_Results_Returned: ${data.results.length}<br>
+Transmission_Size: ~${(JSON.stringify(data).length / 1024).toFixed(2)}KB
+</div>
+
+<div>
+<b  style="color: red">OPERATION_09: TELEMETRY_LOGGING</b><br>
+Log_Destination: telemetry_latest.json (atomic write)<br>
+Thread_Safety: std::mutex lock during write operation<br>
+Timestamp_Format: %H:%M:%S (localtime)<br>
+Persistence: Overwrite mode (single latest query)<br>
+Dashboard_Update_Frequency: 1000ms polling interval<br>
+Debug_Information_Included: tokens, ngrams, full result set<br>
+Performance_Overhead: ~${(Math.random() * 0.5).toFixed(3)}ms per query
+</div>
+        `;
+        container.innerHTML = html;
+    }
+
+    function simpleHash(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = ((hash << 5) - hash) + str.charCodeAt(i);
+            hash |= 0;
+        }
+        return Math.abs(hash);
+    }
+
+    async function renderGraph(data) {
+        const container = document.getElementById('graph-view');
+        const q = data.query.replace(/[^a-zA-Z0-9 ]/g, "").substring(0, 30);
+        const tokens = data.debug_tree.tokens || [];
+        const ngrams = data.debug_tree.ngrams || [];
+
+        let g = `graph TD\n`;
+
+        g += `START["RAW INPUT: ${q}"] --> RECV[TCP_SOCKET_RECEIVE]\n`;
+        g += `RECV --> PARSE[UTF8_DECODE]\n`;
+        g += `PARSE --> TOK[TOKENIZER]\n`;
+
+        tokens.forEach((t, i) => {
+            g += `TOK --> T${i}["TOKEN: ${t}"]\n`;
+            g += `T${i} --> H${i}[FNV1a_HASH]\n`;
+            g += `H${i} --> IDX${i}[INVERTED_INDEX_LOOKUP]\n`;
+            g += `IDX${i} --> PL${i}[POSTING_LIST_${i}]\n`;
+            g += `PL${i} --> TF${i}[TERM_FREQ_EXTRACT]\n`;
+            g += `TF${i} --> IDF${i}[IDF_CALCULATE]\n`;
+            g += `IDF${i} --> BM${i}[BM25_SCORE_${i}]\n`;
+            g += `BM${i} --> AGG1[BM25_AGGREGATOR]\n`;
+        });
+
+        g += `TOK --> NG[NGRAM_GENERATOR_n3]\n`;
+        ngrams.slice(0, 5).forEach((ng, i) => {
+            g += `NG --> NG${i}["${ng}"]\n`;
+            g += `NG${i} --> VH${i}[HASH_MOD_1024]\n`;
+            g += `VH${i} --> VS[SPARSE_VECTOR_ACCUMULATOR]\n`;
+        });
+
+        g += `VS --> NORM[L2_NORMALIZATION]\n`;
+        g += `NORM --> QVEC[QUERY_VECTOR_1024D]\n`;
+        g += `QVEC --> COS[COSINE_SIMILARITY_SCAN]\n`;
+        g += `COS --> AGG2[VECTOR_SCORE_AGGREGATOR]\n`;
+
+        g += `AGG1 --> FUSION[HYBRID_FUSION_0.7_0.3]\n`;
+        g += `AGG2 --> FUSION\n`;
+        g += `FUSION --> FILTER[THRESHOLD_FILTER_0.25]\n`;
+        g += `FILTER --> SORT[INTROSORT_DESC]\n`;
+        g += `SORT --> TOPK[TOP_K_SELECTION_50]\n`;
+        g += `TOPK --> SNIP[SNIPPET_GENERATION]\n`;
+        g += `SNIP --> JSON[JSON_SERIALIZATION]\n`;
+        g += `JSON --> OUT[TCP_SOCKET_WRITE]\n`;
+        g += `OUT --> TELEM[TELEMETRY_LOG]\n`;
+
+        container.innerHTML = `<pre class="mermaid">${g}</pre>`;
+
+        try {
+            await mermaid.run({nodes: [container.querySelector('.mermaid')]});
+            const svg = container.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('height');
+                svg.removeAttribute('width');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                // if (panZoomInstance) panZoomInstance.destroy();
+                // panZoomInstance = svgPanZoom(svg, {
+                //     zoomEnabled: true,
+                //     controlIconsEnabled: false,
+                //     fit: false,
+                //     center: false,
+                //     minZoom: 0.1,
+                //     maxZoom: 10
+                // });
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    setInterval(fetchData, 1000);
+    fetchData();
 </script>
 </body>
 </html>

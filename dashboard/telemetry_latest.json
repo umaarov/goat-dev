@@ -1,33 +1,33 @@
 {
     "debug_tree": {
         "ngrams": [
-            "ave",
-            "lra",
-            "rav",
-            "vel"
+            "ald",
+            "nal",
+            "ona",
+            "ron"
         ],
         "tokens": [
-            "lravel"
+            "ronald"
         ]
     },
-    "latency_ms": 0.167,
-    "query": "lravel",
+    "latency_ms": 0.213,
+    "query": "ronald",
     "results": [
         {
-            "id": 127,
-            "score": 0.34188172692412966,
-            "snippet": "Which one is better for backend apps? Laravel Nest.js Laravel, NestJS, backend, frameworks, nodejs"
+            "id": 82,
+            "score": 0.4170288285361958,
+            "snippet": "Which fast food chain dominates worldwide? McDonald's KFC McDonalds, KFC, fast food, restaurants, chains"
         },
         {
-            "id": 115,
-            "score": 0.3015113374564365,
-            "snippet": "Would you rather time travel to the past or future? Past Future timetravel, past, future, scifi, history"
+            "id": 4,
+            "score": 0.3429971737562769,
+            "snippet": "Who is the greatest footballer of the modern era? Ronaldo Messi "
         },
         {
-            "id": 95,
-            "score": 0.29172998001111256,
-            "snippet": "Which framework is best for web development? Django Laravel Django, Laravel, Web framework, Python framework, PHP framework"
+            "id": 118,
+            "score": 0.3273268386039246,
+            "snippet": "Which framework better? FastAPI Django FastAPI Django, web framework, python"
         }
     ],
-    "timestamp": "09:27:54"
+    "timestamp": "10:24:09"
 }
