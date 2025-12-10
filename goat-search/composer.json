@@ -1,0 +1,41 @@
+{
+    "name": "umaarov/goat-search",
+    "description": "High-performance hybrid search daemon for PHP applications.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Umarov Ismoiljon",
+            "email": "hs.umarov21@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Umaarov\\GoatSearch\\": "src/php/"
+        }
+    },
+    "require": {
+        "php": "^8.2"
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "@compile-engine"
+        ],
+        "post-update-cmd": [
+            "@compile-engine"
+        ],
+        "compile-engine": [
+            "echo ' [GOAT] Checking system requirements...'",
+            "which make || (echo ' [ERROR] GNU Make is required to compile the engine.' && exit 1)",
+            "which g++ || (echo ' [ERROR] G++ compiler is required.' && exit 1)",
+            "echo ' [GOAT] Compiling C++ Search Daemon...'",
+            "cd src/cpp && make clean && make",
+            "mkdir -p bin",
+            "mv src/cpp/build/engine bin/goat-daemon",
+            "echo ' [GOAT] Compilation successful. Daemon installed at bin/goat-daemon'"
+        ]
+    },
+    "bin": [
+        "bin/goat-daemon"
+    ]
+}
