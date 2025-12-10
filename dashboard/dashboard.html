@@ -2,200 +2,202 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>GOAT Algorithm Inspector</title>
+    <title>GOAT Engine // Algorithmic Inspector</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+        window.mermaid = mermaid;
+    </script>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #fff;
-            color: #333;
-            padding: 40px;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        body { background-color: #fafafa; color: #171717; font-family: 'JetBrains Mono', monospace; }
+        .panel { background: white; border: 1px solid #e5e5e5; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border-radius: 8px; }
+        .label { font-size: 0.75rem; font-weight: 700; color: #737373; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; display: block; }
 
-        h1 {
-            border-bottom: 2px solid #000;
-            padding-bottom: 10px;
-            font-size: 24px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .container {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 40px;
-        }
-
-        .panel {
-            border: 1px solid #ccc;
-            padding: 20px;
-            border-radius: 4px;
-        }
-
-        .label {
-            font-weight: bold;
-            font-size: 12px;
-            color: #666;
-            text-transform: uppercase;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .value {
-            font-size: 18px;
-            font-family: monospace;
-            font-weight: bold;
-            color: #000;
-        }
-
-        /* Table Styles */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            font-size: 14px;
-        }
-
-        th {
-            text-align: left;
-            border-bottom: 2px solid #000;
-            padding: 10px 5px;
-        }
-
-        td {
-            border-bottom: 1px solid #ddd;
-            padding: 10px 5px;
-            vertical-align: top;
-        }
-
-        .score-bar {
-            background: #eee;
-            height: 4px;
-            width: 50px;
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 5px;
-        }
-
-        .score-fill {
-            background: #000;
-            height: 100%;
-        }
-
-        /* Mermaid Graph Container */
-        #graph-container {
-            text-align: center;
-        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a3a3a3; }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 </head>
-<body>
+<body class="p-8 h-screen flex flex-col gap-6">
 
-<h1>GOAT Engine // Algorithmic Inspector</h1>
+<header class="flex justify-between items-end border-b-2 border-black pb-4">
+    <div>
+        <h1 class="text-2xl font-bold tracking-tighter">GOAT ENGINE <span class="text-blue-600">//</span> INSPECTOR</h1>
+        <p class="text-sm text-gray-500 mt-1">Real-time Vector Decomposition & BM25 Analysis</p>
+    </div>
+    <div class="text-right">
+        <div class="flex items-center gap-2 justify-end">
+            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span class="text-xs font-bold text-green-600">SYSTEM ONLINE</span>
+        </div>
+        <div class="text-xs text-gray-400 mt-1" id="last-update">Waiting for data...</div>
+    </div>
+</header>
 
-<div class="container">
-    <div class="panel">
-        <span class="label">Query Processing Tree</span>
-        <div id="graph-container">Waiting for query...</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
+
+    <div class="panel col-span-2 p-6 flex flex-col">
+        <span class="label">Query Execution Tree (N-Gram Decomposition)</span>
+        <div class="flex-1 overflow-auto bg-slate-50 rounded border border-slate-200 p-4 flex items-center justify-center relative">
+            <div id="graph-container" class="w-full text-center">
+                <span class="text-gray-400 animate-pulse">Waiting for next query...</span>
+            </div>
+        </div>
     </div>
 
-    <div>
-        <div class="panel" style="margin-bottom: 20px;">
-            <span class="label">Last Query</span>
-            <div class="value" id="q-term">--</div>
-            <div style="margin-top: 10px; font-size: 12px; color: #666;">
-                Processing Time: <span id="q-latency" style="color: #000; font-weight: bold;">--</span>
+    <div class="flex flex-col gap-6 h-full min-h-0">
+
+        <div class="panel p-6">
+            <span class="label">Query Vitals</span>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <div class="text-xs text-gray-400">INPUT TERM</div>
+                    <div class="text-xl font-bold truncate" id="q-term">--</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-400">LATENCY</div>
+                    <div class="text-xl font-bold text-blue-600" id="q-latency">--</div>
+                </div>
             </div>
         </div>
 
-        <div class="panel">
-            <span class="label">Matched Documents</span>
-            <table id="results-table">
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Score</th>
-                    <th>Content Snippet</th>
-                </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
+        <div class="panel flex-1 flex flex-col min-h-0">
+            <div class="p-4 border-b border-slate-100 bg-slate-50 rounded-t-lg">
+                <span class="label mb-0">Ranked Results (Threshold > 0.25)</span>
+            </div>
+            <div class="overflow-auto p-0 flex-1">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-white sticky top-0 shadow-sm z-10">
+                    <tr>
+                        <th class="p-3 border-b text-xs text-gray-500 font-semibold w-16">ID</th>
+                        <th class="p-3 border-b text-xs text-gray-500 font-semibold w-24">SCORE</th>
+                        <th class="p-3 border-b text-xs text-gray-500 font-semibold">CONTENT SNIPPET</th>
+                    </tr>
+                    </thead>
+                    <tbody id="results-body">
+                    </tbody>
+                </table>
+                <div id="no-results" class="hidden p-8 text-center text-gray-400 text-xs italic">
+                    No documents met the similarity threshold (0.25).<br>
+                    Try searching for a known term like "Ronaldo" or "Laravel".
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<script>
-    mermaid.initialize({startOnLoad: true, theme: 'neutral'});
+<script type="module">
+    let lastTimestamp = "";
 
     async function fetchTelemetry() {
         try {
-            // Fetch the detailed JSON
             const response = await fetch('telemetry_latest.json?nocache=' + new Date().getTime());
+            if (!response.ok) throw new Error("File not ready");
             const data = await response.json();
 
-            // 1. Update Basic Stats
-            document.getElementById('q-term').innerText = data.query;
+            // Only redraw if data changed
+            if (data.timestamp === lastTimestamp) return;
+            lastTimestamp = data.timestamp;
+
+            // 1. Update Vitals
+            document.getElementById('last-update').innerText = "Last synced: " + data.timestamp;
+            document.getElementById('q-term').innerText = `"${data.query}"`;
             document.getElementById('q-latency').innerText = data.latency_ms.toFixed(3) + " ms";
 
-            // 2. Build the Tree Graph Definition for Mermaid
-            // We construct a flowchart: Query -> Tokens -> Trigrams
-            let graphDef = "graph TD\n";
-            graphDef += `Q[Query: "${data.query}"] --> T{Tokenize}\n`;
+            // 2. Draw Mermaid Graph (The Tree)
+            renderGraph(data);
 
-            // Add tokens
-            data.debug_tree.tokens.forEach((token, i) => {
-                let nodeId = `TOK${i}`;
-                graphDef += `T --> ${nodeId}["${token}"]\n`;
-
-                // Add N-Grams for this token
-                // (Simple visualization: just link all ngrams to the first token for simplicity in demo)
-                data.debug_tree.ngrams.forEach((gram, j) => {
-                    // Only show ngrams relevant to this token to avoid graph explosion
-                    if (token.includes(gram)) {
-                        graphDef += `${nodeId} -.-> G${j}(${gram})\n`;
-                    }
-                });
-            });
-
-            // Style the graph
-            graphDef += "style Q fill:#f9f,stroke:#333,stroke-width:2px\n";
-            graphDef += "style T fill:#fff,stroke:#333\n";
-
-            // Render the graph
-            const graphContainer = document.getElementById('graph-container');
-            graphContainer.removeAttribute('data-processed'); // Force redraw
-            graphContainer.innerHTML = graphDef;
-            await mermaid.run({nodes: [graphContainer]});
-
-            // 3. Update Results Table
-            const tbody = document.querySelector('#results-table tbody');
-            tbody.innerHTML = '';
-
-            if (data.results.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#999">No significant matches found (Threshold < 0.25)</td></tr>';
-            } else {
-                data.results.forEach(res => {
-                    const width = Math.min(res.score * 100, 100);
-                    const row = `
-                            <tr>
-                                <td><b>#${res.id}</b></td>
-                                <td>
-                                    <div class="score-bar"><div class="score-fill" style="width:${width}%"></div></div>
-                                    ${res.score.toFixed(3)}
-                                </td>
-                                <td style="color:#555; font-family:serif; font-style:italic;">"${res.snippet}"</td>
-                            </tr>
-                        `;
-                    tbody.innerHTML += row;
-                });
-            }
+            // 3. Render Results Table
+            renderTable(data.results);
 
         } catch (e) {
-            console.log("Waiting for engine data...");
+            // Console log silence is golden
         }
     }
 
-    setInterval(fetchTelemetry, 2000);
+    async function renderGraph(data) {
+        const container = document.getElementById('graph-container');
+        const safeQuery = data.query.replace(/["<>&]/g, ''); // Sanitize
+
+        // Build Mermaid Definition
+        let graph = "graph TD\n";
+        graph += `  Q["Query: '${safeQuery}'"]:::query --> T{{"Tokenize"}}:::proc\n`;
+
+        // Build Token Nodes
+        data.debug_tree.tokens.forEach((token, i) => {
+            const tokId = `TOK${i}`;
+            const safeToken = token.replace(/["<>&]/g, '');
+            graph += `  T --> ${tokId}("${safeToken}"):::token\n`;
+
+            // Build N-Gram Leaves
+            // Filter ngrams that belong to this token
+            const relevantGrams = data.debug_tree.ngrams.filter(g => token.includes(g));
+
+            if (relevantGrams.length > 0) {
+                // Create a subgraph for visual grouping
+                graph += `  subgraph SG_${i} [ ]\n`;
+                relevantGrams.forEach((gram, j) => {
+                    const gramId = `G_${i}_${j}`;
+                    const safeGram = gram.replace(/["<>&]/g, '');
+                    graph += `    ${tokId} -.-> ${gramId}["${safeGram}"]:::gram\n`;
+                });
+                graph += `  end\n`;
+            }
+        });
+
+        // Styling
+        graph += `  classDef query fill:#1e293b,stroke:#000,color:#fff,stroke-width:2px;\n`;
+        graph += `  classDef proc fill:#e2e8f0,stroke:#64748b,stroke-width:1px,stroke-dasharray: 5 5;\n`;
+        graph += `  classDef token fill:#fff,stroke:#2563eb,stroke-width:2px;\n`;
+        graph += `  classDef gram fill:#f8fafc,stroke:#94a3b8,color:#64748b,stroke-width:1px;\n`;
+        graph += `  style SG_0 fill:none,stroke:none;\n`; // Hide subgraph borders
+
+        // Render
+        container.innerHTML = `<pre class="mermaid">${graph}</pre>`;
+        await window.mermaid.run({ nodes: [container.querySelector('.mermaid')] });
+    }
+
+    function renderTable(results) {
+        const tbody = document.getElementById('results-body');
+        const noRes = document.getElementById('no-results');
+        tbody.innerHTML = '';
+
+        if (!results || results.length === 0) {
+            noRes.classList.remove('hidden');
+            return;
+        }
+        noRes.classList.add('hidden');
+
+        results.forEach(res => {
+            const percentage = Math.round(res.score * 100);
+            const colorClass = percentage > 80 ? 'bg-green-500' : (percentage > 50 ? 'bg-blue-500' : 'bg-yellow-500');
+
+            const row = `
+                    <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                        <td class="p-3 font-mono text-xs font-bold text-slate-600">#${res.id}</td>
+                        <td class="p-3">
+                            <div class="flex items-center gap-2">
+                                <div class="w-12 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                    <div class="${colorClass} h-full" style="width: ${percentage}%"></div>
+                                </div>
+                                <span class="text-xs font-bold text-slate-700">${res.score.toFixed(3)}</span>
+                            </div>
+                        </td>
+                        <td class="p-3 text-xs text-slate-600 truncate max-w-[200px]" title="${res.snippet.replace(/"/g, '&quot;')}">
+                            "${res.snippet}"
+                        </td>
+                    </tr>
+                `;
+            tbody.innerHTML += row;
+        });
+    }
+
+    // Poll for updates every 1.5 seconds
+    setInterval(fetchTelemetry, 1500);
     fetchTelemetry();
 </script>
 </body>

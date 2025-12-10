@@ -961,14 +961,17 @@ class PostController extends Controller
         $perPage = 15;
 
         if (!$queryTerm) {
-            $posts = Post::query()->whereRaw('0 = 1')->paginate($perPage);
-            return view('search.results', ['posts' => $posts, 'users' => collect(), 'queryTerm' => null]);
+            $emptyParams = ['path' => Paginator::resolveCurrentPath()];
+            $posts = new \Illuminate\Pagination\LengthAwarePaginator([], 0, $perPage, 1, $emptyParams);
+
+            return view('search.results', [
+                'posts' => $posts,
+                'users' => collect(),
+                'queryTerm' => null
+            ]);
         }
 
         $soundexCode = soundex($queryTerm);
-        $users = collect();
-        $posts = null;
-
         $candidateUsers = User::query()
             ->where(function (Builder $subQuery) use ($queryTerm, $soundexCode) {
                 $subQuery->where('username', 'LIKE', "%{$queryTerm}%")
@@ -986,7 +989,7 @@ class PostController extends Controller
         );
         $users = $sortedUsers->take(10);
 
-        // GOAT ENGINE
+        $posts = null;
         try {
             $ids = $this->searchEngine->search($queryTerm);
 
@@ -997,45 +1000,19 @@ class PostController extends Controller
                     ->whereIn('id', $ids)
                     ->orderByRaw("FIELD(id, $idsString)")
                     ->paginate($perPage);
+            } else {
+                $posts = new \Illuminate\Pagination\LengthAwarePaginator(
+                    collect([]),
+                    0,
+                    $perPage,
+                    1,
+                    ['path' => Paginator::resolveCurrentPath(), 'query' => $request->query()]
+                );
             }
         } catch (Exception $e) {
             Log::error("Goat Engine Search Failed: " . $e->getMessage());
-        }
 
-        // SQL + Levenshtein
-        if (!$posts || $posts->isEmpty()) {
-
-            $candidatePosts = Post::query()->withPostData()
-                ->where(function (Builder $subQuery) use ($queryTerm, $soundexCode) {
-                    $subQuery->where('question', 'LIKE', "%{$queryTerm}%")
-                        ->orWhereRaw('SOUNDEX(question) = ?', [$soundexCode])
-                        ->orWhere('option_one_title', 'LIKE', "%{$queryTerm}%")
-                        ->orWhereRaw('SOUNDEX(option_one_title) = ?', [$soundexCode])
-                        ->orWhere('option_two_title', 'LIKE', "%{$queryTerm}%")
-                        ->orWhereRaw('SOUNDEX(option_two_title) = ?', [$soundexCode])
-                        ->orWhere('ai_generated_tags', 'LIKE', "%{$queryTerm}%")
-                        ->orWhereHas('user', fn(Builder $q) => $q->where('username', 'LIKE', "%{$queryTerm}%"));
-                })
-                ->latest()
-                ->limit(200)
-                ->get();
-
-            $sortedPostsCollection = $this->levenshteinService->findBestMatches(
-                $queryTerm,
-                $candidatePosts,
-                ['question', 'option_one_title', 'option_two_title', 'ai_generated_tags', 'user.username']
-            );
-
-            $currentPage = Paginator::resolveCurrentPage('page');
-            $currentPagePosts = $sortedPostsCollection->slice(($currentPage - 1) * $perPage, $perPage);
-
-            $posts = new \Illuminate\Pagination\LengthAwarePaginator(
-                $currentPagePosts,
-                $sortedPostsCollection->count(),
-                $perPage,
-                $currentPage,
-                ['path' => Paginator::resolveCurrentPath(), 'query' => $request->query()]
-            );
+            $posts = new \Illuminate\Pagination\LengthAwarePaginator([], 0, $perPage, 1);
         }
 
         $this->attachUserVoteStatus($posts);
