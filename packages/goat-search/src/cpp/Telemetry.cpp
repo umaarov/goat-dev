@@ -4,7 +4,6 @@
 #include <sstream>
 #include <iomanip>
 #include <ctime>
-#include <algorithm>
 
 using json = nlohmann::json;
 
@@ -39,10 +38,13 @@ void Telemetry::recordQuery(
 
     j["results"] = json::array();
     for(const auto& res : results) {
+        std::string fullText = std::get<2>(res);
+        std::string snippet = fullText.length() > 600 ? fullText.substr(0, 600) + "..." : fullText;
+
         j["results"].push_back({
             {"id", std::get<0>(res)},
             {"score", std::get<1>(res)},
-            {"snippet", std::get<2>(res).substr(0, 150) + "..."}
+            {"snippet", snippet}
         });
     }
 

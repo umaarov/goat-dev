@@ -10,24 +10,24 @@
             "lravel"
         ]
     },
-    "latency_ms": 0.199,
+    "latency_ms": 0.167,
     "query": "lravel",
     "results": [
         {
             "id": 127,
             "score": 0.34188172692412966,
-            "snippet": "Which one is better for backend apps? Laravel Nest.js Laravel, NestJS, backend, frameworks, nodejs..."
+            "snippet": "Which one is better for backend apps? Laravel Nest.js Laravel, NestJS, backend, frameworks, nodejs"
         },
         {
             "id": 115,
             "score": 0.3015113374564365,
-            "snippet": "Would you rather time travel to the past or future? Past Future timetravel, past, future, scifi, history..."
+            "snippet": "Would you rather time travel to the past or future? Past Future timetravel, past, future, scifi, history"
         },
         {
             "id": 95,
             "score": 0.29172998001111256,
-            "snippet": "Which framework is best for web development? Django Laravel Django, Laravel, Web framework, Python framework, PHP framework..."
+            "snippet": "Which framework is best for web development? Django Laravel Django, Laravel, Web framework, Python framework, PHP framework"
         }
     ],
-    "timestamp": "09:17:06"
+    "timestamp": "09:27:54"
 }
