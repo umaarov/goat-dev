@@ -11,7 +11,7 @@ Unlike traditional SQL `LIKE` queries or heavy Java-based engines (Elasticsearch
 
 > **Why use this?**
 > * 🚀 **Speed:** Core logic runs in C++, communicating with PHP via TCP sockets ( < 1ms response times).
-> * 🧠 **Intelligence:** Finds "McDonalds" even if you type "ronald" (Partial Vector Matching).
+> * 🧠 **Intelligence:** (Partial Vector Matching).
 > * 🎯 **Precision:** Uses a smart threshold (0.25) to filter random noise automatically.
 
 ---
