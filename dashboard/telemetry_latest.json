@@ -1,33 +1,23 @@
 {
     "debug_tree": {
         "ngrams": [
-            "ald",
-            "nal",
-            "ona",
-            "ron"
+            "ane",
+            "han",
+            "iph",
+            "pha"
         ],
         "tokens": [
-            "ronald"
+            "iphane"
         ]
     },
-    "latency_ms": 0.213,
-    "query": "ronald",
+    "latency_ms": 0.162,
+    "query": "iphane",
     "results": [
         {
-            "id": 82,
-            "score": 0.4170288285361958,
-            "snippet": "Which fast food chain dominates worldwide? McDonald's KFC McDonalds, KFC, fast food, restaurants, chains"
-        },
-        {
-            "id": 4,
-            "score": 0.3429971737562769,
-            "snippet": "Who is the greatest footballer of the modern era? Ronaldo Messi "
-        },
-        {
-            "id": 118,
-            "score": 0.3273268386039246,
-            "snippet": "Which framework better? FastAPI Django FastAPI Django, web framework, python"
+            "id": 21,
+            "score": 0.24253562815593577,
+            "snippet": "Iphone 16e or Iphone 13 Iphone 16e Iphone 13 "
         }
     ],
-    "timestamp": "10:24:09"
+    "timestamp": "10:46:52"
 }

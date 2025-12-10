@@ -7,10 +7,10 @@
 
 using json = nlohmann::json;
 
-Telemetry& Telemetry::instance() {
-    static Telemetry instance;
-    return instance;
-}
+//Telemetry& Telemetry::instance() {
+//    static Telemetry instance;
+//    return instance;
+//}
 
 std::string Telemetry::getCurrentTime() {
     auto now = std::chrono::system_clock::now();

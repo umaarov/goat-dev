@@ -48,7 +48,7 @@ void VectorIndex::addVector(int docId, const std::vector<float>& vec) {
 std::vector<std::pair<int, double>> VectorIndex::search(const std::vector<float>& queryVec, int k) const {
     std::vector<std::pair<int, double>> allScores;
 
-    double MIN_SCORE_THRESHOLD = 0.25;
+    double MIN_SCORE_THRESHOLD = 0.20;
 
     for (const auto& pair : vectors) {
         double score = cosine_similarity(queryVec, pair.second);
