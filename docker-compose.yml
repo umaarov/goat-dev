@@ -140,7 +140,7 @@ services:
         volumes:
             - ./:/app
             - /app/vendor
-            - /app/public/buildc
+            - /app/public/build
             - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
         depends_on:
             - db
