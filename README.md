@@ -109,7 +109,7 @@ graph TD
 
 1. **Clone the repository**
    ```bash
-   git clone [https://github.com/umaarov/goat-dev.git](https://github.com/umaarov/goat-dev.git)
+   git clone https://github.com/umaarov/goat-dev.git
    cd goat-dev
    ```
 
