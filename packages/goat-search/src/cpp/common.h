@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cmath>
 
-const int VECTOR_DIMENSION = 64;
+const int VECTOR_DIMENSION = 1024;
 
 struct InputDocument {
     int id;
