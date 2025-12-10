@@ -1,5 +1,6 @@
 #include "HybridSearcher.h"
 #include "json.hpp"
+#include "Logger.h"
 #include <iostream>
 #include <string>
 #include <thread>
@@ -15,38 +16,59 @@ std::mutex searcher_mutex;
 
 void handle_connection(int client_socket) {
     char buffer[8192] = {0};
-    read(client_socket, buffer, 8192);
+    ssize_t bytesRead = read(client_socket, buffer, 8192);
+
+    if (bytesRead <= 0) {
+        close(client_socket);
+        return;
+    }
+
     std::string command_str(buffer);
 
-    if (!command_str.empty()) {
-            std::string log_preview = command_str.substr(0, 50);
-            std::cout << "[ACCESS] Received: " << log_preview << "..." << std::endl;
-        }
+    std::string log_preview = command_str.length() > 60 ? command_str.substr(0, 60) + "..." : command_str;
+    std::replace(log_preview.begin(), log_preview.end(), '\n', ' ');
+    Logger::log(NET, "Received Payload (" + std::to_string(bytesRead) + " bytes): " + log_preview);
 
     std::string response;
     try {
         size_t first_space = command_str.find(' ');
+        if (first_space == std::string::npos) throw std::runtime_error("Invalid Protocol Format");
+
         std::string command = command_str.substr(0, first_space);
         std::string payload = command_str.substr(first_space + 1);
 
         std::lock_guard<std::mutex> lock(searcher_mutex);
+
         if (command == "INDEX") {
+            ScopedTimer t("Indexing Document");
             auto j = json::parse(payload);
             InputDocument doc = {j["id"], j["text"]};
             searcher.addDocument(doc);
             response = "{\"status\":\"ok\"}";
+            Logger::log(INFO, "Indexed Doc ID: " + std::to_string(doc.id));
+
         } else if (command == "SEARCH") {
+            ScopedTimer t("Full Search Request");
             auto j = json::parse(payload);
             std::string query = j["query"];
+            Logger::log(INFO, "Processing Query: \"" + query + "\"");
+
             auto results = searcher.search(query, 50);
             response = json(results).dump();
+            Logger::log(INFO, "Returning " + std::to_string(results.size()) + " results.");
+
         } else if (command == "SAVE") {
+            Logger::log(INFO, "Saving Index to disk...");
             searcher.save("index.bm25", "index.vec");
             response = "{\"status\":\"saved\"}";
+            Logger::log(INFO, "Index Saved Successfully.");
+
         } else {
+            Logger::log(WARN, "Unknown Command Received: " + command);
             response = "{\"error\":\"unknown command\"}";
         }
     } catch (const std::exception& e) {
+        Logger::log(ERROR, "Exception handling request: " + std::string(e.what()));
         response = std::string("{\"error\":\"") + e.what() + "\"}";
     }
 
@@ -75,11 +97,13 @@ void start_server(int port) {
         perror("listen"); exit(EXIT_FAILURE);
     }
 
-    std::cout << "Daemon listening on port " << port << "..." << std::endl;
+    Logger::log(INFO, "GOAT SEARCH ENGINE STARTED");
+    Logger::log(NET, "Daemon listening on port " + std::to_string(port) + "...");
+
     while (true) {
         int client_socket;
         if ((client_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
-            perror("accept");
+            Logger::log(ERROR, "Socket Accept Failed");
             continue;
         }
         std::thread(handle_connection, client_socket).detach();
@@ -87,11 +111,11 @@ void start_server(int port) {
 }
 
 int main() {
-    std::cout << "Loading search indexes..." << std::endl;
+    Logger::log(INFO, "Booting System...");
     if (!searcher.load("index.bm25", "index.vec")) {
-        std::cout << "Could not load index files. Starting with empty index." << std::endl;
+        Logger::log(WARN, "No existing index found. Starting Fresh.");
     } else {
-        std::cout << "Indexes loaded successfully." << std::endl;
+        Logger::log(INFO, "Indexes loaded from disk successfully.");
     }
     start_server(9999);
     return 0;
