@@ -18,7 +18,7 @@ COPY composer.json composer.lock ./
 COPY app ./app
 COPY database ./database
 RUN #composer install --no-dev --ignore-platform-reqs --no-interaction --prefer-dist --optimize-autoloader
-RUN composer install --no-dev --ignore-platform-reqs --no-interaction --prefer-dist --optimize-autoloader --no-scripts
+RUN composer install --ignore-platform-reqs --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 FROM dunglas/frankenphp:php8.3-alpine
 
 RUN install-php-extensions \

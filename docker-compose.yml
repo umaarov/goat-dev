@@ -33,7 +33,7 @@ services:
                     memory: 1G
         ports:
             - "8000:80"
-            - "443:443/udp"
+#            - "443:443/udp"
         environment:
             APP_ENV: production
             APP_DEBUG: false
@@ -55,7 +55,8 @@ services:
         volumes:
             - ./:/app
             #            - /app/node_modules
-            #            - /app/vendor
+            - /app/vendor
+            - /app/public/build
             - ./docker/Caddyfile:/etc/caddy/Caddyfile
             - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
         depends_on:
@@ -103,6 +104,8 @@ services:
             CACHE_STORE: redis
         volumes:
             - ./:/app
+            - /app/vendor
+            - /app/public/build
             - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
         depends_on:
             - db
@@ -136,6 +139,8 @@ services:
             CACHE_STORE: redis
         volumes:
             - ./:/app
+            - /app/vendor
+            - /app/public/buildc
             - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
         depends_on:
             - db

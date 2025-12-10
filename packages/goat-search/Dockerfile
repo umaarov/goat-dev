@@ -6,10 +6,8 @@ RUN wget -O json.hpp https://github.com/nlohmann/json/releases/download/v3.11.3/
 RUN make
 
 FROM alpine:3.19
-
 RUN apk add --no-cache libstdc++
-
 WORKDIR /app
-COPY --from=builder /source/build/engine /app/goat-engine
+COPY --from=builder /source/build/engine /usr/local/bin/goat-engine
 EXPOSE 9999
-CMD ["/app/goat-engine"]
+CMD ["/usr/local/bin/goat-engine"]
