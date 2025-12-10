@@ -1,3 +1,6 @@
 [submodule "packages/goat-search"]
 	path = packages/goat-search
 	url = https://github.com/umaarov/goat-search.git
+[submodule "goat-search"]
+	path = goat-search
+	url = https://github.com/umaarov/goat-search.git

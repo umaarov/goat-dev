@@ -201,7 +201,7 @@ services:
     #            - goat-network
     goat-search:
         build:
-            context: ./packages/goat-search
+            context: ./goat-search
             dockerfile: Dockerfile
         restart: unless-stopped
         ports:
