@@ -568,4 +568,5 @@ return [
 
     'profile.online' => 'Online',
     'profile.last_seen' => 'Last seen :time',
+    'delete_confirm_title' => 'Postni o‘chirmoqchimisiz?',
 ];

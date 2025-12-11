@@ -793,63 +793,42 @@ class PostController extends Controller
         $user = Auth::user();
 
         if (!$user || (int)$user->id !== (int)$post->user_id) {
-            Log::warning('Authorization FAILED', [
-                'checked_user_id' => $user ? $user->id : 'none',
-                'post_owner_id' => $post->user_id
-            ]);
             abort(403, __('messages.error_unauthorized_action'));
         }
 
-        $postId = $post->id;
-        $postQuestion = $post->question;
-        $postOwnerId = (int)$post->user_id;
         $postOwnerUsername = $post->user->username;
+        $previousUrl = url()->previous();
+        $profileUrlOfPostOwner = route('profile.show', ['username' => $postOwnerUsername]);
 
         $filesToDelete = [];
-        if ($post->option_one_image) {
-            $filesToDelete[] = $post->option_one_image;
-        }
-        if ($post->option_one_image_placeholder) {
-            $filesToDelete[] = $post->option_one_image_placeholder;
-        }
+        if ($post->option_one_image) $filesToDelete[] = $post->option_one_image;
+        if ($post->option_one_image_lqip) $filesToDelete[] = $post->option_one_image_lqip;
+        if ($post->option_two_image) $filesToDelete[] = $post->option_two_image;
+        if ($post->option_two_image_lqip) $filesToDelete[] = $post->option_two_image_lqip;
+
         if (!empty($filesToDelete)) {
             Storage::disk('public')->delete($filesToDelete);
         }
-
-        $filesToDelete = [];
-        if ($post->option_two_image) {
-            $filesToDelete[] = $post->option_two_image;
-        }
-        if ($post->option_two_image_placeholder) {
-            $filesToDelete[] = $post->option_two_image_placeholder;
-        }
-        if (!empty($filesToDelete)) {
-            Storage::disk('public')->delete($filesToDelete);
-        }
-
         Vote::where('post_id', $post->id)->delete();
         $post->delete();
 
-        Log::channel('audit_trail')->info('Post deleted.', [
-            'deleter_user_id' => $user->id,
-            'deleter_username' => $user->username,
-            'deleted_post_id' => $postId,
-            'original_post_question' => Str::limit($postQuestion, 100),
-            'original_post_owner_id' => $postOwnerId,
-            'original_post_owner_username' => $postOwnerUsername,
-            'ip_address' => request()->ip(),
-        ]);
+        try {
+            Log::channel('audit_trail')->info('Post deleted.', [
+                'deleter_user_id' => $user->id,
+                'deleted_post_id' => $post->id,
+                'ip_address' => request()->ip(),
+            ]);
 
-        $previousUrl = url()->previous();
-        $profileUrlOfPostOwner = route('profile.show', ['username' => $postOwnerUsername]);
-        $currentUserId = (int)$user->id;
+            PingSearchEngines::dispatch();
+        } catch (Exception $e) {
+            Log::error('Post deleted, but cleanup jobs failed: ' . $e->getMessage());
+        }
 
         if (str_contains($previousUrl, $profileUrlOfPostOwner)) {
             return redirect()->route('profile.show', ['username' => $postOwnerUsername])
                 ->with('success', __('messages.post_deleted_successfully'));
         }
 
-        PingSearchEngines::dispatch();
         return redirect()->route('home')->with('success', __('messages.post_deleted_successfully'));
     }
 

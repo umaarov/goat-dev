@@ -71,16 +71,75 @@
                 <p class="text-xs text-gray-500 dark:text-gray-400">{{ $post->created_at->format('Y-m-d H:i:s') }}</p>
             </div>
             @if ($showManagementOptions && Auth::check() && (int)Auth::id() === (int)$post->user_id)
-                <div class="flex justify-end border-gray-200 dark:border-gray-700 pl-4 ml-auto">
-                    <form action="{{ route('posts.destroy', $post) }}" method="POST"
-                          onsubmit="return confirm(@json(__('messages.confirm_delete_post_text')))">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit"
-                                class="bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900/50 dark:hover:bg-red-900/80 dark:text-red-300 text-sm py-1 px-3 rounded-md">
-                            {{ __('messages.delete_button') }}
-                        </button>
-                    </form>
+                <div x-data="{ showDeleteModal: false }" class="flex justify-end border-gray-200 dark:border-gray-700 pl-4 ml-auto">
+
+                    <button @click="showDeleteModal = true"
+                            type="button"
+                            class="bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900/50 dark:hover:bg-red-900/80 dark:text-red-300 text-sm py-1 px-3 rounded-md transition-colors duration-200 flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        {{ __('messages.delete_button') }}
+                    </button>
+
+                    <template x-teleport="body">
+                        <div x-show="showDeleteModal"
+                             style="display: none;"
+                             class="fixed inset-0 z-[9999] flex items-center justify-center px-4"
+                             role="dialog"
+                             aria-modal="true">
+
+                            <div x-show="showDeleteModal"
+                                 x-transition:enter="ease-out duration-300"
+                                 x-transition:enter-start="opacity-0"
+                                 x-transition:enter-end="opacity-100"
+                                 x-transition:leave="ease-in duration-200"
+                                 x-transition:leave-start="opacity-100"
+                                 x-transition:leave-end="opacity-0"
+                                 @click="showDeleteModal = false"
+                                 class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"></div>
+
+                            <div x-show="showDeleteModal"
+                                 x-transition:enter="ease-out duration-300"
+                                 x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                                 x-transition:leave="ease-in duration-200"
+                                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                                 x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+                                 class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-sm w-full p-6 relative z-10 overflow-hidden border border-gray-200 dark:border-gray-700 transform transition-all">
+
+                                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
+                                    <svg class="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                </div>
+
+                                <h3 class="text-lg font-bold text-center text-gray-900 dark:text-gray-100 mb-2">
+                                    {{ __('messages.delete_confirm_title') ?? 'Are you sure?' }}
+                                </h3>
+                                <p class="text-sm text-center text-gray-500 dark:text-gray-400 mb-6">
+                                    {{ __('messages.confirm_delete_post_text') }}
+                                </p>
+
+                                <div class="flex items-center justify-center gap-3">
+                                    <button @click="showDeleteModal = false"
+                                            type="button"
+                                            class="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors">
+                                        {{ __('messages.cancel_button') }}
+                                    </button>
+
+                                    <form action="{{ route('posts.destroy', $post) }}" method="POST" class="w-full">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                                class="w-full px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 shadow-sm transition-colors">
+                                            {{ __('messages.delete_button') }}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
                 </div>
             @endif
         </div>
