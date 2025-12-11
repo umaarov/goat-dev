@@ -87,6 +87,7 @@ services:
         command: frankenphp run --config /etc/caddy/Caddyfile --watch
 
     worker:
+        build: .
         image: goat-app:latest
         restart: unless-stopped
         command: php artisan queue:work --tries=3 --timeout=90
