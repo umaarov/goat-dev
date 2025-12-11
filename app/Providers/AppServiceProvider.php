@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Extensions\SafeFailedJobProvider;
 use App\Models\User;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Gate;
@@ -15,6 +16,12 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton('files', function () {
             return new Filesystem();
+        });
+        $this->app->extend('queue.failed', function ($service, $app) {
+            return new SafeFailedJobProvider(
+                $app['config']->get('queue.failed.database'),
+                $app['config']->get('queue.failed.table')
+            );
         });
     }
 

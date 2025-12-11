@@ -1,41 +1,25 @@
 {
     "debug_tree": {
         "ngrams": [
-            "bik",
-            "ike",
-            "ort",
-            "por",
-            "rtb",
-            "spo",
-            "tbi"
+            "est",
+            "ion",
+            "que",
+            "sti",
+            "tio",
+            "ues"
         ],
         "tokens": [
-            "sportbike"
+            "question"
         ]
     },
-    "latency_ms": 0.47,
-    "query": "Sportbike",
+    "latency_ms": 0.375,
+    "query": "Question",
     "results": [
         {
-            "id": 129,
-            "score": 9.30847030612262,
-            "snippet": "Which is better? Honda rebel 1100 Ducati panigale Honda Rebel, Ducati Panigale, Motorcycle, Cruiser,..."
-        },
-        {
-            "id": 83,
-            "score": 0.09226870661358301,
-            "snippet": "Which brand is better? Nike Adidas Nike, Adidas, sneakers, sportswear, athletic wear"
-        },
-        {
-            "id": 103,
-            "score": 0.08660254506883776,
-            "snippet": "Which is the bigger sporting event? World Cup Olympics World Cup, Olympics, Soccer, Sports, Global e..."
-        },
-        {
-            "id": 108,
-            "score": 0.07862136414596482,
-            "snippet": "Qaysi biri yaxshi Tapochka Krossovka slippers, sneakers, footwear, comfort, sport"
+            "id": 40,
+            "score": 0.2407717153573731,
+            "snippet": "What’s worse for the planet? Overpopulation Overconsumption "
         }
     ],
-    "timestamp": "06:30:20"
+    "timestamp": "09:22:23"
 }

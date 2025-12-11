@@ -3,6 +3,7 @@
 use App\Console\Commands\CleanupUnverifiedUsers;
 use App\Console\Commands\GenerateSitemap;
 use App\Console\Commands\SendPostNotifications;
+use App\Extensions\SafeFailedJobProvider;
 use App\Http\Middleware\CheckRefreshToken;
 use App\Http\Middleware\EnsurePasswordIsSet;
 use App\Http\Middleware\SecurityHeaders;
@@ -191,5 +192,6 @@ return Application::configure(basePath: dirname(__DIR__))
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
         Spatie\ResponseCache\ResponseCacheServiceProvider::class,
+//        SafeFailedJobProvider::class,
     ])
     ->create();

@@ -29,13 +29,25 @@ RUN install-php-extensions \
     opcache \
     pcntl \
     bcmath \
-    redis
+    redis \
+
+RUN apk add --no-cache \
+    build-base \
+    libwebp-dev \
+    libjpeg-turbo-dev \
+    gcc \
+    musl-dev
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
 COPY --from=backend_builder /app/vendor /app/vendor
 COPY --from=frontend_builder /app/public/build /app/public/build
 COPY . /app
+
+WORKDIR /app
+RUN gcc -O3 -o image_processor image_processor_dev/image_processor.c -lwebp -lm \
+    && chmod +x image_processor
+
 RUN chmod -R 777 /app/storage /app/bootstrap/cache
 ENV SERVER_NAME=":80"
 
