@@ -33,10 +33,10 @@ services:
                     memory: 1G
         ports:
             - "8000:80"
-#            - "443:443/udp"
+        #            - "443:443/udp"
         environment:
-            APP_ENV: local
-            APP_DEBUG: true
+            APP_ENV: production
+            APP_DEBUG: false
             SERVER_NAME: ":80"
             TRUSTED_PROXIES: "*"
             APP_KEY: ${APP_KEY}
@@ -55,7 +55,7 @@ services:
         volumes:
             - ./:/app
             #            - /app/node_modules
-            - /app/vendor
+            #            - /app/vendor
             - /app/public/build
             - ./docker/Caddyfile:/etc/caddy/Caddyfile
             - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
@@ -77,6 +77,7 @@ services:
             timeout: 10s
             retries: 3
             start_period: 10s
+        command: frankenphp run --config /etc/caddy/Caddyfile --watch
 
     worker:
         image: goat-app:latest
@@ -104,7 +105,7 @@ services:
             CACHE_STORE: redis
         volumes:
             - ./:/app
-            - /app/vendor
+            #            - /app/vendor
             - /app/public/build
             - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
         depends_on:
