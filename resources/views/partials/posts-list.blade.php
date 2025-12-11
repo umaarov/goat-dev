@@ -8,7 +8,7 @@
     ])
 
     @if ((($postCounter + $loop->iteration) % 6) == 0)
-        <div class="w-full min-w-[250px]">
+        <div class="w-full min-w-[250px] mb-4">
             <ins class="adsbygoogle"
                  style="display:block; min-width: 250px; width: 100%;"
                  data-ad-format="fluid"
