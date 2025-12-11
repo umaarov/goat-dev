@@ -383,12 +383,20 @@
         @auth
             <a href="{{ route('profile.show', ['username' => Auth::user()->username]) }}"
                title="{{ __('messages.account') }}"
-               class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-800 dark:text-gray-300 dark:hover:text-blue-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                     stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                </svg>
+               class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-800 dark:text-gray-300 dark:hover:text-blue-400 group">
+
+                @if(Auth::user()->profile_picture)
+                    <img src="{{ Str::startsWith(Auth::user()->profile_picture, ['http', 'https']) ? Auth::user()->profile_picture : Storage::url(Auth::user()->profile_picture) }}"
+                         alt="{{ Auth::user()->username }}"
+                         class="h-6 w-6 rounded-full object-cover ring-2 ring-transparent group-hover:ring-blue-400 transition-all duration-300">
+                @else
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                         stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                @endif
+
                 <span class="text-xs mt-1">{{ __('messages.account') }}</span>
             </a>
         @else
