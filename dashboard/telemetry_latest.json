@@ -1,25 +1,24 @@
 {
     "debug_tree": {
         "ngrams": [
-            "est",
-            "ion",
-            "que",
-            "sti",
-            "tio",
-            "ues"
+            "how",
+            "ows",
+            "sho",
+            "tvs",
+            "vsh"
         ],
         "tokens": [
-            "question"
+            "tvshows"
         ]
     },
-    "latency_ms": 0.375,
-    "query": "Question",
+    "latency_ms": 0.228,
+    "query": "TVshows",
     "results": [
         {
-            "id": 40,
-            "score": 0.2407717153573731,
-            "snippet": "What’s worse for the planet? Overpopulation Overconsumption "
+            "id": 114,
+            "score": 7.988179622628634,
+            "snippet": "Which film is better: Alice in Borderland or Squid Game? Alice in Borderland Squid Game AliceinBorde..."
         }
     ],
-    "timestamp": "09:22:23"
+    "timestamp": "05:30:43"
 }

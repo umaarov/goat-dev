@@ -32,8 +32,9 @@ services:
                     cpus: '1.0'
                     memory: 1G
         ports:
-            - "8000:80"
-        #            - "443:443/udp"
+            - "80:80"
+            - "443:443"
+            - "443:443/udp"
         environment:
             APP_ENV: local
             APP_DEBUG: true
@@ -79,7 +80,7 @@ services:
         #      # - "traefik.http.routers.app.entrypoints=websecure"
         #      # - "traefik.http.routers.app.tls.certresolver=myresolver"
         healthcheck:
-            test: [ "CMD-SHELL", "wget -qO- http://localhost:80/up || exit 1" ]
+            test: [ "CMD-SHELL", "wget --header='Host: goat.uz' -qO- http://localhost:80/up || exit 1" ]
             interval: 30s
             timeout: 10s
             retries: 3

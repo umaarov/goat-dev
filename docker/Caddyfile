@@ -3,7 +3,7 @@
     order php_server before file_server
 }
 
-:80 {
+goat.uz, www.goat.uz {
     root * /app/public
     encode zstd gzip
 
