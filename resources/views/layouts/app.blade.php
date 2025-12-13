@@ -216,7 +216,6 @@
                 "email": "info@goat.uz",
                 "telephone": "+998-33-500-25-17"
             }
-            "featureList": "AI Moderation, Hybrid Search, 3D Achievement Badges, Structured Debates"
         }
     </script>
 
