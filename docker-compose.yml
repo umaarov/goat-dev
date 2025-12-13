@@ -39,8 +39,8 @@ services:
             - "443:443"
             - "443:443/udp"
         environment:
-            APP_ENV: local
-            APP_DEBUG: true
+            APP_ENV: production
+            APP_DEBUG: false
             SERVER_NAME: ":80"
             TRUSTED_PROXIES: "*"
             APP_KEY: ${APP_KEY}

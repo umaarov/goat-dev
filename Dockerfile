@@ -39,7 +39,9 @@ RUN install-php-extensions \
     libwebp-dev \
     libjpeg-turbo-dev \
     gcc \
-    musl-dev
+    musl-dev \
+    nodejs \
+    npm
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 COPY --from=backend_builder /app/vendor /app/vendor
