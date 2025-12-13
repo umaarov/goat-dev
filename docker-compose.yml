@@ -78,7 +78,7 @@ services:
         volumes:
             - ./:/app
             #            - /app/node_modules
-            #            - /app/vendor
+            - /app/vendor
             - /app/public/build
             - ./docker/Caddyfile:/etc/caddy/Caddyfile
             - caddy_data:/data
