@@ -83,6 +83,7 @@ services:
             - ./docker/Caddyfile:/etc/caddy/Caddyfile
             - caddy_data:/data
             - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
+            - ./docker/certs:/etc/caddy/certs
         depends_on:
             - db
             - redis

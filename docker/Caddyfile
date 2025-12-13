@@ -1,12 +1,19 @@
 {
     frankenphp
     order php_server before file_server
+
     acme_ca https://acme.zerossl.com/v2/DV90
     email hs.umarov21@gmail.com
+
+    servers {
+                trusted_proxies cloudflare
+                client_ip_headers CF-Connecting-IP
+            }
 }
 
 :80 {
     respond /up 200
+    redir https://www.goat.uz{uri} permanent
 }
 
 goat.uz {
@@ -14,13 +21,25 @@ goat.uz {
 }
 
 www.goat.uz {
-    respond /up 200
+    header {
+               X-Frame-Options "SAMEORIGIN"
+               X-Content-Type-Options "nosniff"
+               Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+               -Server
+               -X-Powered-By
+           }
+
     root * /app/public
     encode zstd gzip
 
     php_server {
                    resolve_root_symlink
                }
+
+    @hidden {
+                path */.*
+            }
+    respond @hidden 403
 
     @static {
                 file
