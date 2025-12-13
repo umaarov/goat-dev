@@ -3,7 +3,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci
 #COPY .env .env
-COPY .env ./
+#COPY .env ./
 ARG VITE_PUSHER_APP_KEY
 ARG VITE_PUSHER_APP_CLUSTER
 ENV VITE_PUSHER_APP_KEY=${VITE_PUSHER_APP_KEY}
