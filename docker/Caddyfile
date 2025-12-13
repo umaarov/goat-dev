@@ -2,7 +2,7 @@
     frankenphp
     order php_server before file_server
     acme_ca https://acme.zerossl.com/v2/DV90
-    email your_real_email@gmail.com
+    email hs.umarov21@gmail.com
 }
 
 :80 {
