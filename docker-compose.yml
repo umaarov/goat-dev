@@ -107,6 +107,7 @@ services:
     worker:
         build: .
         image: goat-app:latest
+        pull_policy: never
         restart: unless-stopped
         command: php artisan queue:work --tries=3 --timeout=90
         healthcheck:
