@@ -73,6 +73,8 @@ services:
             PUSHER_APP_ENCRYPTED: ${PUSHER_APP_ENCRYPTED}
             VITE_PUSHER_APP_KEY: ${PUSHER_APP_KEY}
             VITE_PUSHER_APP_CLUSTER: ${PUSHER_APP_CLUSTER}
+        env_file:
+            - .env
         volumes:
             - ./:/app
             #            - /app/node_modules

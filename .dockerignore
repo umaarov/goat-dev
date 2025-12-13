@@ -6,6 +6,7 @@ vendor
 public/build
 public/storage
 .env
+.env.*
 docker-compose.yml
 Dockerfile
 bootstrap/cache/*.php
