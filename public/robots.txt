@@ -3,19 +3,24 @@ User-agent: *
 Disallow: /login
 Disallow: /register
 Disallow: /logout
-Disallow: /auth/
-Disallow: /forgot-password
-Disallow: /reset-password
+Disallow: /password/
 Disallow: /email/
-Disallow: /confirm-password
+Disallow: /auth/
+Disallow: /account/deactivate
+
+Disallow: /__netdebug
+Disallow: /pulse
+Disallow: /sanctum/
 
 Disallow: /posts/create
-Disallow: /*/edit$
 Disallow: /notifications
-Disallow: /check-username
-Disallow: /load-more-posts
-Disallow: /__netdebug
+Disallow: /ratings/rate
+Disallow: /*/edit$
+Disallow: /*/delete$
 
+Allow: /build/
+Allow: /assets/
+Allow: /storage/
 Allow: /
 
-Sitemap: https://goat.uz/sitemap.xml
+Sitemap: https://www.goat.uz/sitemap.xml

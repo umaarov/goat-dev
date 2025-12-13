@@ -242,7 +242,7 @@ return [
     'error.404.lost_goat_alt' => 'Adashgan echki',
 
     'app.default_title' => 'GOAT | Jamiyat so‘rovnomalari',
-    'app.meta_description_default' => 'Eng zo‘ri qaysi? "U yoki bu" so‘rovnomalarini yarating va ovoz bering. Jamiyatga qo‘shiling, o‘z fikringizni bildiring va trendlarni kuzating.',
+    'app.meta_description_default' => 'GOAT - bu yuqori sifatli munozaralar uchun eng yaxshi joy. "U yoki bu" so‘rovnomalarini yarating va ovoz bering. Jamiyatga qo‘shiling, o‘z fikringizni bildiring va trendlarni kuzating.',
     'app.logo_alt' => 'GOAT.uz - Jamiyat so‘rovnomalari logotipi',
 
     'app.all_caught_up' => "Hammasini ko‘rib bo‘ldingiz",

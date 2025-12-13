@@ -245,7 +245,7 @@ return [
     'error.404.lost_goat_alt' => 'Lost Goat',
 
     'app.default_title' => 'GOAT | Community Polls',
-    'app.meta_description_default' => 'What is the GOAT? Create and vote on "this or that" polls. Join the community, share your opinion, and see what\'s trending.',
+    'app.meta_description_default' => 'GOAT is the premier destination for structured, high-quality debate. Create and vote on "this or that" polls. Join the community, share your opinion, and see what\'s trending.',
     'app.logo_alt' => 'GOAT.uz - Community Polls Logo',
     'app.telegram_ad' => 'Join our telegram channel !',
 

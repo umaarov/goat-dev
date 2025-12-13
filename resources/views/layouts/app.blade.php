@@ -124,7 +124,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"
             integrity="sha512-9KkIqdfN7ipEW6B6k+Aq20PV31bjODg4AA52W+tYtAE0jE0kMx49bjJ3FgvS56wzmyfMUHbQ4Km2b7l9+Y/+Eg=="
             crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+    <meta name="title" content="GOAT.uz - Social Debate Platform">
     <meta name="description" content="@yield('meta_description', __('messages.app.meta_description_default'))">
+    <meta name="keywords"
+          content="Debate Platform, Uzbekistan Social Media, Intelligent Discourse, Laravel, AI Moderation, GOAT.uz, Online Community">
     <link rel="canonical" href="@yield('canonical_url', url()->current())"/>
 
     <meta property="og:type" content="@yield('og_type', 'website')">
@@ -149,8 +152,8 @@
     @if(isset($defaultHreflangUrl))
         <link rel="alternate" hreflang="x-default" href="{{ $defaultHreflangUrl }}"/>
     @endif
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
-                crossorigin="anonymous"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
+            crossorigin="anonymous"></script>
     {{--    <script src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false"></script>--}}
     {{--    <script src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false"></script>--}}
     {{--    <script async src="//www.ezojs.com/ezoic/sa.min.js"></script>--}}
@@ -160,10 +163,18 @@
     <script type="application/ld+json">
         {
             "@@context": "https://schema.org",
-            "@@type": "WebSite",
+            "@@type": "WebApplication",
             "@@id": "https://www.goat.uz#website",
-            "name": "GOAT.uz",
+            "name": "GOAT - Social Debate Platform",
             "url": "https://www.goat.uz",
+            "applicationCategory": "SocialNetworkingApplication",
+            "operatingSystem": "Web, PWA",
+            "description": "A mission-critical social platform engineered for structured, high-quality debate and intelligent discourse.",
+            "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "UZS"
+            },
             "alternateName": "GOAT",
             "potentialAction": {
                 "@@type": "SearchAction",
@@ -194,12 +205,18 @@
                 "@@type": "Person",
                 "name": "Ismoiljon Umarov"
             },
+            "author": {
+                "@type": "Person",
+                "name": "Ismoiljon Umarov",
+                "url": "https://linkedin.com/in/umaarov"
+            },
             "contactPoint": {
                 "@@type": "ContactPoint",
                 "contactType": "customer support",
                 "email": "info@goat.uz",
                 "telephone": "+998-33-500-25-17"
             }
+            "featureList": "AI Moderation, Hybrid Search, 3D Achievement Badges, Structured Debates"
         }
     </script>
 
@@ -386,9 +403,10 @@
                class="flex flex-col items-center justify-center text-gray-700 hover:text-blue-800 dark:text-gray-300 dark:hover:text-blue-400 group">
 
                 @if(Auth::user()->profile_picture)
-                    <img src="{{ Str::startsWith(Auth::user()->profile_picture, ['http', 'https']) ? Auth::user()->profile_picture : Storage::url(Auth::user()->profile_picture) }}"
-                         alt="{{ Auth::user()->username }}"
-                         class="h-6 w-6 rounded-full object-cover ring-2 ring-transparent group-hover:ring-blue-400 transition-all duration-300">
+                    <img
+                        src="{{ Str::startsWith(Auth::user()->profile_picture, ['http', 'https']) ? Auth::user()->profile_picture : Storage::url(Auth::user()->profile_picture) }}"
+                        alt="{{ Auth::user()->username }}"
+                        class="h-6 w-6 rounded-full object-cover ring-2 ring-transparent group-hover:ring-blue-400 transition-all duration-300">
                 @else
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                          stroke="currentColor">
@@ -822,7 +840,7 @@
 
             window.addEventListener('beforeunload', () => {
                 if (navigator.sendBeacon) {
-                    const data = new Blob([JSON.stringify({})], { type: 'application/json' });
+                    const data = new Blob([JSON.stringify({})], {type: 'application/json'});
                     navigator.sendBeacon('{{ route("user.logoff") }}?_token=' + csrfToken, data);
                 }
             });
