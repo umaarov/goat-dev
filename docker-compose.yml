@@ -96,7 +96,7 @@ services:
         #      # - "traefik.http.routers.app.entrypoints=websecure"
         #      # - "traefik.http.routers.app.tls.certresolver=myresolver"
         healthcheck:
-            test: [ "CMD-SHELL", "curl -sfk https://127.0.0.1/up || exit 1" ]
+            test: [ "CMD-SHELL", "curl -sf http://127.0.0.1/up || exit 1" ]
             interval: 30s
             timeout: 5s
             retries: 5
