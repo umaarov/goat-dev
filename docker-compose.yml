@@ -81,6 +81,7 @@ services:
             #            - /app/vendor
             - /app/public/build
             - ./docker/Caddyfile:/etc/caddy/Caddyfile
+            - caddy_data:/data
             - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
         depends_on:
             - db
@@ -95,7 +96,7 @@ services:
         #      # - "traefik.http.routers.app.entrypoints=websecure"
         #      # - "traefik.http.routers.app.tls.certresolver=myresolver"
         healthcheck:
-            test: [ "CMD-SHELL", "wget -qO- http://127.0.0.1/up || exit 1" ]
+            test: [ "CMD-SHELL", "curl -sfk https://127.0.0.1/up || exit 1" ]
             interval: 30s
             timeout: 5s
             retries: 5
@@ -249,6 +250,7 @@ networks:
         driver: bridge
 
 volumes:
+    caddy_data:
     goat-db-data:
     goat-redis-data:
     goat-search-data:
