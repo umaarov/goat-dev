@@ -39,6 +39,7 @@ services:
             - "443:443"
             - "443:443/udp"
         environment:
+            APP_SCHEME: https
             APP_ENV: production
             APP_DEBUG: false
             SERVER_NAME: ":80"
@@ -82,7 +83,8 @@ services:
             #            - /app/public/build
             - ./docker/Caddyfile:/etc/caddy/Caddyfile
             - caddy_data:/data
-            - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
+#            - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
+            - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
             - ./docker/certs:/etc/caddy/certs
         depends_on:
             - db
@@ -189,8 +191,6 @@ services:
                 limits:
                     cpus: '1.0'
                     memory: 1G
-        ports:
-            - "${DB_PORT}:3306"
         environment:
             MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
             MYSQL_DATABASE: "${DB_DATABASE}"
@@ -239,7 +239,7 @@ services:
             dockerfile: Dockerfile
         restart: unless-stopped
         ports:
-            - "9999:9999"
+            - "127.0.0.1:9999:9999"
         networks:
             - goat-network
         volumes:
