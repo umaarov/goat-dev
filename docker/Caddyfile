@@ -4,6 +4,7 @@
 }
 
 goat.uz, www.goat.uz {
+    respond /up 200
     root * /app/public
     encode zstd gzip
 
