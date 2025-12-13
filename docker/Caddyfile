@@ -1,7 +1,7 @@
 {
     frankenphp
     order php_server before file_server
-    acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+#    acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
 }
 
 goat.uz, www.goat.uz {
