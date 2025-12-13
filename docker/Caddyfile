@@ -9,7 +9,11 @@
     respond /up 200
 }
 
-goat.uz, www.goat.uz {
+goat.uz {
+    redir https://www.goat.uz{uri} permanent
+}
+
+www.goat.uz {
     respond /up 200
     root * /app/public
     encode zstd gzip
