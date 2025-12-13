@@ -184,13 +184,6 @@
                             @include('partials.post-card-shimmer')
                         </div>
                     </div>
-                @else
-                    @if($users->isEmpty())
-                        <div class="text-center mt-2 mb-8">
-                            <p>{{ __('messages.search_results.no_results_found', ['queryTerm' => e($queryTerm)]) }}</p>
-                            <p>{{ __('messages.search_results.try_different_keywords') }}</p>
-                        </div>
-                    @endif
                 @endif
 
                 @if ($users->isEmpty() && $posts->isEmpty())
