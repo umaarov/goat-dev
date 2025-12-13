@@ -1,0 +1,11 @@
+#Ads.txt goat.uz
+#ownerdomain=goat.uz
+#contact=hs.umarov21@gmail.com
+#managerdomain=Umarov Ismoiljon
+
+#ezoic.ai, 2ffc051620fc982c1a953942c4d29288, DIRECT
+#35
+#themediagrid.com, 4M5PGT, DIRECT, 35d5010d7789b49d
+#themediagrid.com, Q19AKF, DIRECT, 35d5010d7789b49d
+#sonobi.com, 192ecdea01, RESELLER, d1a215d9eb5aee9e
+google.com, pub-2989575196315667, DIRECT, f08c47fec0942fa0
