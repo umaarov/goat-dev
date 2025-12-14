@@ -357,6 +357,7 @@
                    title="Support this project with a coffee"
                    class="inline-block transition-transform duration-200 hover:scale-105">
                     <img src="{{ asset('images/bmc-logo-no-background.png') }}" alt="Buy Me A Coffee"
+                         width="32" height="32"
                          class="h-4 w-auto dark:invert"
                          loading="lazy">
                 </a>
