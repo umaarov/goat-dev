@@ -5,6 +5,7 @@
         'post' => $post,
         'showManagementOptions' => $showManagementOptions,
         'profileOwnerToDisplay' => $profileOwnerToDisplay,
+        'isFirst' => $loop->first && ($posts->currentPage() == 1),
     ])
 
     @if ((($postCounter + $loop->iteration) % 6) == 0)

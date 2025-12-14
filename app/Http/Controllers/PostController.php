@@ -32,8 +32,8 @@ use Illuminate\Support\Str;
 
 class PostController extends Controller
 {
-    private const MAX_POST_IMAGE_WIDTH = 1024;
-    private const MAX_POST_IMAGE_HEIGHT = 1024;
+    private const MAX_POST_IMAGE_WIDTH = 500;
+    private const MAX_POST_IMAGE_HEIGHT = 500;
     private const POST_IMAGE_QUALITY = 75;
     private const LQIP_QUALITY = 30;
     private const LQIP_WIDTH = 24;

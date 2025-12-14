@@ -239,16 +239,29 @@
                  @if($post->option_one_image_lqip) style="background-image: url('{{ $post->option_one_image_lqip }}');" @endif>
 
                 @if($post->option_one_image)
-                    <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-                         data-src="{{ asset('storage/' . $post->option_one_image) }}"
-                         alt="{{ $post->question }} - {{ $post->option_one_title }}"
-                         class="progressive-image h-full w-full object-cover object-center cursor-pointer zoomable-image transition-all duration-300"
-                         decoding="async">
-                @else
-                    <div class="h-full w-full flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-md p-2">
-                        <svg class="h-8 w-8 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                    </div>
-                @endif
+                    @if($isFirst)
+                        <img src="{{ asset('storage/' . $post->option_one_image) }}"
+                             alt="{{ $post->question }} - {{ $post->option_one_title }}"
+                             width="500" height="500"
+                             fetchpriority="high"
+                             loading="eager"
+                             class="h-full w-full object-cover object-center cursor-pointer zoomable-image"
+                             data-full-src="{{ asset('storage/' . $post->option_one_image) }}"> {{-- Keep data-full-src for your modal --}}
+                    @else
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                             data-src="{{ asset('storage/' . $post->option_one_image) }}"
+                             alt="{{ $post->question }} - {{ $post->option_one_title }}"
+                             width="500" height="500"
+                             loading="lazy"
+                             class="progressive-image h-full w-full object-cover object-center cursor-pointer zoomable-image transition-all duration-300"
+                             decoding="async">
+                   @endif
+                    @else
+                        {{-- Fallback SVG --}}
+                        <div class="h-full w-full flex items-center justify-center bg-gray-200 dark:bg-gray-700 p-2">
+                            <svg class="h-8 w-8 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        </div>
+                   @endif
 
                 <div class="vote-result-overlay absolute inset-0 flex items-center justify-center pointer-events-none {{ $hasVoted ? 'opacity-100' : 'opacity-0' }} transition-opacity duration-300">
                     <div class="water-fill absolute bottom-0 left-0 w-full bg-blue-800 dark:bg-blue-600 bg-opacity-70 dark:bg-opacity-70 transition-all duration-700 ease-in-out" style="height: {{ $hasVoted ? $percentOne : 0 }}%;"></div>
@@ -264,13 +277,25 @@
                  @if($post->option_two_image_lqip) style="background-image: url('{{ $post->option_two_image_lqip }}');" @endif>
 
                 @if($post->option_two_image)
-                    <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-                         data-src="{{ asset('storage/' . $post->option_two_image) }}"
-                         alt="{{ $post->question }} - {{ $post->option_two_title }}"
-                         class="progressive-image h-full w-full object-cover object-center cursor-pointer zoomable-image transition-all duration-300"
-                         decoding="async">
+                    @if($isFirst)
+                        <img src="{{ asset('storage/' . $post->option_two_image) }}"
+                             alt="{{ $post->question }} - {{ $post->option_two_title }}"
+                             width="500" height="500"
+                             fetchpriority="high"
+                             loading="eager"
+                             class="h-full w-full object-cover object-center cursor-pointer zoomable-image"
+                             data-full-src="{{ asset('storage/' . $post->option_two_image) }}">
+                    @else
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                             data-src="{{ asset('storage/' . $post->option_two_image) }}"
+                             alt="{{ $post->question }} - {{ $post->option_two_title }}"
+                             width="500" height="500"
+                             loading="lazy"
+                             class="progressive-image h-full w-full object-cover object-center cursor-pointer zoomable-image transition-all duration-300"
+                             decoding="async">
+                    @endif
                 @else
-                    <div class="h-full w-full flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-md p-2">
+                    <div class="h-full w-full flex items-center justify-center bg-gray-200 dark:bg-gray-700 p-2">
                         <svg class="h-8 w-8 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     </div>
                 @endif
