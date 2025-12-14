@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Vote;
 use App\Services\AvatarService;
+use App\Services\CustomImageProcessor;
 use App\Services\ImageGenerationService;
 use App\Services\ModerationService;
 use App\Services\RatingService;
@@ -37,25 +38,32 @@ class UserController extends Controller
 {
     private const PROFILE_IMAGE_SIZE = 300;
     private const PROFILE_IMAGE_QUALITY = 75;
+
     private const HEADER_IMAGE_WIDTH = 1500;
+    private const HEADER_IMAGE_HEIGHT = 500;
     private const HEADER_IMAGE_QUALITY = 80;
+    private const LQIP_WIDTH = 20;
+    private const LQIP_QUALITY = 30;
     protected AvatarService $avatarService;
     protected ModerationService $moderationService;
     protected RatingService $ratingService;
 
     protected ImageGenerationService $imageGenerationService;
+    protected CustomImageProcessor $imageProcessor;
 
     public function __construct(
         AvatarService          $avatarService,
         ModerationService      $moderationService,
         RatingService          $ratingService,
-        ImageGenerationService $imageGenerationService
+        ImageGenerationService $imageGenerationService,
+        CustomImageProcessor   $imageProcessor
     )
     {
         $this->avatarService = $avatarService;
         $this->moderationService = $moderationService;
         $this->ratingService = $ratingService;
         $this->imageGenerationService = $imageGenerationService;
+        $this->imageProcessor = $imageProcessor;
     }
 
     final public function showProfile(string $username): View
@@ -594,7 +602,9 @@ class UserController extends Controller
                 Storage::disk('public')->delete($oldHeader);
             }
             $headerData['header_background'] = $this->processAndStoreHeaderImage(
-                $request->file('header_background_upload'), 'header_backgrounds', 'user_' . $user->id . '_' . time()
+                $request->file('header_background_upload'),
+                'header_backgrounds',
+                'user_' . $user->id . '_' . time()
             );
         } elseif ($request->filled('header_background_template') && in_array($request->input('header_background_template'), $headerTemplateKeys)) {
             if ($isOldHeaderCustom && Storage::disk('public')->exists($oldHeader)) {
@@ -743,19 +753,20 @@ class UserController extends Controller
 
     private function processAndStoreHeaderImage(UploadedFile $uploadedFile, string $directory, string $baseFilename): string
     {
-        $manager = new ImageManager(new GdDriver());
-        $image = $manager->read($uploadedFile->getRealPath());
+        $filename = $baseFilename . '.webp';
+        $relativeOutputPath = $directory . '/' . $filename;
 
-        $image->scaleDown(width: self::HEADER_IMAGE_WIDTH);
+        $result = $this->imageProcessor->process(
+            $uploadedFile->getRealPath(),
+            $relativeOutputPath,
+            self::HEADER_IMAGE_WIDTH,
+            self::HEADER_IMAGE_HEIGHT,
+            self::HEADER_IMAGE_QUALITY,
+            self::LQIP_WIDTH,
+            self::LQIP_QUALITY
+        );
 
-        $newExtension = 'webp';
-        $filename = $baseFilename . '.' . $newExtension;
-        $path = $directory . '/' . $filename;
-
-        $encodedImage = $image->encode(new WebpEncoder(quality: self::HEADER_IMAGE_QUALITY));
-
-        Storage::disk('public')->put($path, $encodedImage);
-        return $path;
+        return $result['main'];
     }
 
     private function processAndStoreProfileImage(UploadedFile $uploadedFile, string $directory, string $baseFilename): string

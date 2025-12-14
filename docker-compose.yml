@@ -1,5 +1,4 @@
-services:
-    #  traefik:
+services: #  traefik:
     #    image: traefik:v3.0
     #    restart: always
     #    command:
@@ -43,7 +42,7 @@ services:
             APP_ENV: production
             APP_DEBUG: false
             SERVER_NAME: ":80"
-            TRUSTED_PROXIES: "*"
+            #            TRUSTED_PROXIES: "*"
             APP_KEY: ${APP_KEY}
             DB_CONNECTION: mysql
             DB_HOST: db
@@ -76,14 +75,13 @@ services:
             VITE_PUSHER_APP_CLUSTER: ${PUSHER_APP_CLUSTER}
         env_file:
             - .env
-        volumes:
-            - ./:/app
+        volumes: #            - ./:/app
             #            - /app/node_modules
             - /app/vendor
             #            - /app/public/build
             - ./docker/Caddyfile:/etc/caddy/Caddyfile
             - caddy_data:/data
-#            - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
+            #            - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
             - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
             - ./docker/certs:/etc/caddy/certs
         depends_on:

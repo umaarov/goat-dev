@@ -8,6 +8,7 @@ use App\Jobs\SharePostToSocialMedia;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\Vote;
+use App\Services\CustomImageProcessor;
 use App\Services\GoatSearchClient;
 use App\Services\GoogleIndexingService;
 use App\Services\LevenshteinService;
@@ -28,10 +29,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Intervention\Image\Drivers\Gd\Driver as GdDriver;
-use Intervention\Image\Encoders\JpegEncoder;
-use Intervention\Image\Encoders\WebpEncoder;
-use Intervention\Image\ImageManager;
 
 class PostController extends Controller
 {
@@ -46,63 +43,13 @@ class PostController extends Controller
 
     private LevenshteinService $levenshteinService;
     private GoatSearchClient $searchEngine;
+    private CustomImageProcessor $imageProcessor;
 
-    public function __construct(LevenshteinService $levenshteinService, GoatSearchClient $searchEngine)
+    public function __construct(LevenshteinService $levenshteinService, GoatSearchClient $searchEngine, CustomImageProcessor $imageProcessor)
     {
         $this->levenshteinService = $levenshteinService;
         $this->searchEngine = $searchEngine;
-
-    }
-
-    final public function index(Request $request): View|JsonResponse
-    {
-        $query = Post::query()->withPostData();
-
-        switch ($request->input('filter')) {
-            case 'trending':
-                $query->where('created_at', '>=', now()->subDays(7))
-                    ->orderByDesc('total_votes')
-                    ->orderByDesc('created_at');
-                break;
-            case 'latest':
-            default:
-                $query->orderByDesc('created_at')->orderByDesc('id');
-                break;
-        }
-
-        $posts = $query->paginate(15)->withQueryString();
-        $this->attachUserVoteStatus($posts);
-
-        if ($request->ajax()) {
-            $html = view('partials.posts-list', ['posts' => $posts])->render();
-
-            return response()->json([
-                'html' => $html,
-                'hasMorePages' => $posts->hasMorePages()
-            ]);
-        }
-
-        return view('home', compact('posts'));
-    }
-
-    private function attachUserVoteStatus(LengthAwarePaginator $posts): void
-    {
-        $userVoteMap = collect();
-        if (Auth::check()) {
-            $loggedInUserId = Auth::id();
-            $postIds = $posts->pluck('id')->all();
-
-            if (!empty($postIds)) {
-                $userVoteMap = Vote::where('user_id', $loggedInUserId)
-                    ->whereIn('post_id', $postIds)
-                    ->pluck('vote_option', 'post_id');
-            }
-        }
-
-        $posts->getCollection()->transform(function ($post) use ($userVoteMap) {
-            $post->user_vote = $userVoteMap->get($post->id);
-            return $post;
-        });
+        $this->imageProcessor = $imageProcessor;
     }
 
     final public function store(Request $request): RedirectResponse
@@ -475,57 +422,17 @@ class PostController extends Controller
     private function processAndStoreImage(UploadedFile $uploadedFile, string $directory, string $baseFilename): array
     {
         $mainImageFilename = $baseFilename . '.webp';
-        $mainImagePath = $directory . '/' . $mainImageFilename;
+        $relativeOutputPath = $directory . '/' . $mainImageFilename;
 
-        $tempPath = $uploadedFile->getRealPath();
-        $finalStoragePath = Storage::disk('public')->path($mainImagePath);
-
-        $binaryPath = base_path('image_processor');
-
-        if (is_executable($binaryPath)) {
-            try {
-                $command = sprintf(
-                    '%s %s %s %d %d %d %d %d',
-                    escapeshellcmd($binaryPath),
-                    escapeshellarg($tempPath),            // <input>
-                    escapeshellarg($finalStoragePath),       // <output_webp>
-                    self::MAX_POST_IMAGE_WIDTH,          // <width>
-                    self::MAX_POST_IMAGE_WIDTH,          // <height>
-                    self::POST_IMAGE_QUALITY,            // <quality>
-                    self::LQIP_WIDTH,                    // <lqip_width>
-                    self::LQIP_QUALITY                   // <lqip_quality>
-                );
-
-                $lqipBase64 = exec($command, $output, $returnCode);
-
-                if ($returnCode !== 0) {
-                    throw new Exception('Custom C binary failed with code ' . $returnCode . '. Output: ' . implode("\n", $output));
-                }
-
-                $lqip = 'data:image/jpeg;base64,' . $lqipBase64;
-                Log::info('Image processed with custom high-performance C binary.');
-
-                return ['main' => $mainImagePath, 'lqip' => $lqip];
-
-            } catch (Exception $e) {
-                Log::error('Custom C binary processing failed. Falling back to PHP GD.', ['error' => $e->getMessage()]);
-            }
-        }
-
-        Log::warning('Custom C binary not found or failed. Using standard PHP GD library.');
-        $manager = new ImageManager(new GdDriver());
-        $image = $manager->read($tempPath);
-
-        $image->scaleDown(width: self::MAX_POST_IMAGE_WIDTH);
-        $encodedMainImage = $image->encode(new WebpEncoder(quality: self::POST_IMAGE_QUALITY));
-        Storage::disk('public')->put($mainImagePath, $encodedMainImage);
-
-        $lqip = (string)$image->scale(width: self::LQIP_WIDTH)
-            ->blur(5)
-            ->encode(new JpegEncoder(quality: self::LQIP_QUALITY))
-            ->toDataUri();
-
-        return ['main' => $mainImagePath, 'lqip' => $lqip];
+        return $this->imageProcessor->process(
+            $uploadedFile->getRealPath(),
+            $relativeOutputPath,
+            self::MAX_POST_IMAGE_WIDTH,
+            self::MAX_POST_IMAGE_HEIGHT,
+            self::POST_IMAGE_QUALITY,
+            self::LQIP_WIDTH,
+            self::LQIP_QUALITY
+        );
     }
 
     final public function create(): View
@@ -603,6 +510,57 @@ class PostController extends Controller
             Log::error('Gemini tags generation exception.', ['message' => $e->getMessage()]);
             return null;
         }
+    }
+
+    final public function index(Request $request): View|JsonResponse
+    {
+        $query = Post::query()->withPostData();
+
+        switch ($request->input('filter')) {
+            case 'trending':
+                $query->where('created_at', '>=', now()->subDays(7))
+                    ->orderByDesc('total_votes')
+                    ->orderByDesc('created_at');
+                break;
+            case 'latest':
+            default:
+                $query->orderByDesc('created_at')->orderByDesc('id');
+                break;
+        }
+
+        $posts = $query->paginate(15)->withQueryString();
+        $this->attachUserVoteStatus($posts);
+
+        if ($request->ajax()) {
+            $html = view('partials.posts-list', ['posts' => $posts])->render();
+
+            return response()->json([
+                'html' => $html,
+                'hasMorePages' => $posts->hasMorePages()
+            ]);
+        }
+
+        return view('home', compact('posts'));
+    }
+
+    private function attachUserVoteStatus(LengthAwarePaginator $posts): void
+    {
+        $userVoteMap = collect();
+        if (Auth::check()) {
+            $loggedInUserId = Auth::id();
+            $postIds = $posts->pluck('id')->all();
+
+            if (!empty($postIds)) {
+                $userVoteMap = Vote::where('user_id', $loggedInUserId)
+                    ->whereIn('post_id', $postIds)
+                    ->pluck('vote_option', 'post_id');
+            }
+        }
+
+        $posts->getCollection()->transform(function ($post) use ($userVoteMap) {
+            $post->user_vote = $userVoteMap->get($post->id);
+            return $post;
+        });
     }
 
     final public function show(Post $post): View

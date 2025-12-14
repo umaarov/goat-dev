@@ -51,7 +51,7 @@ COPY . /app
 WORKDIR /app
 RUN gcc -O3 -o image_processor image_processor_dev/image_processor.c -lwebp -lm \
     && chmod +x image_processor
-RUN chmod -R 777 /app/storage /app/bootstrap/cache \
+RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache \
     && rm -f /app/bootstrap/cache/*.php
 ENV SERVER_NAME=":80"
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
