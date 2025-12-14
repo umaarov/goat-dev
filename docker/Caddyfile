@@ -11,7 +11,7 @@
 }
 
 :80 {
-    respond /up 200
+    respond /up "OK" 200
     redir https://www.goat.uz {uri} permanent
 }
 

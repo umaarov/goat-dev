@@ -49,8 +49,12 @@ COPY --from=backend_builder /app/vendor /app/vendor
 COPY --from=frontend_builder /app/public/build /app/public/build
 COPY . /app
 WORKDIR /app
-RUN gcc -O3 -o image_processor image_processor_dev/image_processor.c -lwebp -lm \
-    && chmod +x image_processor
+RUN gcc -O3 -o image_processor image_processor_dev/image_processor.c -lwebp -lm
+#    && chmod +x image_processor
+
+RUN chmod +x /app/image_processor \
+    && chown www-data:www-data /app/image_processor
+
 RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache \
     && rm -f /app/bootstrap/cache/*.php
 ENV SERVER_NAME=":80"
