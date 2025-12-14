@@ -11,8 +11,12 @@
 }
 
 :80 {
-    respond /up "OK" 200
-    redir https://www.goat.uz {uri} permanent
+    handle /up {
+                   respond "Health OK" 200
+               }
+    handle {
+               redir https://www.goat.uz {uri} permanent
+           }
 }
 
 goat.uz {
