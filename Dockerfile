@@ -41,7 +41,8 @@ RUN install-php-extensions \
     gcc \
     musl-dev \
     nodejs \
-    npm
+    npm \
+    curl
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 COPY --from=backend_builder /app/vendor /app/vendor
