@@ -106,9 +106,22 @@
     {{--        ezstandalone.cmd = ezstandalone.cmd || [];--}}
     {{--    </script>--}}
 
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style"
-          href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+{{--    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>--}}
+{{--    <link rel="preload" as="style"--}}
+{{--          href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">--}}
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link
+        href="https://fonts.bunny.net/css?family=poppins:400,500,600,700&display=swap"
+        rel="preload"
+        as="style"
+        onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <noscript>
+        <link
+            href="https://fonts.bunny.net/css?family=poppins:400,500,600,700&display=swap"
+            rel="stylesheet"
+        />
+    </noscript>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
           media="print" onload="this.media='all'">
     {{--    <script src="https://code.jquery.com/jquery-3.6.0.min.js"--}}
@@ -274,8 +287,14 @@
     <div class="w-full max-w-md mx-auto flex items-center justify-between">
         <div class="w-6"></div>
         <a href="{{route('home')}}">
-            <img src="{{ asset('images/main_logo.png') }}" alt="{{ __('messages.app.logo_alt') }}"
-                 class="h-23 w-23 cursor-pointer dark:invert" width="92" height="92">
+            <img
+                src="{{ asset('images/main_logo.png') }}"
+                srcset="{{ asset('images/main_logo_small.webp') }} 184w, {{ asset('images/main_logo.png') }} 500w"
+                sizes="(max-width: 640px) 92px, 92px"
+                alt="{{ __('messages.app.logo_alt') }}"
+                class="h-23 w-23 cursor-pointer dark:invert"
+                width="92" height="92"
+            >
         </a>
         <div>
             @auth
