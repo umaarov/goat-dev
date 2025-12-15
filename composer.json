@@ -12,7 +12,7 @@
         "ext-gd": "*",
         "ext-pdo": "*",
         "ext-redis": "*",
-        "abraham/twitteroauth": "^7.0",
+        "abraham/twitteroauth": "^7.0 || ^8.0",
         "google/apiclient": "^2.18",
         "intervention/image": "*",
         "jenssegers/agent": "^2.6",
