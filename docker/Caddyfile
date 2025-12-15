@@ -36,9 +36,11 @@ www.goat.uz {
 
 # MAINTENANCE MODE: START
     respond `
-        System Maintenance
+         System Maintenance
             Assalomu alaykum! We are currently performing a scheduled upgrade to improve your experience.
             We truly appreciate your patience and promise to be back online shortly with a faster, smoother platform.
+
+         Goat.uz
     ` 503
 # MAINTENANCE MODE: END
 
