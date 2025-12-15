@@ -15,6 +15,9 @@ class NewCommentPosted implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    public $tries = 3;
+    public $timeout = 20;
+
     public Comment $comment;
 
     public function __construct(Comment $comment)

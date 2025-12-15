@@ -14,6 +14,9 @@ class UpdateCommentScore implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $tries = 3;
+    public $timeout = 60;
+
     public function __construct(public Comment $comment)
     {
         $this->onQueue('scoring');
