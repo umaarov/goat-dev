@@ -1,5 +1,5 @@
 import {BadgeFactory} from './BadgeFactory.js';
-import RendererWorker from '../workers/renderer.worker.js?worker';
+import RendererWorker from '../workers/renderer.worker.js?worker&inline';
 import {EnlargedBadgeRenderer} from '../EnlargedBadgeRenderer.js';
 
 class BadgeCanvasManager {

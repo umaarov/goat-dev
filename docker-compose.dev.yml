@@ -1,0 +1,35 @@
+services:
+  app:
+    volumes:
+      - ./:/app
+      - ./docker/Caddyfile.dev:/etc/caddy/Caddyfile
+      - ./storage:/app/storage
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
+      APP_URL: "http://localhost:8000"
+      SERVER_NAME: ":80"
+    ports:
+      - "8000:80"
+#      - "5173:5173"
+    user: "root"
+
+  worker:
+    volumes:
+      - ./:/app
+    environment:
+      APP_ENV: local
+
+  scheduler:
+    volumes:
+      - ./:/app
+    environment:
+      APP_ENV: local
+
+  db:
+    ports:
+      - "3306:3306"
+
+  redis:
+    ports:
+      - "6379:6379"

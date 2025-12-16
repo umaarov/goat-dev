@@ -1,0 +1,21 @@
+:80 {
+    root * /app/public
+    encode zstd gzip
+
+    php_server {
+                   resolve_root_symlink
+               }
+
+    try_files {path} {path}/ /index.php?{query}
+    file_server
+
+    header {
+               X-Frame-Options "SAMEORIGIN"
+               X-Content-Type-Options "nosniff"
+               Cache-Control "no-cache, no-store, must-revalidate"
+           }
+
+    handle /up {
+                   respond "Health OK" 200
+               }
+}
