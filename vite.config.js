@@ -27,7 +27,7 @@ export default defineConfig({
         }
     },
     worker: {
-        format: 'es',
+        format: 'iife',
         plugins: () => [
             laravel({
                 input: ['resources/js/workers/renderer.worker.js'],
