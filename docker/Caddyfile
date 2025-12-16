@@ -35,34 +35,34 @@ www.goat.uz {
            }
 
 # MAINTENANCE MODE: START
-    respond `
-         System Maintenance
-            Assalomu alaykum! We are currently performing a scheduled upgrade to improve your experience.
-            We truly appreciate your patience and promise to be back online shortly with a faster, smoother platform.
-
-         Goat.uz
-    ` 503
+#    respond `
+#         System Maintenance
+#            Assalomu alaykum! We are currently performing a scheduled upgrade to improve your experience.
+#            We truly appreciate your patience and promise to be back online shortly with a faster, smoother platform.
+#
+#         Goat.uz
+#    ` 503
 # MAINTENANCE MODE: END
 
 # NORMAL MODE
 
-# root * /app/public
-# encode zstd gzip
+    root * /app/public
+    encode zstd gzip
 
-# php_server {
-#    resolve_root_symlink
-# }
+    php_server {
+                   resolve_root_symlink
+               }
 
-# @hidden {
-#    path */.*
-# }
-# respond @hidden 403
+    @hidden {
+                path */.*
+            }
+    respond @hidden 403
 
-# @static {
-#    file
-#    path *.ico *.css *.js *.gif *.jpg *.jpeg *.png *.svg *.woff *.woff2
-# }
-# header @static Cache-Control "max-age=31536000"
+    @static {
+                file
+                path *.ico *.css *.js *.gif *.jpg *.jpeg *.png *.svg *.woff *.woff2
+            }
+    header @static Cache-Control "max-age=31536000"
 
-# file_server
+    file_server
 }
