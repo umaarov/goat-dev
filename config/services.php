@@ -67,6 +67,7 @@ return [
             'text' => env('GROQ_PROMPT_TEXT'),
             'image' => env('GROQ_PROMPT_IMAGE'),
             'url' => env('GROQ_PROMPT_URL'),
+            'comment' => env('GROQ_PROMPT_COMMENT'),
         ],
     ],
 ];

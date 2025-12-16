@@ -19,6 +19,7 @@ class ModerationService
     private string $imagePrompt;
     private string $urlPrompt;
 
+    private string $commentPrompt;
     private bool $isConfigured;
 
     public function __construct()
@@ -28,9 +29,11 @@ class ModerationService
 
         $this->apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
 
-        $this->textPrompt = Config::get('services.groq.prompts.text', 'Analyze for safety.');
-        $this->imagePrompt = Config::get('services.groq.prompts.image', 'Analyze image for safety.');
-        $this->urlPrompt = Config::get('services.groq.prompts.url', 'Analyze URL for safety.');
+        $this->textPrompt = Config::get('services.groq.prompts.text');
+        $this->imagePrompt = Config::get('services.groq.prompts.image');
+        $this->urlPrompt = Config::get('services.groq.prompts.url');
+
+        $this->commentPrompt = Config::get('services.groq.prompts.comment');
 
         $this->isConfigured = !empty($this->apiKey) && !empty($this->model);
 
@@ -39,27 +42,87 @@ class ModerationService
         }
     }
 
+    public function moderateText(string $text, string $languageCode = 'en'): array
+    {
+        return $this->performTextCheck($text, $this->textPrompt, $languageCode, 'Strict Profile Check');
+    }
+
+    private function performTextCheck(string $text, string $promptSystem, string $languageCode, string $logTag): array
+    {
+        if (!$this->isConfigured || empty(trim($text))) {
+            return ['is_appropriate' => true, 'reason' => null, 'category' => 'NONE'];
+        }
+
+        $logContext = "$logTag: " . Str::limit($text, 50);
+        $languageName = $this->getLanguageName($languageCode);
+
+        $finalPrompt = $promptSystem . " (Analyze content in $languageName. If violating, respond in $languageName).";
+
+        return $this->executeGroqRequest([
+            ['role' => 'system', 'content' => $finalPrompt],
+            ['role' => 'user', 'content' => "Input: \"$text\""]
+        ], $logContext);
+    }
+
     private function getLanguageName(string $localeCode): string
     {
         $availableLocales = Config::get('app.available_locales', ['en' => 'English']);
         return $availableLocales[$localeCode] ?? 'English';
     }
 
-    public function moderateText(string $text, string $languageCode = 'en'): array
+    private function executeGroqRequest(array $messages, string $logContext): array
     {
-        if (!$this->isConfigured || empty(trim($text))) {
-            return ['is_appropriate' => true, 'reason' => null, 'category' => 'NONE'];
+        try {
+            Log::debug("ModerationService: Sending Request for $logContext");
+
+            $response = Http::withToken($this->apiKey)
+                ->timeout(20)
+                ->post($this->apiUrl, [
+                    'model' => $this->model,
+                    'messages' => $messages,
+                    'response_format' => ['type' => 'json_object'],
+                    'temperature' => 0.1,
+                ]);
+
+            if ($response->failed()) {
+                Log::error("ModerationService: API Failure ({$response->status()}) for $logContext: " . $response->body());
+                return ['is_appropriate' => true, 'category' => 'API_ERROR'];
+            }
+
+            $jsonContent = $response->json('choices.0.message.content');
+
+            if (!$jsonContent) {
+                Log::error("ModerationService: Empty response content for $logContext");
+                return ['is_appropriate' => true, 'category' => 'EMPTY_RESPONSE'];
+            }
+
+            $data = json_decode($jsonContent, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                Log::error("ModerationService: JSON Parse Error for $logContext: " . json_last_error_msg());
+                return ['is_appropriate' => true, 'category' => 'JSON_PARSE_ERROR'];
+            }
+
+            if (!isset($data['is_appropriate'])) {
+                Log::error("ModerationService: Invalid Schema for $logContext", $data);
+                return ['is_appropriate' => true, 'category' => 'SCHEMA_ERROR'];
+            }
+
+            return [
+                'is_appropriate' => (bool)$data['is_appropriate'],
+                'reason' => $data['reason_if_inappropriate'] ?? null,
+                'category' => $data['violation_category'] ?? 'UNKNOWN'
+            ];
+
+        } catch (Exception $e) {
+            Log::error("ModerationService: Critical Exception for $logContext: " . $e->getMessage());
+            return ['is_appropriate' => true, 'category' => 'CRITICAL_EXCEPTION'];
         }
+    }
 
-        $logContext = "Text: " . Str::limit($text, 50);
-        $languageName = $this->getLanguageName($languageCode);
-
-        $finalPrompt = $this->textPrompt . " (Respond in $languageName if inappropriate).";
-
-        return $this->executeGroqRequest([
-            ['role' => 'system', 'content' => $finalPrompt],
-            ['role' => 'user', 'content' => "Input: \"$text\""]
-        ], $logContext);
+    public function moderateComment(string $text, string $languageCode = 'en'): array
+    {
+        return $this->performTextCheck($text, $this->commentPrompt, $languageCode, 'Smart Comment Check');
     }
 
     public function moderateImage(UploadedFile $imageFile, string $languageCode = 'en'): array
@@ -126,55 +189,5 @@ class ModerationService
             ['role' => 'system', 'content' => $finalPrompt],
             ['role' => 'user', 'content' => "Check URL: \"$urlInput\""]
         ], $logContext);
-    }
-
-    private function executeGroqRequest(array $messages, string $logContext): array
-    {
-        try {
-            Log::debug("ModerationService: Sending Request for $logContext");
-
-            $response = Http::withToken($this->apiKey)
-                ->timeout(20)
-                ->post($this->apiUrl, [
-                    'model' => $this->model,
-                    'messages' => $messages,
-                    'response_format' => ['type' => 'json_object'],
-                    'temperature' => 0.1,
-                ]);
-
-            if ($response->failed()) {
-                Log::error("ModerationService: API Failure ({$response->status()}) for $logContext: " . $response->body());
-                return ['is_appropriate' => true, 'category' => 'API_ERROR'];
-            }
-
-            $jsonContent = $response->json('choices.0.message.content');
-
-            if (!$jsonContent) {
-                Log::error("ModerationService: Empty response content for $logContext");
-                return ['is_appropriate' => true, 'category' => 'EMPTY_RESPONSE'];
-            }
-
-            $data = json_decode($jsonContent, true);
-
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                Log::error("ModerationService: JSON Parse Error for $logContext: " . json_last_error_msg());
-                return ['is_appropriate' => true, 'category' => 'JSON_PARSE_ERROR'];
-            }
-
-            if (!isset($data['is_appropriate'])) {
-                Log::error("ModerationService: Invalid Schema for $logContext", $data);
-                return ['is_appropriate' => true, 'category' => 'SCHEMA_ERROR'];
-            }
-
-            return [
-                'is_appropriate' => (bool) $data['is_appropriate'],
-                'reason' => $data['reason_if_inappropriate'] ?? null,
-                'category' => $data['violation_category'] ?? 'UNKNOWN'
-            ];
-
-        } catch (Exception $e) {
-            Log::error("ModerationService: Critical Exception for $logContext: " . $e->getMessage());
-            return ['is_appropriate' => true, 'category' => 'CRITICAL_EXCEPTION'];
-        }
     }
 }
