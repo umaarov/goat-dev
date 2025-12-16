@@ -1,7 +1,6 @@
 import {BadgeFactory} from './BadgeFactory.js';
 import RendererWorker from '../workers/renderer.worker.js?worker';
 import {EnlargedBadgeRenderer} from '../EnlargedBadgeRenderer.js';
-import wasmUrl from '../../../public/assets/wasm/geometry_optimizer.js';
 
 
 class BadgeCanvasManager {
@@ -121,6 +120,7 @@ class BadgeCanvasManager {
     }
 
     async _initializeAndLoadAssets() {
+        const wasmUrl = '/assets/wasm/geometry_optimizer.js';
         try {
             const wasmFactory = await import(/* @vite-ignore */ wasmUrl);
             const wasmInstance = await wasmFactory.default();
