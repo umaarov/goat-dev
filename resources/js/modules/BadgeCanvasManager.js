@@ -120,7 +120,7 @@ class BadgeCanvasManager {
     }
 
     async _initializeAndLoadAssets() {
-        const wasmUrl = '/assets/wasm/geometry_optimizer.js';
+        const wasmUrl = window.location.origin + '/assets/wasm/geometry_optimizer.js';
         try {
             const wasmFactory = await import(/* @vite-ignore */ wasmUrl);
             const wasmInstance = await wasmFactory.default();
