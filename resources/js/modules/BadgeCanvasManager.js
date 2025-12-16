@@ -1,18 +1,24 @@
 import {BadgeFactory} from './BadgeFactory.js';
 import RendererWorker from '../workers/renderer.worker.js?worker';
 import {EnlargedBadgeRenderer} from '../EnlargedBadgeRenderer.js';
+import wasmUrl from '../../../public/assets/wasm/geometry_optimizer.js';
+
 
 class BadgeCanvasManager {
     constructor() {
         this.container = document.getElementById('badge-container');
         this.canvas = document.getElementById('badge-canvas');
 
-        if (!this.container || !this.canvas) {return;}
+        if (!this.container || !this.canvas) {
+            return;
+        }
 
         let earnedBadges = [];
         try {
             const earnedBadgesData = this.container.dataset.earnedBadges;
-            if (earnedBadgesData) {earnedBadges = JSON.parse(earnedBadgesData);}
+            if (earnedBadgesData) {
+                earnedBadges = JSON.parse(earnedBadgesData);
+            }
         } catch (e) {
             console.error('Could not parse earned badges data:', e);
             earnedBadges = [];
@@ -115,7 +121,6 @@ class BadgeCanvasManager {
     }
 
     async _initializeAndLoadAssets() {
-        const wasmUrl = '/assets/wasm/geometry_optimizer.js';
         try {
             const wasmFactory = await import(/* @vite-ignore */ wasmUrl);
             const wasmInstance = await wasmFactory.default();
@@ -125,6 +130,7 @@ class BadgeCanvasManager {
         }
         this.init();
     }
+
 
     init() {
         const offscreen = this.canvas.transferControlToOffscreen();
@@ -136,7 +142,7 @@ class BadgeCanvasManager {
                 height: rect.height,
                 pixelRatio: Math.min(window.devicePixelRatio, 2),
                 layouts: this.badgeLayouts,
-                wasm: {url: '/assets/wasm/geometry_optimizer.js'}
+                wasm: {url: wasmUrl}
             }
         }, [offscreen]);
     }
@@ -190,12 +196,16 @@ class BadgeCanvasManager {
     }
 
     showEnlargedBadge(badgeKey) {
-        if (!this.enlargedRenderer) {return;}
+        if (!this.enlargedRenderer) {
+            return;
+        }
 
         const details = this.badgeDetails[badgeKey] || {};
         this.enlargedBadgeName.textContent = details.title || 'Badge';
         this.enlargedBadgeName.className = '';
-        if (details.glowClass) {this.enlargedBadgeName.classList.add(details.glowClass);}
+        if (details.glowClass) {
+            this.enlargedBadgeName.classList.add(details.glowClass);
+        }
 
         this.enlargedBadgeContext.textContent = details.context || '';
         this.enlargedBadgeDescription.textContent = details.description || '';
@@ -212,7 +222,9 @@ class BadgeCanvasManager {
     }
 
     hideEnlargedBadge() {
-        if (!this.enlargedRenderer) {return;}
+        if (!this.enlargedRenderer) {
+            return;
+        }
         this.enlargedContainer.classList.remove('visible');
         setTimeout(() => {
             this.enlargedContainer.style.display = 'none';
