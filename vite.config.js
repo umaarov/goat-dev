@@ -11,15 +11,14 @@ export default defineConfig({
         tailwindcss(),
     ],
     server: {
-        host: 'localhost',
-        port: 5173,
-        strictPort: true,
-        cors: {
-            origin: "*",
-            methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-            allowedHeaders: ["X-Requested-With", "content-type", "Authorization"],
+        // port: 5175,
+        server: {
+            // origin: 'http://127.0.0.1:8000',
+            host: '0.0.0.0',
+            port: 5173,
         },
         hmr: {
+            // overlay: false,
             host: 'localhost'
         },
         watch: {
@@ -27,14 +26,15 @@ export default defineConfig({
         }
     },
     worker: {
-        format: 'iife',
-        plugins: () => [
+        format: 'es',
+        plugins: [
             laravel({
                 input: ['resources/js/workers/renderer.worker.js'],
                 refresh: true,
             }),
         ],
     },
+
     build: {
         sourcemap: true,
         rollupOptions: {
@@ -50,6 +50,7 @@ export default defineConfig({
             }
         }
     },
+
     define: {
         'process.env': {}
     }
