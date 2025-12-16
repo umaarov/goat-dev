@@ -69,12 +69,12 @@ class PostController extends Controller
         $generatedContext = null;
         $generatedTags = null;
 
-        // 2. Local Blacklist Check
+        // 2. Check Local Banned Words
         if ($violation = $this->checkLocalBannedWords($request->all())) {
             return redirect()->back()->withErrors($violation)->withInput();
         }
 
-        // 3. GROQ MASTER REQUEST
+        // 3. GROQ MASTER TASK
         if (!empty(env('GROQ_API_KEY'))) {
             $groqResult = $this->executeGroqMasterTask(
                 $request->question,
@@ -92,20 +92,22 @@ class PostController extends Controller
             $generatedTags = $groqResult['generated_tags'] ?? null;
         }
 
-        // 4. GROQ IMAGE MODERATION
+        // 4. GROQ IMAGE MODERATION (Context-Aware)
         if (!empty(env('GROQ_API_KEY'))) {
             $imageCheck = $this->executeGroqImageModeration(
                 $request->file('option_one_image'),
-                $request->file('option_two_image')
+                $request->file('option_two_image'),
+                $request->all()
             );
 
             if (!$imageCheck['safe']) {
                 $field = $imageCheck['violation_source'] === 'image_two' ? 'option_two_image' : 'option_one_image';
-                return redirect()->back()->withErrors([$field => $imageCheck['reason']])->withInput();
+                $reason = $imageCheck['reason'] ?? __('messages.error_post_image_inappropriate');
+                return redirect()->back()->withErrors([$field => $reason])->withInput();
             }
         }
 
-        // 5. Process Images (Local CPU)
+        // 5. Image Processing (Local)
         $opt1Paths = $this->processAndStoreImage($request->file('option_one_image'), 'post_images', uniqid('p1_'));
         $opt2Paths = $this->processAndStoreImage($request->file('option_two_image'), 'post_images', uniqid('p2_'));
 
@@ -113,7 +115,7 @@ class PostController extends Controller
             return redirect()->back()->withErrors(['general' => 'Image processing failed.'])->withInput();
         }
 
-        // 6. Create Post (With pre-generated AI content!)
+        // 6. Create Post
         $post = Post::create([
             'user_id' => Auth::id(),
             'question' => $request->question,
@@ -128,9 +130,11 @@ class PostController extends Controller
             'ai_generated_tags' => $generatedTags,
         ]);
 
+        // 7. Search Indexing
         if ($generatedTags) {
             try {
-                $this->searchEngine->index($post->id, $post->question . ' ' . $post->option_one_title . ' ' . $post->option_two_title . ' ' . $generatedTags);
+                $searchContent = $post->question . ' ' . $post->option_one_title . ' ' . $post->option_two_title . ' ' . $generatedTags;
+                $this->searchEngine->index($post->id, $searchContent);
             } catch (Exception $e) {
                 Log::error("Indexing failed: " . $e->getMessage());
             }
@@ -156,8 +160,7 @@ class PostController extends Controller
             $lowerContent = strtolower($inputs[$field]);
             foreach ($bannedWords as $word) {
                 $word = trim($word);
-                if (empty($word)) continue;
-                if (str_contains($lowerContent, $word)) {
+                if (!empty($word) && str_contains($lowerContent, $word)) {
                     return [$field => __('messages.error_post_content_prohibited_language')];
                 }
             }
@@ -168,8 +171,6 @@ class PostController extends Controller
     private function executeGroqMasterTask(string $q, string $o1, string $o2): array
     {
         $apiKey = env('GROQ_API_KEY');
-        if (!$apiKey) return ['is_safe' => true];
-
         $language = App::getLocale() === 'uz' ? 'Uzbek' : (App::getLocale() === 'ru' ? 'Russian' : 'English');
 
         $prompt = str_replace(
@@ -181,20 +182,22 @@ class PostController extends Controller
         try {
             $response = Http::withToken($apiKey)->post('https://api.groq.com/openai/v1/chat/completions', [
                 'model' => env('GROQ_TEXT_MODEL'),
-                'messages' => [
-                    ['role' => 'user', 'content' => $prompt]
-                ],
+                'messages' => [['role' => 'user', 'content' => $prompt]],
                 'response_format' => ['type' => 'json_object'],
-                'temperature' => 0.5,
+                'temperature' => 0.3,
             ]);
 
             if (!$response->successful()) {
-                Log::error('Groq Text API Error: ' . $response->body());
+                Log::error('Groq API Error: ' . $response->body());
                 return ['is_safe' => true];
             }
 
             $content = $response->json('choices.0.message.content');
             $data = json_decode($content, true);
+
+            if (isset($data['analysis_thought_process'])) {
+                Log::info('AI Decision Logic: ' . $data['analysis_thought_process']);
+            }
 
             return $data ?? ['is_safe' => true];
 
@@ -204,17 +207,25 @@ class PostController extends Controller
         }
     }
 
-    private function executeGroqImageModeration(UploadedFile $img1, UploadedFile $img2): array
+    private function executeGroqImageModeration(UploadedFile $img1, UploadedFile $img2, array $textContext): array
     {
         $apiKey = env('GROQ_API_KEY');
-        if (!$apiKey) return ['safe' => true];
+        $language = App::getLocale() === 'uz' ? 'Uzbek' : (App::getLocale() === 'ru' ? 'Russian' : 'English');
 
-        $prompt = str_replace('{LANGUAGE}', App::getLocale(), env('GROQ_IMAGE_PROMPT'));
+        $promptRaw = env('GROQ_IMAGE_PROMPT');
+        $prompt = str_replace(
+            ['{QUESTION}', '{OPTION_ONE}', '{OPTION_TWO}', '{LANGUAGE}'],
+            [
+                addslashes($textContext['question']),
+                addslashes($textContext['option_one_title']),
+                addslashes($textContext['option_two_title']),
+                $language
+            ],
+            $promptRaw
+        );
 
         $b64_1 = base64_encode(file_get_contents($img1->getRealPath()));
         $b64_2 = base64_encode(file_get_contents($img2->getRealPath()));
-        $mime1 = $img1->getMimeType();
-        $mime2 = $img2->getMimeType();
 
         try {
             $response = Http::withToken($apiKey)->post('https://api.groq.com/openai/v1/chat/completions', [
@@ -224,8 +235,8 @@ class PostController extends Controller
                         'role' => 'user',
                         'content' => [
                             ['type' => 'text', 'text' => $prompt],
-                            ['type' => 'image_url', 'image_url' => ['url' => "data:$mime1;base64,$b64_1"]],
-                            ['type' => 'image_url', 'image_url' => ['url' => "data:$mime2;base64,$b64_2"]],
+                            ['type' => 'image_url', 'image_url' => ['url' => "data:" . $img1->getMimeType() . ";base64,$b64_1"]],
+                            ['type' => 'image_url', 'image_url' => ['url' => "data:" . $img2->getMimeType() . ";base64,$b64_2"]],
                         ]
                     ]
                 ],
@@ -234,11 +245,16 @@ class PostController extends Controller
             ]);
 
             if (!$response->successful()) {
-                Log::error('Groq Vision API Error: ' . $response->body());
+                Log::error('Groq Vision Error: ' . $response->body());
                 return ['safe' => true];
             }
 
             $data = json_decode($response->json('choices.0.message.content'), true);
+
+            if (isset($data['analysis'])) {
+                Log::info('AI Vision Logic: ' . $data['analysis']);
+            }
+
             return $data ?? ['safe' => true];
 
         } catch (Exception $e) {
@@ -251,7 +267,6 @@ class PostController extends Controller
     {
         $mainImageFilename = $baseFilename . '.webp';
         $mainImagePath = $directory . '/' . $mainImageFilename;
-
         $tempPath = $uploadedFile->getRealPath();
         $finalStoragePath = Storage::disk('public')->path($mainImagePath);
 
@@ -262,43 +277,29 @@ class PostController extends Controller
                 $command = sprintf(
                     '%s %s %s %d %d %d %d %d',
                     escapeshellcmd($binaryPath),
-                    escapeshellarg($tempPath),            // <input>
-                    escapeshellarg($finalStoragePath),       // <output_webp>
-                    self::MAX_POST_IMAGE_WIDTH,          // <width>
-                    self::MAX_POST_IMAGE_WIDTH,          // <height>
-                    self::POST_IMAGE_QUALITY,            // <quality>
-                    self::LQIP_WIDTH,                    // <lqip_width>
-                    self::LQIP_QUALITY                   // <lqip_quality>
+                    escapeshellarg($tempPath),
+                    escapeshellarg($finalStoragePath),
+                    self::MAX_POST_IMAGE_WIDTH,
+                    self::MAX_POST_IMAGE_WIDTH,
+                    self::POST_IMAGE_QUALITY,
+                    self::LQIP_WIDTH,
+                    self::LQIP_QUALITY
                 );
-
                 $lqipBase64 = exec($command, $output, $returnCode);
-
-                if ($returnCode !== 0) {
-                    throw new Exception('Custom C binary failed with code ' . $returnCode . '. Output: ' . implode("\n", $output));
+                if ($returnCode === 0) {
+                    return ['main' => $mainImagePath, 'lqip' => 'data:image/jpeg;base64,' . $lqipBase64];
                 }
-
-                $lqip = 'data:image/jpeg;base64,' . $lqipBase64;
-                Log::info('Image processed with custom high-performance C binary.');
-
-                return ['main' => $mainImagePath, 'lqip' => $lqip];
-
             } catch (Exception $e) {
-                Log::error('Custom C binary processing failed. Falling back to PHP GD.', ['error' => $e->getMessage()]);
+                Log::error('Binary failed, using fallback.');
             }
         }
 
-        Log::warning('Custom C binary not found or failed. Using standard PHP GD library.');
         $manager = new ImageManager(new GdDriver());
         $image = $manager->read($tempPath);
-
         $image->scaleDown(width: self::MAX_POST_IMAGE_WIDTH);
-        $encodedMainImage = $image->encode(new WebpEncoder(quality: self::POST_IMAGE_QUALITY));
-        Storage::disk('public')->put($mainImagePath, $encodedMainImage);
+        Storage::disk('public')->put($mainImagePath, $image->encode(new WebpEncoder(quality: self::POST_IMAGE_QUALITY)));
 
-        $lqip = (string)$image->scale(width: self::LQIP_WIDTH)
-            ->blur(5)
-            ->encode(new JpegEncoder(quality: self::LQIP_QUALITY))
-            ->toDataUri();
+        $lqip = (string)$image->scale(width: self::LQIP_WIDTH)->blur(5)->encode(new JpegEncoder(quality: self::LQIP_QUALITY))->toDataUri();
 
         return ['main' => $mainImagePath, 'lqip' => $lqip];
     }

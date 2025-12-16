@@ -1,24 +1,38 @@
 {
     "debug_tree": {
         "ngrams": [
-            "how",
-            "ows",
-            "sho",
-            "tvs",
-            "vsh"
+            "hit",
+            "itl",
+            "ler",
+            "tle"
         ],
         "tokens": [
-            "tvshows"
+            "hitler"
         ]
     },
-    "latency_ms": 0.228,
-    "query": "TVshows",
+    "latency_ms": 0.129,
+    "query": "Hitler",
     "results": [
         {
-            "id": 114,
-            "score": 7.988179622628634,
-            "snippet": "Which film is better: Alice in Borderland or Squid Game? Alice in Borderland Squid Game AliceinBorde..."
+            "id": 72,
+            "score": 11.09426250167337,
+            "snippet": "Who had a more dangerous ideology in practice? Hitler’s Nazism Stalin’s Communism Nazism, Commun..."
+        },
+        {
+            "id": 146,
+            "score": 2.6054648013470154,
+            "snippet": "hitler was a nice guy 1 2 Hitler, Debate, Free Speech, Historical Figures, Controversy"
+        },
+        {
+            "id": 142,
+            "score": 2.4279462484054544,
+            "snippet": "Hitler was a good commander Yes No Hitler, World War II, Military Strategy, Historical Debate, Contr..."
+        },
+        {
+            "id": 130,
+            "score": 0.06837634538482593,
+            "snippet": "Whose songs do you like more? Eminem XXXTENTACION Eminem, XXXTENTACION, Rap, Music, Hip-Hop"
         }
     ],
-    "timestamp": "05:30:43"
+    "timestamp": "09:39:40"
 }
