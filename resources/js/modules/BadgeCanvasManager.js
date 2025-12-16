@@ -7,12 +7,16 @@ class BadgeCanvasManager {
         this.container = document.getElementById('badge-container');
         this.canvas = document.getElementById('badge-canvas');
 
-        if (!this.container || !this.canvas) {return;}
+        if (!this.container || !this.canvas) {
+            return;
+        }
 
         let earnedBadges = [];
         try {
             const earnedBadgesData = this.container.dataset.earnedBadges;
-            if (earnedBadgesData) {earnedBadges = JSON.parse(earnedBadgesData);}
+            if (earnedBadgesData) {
+                earnedBadges = JSON.parse(earnedBadgesData);
+            }
         } catch (e) {
             console.error('Could not parse earned badges data:', e);
             earnedBadges = [];
@@ -129,6 +133,9 @@ class BadgeCanvasManager {
     init() {
         const offscreen = this.canvas.transferControlToOffscreen();
         const rect = this.container.getBoundingClientRect();
+
+        const fullWasmUrl = window.location.origin + '/assets/wasm/geometry_optimizer.js';
+
         this.worker.postMessage({
             type: 'init', payload: {
                 canvas: offscreen,
@@ -136,7 +143,7 @@ class BadgeCanvasManager {
                 height: rect.height,
                 pixelRatio: Math.min(window.devicePixelRatio, 2),
                 layouts: this.badgeLayouts,
-                wasm: {url: '/assets/wasm/geometry_optimizer.js'}
+                wasm: {url: fullWasmUrl}
             }
         }, [offscreen]);
     }
@@ -190,12 +197,16 @@ class BadgeCanvasManager {
     }
 
     showEnlargedBadge(badgeKey) {
-        if (!this.enlargedRenderer) {return;}
+        if (!this.enlargedRenderer) {
+            return;
+        }
 
         const details = this.badgeDetails[badgeKey] || {};
         this.enlargedBadgeName.textContent = details.title || 'Badge';
         this.enlargedBadgeName.className = '';
-        if (details.glowClass) {this.enlargedBadgeName.classList.add(details.glowClass);}
+        if (details.glowClass) {
+            this.enlargedBadgeName.classList.add(details.glowClass);
+        }
 
         this.enlargedBadgeContext.textContent = details.context || '';
         this.enlargedBadgeDescription.textContent = details.description || '';
@@ -212,7 +223,9 @@ class BadgeCanvasManager {
     }
 
     hideEnlargedBadge() {
-        if (!this.enlargedRenderer) {return;}
+        if (!this.enlargedRenderer) {
+            return;
+        }
         this.enlargedContainer.classList.remove('visible');
         setTimeout(() => {
             this.enlargedContainer.style.display = 'none';
