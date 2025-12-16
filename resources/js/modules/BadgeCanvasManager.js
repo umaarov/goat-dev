@@ -1,6 +1,7 @@
 import {BadgeFactory} from './BadgeFactory.js';
 import RendererWorker from '../workers/renderer.worker.js?worker&inline';
 import {EnlargedBadgeRenderer} from '../EnlargedBadgeRenderer.js';
+import wasmFactory from '../wasm/geometry_optimizer.js';
 
 class BadgeCanvasManager {
     constructor() {
@@ -115,10 +116,10 @@ class BadgeCanvasManager {
     }
 
     async _initializeAndLoadAssets() {
-        const wasmUrl = '/assets/wasm/geometry_optimizer.js';
+        // const wasmUrl = '/assets/wasm/geometry_optimizer.js';
         try {
-            const wasmFactory = await import(/* @vite-ignore */ wasmUrl);
-            const wasmInstance = await wasmFactory.default();
+            // const wasmFactory = await import(/* @vite-ignore */ wasmUrl);
+            const wasmInstance = await wasmFactory();
             BadgeFactory.setWasm(wasmInstance);
         } catch (e) {
             console.error('Main thread failed to load WASM module:', e);
@@ -136,7 +137,8 @@ class BadgeCanvasManager {
                 height: rect.height,
                 pixelRatio: Math.min(window.devicePixelRatio, 2),
                 layouts: this.badgeLayouts,
-                wasm: {url: '/assets/wasm/geometry_optimizer.js'}
+                // wasm: {url: '/assets/wasm/geometry_optimizer.js'}
+                wasm: null
             }
         }, [offscreen]);
     }
