@@ -14,31 +14,28 @@ class ModerationService
     private string $apiKey;
     private string $apiUrl;
     private string $model;
-    private string $textPromptTemplate;
-    private string $imagePromptTemplate;
-    private string $urlPromptTemplate;
+
+    private string $textPrompt;
+    private string $imagePrompt;
+    private string $urlPrompt;
+
     private bool $isConfigured;
-    private bool $useJsonMode;
 
     public function __construct()
     {
-        $this->apiKey = Config::get('gemini.api_key');
-        $this->apiUrl = Config::get('gemini.api_url');
-        $this->model = Config::get('gemini.model');
-        $this->textPromptTemplate = Config::get('gemini.prompt_template');
-        $this->imagePromptTemplate = Config::get('gemini.image_prompt_template');
-        $this->urlPromptTemplate = Config::get('gemini.url_prompt_template');
-        $this->useJsonMode = Config::get('gemini.use_json_mode', true);
+        $this->apiKey = Config::get('services.groq.api_key');
+        $this->model = Config::get('services.groq.model');
 
-        $this->isConfigured = !empty($this->apiKey) &&
-            !empty($this->apiUrl) &&
-            !empty($this->model) &&
-            !empty($this->textPromptTemplate) &&
-            !empty($this->imagePromptTemplate) &&
-            !empty($this->urlPromptTemplate);
+        $this->apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
+
+        $this->textPrompt = Config::get('services.groq.prompts.text', 'Analyze for safety.');
+        $this->imagePrompt = Config::get('services.groq.prompts.image', 'Analyze image for safety.');
+        $this->urlPrompt = Config::get('services.groq.prompts.url', 'Analyze URL for safety.');
+
+        $this->isConfigured = !empty($this->apiKey) && !empty($this->model);
 
         if (!$this->isConfigured) {
-            Log::error('ModerationService: Gemini configuration is missing or incomplete. Moderation capabilities will be limited or permissive.');
+            Log::error('ModerationService: Groq configuration is missing. Moderation will be skipped (Allowed).');
         }
     }
 
@@ -48,221 +45,136 @@ class ModerationService
         return $availableLocales[$localeCode] ?? 'English';
     }
 
-    private function extractJsonFromString(?string $text): ?string
-    {
-        if ($text === null) {
-            return null;
-        }
-
-        if (preg_match('/```json\s*(\{[\s\S]*?\})\s*```/s', $text, $matches)) {
-            return $matches[1];
-        }
-        if (preg_match('/(\{((?:[^{}]++|\{(?1)\})++)\})/s', $text, $matches)) {
-            return $matches[1];
-        }
-        if (Str::startsWith(trim($text), '{') && Str::endsWith(trim($text), '}')) {
-            return trim($text);
-        }
-        return null;
-    }
-
-    private function parseModerationResult(mixed $apiResponseData, string $contextForLogging): array
-    {
-        $jsonStringToParse = null;
-
-        if (!isset($apiResponseData['candidates'][0]['content']['parts'][0])) {
-            Log::error("ModerationService: Unexpected API response structure for {$contextForLogging}. Missing 'candidates[0][content][parts][0]'.", ['response_data' => $apiResponseData]);
-            return ['is_appropriate' => false, 'reason' => "Moderation service response invalid (structure). Context: {$contextForLogging}", 'category' => 'ERROR_API_RESPONSE_STRUCTURE'];
-        }
-
-        $jsonStringToParse = $apiResponseData['candidates'][0]['content']['parts'][0]['text'] ?? null;
-
-        if ($jsonStringToParse === null) {
-            Log::error("ModerationService: 'text' field missing in API response part for {$contextForLogging}.", ['part_data' => $apiResponseData['candidates'][0]['content']['parts'][0]]);
-            return ['is_appropriate' => false, 'reason' => "Moderation service response invalid (missing text part). Context: {$contextForLogging}", 'category' => 'ERROR_API_MISSING_TEXT'];
-        }
-
-        Log::debug("ModerationService: Raw text content from API for {$contextForLogging}.", ['raw_text_content' => $jsonStringToParse]);
-
-        $extractedJson = null;
-        if ($this->useJsonMode) {
-            $extractedJson = $jsonStringToParse;
-        } else {
-            $extractedJson = $this->extractJsonFromString($jsonStringToParse);
-
-            if (!$extractedJson) {
-                Log::error("ModerationService: Could not extract a valid JSON-like string from Gemini's response for {$contextForLogging}.", [
-                    'received_string' => $jsonStringToParse
-                ]);
-                $reason = Str::limit("Moderation analysis failed (JSON extraction). Gemini's raw response: " . $jsonStringToParse, 150);
-                return ['is_appropriate' => false, 'reason' => $reason, 'category' => 'ERROR_JSON_EXTRACTION'];
-            }
-        }
-
-        Log::debug("ModerationService: Extracted JSON string for {$contextForLogging}.", ['extracted_json' => $extractedJson]);
-        $decodedJson = json_decode($extractedJson, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            Log::error("ModerationService: Failed to parse extracted JSON string for {$contextForLogging}.", [
-                'json_error' => json_last_error_msg(),
-                'json_string_attempted_to_parse' => $extractedJson,
-                'original_api_text_part' => $jsonStringToParse
-            ]);
-            return ['is_appropriate' => false, 'reason' => "Moderation analysis failed (JSON parsing). Context: {$contextForLogging}", 'category' => 'ERROR_JSON_PARSE'];
-        }
-
-        $moderationData = null;
-        if (isset($decodedJson['is_appropriate']) && isset($decodedJson['violation_category'])) {
-            $moderationData = $decodedJson;
-        } elseif (isset($decodedJson['properties']) && is_array($decodedJson['properties']) &&
-            isset($decodedJson['properties']['is_appropriate']) && isset($decodedJson['properties']['violation_category'])) {
-            $moderationData = $decodedJson['properties'];
-        }
-
-        if ($moderationData === null) {
-            Log::error("ModerationService: Parsed JSON is missing required keys ('is_appropriate' or 'violation_category') at expected locations for {$contextForLogging}.", [
-                'parsed_json' => $decodedJson, // Log the original full parsed structure
-                'original_extracted_json_string' => $extractedJson
-            ]);
-            return ['is_appropriate' => false, 'reason' => "Moderation analysis failed (schema mismatch). Context: {$contextForLogging}", 'category' => 'ERROR_SCHEMA_MISMATCH'];
-        }
-
-        return [
-            'is_appropriate' => (bool)$moderationData['is_appropriate'],
-            'reason' => $moderationData['reason_if_inappropriate'] ?? null,
-            'category' => $moderationData['violation_category'],
-            // 'was_nested' => ($moderationData !== $decodedJson)
-        ];
-    }
-
     public function moderateText(string $text, string $languageCode = 'en'): array
     {
-        if (!$this->isConfigured || empty($this->textPromptTemplate)) {
-            Log::warning('ModerationService: Service not configured for text or text prompt missing. Allowing text content by default.', ['text_snippet' => Str::limit($text, 50)]);
-            return ['is_appropriate' => true, 'reason' => null, 'category' => 'UNCHECKED_CONFIG'];
-        }
-        if (empty(trim($text))) {
+        if (!$this->isConfigured || empty(trim($text))) {
             return ['is_appropriate' => true, 'reason' => null, 'category' => 'NONE'];
         }
 
+        $logContext = "Text: " . Str::limit($text, 50);
         $languageName = $this->getLanguageName($languageCode);
-        $prompt = str_replace(['{COMMENT_TEXT}', '{LANGUAGE_NAME}'], [$text, $languageName], $this->textPromptTemplate);
 
-        $payload = ['contents' => [['parts' => [['text' => $prompt]]]]];
-        if ($this->useJsonMode) {
-            $payload['generationConfig'] = ['responseMimeType' => 'application/json'];
-        }
+        $finalPrompt = $this->textPrompt . " (Respond in $languageName if inappropriate).";
 
-        $requestUrl = rtrim($this->apiUrl, '/') . '/' . $this->model . ':generateContent?key=' . $this->apiKey; // Renamed for clarity
-
-        try {
-            $logContext = "Text: " . Str::limit($text, 70);
-            Log::debug("ModerationService: Sending text moderation request for {$logContext}", ['url' => $requestUrl, 'using_json_mode' => $this->useJsonMode]);
-            $response = Http::timeout(30)->post($requestUrl, $payload); // Increased timeout slightly
-
-            if ($response->failed()) {
-                Log::error("ModerationService: API request failed for text moderation on {$logContext}", [
-                    'status' => $response->status(), 'body' => $response->body()
-                ]);
-                return ['is_appropriate' => false, 'reason' => "Moderation service error (API status: {$response->status()}). Context: {$logContext}", 'category' => 'ERROR_API_REQUEST'];
-            }
-            return $this->parseModerationResult($response->json(), $logContext);
-
-        } catch (Exception $e) {
-            $logContext = "Text: " . Str::limit($text, 70);
-            Log::error("ModerationService: Exception during text moderation for {$logContext}", ['message' => $e->getMessage(), 'trace' => Str::limit($e->getTraceAsString(), 300)]);
-            return ['is_appropriate' => false, 'reason' => "Moderation system unavailable (exception). Context: {$logContext}", 'category' => 'ERROR_EXCEPTION'];
-        }
+        return $this->executeGroqRequest([
+            ['role' => 'system', 'content' => $finalPrompt],
+            ['role' => 'user', 'content' => "Input: \"$text\""]
+        ], $logContext);
     }
 
     public function moderateImage(UploadedFile $imageFile, string $languageCode = 'en'): array
     {
-        if (!$this->isConfigured || empty($this->imagePromptTemplate)) {
-            Log::warning('ModerationService: Service not configured for images or image prompt missing. Allowing image by default.', ['filename' => $imageFile->getClientOriginalName()]);
-            return ['is_appropriate' => true, 'reason' => null, 'category' => 'UNCHECKED_CONFIG'];
+        if (!$this->isConfigured) {
+            return ['is_appropriate' => true, 'reason' => null, 'category' => 'NONE'];
         }
 
+        $logContext = "Image: " . $imageFile->getClientOriginalName();
         $languageName = $this->getLanguageName($languageCode);
-        $prompt = str_replace('{LANGUAGE_NAME}', $languageName, $this->imagePromptTemplate);
-
-        $imageData = base64_encode(file_get_contents($imageFile->getRealPath()));
-        $imageMimeType = $imageFile->getMimeType();
-
-        $payload = [
-            'contents' => [[
-                'parts' => [
-                    ['text' => $prompt],
-                    ['inline_data' => ['mime_type' => $imageMimeType, 'data' => $imageData]]
-                ]
-            ]],
-        ];
-        if ($this->useJsonMode) {
-            $payload['generationConfig'] = ['responseMimeType' => 'application/json'];
-        }
-
-        $requestUrl = rtrim($this->apiUrl, '/') . '/' . $this->model . ':generateContent?key=' . $this->apiKey;
+        $finalPrompt = $this->imagePrompt . " (Respond in $languageName if inappropriate).";
 
         try {
-            $logContext = "Image: " . $imageFile->getClientOriginalName();
-            Log::debug("ModerationService: Sending image moderation request for {$logContext}", ['url' => $requestUrl, 'using_json_mode' => $this->useJsonMode]);
-            $response = Http::timeout(45)->post($requestUrl, $payload);
+            $imageData = base64_encode(file_get_contents($imageFile->getRealPath()));
+            $mimeType = $imageFile->getMimeType();
 
-            if ($response->failed()) {
-                Log::error("ModerationService: API request failed for image moderation on {$logContext}", [
-                    'status' => $response->status(), 'body' => $response->body()
-                ]);
-                return ['is_appropriate' => false, 'reason' => "Image moderation service error (API status: {$response->status()}). Context: {$logContext}", 'category' => 'ERROR_API_REQUEST'];
-            }
-            return $this->parseModerationResult($response->json(), $logContext);
+            $messages = [
+                ['role' => 'system', 'content' => $finalPrompt],
+                [
+                    'role' => 'user',
+                    'content' => [
+                        ['type' => 'text', 'text' => 'Analyze this image.'],
+                        [
+                            'type' => 'image_url',
+                            'image_url' => ['url' => "data:$mimeType;base64,$imageData"]
+                        ]
+                    ]
+                ]
+            ];
+
+            return $this->executeGroqRequest($messages, $logContext);
 
         } catch (Exception $e) {
-            $logContext = "Image: " . $imageFile->getClientOriginalName();
-            Log::error("ModerationService: Exception during image moderation for {$logContext}", ['message' => $e->getMessage(), 'trace' => Str::limit($e->getTraceAsString(), 300)]);
-            return ['is_appropriate' => false, 'reason' => "Image moderation system unavailable (exception). Context: {$logContext}", 'category' => 'ERROR_EXCEPTION'];
+            Log::error("ModerationService: Image Processing Error for $logContext: " . $e->getMessage());
+            return ['is_appropriate' => true, 'category' => 'EXCEPTION'];
         }
     }
 
     public function moderateUrl(string $urlInput, string $languageCode = 'en'): array
     {
-        if (!$this->isConfigured || empty($this->urlPromptTemplate)) {
-            Log::warning('ModerationService: Service not configured for URLs or URL prompt missing. Allowing URL by default.', ['url' => $urlInput]);
-            return ['is_appropriate' => true, 'reason' => null, 'category' => 'UNCHECKED_CONFIG'];
-        }
-        if (empty(trim($urlInput))) {
+        if (!$this->isConfigured || empty(trim($urlInput))) {
             return ['is_appropriate' => true, 'reason' => null, 'category' => 'NONE'];
         }
 
+        $allowedDomains = ['t.me', 'telegram.me', 'x.com', 'twitter.com', 'instagram.com', 'facebook.com', 'youtube.com', 'youtu.be', 'discord.gg'];
+        $parsedHost = parse_url($urlInput, PHP_URL_HOST);
+
+        $cleanHost = preg_replace('/^www\./', '', $parsedHost ?? '');
+
+        if (in_array($cleanHost, $allowedDomains)) {
+            return ['is_appropriate' => true, 'reason' => null, 'category' => 'SAFE_DOMAIN'];
+        }
+
+        $logContext = "URL: $urlInput";
+
         if (!Str::startsWith($urlInput, ['http://', 'https://'])) {
-            Log::warning("ModerationService: moderateUrl called with a non-HTTP(S) URL: {$urlInput}. This may fail or be misinterpreted by the API.");
+            Log::warning("ModerationService: Non-HTTP URL detected: $urlInput");
         }
 
         $languageName = $this->getLanguageName($languageCode);
-        $prompt = str_replace(['{URL_TEXT}', '{LANGUAGE_NAME}'], [$urlInput, $languageName], $this->urlPromptTemplate);
+        $finalPrompt = $this->urlPrompt . " (Respond in $languageName if inappropriate).";
 
-        $payload = ['contents' => [['parts' => [['text' => $prompt]]]]];
-        if ($this->useJsonMode) {
-            $payload['generationConfig'] = ['responseMimeType' => 'application/json'];
-        }
+        return $this->executeGroqRequest([
+            ['role' => 'system', 'content' => $finalPrompt],
+            ['role' => 'user', 'content' => "Check URL: \"$urlInput\""]
+        ], $logContext);
+    }
 
-        $requestUrl = rtrim($this->apiUrl, '/') . '/' . $this->model . ':generateContent?key=' . $this->apiKey;
-
+    private function executeGroqRequest(array $messages, string $logContext): array
+    {
         try {
-            $logContext = "URL: " . Str::limit($urlInput, 100);
-            Log::debug("ModerationService: Sending URL moderation request for {$logContext}", ['url_param' => $requestUrl, 'using_json_mode' => $this->useJsonMode]);
-            $response = Http::timeout(30)->post($requestUrl, $payload);
+            Log::debug("ModerationService: Sending Request for $logContext");
+
+            $response = Http::withToken($this->apiKey)
+                ->timeout(20)
+                ->post($this->apiUrl, [
+                    'model' => $this->model,
+                    'messages' => $messages,
+                    'response_format' => ['type' => 'json_object'],
+                    'temperature' => 0.1,
+                ]);
 
             if ($response->failed()) {
-                Log::error("ModerationService: API request failed for URL moderation on {$logContext}", [
-                    'status' => $response->status(), 'body' => $response->body()
-                ]);
-                return ['is_appropriate' => false, 'reason' => "URL moderation service error (API status: {$response->status()}). Context: {$logContext}", 'category' => 'ERROR_API_REQUEST'];
+                Log::error("ModerationService: API Failure ({$response->status()}) for $logContext: " . $response->body());
+                return ['is_appropriate' => true, 'category' => 'API_ERROR'];
             }
-            return $this->parseModerationResult($response->json(), $logContext);
+
+            $jsonContent = $response->json('choices.0.message.content');
+
+            if (!$jsonContent) {
+                Log::error("ModerationService: Empty response content for $logContext");
+                return ['is_appropriate' => true, 'category' => 'EMPTY_RESPONSE'];
+            }
+
+            $data = json_decode($jsonContent, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                Log::error("ModerationService: JSON Parse Error for $logContext: " . json_last_error_msg());
+                return ['is_appropriate' => true, 'category' => 'JSON_PARSE_ERROR'];
+            }
+
+            if (!isset($data['is_appropriate'])) {
+                Log::error("ModerationService: Invalid Schema for $logContext", $data);
+                return ['is_appropriate' => true, 'category' => 'SCHEMA_ERROR'];
+            }
+
+            return [
+                'is_appropriate' => (bool) $data['is_appropriate'],
+                'reason' => $data['reason_if_inappropriate'] ?? null,
+                'category' => $data['violation_category'] ?? 'UNKNOWN'
+            ];
 
         } catch (Exception $e) {
-            $logContext = "URL: " . Str::limit($urlInput, 100);
-            Log::error("ModerationService: Exception during URL moderation for {$logContext}", ['message' => $e->getMessage(), 'trace' => Str::limit($e->getTraceAsString(), 300)]);
-            return ['is_appropriate' => false, 'reason' => "URL moderation system unavailable (exception). Context: {$logContext}", 'category' => 'ERROR_EXCEPTION'];
+            Log::error("ModerationService: Critical Exception for $logContext: " . $e->getMessage());
+            return ['is_appropriate' => true, 'category' => 'CRITICAL_EXCEPTION'];
         }
     }
 }

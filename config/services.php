@@ -62,7 +62,11 @@ return [
 
     'groq' => [
         'api_key' => env('GROQ_API_KEY'),
-        'text_model' => env('GROQ_TEXT_MODEL'),
-        'vision_model' => env('GROQ_VISION_MODEL'),
+        'model' => env('GROQ_MODEL'),
+        'prompts' => [
+            'text' => env('GROQ_PROMPT_TEXT'),
+            'image' => env('GROQ_PROMPT_IMAGE'),
+            'url' => env('GROQ_PROMPT_URL'),
+        ],
     ],
 ];
