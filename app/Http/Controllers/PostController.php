@@ -140,6 +140,7 @@ class PostController extends Controller
             }
         }
 
+        Log::emergency('🔥🔥🔥 DISPATCHING SOCIAL SHARE FOR POST ID: ' . $post->id);
 //        SharePostToSocialMedia::dispatch($post)->delay(now()->addSeconds(5));
         SharePostToSocialMedia::dispatch($post);
         PingSearchEngines::dispatch();
