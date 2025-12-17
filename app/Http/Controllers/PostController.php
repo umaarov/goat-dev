@@ -55,6 +55,7 @@ class PostController extends Controller
 
     final public function store(Request $request): RedirectResponse
     {
+        Log::emergency('[CHECK] 1. CONTROLLER HIT');
         // 1. Validation
         $validator = Validator::make($request->all(), [
             'question' => 'required|string|max:255',
@@ -64,7 +65,11 @@ class PostController extends Controller
             'option_two_image' => 'required|image|mimes:jpeg,png,jpg,webp|max:' . self::MAX_POST_IMAGE_SIZE_KB,
         ]);
 
-        if ($validator->fails()) return redirect()->back()->withErrors($validator)->withInput();
+
+        if ($validator->fails()) {
+            Log::emergency('[CHECK] 2. VALIDATION FAILED: ' . json_encode($validator->errors()));
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
 
         $generatedContext = null;
         $generatedTags = null;
@@ -76,6 +81,7 @@ class PostController extends Controller
 
         // 3. GROQ MASTER TASK
         if (!empty(env('GROQ_API_KEY'))) {
+            Log::emergency('[CHECK] 3. STARTING GROQ CHECK');
             $groqResult = $this->executeGroqMasterTask(
                 $request->question,
                 $request->option_one_title,
@@ -140,7 +146,8 @@ class PostController extends Controller
             }
         }
 
-        Log::emergency('🔥🔥🔥 DISPATCHING SOCIAL SHARE FOR POST ID: ' . $post->id);
+        Log::emergency('[CHECK] 4. DISPATCHING JOB');
+        Log::emergency('[CHECK] DISPATCHING SOCIAL SHARE FOR POST ID: ' . $post->id);
 //        SharePostToSocialMedia::dispatch($post)->delay(now()->addSeconds(5));
         SharePostToSocialMedia::dispatch($post);
         PingSearchEngines::dispatch();
