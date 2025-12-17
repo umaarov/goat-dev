@@ -140,7 +140,8 @@ class PostController extends Controller
             }
         }
 
-        SharePostToSocialMedia::dispatch($post)->delay(now()->addSeconds(5));
+//        SharePostToSocialMedia::dispatch($post)->delay(now()->addSeconds(5));
+        SharePostToSocialMedia::dispatch($post);
         PingSearchEngines::dispatch();
         PostCreated::dispatch($post);
 
