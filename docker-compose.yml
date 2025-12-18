@@ -115,19 +115,11 @@ services: #  traefik:
                 limits:
                     cpus: '0.5'
                     memory: 512M
-        env_file:
-            - .env
         environment:
             APP_ENV: production
-            APP_KEY: ${APP_KEY}
             DB_CONNECTION: mysql
             DB_HOST: db
-            DB_PORT: 3306
-            DB_DATABASE: ${DB_DATABASE}
-            DB_USERNAME: ${DB_USERNAME}
-            DB_PASSWORD: ${DB_PASSWORD}
             REDIS_HOST: redis
-            REDIS_PORT: 6379
             REDIS_CLIENT: phpredis
             QUEUE_CONNECTION: redis
             CACHE_STORE: redis
@@ -139,16 +131,22 @@ services: #  traefik:
             X_API_SECRET_KEY: ${X_API_SECRET_KEY}
             X_ACCESS_TOKEN: ${X_ACCESS_TOKEN}
             X_ACCESS_TOKEN_SECRET: ${X_ACCESS_TOKEN_SECRET}
+            MEMORY_LIMIT: 512M
+            GD_PNG: 1
+            GD_JPEG: 1
+            GD_WEBP: 1
         volumes:
             - ./:/app
             - /app/vendor
             - /app/public/build
             - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
+            - /tmp:/tmp
         depends_on:
             - db
             - redis
         networks:
             - goat-network
+
     scheduler:
         image: goat-app:latest
         restart: unless-stopped
