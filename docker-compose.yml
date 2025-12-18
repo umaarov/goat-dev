@@ -113,8 +113,8 @@ services: #  traefik:
         deploy:
             resources:
                 limits:
-                    cpus: '0.5'
-                    memory: 512M
+                    cpus: '1.0'
+                    memory: 2G
         environment:
             APP_ENV: production
             DB_CONNECTION: mysql

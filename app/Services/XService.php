@@ -103,6 +103,11 @@ class XService
 
     private function generateCompositeImage(Post $post): ?string
     {
+        Log::info('Starting image generation', [
+            'post_id' => $post->id,
+            'memory_start' => memory_get_usage() / 1024 / 1024 . ' MB',
+            'memory_limit' => ini_get('memory_limit'),
+        ]);
         $resources = [];
         try {
             $imageOnePath = Storage::disk('public')->path($post->option_one_image);
@@ -126,7 +131,7 @@ class XService
             imagecopy($canvas, $img2_src, 600, 0, imagesx($img2_src) - 600, 0, 600, 630);
 
             for ($i = 0; $i < 25; $i++) {
-                imagefilter($canvas, IMG_FILTER_GAUSSIAN_BLUR);
+                imagefilter($canvas, IMG_FILTER_GAUSSIAN_BLUR, 2);
             }
 
             $overlayColor = imagecolorallocatealpha($canvas, 0, 0, 0, 64);

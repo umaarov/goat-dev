@@ -142,6 +142,12 @@ class InstagramService
 
     private function generatePostImage(Post $post): ?string
     {
+        Log::info('Starting image generation', [
+            'post_id' => $post->id,
+            'memory_start' => memory_get_usage() / 1024 / 1024 . ' MB',
+            'memory_limit' => ini_get('memory_limit'),
+        ]);
+        ini_set('memory_limit', '1024M');
         $resources = [];
         try {
             $imageOnePath = Storage::disk('public')->path($post->option_one_image);
@@ -199,7 +205,7 @@ class InstagramService
         imagedestroy($rightHalf);
 
         for ($i = 0; $i < 25; $i++) {
-            imagefilter($canvas, IMG_FILTER_GAUSSIAN_BLUR);
+            imagefilter($canvas, IMG_FILTER_GAUSSIAN_BLUR, 2);
         }
         $overlay = imagecolorallocatealpha($canvas, 0, 0, 0, 80);
         imagefilledrectangle($canvas, 0, 0, self::CANVAS_WIDTH, self::CANVAS_HEIGHT, $overlay);
