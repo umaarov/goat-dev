@@ -115,17 +115,33 @@ services: #  traefik:
                 limits:
                     cpus: '0.5'
                     memory: 512M
+        env_file:
+            - .env
         environment:
             APP_ENV: production
+            APP_KEY: ${APP_KEY}
             DB_CONNECTION: mysql
             DB_HOST: db
+            DB_PORT: 3306
+            DB_DATABASE: ${DB_DATABASE}
+            DB_USERNAME: ${DB_USERNAME}
+            DB_PASSWORD: ${DB_PASSWORD}
             REDIS_HOST: redis
+            REDIS_PORT: 6379
             REDIS_CLIENT: phpredis
             QUEUE_CONNECTION: redis
             CACHE_STORE: redis
+            TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+            TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+            INSTAGRAM_BUSINESS_ACCOUNT_ID: ${INSTAGRAM_BUSINESS_ACCOUNT_ID}
+            INSTAGRAM_ACCESS_TOKEN: ${INSTAGRAM_ACCESS_TOKEN}
+            X_API_KEY: ${X_API_KEY}
+            X_API_SECRET_KEY: ${X_API_SECRET_KEY}
+            X_ACCESS_TOKEN: ${X_ACCESS_TOKEN}
+            X_ACCESS_TOKEN_SECRET: ${X_ACCESS_TOKEN_SECRET}
         volumes:
             - ./:/app
-            #            - /app/vendor
+            - /app/vendor
             - /app/public/build
             - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
         depends_on:
@@ -133,13 +149,12 @@ services: #  traefik:
             - redis
         networks:
             - goat-network
-
     scheduler:
         image: goat-app:latest
         restart: unless-stopped
         command: php artisan schedule:work
         healthcheck:
-            disable: true
+            disable: false
             test: [ "CMD-SHELL", "pgrep -f 'php artisan schedule:work' || exit 1" ]
             interval: 30s
             timeout: 10s
