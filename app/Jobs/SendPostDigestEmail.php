@@ -27,6 +27,10 @@ class SendPostDigestEmail implements ShouldQueue
 
     public function handle(): void
     {
+        if (!$this->user->exists) {
+            return;
+        }
+
         $user = $this->user->fresh();
 
         if (!$user || !$user->receives_notifications) {
@@ -34,14 +38,20 @@ class SendPostDigestEmail implements ShouldQueue
         }
 
         $since = $user->last_notified_at ?? Carbon::now()->subDays(2);
-        $newPosts = Post::where('created_at', '>', $since)->latest()->get();
 
-        if ($newPosts->isEmpty()) {
+        $mainPost = Post::where('created_at', '>', $since)
+            ->orderByDesc('total_votes')
+            ->first();
+
+        if (!$mainPost) {
             return;
         }
 
-        $mainPost = $newPosts->sortByDesc('total_votes')->first();
-        $gridPosts = $newPosts->where('id', '!=', $mainPost->id)->take(4);
+        $gridPosts = Post::where('created_at', '>', $since)
+            ->where('id', '!=', $mainPost->id)
+            ->latest()
+            ->limit(4)
+            ->get();
 
         Mail::to($user)->send(new NewPostsNotification($user, $mainPost, $gridPosts));
 
