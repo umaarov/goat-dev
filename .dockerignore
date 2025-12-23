@@ -10,4 +10,7 @@ public/storage
 docker-compose.yml
 Dockerfile
 bootstrap/cache/*.php
-storage/framework/views/*.php
+storage/logs/*.log
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*

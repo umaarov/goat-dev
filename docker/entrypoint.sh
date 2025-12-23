@@ -4,21 +4,20 @@ set -e
 echo "Linking storage..."
 php artisan storage:link || true
 
-if [ ! -d "vendor" ] || [ -z "$(ls -A vendor)" ]; then
-    echo "Vendor folder missing. Installing Composer dependencies..."
-    composer install --optimize-autoloader --no-dev --no-interaction
-fi
-
-if [ ! -d "node_modules" ]; then
-    echo "Node modules missing. Installing NPM dependencies..."
+if [ ! -f "node_modules/.bin/vite" ]; then
+    echo "Vite binary missing. Installing NPM dependencies..."
     npm install
 fi
 
-echo "Building frontend assets..."
-npm run build
+if echo "$@" | grep -q "frankenphp"; then
+    echo "Building frontend assets (Web Server)..."
+    npm run build
+else
+    echo "Skipping asset build (Worker/Scheduler detected)."
+fi
 
-if [ "$APP_ENV" = "production" ]; then
-    echo "Caching configurations..."
+if [ "$APP_ENV" = "production" ] && echo "$@" | grep -q "frankenphp"; then
+    echo "Production mode: Caching configurations..."
     php artisan config:clear
     php artisan cache:clear
     php artisan config:cache
@@ -27,5 +26,5 @@ if [ "$APP_ENV" = "production" ]; then
     php artisan event:cache
 fi
 
-echo "Application Starting..."
+echo "Container Starting..."
 exec "$@"
