@@ -25,6 +25,21 @@ RUN composer install \
 COPY . .
 
 FROM dunglas/frankenphp:php8.3-alpine
+RUN apk add --no-cache \
+    build-base \
+    libwebp-dev \
+    libjpeg-turbo-dev \
+    libpng-dev \
+    freetype-dev \
+    freetype \
+    libpng \
+    libjpeg-turbo \
+    gcc \
+    musl-dev \
+    nodejs \
+    npm \
+    curl
+
 RUN install-php-extensions \
     pdo_mysql \
     gd \
@@ -33,16 +48,7 @@ RUN install-php-extensions \
     opcache \
     pcntl \
     bcmath \
-    redis \
-    && apk add --no-cache \
-    build-base \
-    libwebp-dev \
-    libjpeg-turbo-dev \
-    gcc \
-    musl-dev \
-    nodejs \
-    npm \
-    curl
+    redis
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 COPY --from=backend_builder /app/vendor /app/vendor

@@ -80,6 +80,15 @@ class TelegramService
             $fontPath = storage_path('app/fonts/Inter-Bold.ttf');
             $logoFontPath = storage_path('app/fonts/Inter-Black.ttf');
 
+            if (!function_exists('imagettftext')) {
+                Log::error('GD FreeType support is missing on this server!');
+                return null;
+            }
+            if (!file_exists($fontPath)) {
+                Log::error('Font file missing at: ' . $fontPath);
+                return null;
+            }
+
             if (!File::exists($imageOnePath) || !File::exists($imageTwoPath) || !File::exists($fontPath) || !File::exists($logoFontPath)) {
                 Log::error('Required image or font file not found for GD generation.', ['post_id' => $post->id]);
                 return null;
