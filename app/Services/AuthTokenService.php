@@ -39,32 +39,6 @@ class AuthTokenService
         return $this->createCookie($plainTextToken);
     }
 
-    public function getValidToken(string $plainTextToken): ?RefreshToken
-    {
-        $hashedToken = hash('sha256', $plainTextToken);
-
-        $token = RefreshToken::where('token', $hashedToken)->first();
-
-        if (!$token || $token->revoked_at || $token->expires_at->isPast()) {
-            if ($token) {
-                $this->revokeTokenFamily($token);
-            }
-            return null;
-        }
-
-        return $token;
-    }
-
-    public function revokeToken(RefreshToken $token): void
-    {
-        $token->update(['revoked_at' => now()]);
-    }
-
-    public function revokeAllTokensForUser(User $user): void
-    {
-        $user->refreshTokens()->whereNull('revoked_at')->update(['revoked_at' => now()]);
-    }
-
     public function createCookie(string $plainTextToken): SymfonyCookie
     {
         return cookie(
@@ -80,17 +54,45 @@ class AuthTokenService
         );
     }
 
-    public function clearCookie(): SymfonyCookie
+    public function getValidToken(string $plainTextToken): ?RefreshToken
     {
-        return Cookie::forget(self::COOKIE_NAME);
+        $hashedToken = hash('sha256', $plainTextToken);
+
+        $token = RefreshToken::where('token', $hashedToken)->first();
+
+        if (!$token) {
+            return null;
+        }
+
+        if ($token->revoked_at || $token->expires_at->isPast()) {
+            $this->revokeTokenFamily($token);
+            return null;
+        }
+
+        return $token;
     }
 
     private function revokeTokenFamily(RefreshToken $token): void
     {
         RefreshToken::where('user_id', $token->user_id)
-            ->where('ip_address', $token->ip_address)
+            // ->where('ip_address', $token->ip_address)
             ->where('user_agent', $token->user_agent)
             ->whereNull('revoked_at')
             ->update(['revoked_at' => now()]);
+    }
+
+    public function revokeToken(RefreshToken $token): void
+    {
+        $token->update(['revoked_at' => now()]);
+    }
+
+    public function revokeAllTokensForUser(User $user): void
+    {
+        $user->refreshTokens()->whereNull('revoked_at')->update(['revoked_at' => now()]);
+    }
+
+    public function clearCookie(): SymfonyCookie
+    {
+        return Cookie::forget(self::COOKIE_NAME);
     }
 }

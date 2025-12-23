@@ -23,16 +23,22 @@ class CheckRefreshToken
             return $next($request);
         }
 
-        $refreshToken = $request->cookie('refresh_token');
-        if (!$refreshToken) {
+        $refreshTokenCookie = $request->cookie('refresh_token');
+        if (!$refreshTokenCookie) {
             return $next($request);
         }
 
-        $tokenModel = $this->authTokenService->getValidToken($refreshToken);
-        if ($tokenModel) {
-            Auth::login($tokenModel->user);
+        $tokenModel = $this->authTokenService->getValidToken($refreshTokenCookie);
+
+        if (!$tokenModel) {
+            $response = $next($request);
+            return $response->withCookie($this->authTokenService->clearCookie());
         }
 
-        return $next($request);
+        Auth::login($tokenModel->user);
+        $this->authTokenService->revokeToken($tokenModel);
+        $newCookie = $this->authTokenService->issueToken($tokenModel->user, $request);
+        $response = $next($request);
+        return $response->withCookie($newCookie);
     }
 }
