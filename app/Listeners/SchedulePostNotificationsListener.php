@@ -16,28 +16,28 @@ class SchedulePostNotificationsListener implements ShouldQueue
 //        $alreadyScheduledUserIds = NotificationSchedule::whereIn('user_id', $subscribedUserIds)
 //            ->pluck('user_id');
 ////
-        $subscribedUserIds = User::where('email', 'fantasy.hate17@gmail.com')->pluck('id');
-
-        $alreadyScheduledUserIds = NotificationSchedule::whereIn('user_id', $subscribedUserIds)
-            ->pluck('user_id');
-
-        $usersToSchedule = $subscribedUserIds->diff($alreadyScheduledUserIds);
-
-        $schedules = [];
-        foreach ($usersToSchedule as $userId) {
-//            $randomDelayInSeconds = rand(1800, 43200);
-            $randomDelayInSeconds = rand(5, 15);
-
-            $schedules[] = [
-                'user_id' => $userId,
-                'send_at' => now()->addSeconds($randomDelayInSeconds),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-        }
-
-        if (!empty($schedules)) {
-            NotificationSchedule::insert($schedules);
-        }
+//        $subscribedUserIds = User::where('email', 'fantasy.hate17@gmail.com')->pluck('id');
+//
+//        $alreadyScheduledUserIds = NotificationSchedule::whereIn('user_id', $subscribedUserIds)
+//            ->pluck('user_id');
+//
+//        $usersToSchedule = $subscribedUserIds->diff($alreadyScheduledUserIds);
+//
+//        $schedules = [];
+//        foreach ($usersToSchedule as $userId) {
+////            $randomDelayInSeconds = rand(1800, 43200);
+//            $randomDelayInSeconds = rand(5, 15);
+//
+//            $schedules[] = [
+//                'user_id' => $userId,
+//                'send_at' => now()->addSeconds($randomDelayInSeconds),
+//                'created_at' => now(),
+//                'updated_at' => now(),
+//            ];
+//        }
+//
+//        if (!empty($schedules)) {
+//            NotificationSchedule::insert($schedules);
+//        }
     }
 }

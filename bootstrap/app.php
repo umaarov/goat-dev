@@ -2,6 +2,8 @@
 
 use App\Console\Commands\CleanupUnverifiedUsers;
 use App\Console\Commands\GenerateSitemap;
+use App\Console\Commands\ProcessNotificationSchedules;
+use App\Console\Commands\ScheduleDailyDigests;
 use App\Console\Commands\SendPostNotifications;
 use App\Extensions\SafeFailedJobProvider;
 use App\Http\Middleware\CheckRefreshToken;
@@ -156,18 +158,15 @@ return Application::configure(basePath: dirname(__DIR__))
     })->withCommands(
         (array)CleanupUnverifiedUsers::class,
         SendPostNotifications::class,
-        GenerateSitemap::class
-    )->withSchedule(
-        function ($schedule) {
-            $schedule->command('users:cleanup-unverified')
-                ->everyTenMinutes();
-            $schedule->command('sitemap:generate')
-                ->dailyAt('02:00');
-            $schedule->command('app:send-post-notifications')
-                ->hourly();
-            $schedule->command('app:process-notification-schedules')->everyMinute();
-        }
-    )
+        GenerateSitemap::class,
+        ScheduleDailyDigests::class,
+        ProcessNotificationSchedules::class,
+    )->withSchedule(function ($schedule) {
+        $schedule->command('users:cleanup-unverified')->everyTenMinutes();
+        $schedule->command('sitemap:generate')->dailyAt('02:00');
+        $schedule->command('app:schedule-daily-digests')->dailyAt('01:00');
+        $schedule->command('app:process-notification-schedules')->everyMinute();
+    })
     ->withProviders([
         Illuminate\Auth\AuthServiceProvider::class,
         Illuminate\Broadcasting\BroadcastServiceProvider::class,
