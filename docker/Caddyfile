@@ -1,5 +1,9 @@
 {
-    frankenphp
+    frankenphp {
+                   worker {
+                              num 8
+                          }
+               }
     order php_server before file_server
     email hs.umarov21@gmail.com
 
@@ -17,6 +21,13 @@
     handle {
                redir https://www.goat.uz {uri} permanent
            }
+
+    servers {
+                read_timeout 10s
+                write_timeout 10s
+                idle_timeout 60s
+                max_header_size 16kb
+            }
 }
 
 goat.uz {
