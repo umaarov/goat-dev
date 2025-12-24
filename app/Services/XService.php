@@ -130,7 +130,7 @@ class XService
             imagecopy($canvas, $img1_src, 0, 0, 0, 0, 600, 630);
             imagecopy($canvas, $img2_src, 600, 0, imagesx($img2_src) - 600, 0, 600, 630);
 
-            for ($i = 0; $i < 25; $i++) {
+            for ($i = 0; $i < 5; $i++) {
                 imagefilter($canvas, IMG_FILTER_GAUSSIAN_BLUR, 2);
             }
 

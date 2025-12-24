@@ -204,7 +204,7 @@ class InstagramService
         imagedestroy($leftHalf);
         imagedestroy($rightHalf);
 
-        for ($i = 0; $i < 25; $i++) {
+        for ($i = 0; $i < 5; $i++) {
             imagefilter($canvas, IMG_FILTER_GAUSSIAN_BLUR, 2);
         }
         $overlay = imagecolorallocatealpha($canvas, 0, 0, 0, 80);
