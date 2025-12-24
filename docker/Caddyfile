@@ -24,8 +24,9 @@ goat.uz {
 }
 
 www.goat.uz {
-    tls /etc/caddy/certs/goat.uz.pem /etc/caddy/certs/goat.uz.key
-
+    tls /etc/caddy/certs/goat.uz.pem /etc/caddy/certs/goat.uz.key {
+                                                                      protocols tls1.2 tls1.3
+                                                                  }
     header {
                X-Frame-Options "SAMEORIGIN"
                X-Content-Type-Options "nosniff"

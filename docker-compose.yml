@@ -253,7 +253,8 @@ services: #  traefik:
 
     portainer:
         image: portainer/portainer-ce:latest
-        restart: always
+        profiles: [ "maintenance" ]
+        restart: no
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
             - portainer_data:/data
@@ -264,7 +265,8 @@ services: #  traefik:
 
     adminer:
         image: adminer
-        restart: always
+        profiles: [ "maintenance" ]
+        restart: no
         environment:
             ADMINER_DESIGN: "pepa-lined"
         ports:
