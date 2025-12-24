@@ -68,7 +68,7 @@ services: #  traefik:
             VITE_PUSHER_APP_CLUSTER: ${PUSHER_APP_CLUSTER}
         env_file:
             - .env
-        read_only: true
+#        read_only: true
         logging:
             driver: "json-file"
             options:
