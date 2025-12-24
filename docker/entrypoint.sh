@@ -9,13 +9,11 @@ if echo "$@" | grep -q "artisan"; then
 else
     if [ "$APP_ENV" != "production" ]; then
         if [ ! -f "node_modules/.bin/vite" ]; then
-            echo "Dev environment: Vite missing. Installing dependencies..."
             npm install
         fi
-        echo "Dev environment: Building frontend assets..."
         npm run build
     else
-        echo "Production environment: Skipping frontend build (relying on Dockerfile artifacts)."
+        echo "Production: Skipping NPM build."
     fi
 
     echo "Caching configuration..."
