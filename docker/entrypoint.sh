@@ -26,5 +26,6 @@ else
     php artisan view:cache
 fi
 
+# shellcheck disable=SC2145
 echo "✅ Container Starting: $@"
 exec "$@"
