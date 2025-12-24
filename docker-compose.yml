@@ -116,6 +116,8 @@ services: #  traefik:
                 limits:
                     cpus: '1.0'
                     memory: 2G
+        env_file:
+            - .env
         environment:
             APP_ENV: production
             DB_CONNECTION: mysql
