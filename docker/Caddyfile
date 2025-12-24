@@ -1,9 +1,5 @@
 {
-    frankenphp {
-                   worker /app/public/index.php {
-                                                    num 10
-                                                }
-               }
+    frankenphp
     order php_server before file_server
     email hs.umarov21@gmail.com
 
