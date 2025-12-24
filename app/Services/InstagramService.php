@@ -14,14 +14,13 @@ use Throwable;
 
 class InstagramService
 {
-    private ?string $accountId;
-    private ?string $accessToken;
-    private string $graphApiUrl;
-
     private const CANVAS_WIDTH = 1080;
     private const CANVAS_HEIGHT = 1080;
     private const FONT_BOLD_PATH_KEY = 'app/fonts/Inter-Bold.ttf';
     private const FONT_BLACK_PATH_KEY = 'app/fonts/Inter-Black.ttf';
+    private ?string $accountId;
+    private ?string $accessToken;
+    private string $graphApiUrl;
 
     public function __construct()
     {
@@ -38,6 +37,8 @@ class InstagramService
     public function share(Post $post): void
     {
         $post = $post->fresh()->loadMissing('user');
+
+        gc_collect_cycles();
 
         $imageData = $this->generatePostImage($post);
         if (!$imageData) {
@@ -61,82 +62,8 @@ class InstagramService
             if (Storage::disk('public')->exists($tempFileName)) {
                 Storage::disk('public')->delete($tempFileName);
             }
-        }
-    }
-
-    private function createCaption(Post $post): string
-    {
-        $caption = "⚡️ " . $post->question . "\n\n";
-        $caption .= "1️⃣ " . $post->option_one_title . "\n";
-        $caption .= "2️⃣ " . $post->option_two_title . "\n\n";
-
-        if ($post->ai_generated_tags) {
-            $tags = '#' . implode(' #', preg_split('/[,\s]+/', $post->ai_generated_tags));
-            $caption .= $tags . "\n\n";
-        }
-
-        $caption .= "👉 Vote on our website! Link in bio. #goatuz";
-
-        return $caption;
-    }
-
-    private function createPhotoContainer(string $imageUrl, string $caption): string
-    {
-        $url = "{$this->graphApiUrl}/{$this->accountId}/media";
-        $params = [
-            'image_url' => $imageUrl,
-            'caption' => $caption,
-            'access_token' => $this->accessToken,
-        ];
-
-        $response = Http::timeout(60)->post($url, $params);
-        $responseData = $response->json();
-
-        if (!$response->successful() || !isset($responseData['id'])) {
-            throw new Exception('Failed to create Instagram media container. Response: ' . $response->body());
-        }
-
-        $this->waitForContainerReady($responseData['id']);
-
-        return $responseData['id'];
-    }
-
-    private function waitForContainerReady(string $containerId): void
-    {
-        $url = "{$this->graphApiUrl}/{$containerId}";
-        $params = ['fields' => 'status_code', 'access_token' => $this->accessToken];
-        $maxAttempts = 12;
-        $waitSeconds = 5;
-
-        for ($i = 0; $i < $maxAttempts; $i++) {
-            sleep($waitSeconds);
-            $response = Http::get($url, $params);
-            $responseData = $response->json();
-
-            if (!$response->successful()) {
-                throw new Exception('Failed to check Instagram container status. Response: ' . $response->body());
-            }
-
-            $status = $responseData['status_code'] ?? 'UNKNOWN';
-            if ($status === 'FINISHED') {
-                return;
-            }
-            if (in_array($status, ['ERROR', 'EXPIRED', 'FAILED'])) {
-                throw new Exception("Instagram container processing failed with status: {$status}");
-            }
-        }
-
-        throw new Exception("Instagram media container did not become ready in time.");
-    }
-
-    private function publishContainer(string $containerId): void
-    {
-        $url = "{$this->graphApiUrl}/{$this->accountId}/media_publish";
-        $params = ['creation_id' => $containerId, 'access_token' => $this->accessToken];
-        $response = Http::post($url, $params);
-
-        if (!$response->successful()) {
-            throw new Exception('Failed to publish Instagram media container. Response: ' . $response->body());
+            unset($imageData);
+            gc_collect_cycles();
         }
     }
 
@@ -167,10 +94,12 @@ class InstagramService
             $resources[] = $img2_src;
             $canvas = imagecreatetruecolor(self::CANVAS_WIDTH, self::CANVAS_HEIGHT);
             $resources[] = $canvas;
+
             $this->addBackgroundImage($canvas, $img1_src, $img2_src);
             $this->addForegroundImages($canvas, $img1_src, $img2_src);
             $this->addVsElement($canvas, $fontBoldPath);
             $this->addWatermarkBadge($canvas, $fontBlackPath);
+
             ob_start();
             imagejpeg($canvas, null, 95);
             return ob_get_clean();
@@ -178,8 +107,7 @@ class InstagramService
         } catch (Throwable $e) {
             Log::error('Error generating GD image for Instagram.', [
                 'post_id' => $post->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'error' => $e->getMessage()
             ]);
             return null;
         } finally {
@@ -188,6 +116,7 @@ class InstagramService
                     imagedestroy($resource);
                 }
             }
+            unset($canvas, $img1_src, $img2_src);
         }
     }
 
@@ -211,13 +140,36 @@ class InstagramService
         imagefilledrectangle($canvas, 0, 0, self::CANVAS_WIDTH, self::CANVAS_HEIGHT, $overlay);
     }
 
+    private function createCroppedImage(GdImage $sourceImage, int $targetWidth, int $targetHeight): GdImage
+    {
+        $sourceWidth = imagesx($sourceImage);
+        $sourceHeight = imagesy($sourceImage);
+        $sourceRatio = $sourceWidth / $sourceHeight;
+        $targetRatio = $targetWidth / $targetHeight;
+        $srcX = 0;
+        $srcY = 0;
+        $srcW = $sourceWidth;
+        $srcH = $sourceHeight;
+        if ($sourceRatio > $targetRatio) {
+            $srcH = $sourceHeight;
+            $srcW = (int)($sourceHeight * $targetRatio);
+            $srcX = (int)(($sourceWidth - $srcW) / 2);
+        } else {
+            $srcW = $sourceWidth;
+            $srcH = (int)($sourceWidth / $targetRatio);
+            $srcY = (int)(($sourceHeight - $srcH) / 2);
+        }
+        $croppedImage = imagecreatetruecolor($targetWidth, $targetHeight);
+        imagecopyresampled($croppedImage, $sourceImage, 0, 0, $srcX, $srcY, $targetWidth, $targetHeight, $srcW, $srcH);
+        return $croppedImage;
+    }
+
     private function addForegroundImages(GdImage $canvas, GdImage $img1, GdImage $img2): void
     {
         $imageSize = 450;
         $borderSize = 10;
         $borderedImageSize = $imageSize + ($borderSize * 2);
         $borderColor = imagecolorallocatealpha($canvas, 255, 255, 255, 90);
-
         $createBorderedImage = function (GdImage $source) use ($imageSize, $borderSize, $borderedImageSize, $borderColor) {
             $cropped = $this->createCroppedImage($source, $imageSize, $imageSize);
             $bordered = imagecreatetruecolor($borderedImageSize, $borderedImageSize);
@@ -226,18 +178,14 @@ class InstagramService
             imagedestroy($cropped);
             return $bordered;
         };
-
         $img1_bordered = $createBorderedImage($img1);
         $img2_bordered = $createBorderedImage($img2);
-
         $gap = 60;
         $x1 = (self::CANVAS_WIDTH - ($borderedImageSize * 2 + $gap)) / 2;
         $y = (self::CANVAS_HEIGHT - $borderedImageSize) / 2;
         $x2 = $x1 + $borderedImageSize + $gap;
-
         imagecopy($canvas, $img1_bordered, $x1, $y, 0, 0, $borderedImageSize, $borderedImageSize);
         imagecopy($canvas, $img2_bordered, $x2, $y, 0, 0, $borderedImageSize, $borderedImageSize);
-
         imagedestroy($img1_bordered);
         imagedestroy($img2_bordered);
     }
@@ -246,11 +194,9 @@ class InstagramService
     {
         $centerX = self::CANVAS_WIDTH / 2;
         $centerY = self::CANVAS_HEIGHT / 2;
-
         $vsCircleRadius = 120;
         $vsCircleColor = imagecolorallocatealpha($canvas, 0, 0, 0, 90);
         imagefilledellipse($canvas, $centerX, $centerY, $vsCircleRadius, $vsCircleRadius, $vsCircleColor);
-
         $vsText = 'VS';
         $vsFontSize = 48;
         $vsTextColor = imagecolorallocatealpha($canvas, 255, 255, 255, 15);
@@ -265,16 +211,13 @@ class InstagramService
         $badgeHeight = 45;
         $badgeWidth = 160;
         $padding = 30;
-
         $badgeX = self::CANVAS_WIDTH - $badgeWidth - $padding;
         $badgeY = self::CANVAS_HEIGHT - $badgeHeight - $padding;
         $radius = $badgeHeight / 2;
-
         $bgColor = imagecolorallocatealpha($canvas, 15, 15, 15, 50);
         imagefilledrectangle($canvas, $badgeX + $radius, $badgeY, $badgeX + $badgeWidth - $radius, $badgeY + $badgeHeight, $bgColor);
         imagefilledellipse($canvas, $badgeX + $radius, $badgeY + $radius, $badgeHeight, $badgeHeight, $bgColor);
         imagefilledellipse($canvas, $badgeX + $badgeWidth - $radius, $badgeY + $radius, $badgeHeight, $badgeHeight, $bgColor);
-
         $watermarkText = 'GOAT.UZ';
         $watermarkFontSize = 20;
         $textColor = imagecolorallocatealpha($canvas, 255, 255, 255, 50);
@@ -284,36 +227,69 @@ class InstagramService
         imagettftext($canvas, $watermarkFontSize, 0, $textX, $textY, $textColor, $fontPath, $watermarkText);
     }
 
-    private function createCroppedImage(GdImage $sourceImage, int $targetWidth, int $targetHeight): GdImage
+    private function createCaption(Post $post): string
     {
-        $sourceWidth = imagesx($sourceImage);
-        $sourceHeight = imagesy($sourceImage);
-        $sourceRatio = $sourceWidth / $sourceHeight;
-        $targetRatio = $targetWidth / $targetHeight;
+        $caption = "⚡️ " . $post->question . "\n\n";
+        $caption .= "1️⃣ " . $post->option_one_title . "\n";
+        $caption .= "2️⃣ " . $post->option_two_title . "\n\n";
 
-        $srcX = 0;
-        $srcY = 0;
-        $srcW = $sourceWidth;
-        $srcH = $sourceHeight;
-
-        if ($sourceRatio > $targetRatio) {
-            $srcH = $sourceHeight;
-            $srcW = (int)($sourceHeight * $targetRatio);
-            $srcX = (int)(($sourceWidth - $srcW) / 2);
-        } else {
-            $srcW = $sourceWidth;
-            $srcH = (int)($sourceWidth / $targetRatio);
-            $srcY = (int)(($sourceHeight - $srcH) / 2);
+        if ($post->ai_generated_tags) {
+            $tags = '#' . implode(' #', preg_split('/[,\s]+/', $post->ai_generated_tags));
+            $caption .= $tags . "\n\n";
         }
 
-        $croppedImage = imagecreatetruecolor($targetWidth, $targetHeight);
-        imagecopyresampled(
-            $croppedImage, $sourceImage,
-            0, 0, $srcX, $srcY,
-            $targetWidth, $targetHeight,
-            $srcW, $srcH
-        );
+        $caption .= "👉 Vote on our website! Link in bio. #goatuz";
+        return $caption;
+    }
 
-        return $croppedImage;
+    private function createPhotoContainer(string $imageUrl, string $caption): string
+    {
+        $url = "{$this->graphApiUrl}/{$this->accountId}/media";
+        $params = [
+            'image_url' => $imageUrl,
+            'caption' => $caption,
+            'access_token' => $this->accessToken,
+        ];
+        $response = Http::timeout(60)->post($url, $params);
+        $responseData = $response->json();
+        if (!$response->successful() || !isset($responseData['id'])) {
+            throw new Exception('Failed to create Instagram media container. Response: ' . $response->body());
+        }
+        $this->waitForContainerReady($responseData['id']);
+        return $responseData['id'];
+    }
+
+    private function waitForContainerReady(string $containerId): void
+    {
+        $url = "{$this->graphApiUrl}/{$containerId}";
+        $params = ['fields' => 'status_code', 'access_token' => $this->accessToken];
+        $maxAttempts = 12;
+        $waitSeconds = 5;
+        for ($i = 0; $i < $maxAttempts; $i++) {
+            sleep($waitSeconds);
+            $response = Http::get($url, $params);
+            $responseData = $response->json();
+            if (!$response->successful()) {
+                throw new Exception('Failed to check Instagram container status. Response: ' . $response->body());
+            }
+            $status = $responseData['status_code'] ?? 'UNKNOWN';
+            if ($status === 'FINISHED') {
+                return;
+            }
+            if (in_array($status, ['ERROR', 'EXPIRED', 'FAILED'])) {
+                throw new Exception("Instagram container processing failed with status: {$status}");
+            }
+        }
+        throw new Exception("Instagram media container did not become ready in time.");
+    }
+
+    private function publishContainer(string $containerId): void
+    {
+        $url = "{$this->graphApiUrl}/{$this->accountId}/media_publish";
+        $params = ['creation_id' => $containerId, 'access_token' => $this->accessToken];
+        $response = Http::post($url, $params);
+        if (!$response->successful()) {
+            throw new Exception('Failed to publish Instagram media container. Response: ' . $response->body());
+        }
     }
 }

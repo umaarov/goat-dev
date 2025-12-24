@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Abraham\TwitterOAuth\TwitterOAuth;
+use Abraham\TwitterOAuth\TwitterOAuthException;
 use App\Models\Post;
 use Exception;
 use GdImage;
@@ -17,6 +18,9 @@ class XService
 {
     protected TwitterOAuth $client;
 
+    /**
+     * @throws TwitterOAuthException
+     */
     public function __construct()
     {
         $apiKey = Config::get('services.x.api_key');
