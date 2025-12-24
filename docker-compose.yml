@@ -77,6 +77,7 @@ services: #  traefik:
             #            - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
             - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
             - ./docker/certs:/etc/caddy/certs
+            - goat-storage:/app/storage/app/public
         depends_on:
             - db
             - redis
@@ -136,11 +137,12 @@ services: #  traefik:
             GD_JPEG: 1
             GD_WEBP: 1
         volumes:
-            - ./:/app
+            #            - ./:/app
             - /app/vendor
             - /app/public/build
             - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
             - /tmp:/tmp
+            - goat-storage:/app/storage/app/public
         depends_on:
             - db
             - redis
@@ -172,10 +174,11 @@ services: #  traefik:
             QUEUE_CONNECTION: redis
             CACHE_STORE: redis
         volumes:
-            - ./:/app
+            #            - ./:/app
             - /app/vendor
             - /app/public/build
             - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
+            - goat-storage:/app/storage/app/public
         depends_on:
             - db
             - redis
@@ -246,6 +249,27 @@ services: #  traefik:
             - goat-search-data:/app
             - ./dashboard:/app
 
+    portainer:
+        image: portainer/portainer-ce:latest
+        restart: always
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - portainer_data:/data
+        ports:
+            - "127.0.0.1:9000:9000"
+        networks:
+            - goat-network
+
+    adminer:
+        image: adminer
+        restart: always
+        environment:
+            ADMINER_DESIGN: "pepa-lined"
+        ports:
+            - "127.0.0.1:8080:8080"
+        networks:
+            - goat-network
+
 networks:
     goat-network:
         driver: bridge
@@ -255,3 +279,5 @@ volumes:
     goat-db-data:
     goat-redis-data:
     goat-search-data:
+    goat-storage:
+    portainer_data:
