@@ -89,6 +89,7 @@ services: #  traefik:
             - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
             - ./docker/certs:/etc/caddy/certs
             - goat-storage:/app/storage/app/public
+            - ./docs:/app/docs
         depends_on:
             - db
             - redis

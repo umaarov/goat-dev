@@ -67,3 +67,19 @@ www.goat.uz {
 
     file_server
 }
+
+git.goat.uz {
+    tls /etc/caddy/certs/goat.uz.pem /etc/caddy/certs/goat.uz.key
+    redir https://github.com/umaarov/goat-dev permanent
+}
+
+docs.goat.uz {
+    tls /etc/caddy/certs/goat.uz.pem /etc/caddy/certs/goat.uz.key
+    root * /app/docs
+    rewrite / goat_doc_en.pdf
+    file_server
+    header {
+               Content-Type "application/pdf"
+               Content-Disposition "inline"
+           }
+}
