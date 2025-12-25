@@ -11,7 +11,7 @@
 [![Status](https://img.shields.io/badge/Status-Active_Development-success)]()
 
 
-**[Live Demo](https://www.goat.uz) • [Documentation](docs/goat_doc_en.pdf) • [Report Bug](https://github.com/umaarov/goat-dev/issues)**
+**[Live Demo](https://www.goat.uz) • [Documentation](https://docs.goat.uz) • [Report Bug](https://github.com/umaarov/goat-dev/issues)**
 </div>
 
 ---
