@@ -8,59 +8,59 @@ It translates the raw codebase into a structured map of Computer Science concept
 
 ### A. Search & Text Analysis
 
-- **Okapi BM25**: (C++) Probabilistic information retrieval for ranking text relevance based on term frequency and document length.
-- **Cosine Similarity**: (C++) Vector space metric to measure semantic similarity between high-dimensional text embeddings.
-- **Levenshtein Distance**: (PHP) Dynamic programming algorithm for fuzzy string matching and typo tolerance.
-- **Soundex**: (PHP) Phonetic algorithm for indexing names by sound (handling "Jon" vs "John").
-- **Feature Hashing (The Hashing Trick)**: (C++) Dimensionality reduction converting n-grams into fixed-size vectors without a dictionary.
-- **Hybrid Score Fusion**: (C++) Weighted linear combination algorithm to merge Keyword (BM25) and Semantic (Vector) search scores.
-- **Linear Search**: (PHP) Iterative string scanning implementation for log filtering (--grep).
-- **Regex Pattern Matching**: (PHP) State-machine based text extraction for mentions and URL validation.
+- **[Okapi BM25](https://github.com/umaarov/goat-search/blob/9cc47cedf6f51a6fd7da05629377b70e2d24b787/src/cpp/BM25Index.cpp#L26)**: (C++) Probabilistic information retrieval for ranking text relevance based on term frequency and document length.
+- **[Cosine Similarity](https://github.com/umaarov/goat-search/blob/9cc47cedf6f51a6fd7da05629377b70e2d24b787/src/cpp/common.h#L36)**: (C++) Vector space metric to measure semantic similarity between high-dimensional text embeddings.
+- **[Levenshtein Distance](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Services/LevenshteinService.php#L9)**: (PHP) Dynamic programming algorithm for fuzzy string matching and typo tolerance.
+- **[Soundex](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Http/Controllers/PostController.php#L865)**: (PHP) Phonetic algorithm for indexing names by sound (handling "Jon" vs "John").
+- **[Feature Hashing  (The Hashing Trick)](https://github.com/umaarov/goat-search/blob/9cc47cedf6f51a6fd7da05629377b70e2d24b787/src/cpp/VectorIndex.cpp#L19)**: (C++) Dimensionality reduction converting n-grams into fixed-size vectors without a dictionary.
+- **[Hybrid Score Fusion](https://github.com/umaarov/goat-search/blob/9cc47cedf6f51a6fd7da05629377b70e2d24b787/src/cpp/HybridSearcher.cpp#L45)**: (C++) Weighted linear combination algorithm to merge Keyword (BM25) and Semantic (Vector) search scores.
+- **[Linear Search](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Console/Commands/ShowAppLogs.php#L65)**: (PHP) Iterative string scanning implementation for log filtering (--grep).
+- **[Regex Pattern Matching](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Http/Controllers/CommentController.php#L368)**: (PHP) State-machine based text extraction for mentions and URL validation.
 
 ### B. Graphics & Geometry
 
-- **Parametric Curve Generation**: (C++/WASM) Calculating 3D vertices for (p,q)-Torus Knots using trigonometric functions.
-- **Simplex Noise**: (GLSL) Gradient noise algorithm for procedural texture generation (Ink blots).
-- **Volumetric Ray Casting (God Rays)**: (GLSL) Screen-space radial blur using occlusion sampling to simulate light scattering.
-- **Spherical to Cartesian Conversion**: (JS) Distributing particles evenly on a 3D sphere surface.
-- **AABB Layout (Axis-Aligned Bounding Box)**: (JS) 2D geometric algorithm to center and arrange arbitrary groups of badges.
-- **Gaussian Blur (Convolution)**: (PHP/C) Matrix operation for image smoothing and noise reduction.
-- **Image Downsampling**: (PHP/C) Algorithmic reduction of pixel density for LQIP generation.
-- **Color Space Conversion (HSV to RGB)**: (PHP) Geometric mapping of cylindrical color coordinates to cubic RGB for consistent pastel generation.
+- **[Parametric Curve Generation](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/cpp/geometry_optimizer.cpp#L10)**: (C++/WASM) Calculating 3D vertices for (p,q)-Torus Knots using trigonometric functions.
+- **[Simplex Noise](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/resources/js/shaders/ink_blot/fragment.glsl#L8)**: (GLSL) Gradient noise algorithm for procedural texture generation (Ink blots).
+- **[Volumetric Ray Casting (God Rays)](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/resources/js/shaders/GodRaysShader.js#L21)**: (GLSL) Screen-space radial blur using occlusion sampling to simulate light scattering.
+- **[Spherical to Cartesian Conversion](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/resources/js/modules/particleEffects.js#L14)**: (JS) Distributing particles evenly on a 3D sphere surface.
+- **[AABB Layout (Axis-Aligned Bounding Box)](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/resources/js/modules/BadgeCanvasManager.js#L6)**: (JS) 2D geometric algorithm to center and arrange arbitrary groups of badges.
+- **[Gaussian Blur (Convolution)](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Services/InstagramService.php#L123)**: (PHP/C) Matrix operation for image smoothing and noise reduction.
+- **[Image Downsampling](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/image_processor_dev/image_processor.c#L57)**: (PHP/C) Algorithmic reduction of pixel density for LQIP generation.
+- **[Color Space Conversion (HSV to RGB)](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Services/AvatarService.php#L75)**: (PHP) Geometric mapping of cylindrical color coordinates to cubic RGB for consistent pastel generation.
 
 ### C. System & Optimization
 
-- **Exponential Decay**: (PHP) Mathematical ranking formula ($S(t) = W \cdot e^{-\lambda t}$) to lower scores of old content over time.
-- **Greedy Algorithm**: (PHP) Resource allocation logic for filling limited daily email slots with the most urgent users.
-- **Probabilistic Throttling (Jitter)**: (PHP) Randomizing execution time to prevent "Thundering Herd" database stampedes.
-- **Tailing Algorithm**: (PHP) File pointer manipulation (fseek, ftell) to read only appended bytes of large logs.
-- **Batch Processing (Chunking)**: (PHP) Memory-safe cursor iteration for processing millions of database rows.
-- **Pessimistic Locking (Mutex)**: (PHP) Concurrency control to prevent race conditions during vote/like counting.
-- **Proof of Work (Hashcash)**: (C) Brute-force algorithm finding a nonce to satisfy a cryptographic difficulty constraint.
+- **[Exponential Decay](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Services/CommentScoringService.php#L19)**: (PHP) Mathematical ranking formula ($S(t) = W \cdot e^{-\lambda t}$) to lower scores of old content over time.
+- **[Greedy Algorithm](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Console/Commands/ScheduleDailyDigests.php#L17)**: (PHP) Resource allocation logic for filling limited daily email slots with the most urgent users.
+- **[Probabilistic Throttling (Jitter)](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Console/Commands/SendPostNotifications.php#L24)**: (PHP) Randomizing execution time to prevent "Thundering Herd" database stampedes.
+- **[Tailing Algorithm](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Console/Commands/ShowAppLogs.php#L95)**: (PHP) File pointer manipulation (fseek, ftell) to read only appended bytes of large logs.
+- **[Batch Processing (Chunking)](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Console/Commands/CalculateCommentScores.php#L15)**: (PHP) Memory-safe cursor iteration for processing millions of database rows.
+- **[Pessimistic Locking (Mutex)](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Http/Controllers/CommentLikeController.php#L22)**: (PHP) Concurrency control to prevent race conditions during vote/like counting.
+- **[Proof of Work (Hashcash)](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/resources/wasm/pow_solver.c#L21)**: (C) Brute-force algorithm finding a nonce to satisfy a cryptographic difficulty constraint.
 
 ### D. Security & Data
 
-- **SHA-256**: (C/PHP) Cryptographic hashing implementation.
-- **HMAC**: (PHP) Hash-based message authentication code for data integrity.
-- **CRC32**: (PHP) Cyclic redundancy check used for deterministic color seeding.
-- **Data Masking/Obfuscation**: (PHP) Algorithmic scrubbing of PII to anonymize users while maintaining DB integrity.
-- **Collision Resolution (Linear Probing)**: (PHP) Iterative suffix appending to ensure username uniqueness.
-- **Canary Testing (Heuristic)**: (PHP) Transaction rollback diagnostic to test database trigger behavior safely in production.
+- **[SHA-256](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/resources/wasm/pow_solver.c#L93)**: (C/PHP) Cryptographic hashing implementation.
+- **[HMAC](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Services/TelegramAuthService.php#L16)**: (PHP) Hash-based message authentication code for data integrity.
+- **[CRC32](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Services/AvatarService.php#L66)**: (PHP) Cyclic redundancy check used for deterministic color seeding.
+- **[Data Masking/Obfuscation](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Http/Controllers/UserController.php#L1009)**: (PHP) Algorithmic scrubbing of PII to anonymize users while maintaining DB integrity.
+- **[Collision Resolution (Linear Probing)](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Http/Controllers/Auth/AuthController.php#L510)**: (PHP) Iterative suffix appending to ensure username uniqueness.
+- **[Canary Testing (Heuristic)](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Http/Controllers/NotificationController.php#L38)**: (PHP) Transaction rollback diagnostic to test database trigger behavior safely in production.
 
 ## II. Data Structures
 
-- **Inverted Index**: (C++) Mapping terms to postings lists for O(1) text search.
-- **Dense Vectors**: (C++) 1024-dimensional float arrays representing semantic meaning.
-- **Scene Graph**: (JS/Three.js) Hierarchical tree structure managing 3D object transformations.
-- **Typed Arrays (Buffers)**: (JS/WASM) Contiguous memory blocks (Float32Array) for high-performance binary data transfer.
-- **Tree (DOM/XML)**: (PHP) Hierarchical structure used for Sitemap generation.
-- **Tree (Threaded Comments)**: (PHP) Recursive parent-child relationship flattened for UI presentation.
-- **Queues**: (PHP/Redis) FIFO structures managing asynchronous background jobs.
-- **Hash Maps**: (PHP/C++) Key-value stores used for caching, CSP policies, and JSON payloads.
-- **Bitmaps**: (PHP/C) 2D pixel grids manipulated during image processing.
-- **Linked List (Abstract)**: (PHP) Pagination cursors behaving as doubly linked lists for navigation.
-- **TCP Sockets**: (PHP/C++) Stream-based communication channels for inter-service messaging.
-- **Priority Queue (Implicit)**: (C++) Sorting mechanisms used to rank search results and user badges.
+- **[Inverted Index](https://github.com/umaarov/goat-search/blob/9cc47cedf6f51a6fd7da05629377b70e2d24b787/src/cpp/BM25Index.h#L16)**: (C++) Mapping terms to postings lists for O(1) text search.
+- **[Dense Vectors](https://github.com/umaarov/goat-search/blob/9cc47cedf6f51a6fd7da05629377b70e2d24b787/src/cpp/VectorIndex.h#L15)**: (C++) 1024-dimensional float arrays representing semantic meaning.
+- **[Scene Graph](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/resources/js/modules/BadgeFactory.js#L49)**: (JS/Three.js) Hierarchical tree structure managing 3D object transformations.
+- **[Typed Arrays (Buffers)](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/resources/js/modules/BadgeFactory.js#L172)**: (JS/WASM) Contiguous memory blocks (Float32Array) for high-performance binary data transfer.
+- **[Tree (DOM/XML)](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Console/Commands/GenerateSitemap.php#L19)**: (PHP) Hierarchical structure used for Sitemap generation.
+- **[Tree (Threaded Comments)](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Http/Controllers/CommentController.php#L35)**: (PHP) Recursive parent-child relationship flattened for UI presentation.
+- **[Queues](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Jobs/SharePostToSocialMedia.php#L20)**: (PHP/Redis) FIFO structures managing asynchronous background jobs.
+- **[Hash Maps](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Csp/CustomPolicy.php#L11)**: (PHP/C++) Key-value stores used for caching, CSP policies, and JSON payloads.
+- **[Bitmaps](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Services/InstagramService.php#L70)**: (PHP/C) 2D pixel grids manipulated during image processing.
+- **[Linked List (Abstract)](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Http/Controllers/PostController.php#L324)**: (PHP) Pagination cursors behaving as doubly linked lists for navigation.
+- **[TCP Sockets](https://github.com/umaarov/goat-dev/blob/3a3f2e2d460c75c2343f700dc25824e86cdb1484/app/Services/GoatSearchClient.php#L63)**: (PHP/C++) Stream-based communication channels for inter-service messaging.
+- **[Priority Queue (Implicit)](https://github.com/umaarov/goat-search/blob/9cc47cedf6f51a6fd7da05629377b70e2d24b787/src/cpp/HybridSearcher.cpp#L45)**: (C++) Sorting mechanisms used to rank search results and user badges.
 
 ## III. Design Patterns
 
