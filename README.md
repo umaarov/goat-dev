@@ -9,6 +9,7 @@
 [![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?logo=laravel&logoColor=white)](https://laravel.com)
 [![FrankenPHP](https://img.shields.io/badge/FrankenPHP-HTTP%2F3-purple)](https://frankenphp.dev/)
 [![Status](https://img.shields.io/badge/Status-Active_Development-success)]()
+[![wakatime](https://wakatime.com/badge/user/018e6013-1635-4eb7-8b04-e9e6b767210f/project/104fe66a-1392-47a1-9f58-93b12366668e.svg)](https://wakatime.com/badge/user/018e6013-1635-4eb7-8b04-e9e6b767210f/project/104fe66a-1392-47a1-9f58-93b12366668e)
 
 
 **[Live Demo](https://www.goat.uz) • [Documentation](https://docs.goat.uz) • [Report Bug](https://github.com/umaarov/goat-dev/issues)**
