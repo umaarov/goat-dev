@@ -65,25 +65,22 @@ class AuthController extends Controller
             $this->setProfilePicture($user, $request);
             $this->emailVerificationService->sendVerificationEmail($user);
 
-            Log::channel('audit_trail')->info('User registration initiated.', [
-                'attempted_email' => $request->email,
-                'attempted_username' => $request->username,
-                'user_id_created' => $user->id,
-                'ip_address' => $request->ip(),
+            Log::channel('audit_trail')->info('[AUTH] [REGISTER] New user registration successful', [
+                'user_id' => $user->id,
+                'email' => $request->email,
+                'username' => $request->username,
+                'ip' => $request->ip(),
             ]);
 
             return redirect()->route('login')
                 ->with('success', __('messages.registration_successful_verify_email'));
         } catch (Exception $e) {
-            Log::channel('audit_trail')->error('User registration failed.', [
-                'attempted_email' => $request->email,
+            Log::channel('audit_trail')->error('[AUTH] [REGISTER] Registration system failure', [
+                'email' => $request->email,
                 'error' => $e->getMessage(),
-                'ip_address' => $request->ip(),
+                'ip' => $request->ip(),
             ]);
-            Log::error('Registration system error: ' . $e->getMessage(), [
-                'user_email' => $request->email,
-                'trace' => $e->getTraceAsString()
-            ]);
+            Log::error($e->getMessage(), ['trace' => $e->getTraceAsString()]);
 
             return redirect()->back()
                 ->withErrors(['error' => __('messages.error_registration_failed')])
@@ -145,6 +142,10 @@ class AuthController extends Controller
     public function verifyEmail(Request $request): RedirectResponse
     {
         if (!$request->hasValidSignature()) {
+            Log::channel('audit_trail')->warning('[AUTH] [VERIFY] Invalid signature in verification link', [
+                'user_id' => $request->id,
+                'ip' => $request->ip()
+            ]);
             return redirect()->route('verification.notice')
                 ->with('error', __('messages.error_invalid_verification_link'));
         }
@@ -158,11 +159,10 @@ class AuthController extends Controller
         }
 
         if ($this->emailVerificationService->verify($user, $request->token)) {
-            Log::channel('audit_trail')->info('User email verified.', [
+            Log::channel('audit_trail')->info('[AUTH] [VERIFY] Email verified successfully', [
                 'user_id' => $user->id,
-                'username' => $user->username,
                 'email' => $user->email,
-                'ip_address' => $request->ip(),
+                'ip' => $request->ip(),
             ]);
             event(new UserRegistered($user));
 
@@ -171,11 +171,9 @@ class AuthController extends Controller
                 : redirect()->route('login')->with('success', __('messages.email_verified_can_login'));
         }
 
-        Log::channel('audit_trail')->warning('Email verification failed (invalid token/link).', [
-            'attempted_user_id' => $request->id,
-            'token_used' => $request->token,
-            'ip_address' => $request->ip(),
-            'signature_valid' => $request->hasValidSignature()
+        Log::channel('audit_trail')->warning('[AUTH] [VERIFY] Token mismatch or expiry', [
+            'user_id' => $request->id,
+            'ip' => $request->ip()
         ]);
 
         return redirect()->route('verification.notice')
@@ -236,7 +234,7 @@ class AuthController extends Controller
                 $user->google_id = $googleUser->getId();
                 $user->save();
 
-                Log::channel('audit_trail')->info('User linked Google account.', [
+                Log::channel('audit_trail')->info('[AUTH] [GOOGLE] User linked Google account.', [
                     'user_id' => $user->id, 'google_id' => $googleUser->getId(), 'ip_address' => $request->ip(),
                 ]);
 
@@ -247,7 +245,7 @@ class AuthController extends Controller
             }
         }
         $time_start_callback = microtime(true);
-        Log::channel('audit_trail')->info('Google callback initiated.', [
+        Log::channel('audit_trail')->info('[AUTH] [GOOGLE] Google callback initiated.', [
             'ip_address' => $request->ip(),
             'query_params' => $request->query(),
             'time_start_callback' => $time_start_callback
@@ -255,7 +253,7 @@ class AuthController extends Controller
 
         try {
             if ($request->has('error')) {
-                Log::channel('audit_trail')->error('Google callback returned an error.', [
+                Log::channel('audit_trail')->error('[AUTH] [GOOGLE] Google callback returned an error.', [
                     'error' => $request->input('error'),
                     'error_description' => $request->input('error_description'),
                     'ip_address' => $request->ip(),
@@ -266,7 +264,7 @@ class AuthController extends Controller
             }
 
             if (!$request->has('code')) {
-                Log::channel('audit_trail')->error('Google callback missing authorization code.', [
+                Log::channel('audit_trail')->error('[AUTH] [GOOGLE] Google callback missing authorization code.', [
                     'ip_address' => $request->ip(),
                     'query_params' => $request->query(),
                     'time' => microtime(true),
@@ -276,13 +274,13 @@ class AuthController extends Controller
             }
 
             $time_before_socialite_user = microtime(true);
-            Log::channel('audit_trail')->info('Attempting to fetch Google user from Socialite.', ['time' => $time_before_socialite_user]);
+            Log::channel('audit_trail')->info('[AUTH] [GOOGLE] Attempting to fetch Google user from Socialite.', ['time' => $time_before_socialite_user]);
 
             $googleUser = Socialite::driver('google')->stateless()->user();
 
             $time_after_socialite_user = microtime(true);
             $duration_socialite_user_call = $time_after_socialite_user - $time_before_socialite_user;
-            Log::channel('audit_trail')->info('Successfully fetched Google user from Socialite.', [
+            Log::channel('audit_trail')->info('[AUTH] [GOOGLE] Successfully fetched Google user from Socialite.', [
                 'google_user_id' => $googleUser->getId(),
                 'google_user_email' => $googleUser->getEmail(),
                 'time' => $time_after_socialite_user,
@@ -292,7 +290,7 @@ class AuthController extends Controller
             $time_before_db_lookup = microtime(true);
             $userModel = User::where('google_id', $googleUser->getId())->first();
             $time_after_db_lookup = microtime(true);
-            Log::channel('audit_trail')->info('DB lookup for existing Google ID.', [
+            Log::channel('audit_trail')->info('[AUTH] [GOOGLE] DB lookup for existing Google ID.', [
                 'duration_db_lookup_seconds' => $time_after_db_lookup - $time_before_db_lookup,
                 'found_user_by_google_id' => !is_null($userModel)
             ]);
@@ -302,7 +300,7 @@ class AuthController extends Controller
 
             if (!$userModel) {
                 $time_before_handle_user = microtime(true);
-                Log::channel('audit_trail')->info('No existing user by Google ID. Calling handleGoogleUser.', [
+                Log::channel('audit_trail')->info('[AUTH] [GOOGLE] No existing user by Google ID. Calling handleGoogleUser.', [
                     'google_email' => $googleUser->getEmail(),
                     'time' => $time_before_handle_user
                 ]);
@@ -310,7 +308,7 @@ class AuthController extends Controller
                 $userModel = $this->handleGoogleUser($googleUser);
 
                 $time_after_handle_user = microtime(true);
-                Log::channel('audit_trail')->info('Finished handleGoogleUser call.', [
+                Log::channel('audit_trail')->info('[AUTH] [GOOGLE] Finished handleGoogleUser call.', [
                     'user_id_returned' => $userModel->id,
                     'was_recently_created' => $userModel->wasRecentlyCreated,
                     'duration_handle_user_seconds' => $time_after_handle_user - $time_before_handle_user
@@ -352,7 +350,7 @@ class AuthController extends Controller
                 ->with('success', __('messages.google_login_success'))
                 ->withCookie($cookie);
         } catch (InvalidStateException $e) {
-            Log::channel('audit_trail')->error('Google authentication failed: Invalid State.', [
+            Log::channel('audit_trail')->error('[AUTH] [GOOGLE] Google authentication failed: Invalid State.', [
                 'error' => $e->getMessage(),
                 'ip_address' => $request->ip(),
                 'time_exception' => microtime(true),
@@ -365,7 +363,7 @@ class AuthController extends Controller
             return redirect()->route('login')
                 ->with('error', __('messages.error_google_auth_failed_state') ?: 'Google authentication failed due to an invalid state. Please try again.');
         } catch (ConnectException $e) {
-            Log::channel('audit_trail')->error('Google authentication failed: Connection issue (Guzzle).', [
+            Log::channel('audit_trail')->error('[AUTH] [GOOGLE] Google authentication failed: Connection issue (Guzzle).', [
                 'error' => $e->getMessage(),
                 'ip_address' => $request->ip(),
                 'time_exception' => microtime(true),
@@ -378,13 +376,13 @@ class AuthController extends Controller
             return redirect()->route('login')
                 ->with('error', __('messages.error_google_auth_network') ?: 'Could not connect to Google for authentication. Please check your internet connection and try again.');
         } catch (Exception $e) {
-            Log::channel('audit_trail')->error('Google authentication/callback failed with generic Exception.', [
+            Log::channel('audit_trail')->error('[AUTH] [GOOGLE] Google authentication/callback failed with generic Exception.', [
                 'error' => $e->getMessage(),
                 'exception_type' => get_class($e),
                 'ip_address' => $request->ip(),
                 'time_exception' => microtime(true),
             ]);
-            Log::error('Google Auth System Error (Generic Exception)', [
+            Log::error('[AUTH] [GOOGLE] Google Auth System Error (Generic Exception)', [
                 'error' => $e->getMessage(),
                 'exception_type' => get_class($e),
                 'trace' => $e->getTraceAsString(),
@@ -402,7 +400,7 @@ class AuthController extends Controller
     private function handleGoogleUser($googleUser): User
     {
         $time_start_handle = microtime(true);
-        Log::channel('audit_trail')->info('Inside handleGoogleUser.', [
+        Log::channel('audit_trail')->info('[AUTH] [GOOGLE] Inside handleGoogleUser.', [
             'google_email' => $googleUser->getEmail(),
             'google_id_from_socialite' => $googleUser->getId(),
             'time_start' => $time_start_handle
@@ -410,26 +408,26 @@ class AuthController extends Controller
 
         $existingUserByEmail = User::where('email', $googleUser->getEmail())->first();
         $time_after_email_lookup = microtime(true);
-        Log::channel('audit_trail')->info('DB lookup for existing email in handleGoogleUser.', [
+        Log::channel('audit_trail')->info('[AUTH] [GOOGLE] DB lookup for existing email in handleGoogleUser.', [
             'duration_email_lookup_seconds' => $time_after_email_lookup - $time_start_handle,
             'found_user_by_email' => !is_null($existingUserByEmail)
         ]);
 
         if ($existingUserByEmail) {
-            Log::channel('audit_trail')->info('Existing user found by email in handleGoogleUser. Updating with Google ID if not set.', [
+            Log::channel('audit_trail')->info('[AUTH] [GOOGLE] Existing user found by email in handleGoogleUser. Updating with Google ID if not set.', [
                 'user_id' => $existingUserByEmail->id,
                 'current_google_id_on_user' => $existingUserByEmail->google_id
             ]);
             $userToReturn = $this->updateExistingUserWithGoogle($existingUserByEmail, $googleUser);
             $log_action = 'updated_existing_user_with_google_info';
         } else {
-            Log::channel('audit_trail')->info('No existing user by email in handleGoogleUser. Creating new user from Google info.');
+            Log::channel('audit_trail')->info('[AUTH] [GOOGLE] No existing user by email in handleGoogleUser. Creating new user from Google info.');
             $userToReturn = $this->createUserFromGoogle($googleUser);
             $log_action = 'created_new_user_from_google_info';
         }
 
         $time_end_handle = microtime(true);
-        Log::channel('audit_trail')->info('Finished handleGoogleUser.', [
+        Log::channel('audit_trail')->info('[AUTH] [GOOGLE] Finished handleGoogleUser.', [
             'user_id_processed' => $userToReturn->id,
             'action_taken' => $log_action,
             'was_recently_created_flag' => $userToReturn->wasRecentlyCreated,
@@ -453,14 +451,14 @@ class AuthController extends Controller
 
         $user->email_verified_at = $user->email_verified_at ?? now();
         $user->save();
-        Log::channel('audit_trail')->info('Updated existing user with Google info.', ['user_id' => $user->id, 'google_id_set' => $user->google_id]);
+        Log::channel('audit_trail')->info('[AUTH] [GOOGLE] Updated existing user with Google info.', ['user_id' => $user->id, 'google_id_set' => $user->google_id]);
         return $user;
     }
 
     private function createUserFromGoogle($googleUser): User
     {
         $time_start_create = microtime(true);
-        Log::channel('audit_trail')->info('Creating new user from Google data.', [
+        Log::channel('audit_trail')->info('[AUTH] [GOOGLE] Creating new user from Google data.', [
             'google_email' => $googleUser->getEmail(),
             'google_name' => $googleUser->getName(),
             'time_start' => $time_start_create
@@ -483,7 +481,7 @@ class AuthController extends Controller
 //            'password' => Hash::make(Str::random(24)),
             'password' => null,
         ]);
-        Log::channel('audit_trail')->info('User model created in DB.', ['user_id' => $user->id, 'username' => $username, 'time_after_eloquent_create' => microtime(true)]);
+        Log::channel('audit_trail')->info('[AUTH] [GOOGLE] User model created in DB.', ['user_id' => $user->id, 'username' => $username, 'time_after_eloquent_create' => microtime(true)]);
 
 
         if ($googleUser->getAvatar()) {
@@ -499,7 +497,7 @@ class AuthController extends Controller
         $user->save();
 
         $time_end_create = microtime(true);
-        Log::channel('audit_trail')->info('Finished creating user from Google and saved profile picture.', [
+        Log::channel('audit_trail')->info('[AUTH] [GOOGLE] Finished creating user from Google and saved profile picture.', [
             'user_id' => $user->id,
             'duration_create_user_seconds' => $time_end_create - $time_start_create
         ]);
@@ -532,7 +530,7 @@ class AuthController extends Controller
         if (Cache::has($cacheKey)) {
             $cachedUsername = Cache::get($cacheKey);
             if (!User::where('username', $cachedUsername)->exists()) {
-                Log::channel('audit_trail')->debug('Using cached unique username.', ['username' => $cachedUsername]);
+                Log::channel('audit_trail')->debug('[AUTH] [GOOGLE] Using cached unique username.', ['username' => $cachedUsername]);
                 return $cachedUsername;
             }
             Cache::forget($cacheKey);
@@ -545,7 +543,7 @@ class AuthController extends Controller
 
         while (User::where('username', $username)->exists()) {
             if ($attempt++ >= $maxAttempts) {
-                Log::channel('audit_trail')->warning('Max attempts reached, generating random username.', ['base' => $baseUsername]);
+                Log::channel('audit_trail')->warning('[AUTH] [GOOGLE] Max attempts reached, generating random username.', ['base' => $baseUsername]);
                 do {
                     $username = 'user' . Str::lower(Str::random(10));
                 } while (User::where('username', $username)->exists());
@@ -558,7 +556,7 @@ class AuthController extends Controller
         }
 
         Cache::put($cacheKey, $username, now()->addMinutes(10));
-        Log::channel('audit_trail')->info('Generated unique username.', [
+        Log::channel('audit_trail')->info('[AUTH] Generated unique username.', [
             'original_name' => $name,
             'base_username' => $baseUsername,
             'generated_username' => $username,
@@ -590,8 +588,10 @@ class AuthController extends Controller
 
             if (!$user->email_verified_at) {
                 Auth::logout();
-                Log::channel('audit_trail')->warning('Login attempt failed: Email not verified.', [
-                    'login_identifier' => $loginInput, 'user_id' => $user->id, 'ip_address' => $request->ip(),
+                Log::channel('audit_trail')->warning('[AUTH] [LOGIN] Blocked: Email not verified', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'ip' => $request->ip(),
                 ]);
                 return redirect()->route('login')
                     ->withErrors(['login_identifier' => __('messages.error_email_not_verified_login')])
@@ -599,8 +599,11 @@ class AuthController extends Controller
             }
 
             $request->session()->regenerate();
-            Log::channel('audit_trail')->info('User authenticated successfully.', [
-                'user_id' => $user->id, 'username' => $user->username, 'ip_address' => $request->ip(),
+            Log::channel('audit_trail')->info('[AUTH] [LOGIN] Session started', [
+                'user_id' => $user->id,
+                'username' => $user->username,
+                'ip' => $request->ip(),
+                'method' => 'credentials'
             ]);
 
             $cookie = $this->authTokenService->issueToken($user, $request);
@@ -646,10 +649,11 @@ class AuthController extends Controller
                     $user->save();
 
                     Log::channel('audit_trail')->info('User account REACTIVATED successfully upon login.');
-                    Log::channel('audit_trail')->info('User account reactivated.', [
-                        'user_id' => $user->id, 'username' => $user->username, 'ip_address' => $request->ip(),
+                    Log::channel('audit_trail')->notice('[AUTH] [REACTIVATE] Account restored from trash', [
+                        'user_id' => $user->id,
+                        'username' => $user->username,
+                        'ip' => $request->ip()
                     ]);
-
                     Auth::login($user);
                     $request->session()->regenerate();
 
@@ -662,9 +666,9 @@ class AuthController extends Controller
             }
         }
 
-        Log::channel('audit_trail')->warning('Failed login attempt: Invalid credentials.', [
-            'login_identifier' => $loginInput,
-            'ip_address' => $request->ip(),
+        Log::channel('audit_trail')->warning('[AUTH] [LOGIN] Failed attempt: Invalid credentials', [
+            'identifier' => $loginInput,
+            'ip' => $request->ip(),
         ]);
         Log::warning('Failed login attempt', ['login_identifier' => $loginInput, 'ip' => $request->ip()]);
 
@@ -677,8 +681,10 @@ class AuthController extends Controller
     {
         $user = Auth::user();
         if ($user) {
-            Log::channel('audit_trail')->info('User logged out.', [
-                'user_id' => $user->id, 'username' => $user->username, 'ip_address' => $request->ip(),
+            Log::channel('audit_trail')->info('[AUTH] [LOGOUT] Session ended', [
+                'user_id' => $user->id,
+                'username' => $user->username,
+                'ip' => $request->ip(),
             ]);
 
             $refreshTokenCookie = $request->cookie('refresh_token');
@@ -689,7 +695,7 @@ class AuthController extends Controller
                 }
             }
         } else {
-            Log::channel('audit_trail')->info('Logout attempt by unauthenticated session.', [
+            Log::channel('audit_trail')->info('[AUTH] [LOGOUT] Logout attempt by unauthenticated session.', [
                 'ip_address' => $request->ip(),
             ]);
         }
@@ -735,14 +741,14 @@ class AuthController extends Controller
         $status = Password::sendResetLink($request->only('email'));
 
         if ($status === Password::RESET_LINK_SENT) {
-            Log::channel('audit_trail')->info('Password reset link sent.', [
+            Log::channel('audit_trail')->info('[AUTH] [PASSRESET] Password reset link sent.', [
                 'email' => $request->email,
                 'ip_address' => $request->ip(),
             ]);
             return back()->with('success', __($status));
         }
 
-        Log::channel('audit_trail')->warning('Password reset link failed to send.', [
+        Log::channel('audit_trail')->warning('[AUTH] [PASSRESET] Password reset link failed to send.', [
             'email' => $request->email,
             'ip_address' => $request->ip(),
             'status' => $status,
@@ -777,7 +783,7 @@ class AuthController extends Controller
         );
 
         if ($status === Password::PASSWORD_RESET) {
-            Log::channel('audit_trail')->info('User password has been reset.', [
+            Log::channel('audit_trail')->info('[AUTH] [PASSRESET] User password has been reset.', [
                 'email' => $request->email,
                 'ip_address' => $request->ip(),
             ]);
@@ -793,7 +799,7 @@ class AuthController extends Controller
         try {
             $scopes = ['users.read', 'tweet.read'];
 
-            Log::channel('audit_trail')->info('Redirecting to X for authentication.', [
+            Log::channel('audit_trail')->info('[AUTH] [X] Redirecting to X for authentication.', [
                 'time' => microtime(true),
                 'scopes_requested' => $scopes
             ]);
@@ -825,7 +831,7 @@ class AuthController extends Controller
                 $user->x_id = $xUser->getId();
                 $user->save();
 
-                Log::channel('audit_trail')->info('User linked X account.', [
+                Log::channel('audit_trail')->info('[AUTH] [X] User linked X account.', [
                     'user_id' => $user->id, 'x_id' => $xUser->getId(), 'ip_address' => $request->ip(),
                 ]);
                 return redirect($redirectRoute)->with('success', 'Successfully linked your X account.');
@@ -835,7 +841,7 @@ class AuthController extends Controller
             }
         }
         $time_start_callback = microtime(true);
-        Log::channel('audit_trail')->info('X callback initiated.', [
+        Log::channel('audit_trail')->info('[AUTH] [X] X callback initiated.', [
             'ip_address' => $request->ip(),
             'query_params' => $request->query(),
             'time_start_callback' => $time_start_callback
@@ -843,7 +849,7 @@ class AuthController extends Controller
 
         try {
             if ($request->has('error')) {
-                Log::channel('audit_trail')->error('X callback returned an error.', [
+                Log::channel('audit_trail')->error('[AUTH] [X] X callback returned an error.', [
                     'error' => $request->input('error'),
                     'error_description' => $request->input('error_description'),
                     'ip_address' => $request->ip(),
@@ -854,7 +860,7 @@ class AuthController extends Controller
             }
 
             if (!$request->has('code')) {
-                Log::channel('audit_trail')->error('X callback missing authorization code.', [
+                Log::channel('audit_trail')->error('[AUTH] [X] X callback missing authorization code.', [
                     'ip_address' => $request->ip(),
                     'query_params' => $request->query(),
                     'time' => microtime(true),
@@ -864,13 +870,13 @@ class AuthController extends Controller
             }
 
             $time_before_socialite_user = microtime(true);
-            Log::channel('audit_trail')->info('Attempting to fetch X user from Socialite.', ['time' => $time_before_socialite_user]);
+            Log::channel('audit_trail')->info('[AUTH] [X] Attempting to fetch X user from Socialite.', ['time' => $time_before_socialite_user]);
 
             $xUser = Socialite::driver('x')->user();
 
             $time_after_socialite_user = microtime(true);
             $duration_socialite_user_call = $time_after_socialite_user - $time_before_socialite_user;
-            Log::channel('audit_trail')->info('Successfully fetched X user from Socialite.', [
+            Log::channel('audit_trail')->info('[AUTH] [X] Successfully fetched X user from Socialite.', [
                 'x_user_id' => $xUser->getId(),
                 'x_user_email' => $xUser->getEmail(),
                 'time' => $time_after_socialite_user,
@@ -880,7 +886,7 @@ class AuthController extends Controller
             $time_before_db_lookup = microtime(true);
             $userModel = User::where('x_id', $xUser->getId())->first();
             $time_after_db_lookup = microtime(true);
-            Log::channel('audit_trail')->info('DB lookup for existing X ID.', [
+            Log::channel('audit_trail')->info('[AUTH] [X] DB lookup for existing X ID.', [
                 'duration_db_lookup_seconds' => $time_after_db_lookup - $time_before_db_lookup,
                 'found_user_by_x_id' => !is_null($userModel)
             ]);
@@ -890,7 +896,7 @@ class AuthController extends Controller
 
             if (!$userModel) {
                 $time_before_handle_user = microtime(true);
-                Log::channel('audit_trail')->info('No existing user by X ID. Calling handleXUser.', [
+                Log::channel('audit_trail')->info('[AUTH] [X] No existing user by X ID. Calling handleXUser.', [
                     'x_email' => $xUser->getEmail(),
                     'time' => $time_before_handle_user
                 ]);
@@ -898,7 +904,7 @@ class AuthController extends Controller
                 $userModel = $this->handleXUser($xUser);
 
                 $time_after_handle_user = microtime(true);
-                Log::channel('audit_trail')->info('Finished handleXUser call.', [
+                Log::channel('audit_trail')->info('[AUTH] [X] Finished handleXUser call.', [
                     'user_id_returned' => $userModel->id,
                     'was_recently_created' => $userModel->wasRecentlyCreated,
                     'duration_handle_user_seconds' => $time_after_handle_user - $time_before_handle_user
@@ -924,7 +930,7 @@ class AuthController extends Controller
 
             $time_end_callback = microtime(true);
             $total_callback_duration = $time_end_callback - $time_start_callback;
-            Log::channel('audit_trail')->info("User $action via X.", [
+            Log::channel('audit_trail')->info("[AUTH] [X] User $action via X.", [
                 'user_id' => $user->id,
                 'username' => $user->username,
                 'email' => $user->email,
@@ -940,7 +946,7 @@ class AuthController extends Controller
                 ->withCookie($cookie);
 
         } catch (InvalidStateException $e) {
-            Log::channel('audit_trail')->error('X authentication failed: Invalid State.', [
+            Log::channel('audit_trail')->error('[AUTH] [X] X authentication failed: Invalid State.', [
                 'error' => $e->getMessage(),
                 'ip_address' => $request->ip(),
                 'time_exception' => microtime(true),
@@ -953,7 +959,7 @@ class AuthController extends Controller
             return redirect()->route('login')
                 ->with('error', __('messages.error_x_auth_failed_state') ?: 'X authentication failed due to an invalid state. Please try again.');
         } catch (ConnectException $e) {
-            Log::channel('audit_trail')->error('X authentication failed: Connection issue (Guzzle).', [
+            Log::channel('audit_trail')->error('[AUTH] [X] X authentication failed: Connection issue (Guzzle).', [
                 'error' => $e->getMessage(),
                 'ip_address' => $request->ip(),
                 'time_exception' => microtime(true),
@@ -966,7 +972,7 @@ class AuthController extends Controller
             return redirect()->route('login')
                 ->with('error', __('messages.error_x_auth_network') ?: 'Could not connect to X for authentication. Please check your internet connection and try again.');
         } catch (Exception $e) {
-            Log::channel('audit_trail')->error('X authentication/callback failed with generic Exception.', [
+            Log::channel('audit_trail')->error('[AUTH] [X] X authentication/callback failed with generic Exception.', [
                 'error' => $e->getMessage(),
                 'exception_type' => get_class($e),
                 'ip_address' => $request->ip(),
@@ -989,7 +995,7 @@ class AuthController extends Controller
     private function handleXUser($xUser): User
     {
         $time_start_handle = microtime(true);
-        Log::channel('audit_trail')->info('Inside handleXUser.', [
+        Log::channel('audit_trail')->info('[AUTH] [X] Inside handleXUser.', [
             'x_email' => $xUser->getEmail(),
             'x_id_from_socialite' => $xUser->getId(),
             'time_start' => $time_start_handle
@@ -997,26 +1003,26 @@ class AuthController extends Controller
 
         $existingUserByEmail = User::where('email', $xUser->getEmail())->first();
         $time_after_email_lookup = microtime(true);
-        Log::channel('audit_trail')->info('DB lookup for existing email in handleXUser.', [
+        Log::channel('audit_trail')->info('[AUTH] [X] DB lookup for existing email in handleXUser.', [
             'duration_email_lookup_seconds' => $time_after_email_lookup - $time_start_handle,
             'found_user_by_email' => !is_null($existingUserByEmail)
         ]);
 
         if ($existingUserByEmail) {
-            Log::channel('audit_trail')->info('Existing user found by email in handleXUser. Updating with X ID if not set.', [
+            Log::channel('audit_trail')->info('[AUTH] [X] Existing user found by email in handleXUser. Updating with X ID if not set.', [
                 'user_id' => $existingUserByEmail->id,
                 'current_x_id_on_user' => $existingUserByEmail->x_id
             ]);
             $userToReturn = $this->updateExistingUserWithX($existingUserByEmail, $xUser);
             $log_action = 'updated_existing_user_with_x_info';
         } else {
-            Log::channel('audit_trail')->info('No existing user by email in handleXUser. Creating new user from X info.');
+            Log::channel('audit_trail')->info('[AUTH] [X] No existing user by email in handleXUser. Creating new user from X info.');
             $userToReturn = $this->createUserFromX($xUser);
             $log_action = 'created_new_user_from_x_info';
         }
 
         $time_end_handle = microtime(true);
-        Log::channel('audit_trail')->info('Finished handleXUser.', [
+        Log::channel('audit_trail')->info('[AUTH] [X] Finished handleXUser.', [
             'user_id_processed' => $userToReturn->id,
             'action_taken' => $log_action,
             'was_recently_created_flag' => $userToReturn->wasRecentlyCreated,
@@ -1041,14 +1047,14 @@ class AuthController extends Controller
 
         $user->email_verified_at = $user->email_verified_at ?? now();
         $user->save();
-        Log::channel('audit_trail')->info('Updated existing user with X info.', ['user_id' => $user->id, 'x_id_set' => $user->x_id]);
+        Log::channel('audit_trail')->info('[AUTH] [X] Updated existing user with X info.', ['user_id' => $user->id, 'x_id_set' => $user->x_id]);
         return $user;
     }
 
     private function createUserFromX($xUser): User
     {
         $time_start_create = microtime(true);
-        Log::channel('audit_trail')->info('Creating new user from X data.', [
+        Log::channel('audit_trail')->info('[AUTH] [X] Creating new user from X data.', [
             'x_email' => $xUser->getEmail(),
             'x_name' => $xUser->getName(),
             'time_start' => $time_start_create
@@ -1074,7 +1080,7 @@ class AuthController extends Controller
 
         $user->x_username = $xUser->getNickname();
 
-        Log::channel('audit_trail')->info('User model created in DB.', ['user_id' => $user->id, 'username' => $username, 'time_after_eloquent_create' => microtime(true)]);
+        Log::channel('audit_trail')->info('[AUTH] [X] User model created in DB.', ['user_id' => $user->id, 'username' => $username, 'time_after_eloquent_create' => microtime(true)]);
 
         if ($xUser->getAvatar()) {
             $user->profile_picture = $xUser->getAvatar();
@@ -1089,7 +1095,7 @@ class AuthController extends Controller
         $user->save();
 
         $time_end_create = microtime(true);
-        Log::channel('audit_trail')->info('Finished creating user from X and saved profile picture.', [
+        Log::channel('audit_trail')->info('[AUTH] [X] Finished creating user from X and saved profile picture.', [
             'user_id' => $user->id,
             'duration_create_user_seconds' => $time_end_create - $time_start_create
         ]);
@@ -1136,7 +1142,7 @@ class AuthController extends Controller
                 $user->telegram_id = $telegramUser['id'];
                 $user->save();
 
-                Log::channel('audit_trail')->info('User linked Telegram account.', [
+                Log::channel('audit_trail')->info('[AUTH] [TELEGRAM] User linked Telegram account.', [
                     'user_id' => $user->id, 'telegram_id' => $telegramUser['id'], 'ip_address' => $request->ip(),
                 ]);
                 return redirect($redirectRoute)->with('success', 'Successfully linked your Telegram account.');
@@ -1147,7 +1153,7 @@ class AuthController extends Controller
         }
 
         $time_start_callback = microtime(true);
-        Log::channel('audit_trail')->info('Telegram callback initiated.', [
+        Log::channel('audit_trail')->info('[AUTH] [TELEGRAM] Telegram callback initiated.', [
             'ip_address' => $request->ip(),
             'query_params' => $request->query(),
         ]);
@@ -1156,7 +1162,7 @@ class AuthController extends Controller
             $telegramUser = $this->telegramAuthService->validate($request->all());
 
             if (!$telegramUser) {
-                Log::channel('audit_trail')->error('Telegram authentication failed: Invalid data or hash.');
+                Log::channel('audit_trail')->error('[AUTH] [TELEGRAM] Telegram authentication failed: Invalid data or hash.');
                 return redirect()->route('login')->with('error', __('messages.error_telegram_auth_failed'));
             }
 
@@ -1172,7 +1178,7 @@ class AuthController extends Controller
             Auth::login($userModel);
             $request->session()->regenerate();
 
-            Log::channel('audit_trail')->info("User $action via Telegram.", [
+            Log::channel('audit_trail')->info("[AUTH] [TELEGRAM] User $action via Telegram.", [
                 'user_id' => $userModel->id,
                 'username' => $userModel->username,
                 'telegram_id' => $telegramUser['id'],
@@ -1188,7 +1194,7 @@ class AuthController extends Controller
 //            return redirect()->route('home')->with('success', __('messages.telegram_login_success'));
 
         } catch (Exception $e) {
-            Log::channel('audit_trail')->error('Telegram authentication/callback failed with generic Exception.', [
+            Log::channel('audit_trail')->error('[AUTH] [TELEGRAM] Telegram authentication/callback failed with generic Exception.', [
                 'error' => $e->getMessage(),
                 'exception_type' => get_class($e),
                 'ip_address' => $request->ip(),
@@ -1316,7 +1322,7 @@ class AuthController extends Controller
 
                 $user->forceFill($updateData)->save();
 
-                Log::channel('audit_trail')->info("User {$user->username} linked their {$provider} account.");
+                Log::channel('audit_trail')->info("[AUTH] [SOCIAL] User {$user->username} linked their {$provider} account.");
                 return redirect()->route('profile.edit')->with('success', "Successfully linked your {$provider} account.");
             }
 
@@ -1324,7 +1330,7 @@ class AuthController extends Controller
             $user = User::where("{$provider}_id", $socialUser->id)->first();
             if ($user) {
                 Auth::login($user, true);
-                Log::channel('audit_trail')->info("User {$user->username} logged in via {$provider}.");
+                Log::channel('audit_trail')->info("[AUTH] [SOCIAL] User {$user->username} logged in via {$provider}.");
                 return redirect()->intended(route('home'));
             }
 
@@ -1333,14 +1339,14 @@ class AuthController extends Controller
                 if ($user) {
                     $user->forceFill(["{$provider}_id" => $socialUser->id])->save();
                     Auth::login($user, true);
-                    Log::channel('audit_trail')->info("User {$user->username} logged in via {$provider} (linked to existing email).");
+                    Log::channel('audit_trail')->info("[AUTH] [SOCIAL] User {$user->username} logged in via {$provider} (linked to existing email).");
                     return redirect()->intended(route('home'));
                 }
             }
 
             $newUser = $this->createUserFromSocial($provider, $socialUser);
             Auth::login($newUser, true);
-            Log::channel('audit_trail')->info("New user {$newUser->username} registered and logged in via {$provider}.");
+            Log::channel('audit_trail')->info("[AUTH] [SOCIAL] New user {$newUser->username} registered and logged in via {$provider}.");
 
             return redirect()->intended(route('home'));
 
@@ -1386,7 +1392,7 @@ class AuthController extends Controller
     public function githubRedirect()
     {
         try {
-            Log::channel('audit_trail')->info('Redirecting to GitHub for authentication.', [
+            Log::channel('audit_trail')->info('[AUTH] [GITHUB] Redirecting to GitHub for authentication.', [
                 'time' => microtime(true)
             ]);
             return Socialite::driver('github')->scopes(['user:email'])->redirect();
@@ -1416,7 +1422,7 @@ class AuthController extends Controller
                 $user->is_developer = true;
                 $user->save();
 
-                Log::channel('audit_trail')->info('User linked GitHub account and was granted developer access.', [
+                Log::channel('audit_trail')->info('[AUTH] [GITHUB] User linked GitHub account and was granted developer access.', [
                     'user_id' => $user->id, 'github_id' => $githubUser->getId(), 'ip_address' => $request->ip(),
                 ]);
 
@@ -1429,7 +1435,7 @@ class AuthController extends Controller
 
         try {
             if ($request->has('error')) {
-                Log::channel('audit_trail')->error('GitHub callback returned an error.', ['error' => $request->input('error'), 'ip_address' => $request->ip()]);
+                Log::channel('audit_trail')->error('[AUTH] [GITHUB] GitHub callback returned an error.', ['error' => $request->input('error'), 'ip_address' => $request->ip()]);
                 return redirect()->route('login')->with('error', __('messages.error_github_auth_denied_or_failed', [], 'en'));
             }
 
@@ -1454,7 +1460,7 @@ class AuthController extends Controller
             Auth::login($userModel);
             $request->session()->regenerate();
 
-            Log::channel('audit_trail')->info("User $action via GitHub.", [
+            Log::channel('audit_trail')->info("[AUTH] [GITHUB] User $action via GitHub.", [
                 'user_id' => $userModel->id, 'username' => $userModel->username, 'github_id' => $githubUser->getId(), 'ip_address' => $request->ip(),
             ]);
 
@@ -1487,7 +1493,7 @@ class AuthController extends Controller
             $user->is_developer = true; // Grant developer access!
             $user->email_verified_at = $user->email_verified_at ?? now();
             $user->save();
-            Log::channel('audit_trail')->info('Linked existing user to GitHub and granted developer access.', ['user_id' => $user->id]);
+            Log::channel('audit_trail')->info('[AUTH] [GITHUB] Linked existing user to GitHub and granted developer access.', ['user_id' => $user->id]);
             return $user;
         }
 
@@ -1519,7 +1525,7 @@ class AuthController extends Controller
         }
         $newUser->save();
 
-        Log::channel('audit_trail')->info('Created new user from GitHub with developer access.', ['user_id' => $newUser->id]);
+        Log::channel('audit_trail')->info('[AUTH] [GITHUB] Created new user from GitHub with developer access.', ['user_id' => $newUser->id]);
         return $newUser;
     }
 }
