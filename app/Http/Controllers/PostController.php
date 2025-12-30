@@ -409,7 +409,7 @@ class PostController extends Controller
     {
         $user = Auth::user();
         if ((int)$user->id !== (int)$post->user_id) {
-            Log::channel('audit_trail')->warning('Unauthorized post update attempt.', [
+            Log::channel('audit_trail')->warning('[POST] [UPDATE] Unauthorized post update attempt.', [
                 'user_id' => $user->id,
                 'username' => $user->username,
                 'post_id' => $post->id,
@@ -473,7 +473,7 @@ class PostController extends Controller
                 $bannedWordCheck = $this->checkForBannedWords($newContent, $field);
                 if ($bannedWordCheck && !$bannedWordCheck['is_appropriate']) {
                     $moderationErrorMessage = __($bannedWordCheck['translation_key'], $bannedWordCheck['translation_params']);
-                    Log::channel('audit_trail')->info('Post update rejected by local blacklist.', array_merge($logContextBase, ['field' => $field, 'reason_key' => $bannedWordCheck['translation_key'], 'category' => $bannedWordCheck['category']]));
+                    Log::channel('audit_trail')->info('[POST] [UPDATE] Post update rejected by local blacklist.', array_merge($logContextBase, ['field' => $field, 'reason_key' => $bannedWordCheck['translation_key'], 'category' => $bannedWordCheck['category']]));
                     return redirect()->back()->withErrors([$field => $moderationErrorMessage])->withInput();
                 }
 
@@ -487,7 +487,7 @@ class PostController extends Controller
                             Log::warning('Gemini Text Moderation Service Error during post update.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiTextCheck]));
                         } else {
                             $moderationErrorMessage = __('messages.error_post_content_inappropriate', ['field' => $field, 'reason' => $reasonText]);
-                            Log::channel('audit_trail')->info('Post update rejected by Gemini text moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $geminiTextCheck['category']]));
+                            Log::channel('audit_trail')->info('[POST] [UPDATE] Post update rejected by Gemini text moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $geminiTextCheck['category']]));
                         }
                         return redirect()->back()->withErrors([$field => $moderationErrorMessage])->withInput();
                     }
@@ -519,7 +519,7 @@ class PostController extends Controller
                         Log::warning('Gemini Image Moderation Service Error during post update.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiImageCheck]));
                     } else {
                         $moderationErrorMessage = __('messages.error_post_image_inappropriate', ['field' => $field, 'reason' => $reasonText]);
-                        Log::channel('audit_trail')->info('Post update rejected by Gemini image moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $geminiImageCheck['category']]));
+                        Log::channel('audit_trail')->info('[POST] [UPDATE] Post update rejected by Gemini image moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $geminiImageCheck['category']]));
                     }
                     return redirect()->back()->withErrors([$field => $moderationErrorMessage])->withInput();
                 }
@@ -550,7 +550,7 @@ class PostController extends Controller
         }
 
         $post->update($data);
-        Log::channel('audit_trail')->info('Post updated and passed all moderation.', array_merge($logContextBase, ['updated_fields' => array_keys($data)]));
+        Log::channel('audit_trail')->info('[POST] [UPDATE] Post updated and passed all moderation.', array_merge($logContextBase, ['updated_fields' => array_keys($data)]));
         PingSearchEngines::dispatch();
         return redirect()->route('profile.show', ['username' => $post->user->username])->with('success', __('messages.post_updated_successfully'));
     }
@@ -741,7 +741,7 @@ class PostController extends Controller
         $post->delete();
 
         try {
-            Log::channel('audit_trail')->info('Post deleted.', [
+            Log::channel('audit_trail')->info('[POST] [DELETE] Post deleted.', [
                 'deleter_user_id' => $user->id,
                 'deleted_post_id' => $post->id,
                 'ip_address' => request()->ip(),
@@ -795,7 +795,7 @@ class PostController extends Controller
             'vote_option' => $request->option,
         ]);
 
-        Log::channel('audit_trail')->info('User voted on post.', [
+        Log::channel('audit_trail')->info('[POST] [VOTE] User voted on post.', [
             'user_id' => $user->id,
             'username' => $user->username,
             'post_id' => $post->id,
@@ -853,7 +853,7 @@ class PostController extends Controller
     {
         $post->increment('shares_count');
         $user = Auth::user();
-        Log::channel('audit_trail')->info('Post share count incremented.', [
+        Log::channel('audit_trail')->info('[POST] [SHARE] Post share count incremented.', [
             'user_id' => $user ? $user->id : null,
             'username' => $user ? $user->username : 'Guest/Unconfirmed',
             'post_id' => $post->id,
