@@ -9,6 +9,8 @@
 @section('meta_description', $metaDescription)
 
 @section('content')
+    <canvas id="snow-canvas"
+            style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50;"></canvas>
     <div class="max-w-3xl mx-auto">
         @php
             $isDeactivated = $user->trashed();
@@ -113,29 +115,29 @@
                             </p>
 
                             {{-- START: "Last Active" method --}}
-{{--                            @if (!$isDeactivated && !is_null($user->last_active_at))--}}
-{{--                                @php--}}
-{{--                                    $lastActive = Carbon::parse($user->last_active_at);--}}
-{{--                                    $isOnline = $lastActive->diffInMinutes(now()) < 5;--}}
-{{--                                @endphp--}}
-{{--                                <div--}}
-{{--                                    class="flex items-center text-xs mt-1.5 {{ $hasBackground ? 'text-gray-400' : 'text-gray-500 dark:text-gray-400' }}">--}}
-{{--                                    @if ($isOnline)--}}
-{{--                                        <span class="flex h-2 w-2 relative mr-2">--}}
-{{--                                            <span--}}
-{{--                                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>--}}
-{{--                                            <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>--}}
-{{--                                        </span>--}}
-{{--                                        <span>{{ __('messages.profile.online') }}</span>--}}
-{{--                                    @else--}}
-{{--                                        <span class="flex h-2 w-2 relative mr-2">--}}
-{{--                                             <span--}}
-{{--                                                 class="relative inline-flex rounded-full h-2 w-2 bg-gray-400 dark:bg-gray-500"></span>--}}
-{{--                                        </span>--}}
-{{--                                        <span>{{ __('messages.profile.last_seen', ['time' => $lastActive->diffForHumans()]) }}</span>--}}
-{{--                                    @endif--}}
-{{--                                </div>--}}
-{{--                            @endif--}}
+                            {{--                            @if (!$isDeactivated && !is_null($user->last_active_at))--}}
+                            {{--                                @php--}}
+                            {{--                                    $lastActive = Carbon::parse($user->last_active_at);--}}
+                            {{--                                    $isOnline = $lastActive->diffInMinutes(now()) < 5;--}}
+                            {{--                                @endphp--}}
+                            {{--                                <div--}}
+                            {{--                                    class="flex items-center text-xs mt-1.5 {{ $hasBackground ? 'text-gray-400' : 'text-gray-500 dark:text-gray-400' }}">--}}
+                            {{--                                    @if ($isOnline)--}}
+                            {{--                                        <span class="flex h-2 w-2 relative mr-2">--}}
+                            {{--                                            <span--}}
+                            {{--                                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>--}}
+                            {{--                                            <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>--}}
+                            {{--                                        </span>--}}
+                            {{--                                        <span>{{ __('messages.profile.online') }}</span>--}}
+                            {{--                                    @else--}}
+                            {{--                                        <span class="flex h-2 w-2 relative mr-2">--}}
+                            {{--                                             <span--}}
+                            {{--                                                 class="relative inline-flex rounded-full h-2 w-2 bg-gray-400 dark:bg-gray-500"></span>--}}
+                            {{--                                        </span>--}}
+                            {{--                                        <span>{{ __('messages.profile.last_seen', ['time' => $lastActive->diffForHumans()]) }}</span>--}}
+                            {{--                                    @endif--}}
+                            {{--                                </div>--}}
+                            {{--                            @endif--}}
                             {{-- END: "Last Active" method --}}
 
                         </div>
@@ -606,5 +608,85 @@
         }
     ]
 }
+    </script>
+    <script>
+        (function () {
+            const canvas = document.getElementById('snow-canvas');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            let width, height;
+            let particles = [];
+
+            const particleCount = 150;
+            const gravity = 0.5;
+            const windBase = 0;
+
+            function resize() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width;
+                canvas.height = height;
+            }
+
+            class Snowflake {
+                constructor() {
+                    this.reset(true);
+                }
+
+                reset(initial = false) {
+                    this.x = Math.random() * width;
+                    this.y = initial ? Math.random() * height : -10;
+                    this.z = Math.random();
+                    this.size = (1.5 * this.z) + 0.5;
+                    this.opacity = (0.8 * this.z) + 0.2;
+
+                    this.vy = (gravity * this.z) + 0.5;
+                    this.vx = (Math.random() - 0.5) * 0.5;
+
+                    this.oscillationSpeed = (Math.random() * 0.02) + 0.01;
+                    this.oscillationOffset = Math.random() * Math.PI * 2;
+                }
+
+                update() {
+                    this.y += this.vy;
+                    this.x += Math.sin(this.y * this.oscillationSpeed + this.oscillationOffset) * 0.5 + this.vx;
+                    if (this.y > height || this.x > width || this.x < 0) {
+                        this.reset();
+                    }
+                }
+
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+                    ctx.fill();
+                }
+            }
+
+            function init() {
+                resize();
+                window.addEventListener('resize', resize);
+
+                for (let i = 0; i < particleCount; i++) {
+                    particles.push(new Snowflake());
+                }
+
+                loop();
+            }
+
+            function loop() {
+                ctx.clearRect(0, 0, width, height);
+
+                particles.forEach(p => {
+                    p.update();
+                    p.draw();
+                });
+
+                requestAnimationFrame(loop);
+            }
+
+            init();
+        })();
     </script>
 @endpush
