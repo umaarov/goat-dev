@@ -9,8 +9,6 @@
 @section('meta_description', $metaDescription)
 
 @section('content')
-    <canvas id="snow-canvas"
-            style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50;"></canvas>
     <div class="max-w-3xl mx-auto">
         @php
             $isDeactivated = $user->trashed();
@@ -40,9 +38,12 @@
             </div>
         @endif
 
-        <div
-            {{--            class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] border border-gray-100 overflow-hidden mb-6">--}}
-            class="relative rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] dark:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)] border border-gray-100 dark:border-gray-700 overflow-hidden mb-6 @if(!$hasBackground) bg-white dark:bg-gray-800 @endif">
+        <div id="profile-header"
+             {{--            class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] border border-gray-100 overflow-hidden mb-6">--}}
+             class="relative rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] dark:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)] border border-gray-100 dark:border-gray-700 overflow-hidden mb-6 @if(!$hasBackground) bg-white dark:bg-gray-800 @endif">
+
+            <canvas id="snow-canvas"
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20;"></canvas>
 
             {{-- Background Image & Gradient Overlay Layer --}}
             @if($hasBackground)
@@ -554,19 +555,21 @@
     <script>
         (function () {
             const canvas = document.getElementById('snow-canvas');
-            if (!canvas) return;
+            const header = document.getElementById('profile-header');
+
+            if (!canvas || !header) return;
 
             const ctx = canvas.getContext('2d');
             let width, height;
             let particles = [];
 
-            const particleCount = 150;
+            const particleCount = 80;
             const gravity = 0.5;
-            const windBase = 0;
 
             function resize() {
-                width = window.innerWidth;
-                height = window.innerHeight;
+                width = header.offsetWidth;
+                height = header.offsetHeight;
+
                 canvas.width = width;
                 canvas.height = height;
             }
@@ -578,14 +581,12 @@
 
                 reset(initial = false) {
                     this.x = Math.random() * width;
-                    this.y = initial ? Math.random() * height : -10;
+                    this.y = initial ? Math.random() * height : -5;
                     this.z = Math.random();
                     this.size = (1.5 * this.z) + 0.5;
                     this.opacity = (0.8 * this.z) + 0.2;
-
                     this.vy = (gravity * this.z) + 0.5;
                     this.vx = (Math.random() - 0.5) * 0.5;
-
                     this.oscillationSpeed = (Math.random() * 0.02) + 0.01;
                     this.oscillationOffset = Math.random() * Math.PI * 2;
                 }
@@ -593,6 +594,7 @@
                 update() {
                     this.y += this.vy;
                     this.x += Math.sin(this.y * this.oscillationSpeed + this.oscillationOffset) * 0.5 + this.vx;
+
                     if (this.y > height || this.x > width || this.x < 0) {
                         this.reset();
                     }
@@ -601,7 +603,7 @@
                 draw() {
                     ctx.beginPath();
                     ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+                    ctx.fillStyle = `rgba(220, 235, 255, ${this.opacity})`;
                     ctx.fill();
                 }
             }
@@ -619,12 +621,10 @@
 
             function loop() {
                 ctx.clearRect(0, 0, width, height);
-
                 particles.forEach(p => {
                     p.update();
                     p.draw();
                 });
-
                 requestAnimationFrame(loop);
             }
 
