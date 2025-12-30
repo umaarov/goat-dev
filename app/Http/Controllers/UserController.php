@@ -129,7 +129,7 @@ class UserController extends Controller
             return response()->json(['message' => 'Please log in to see posts.'], 401);
         }
 
-        Log::channel('audit_trail')->info('User posts data accessed.', [
+        Log::channel('audit_trail')->info('[USER] [POST_ACCESS] User posts data accessed.', [
             'accessor_user_id' => Auth::id(),
             'accessor_username' => Auth::user()?->username,
             'profile_username_viewed' => $username,
@@ -279,7 +279,7 @@ class UserController extends Controller
 
         DB::table('sessions')->where('id', $sessionId)->delete();
 
-        Log::channel('audit_trail')->info('User terminated a session.', [
+        Log::channel('audit_trail')->info('[USER] [SESSION] User terminated a session.', [
             'user_id' => Auth::id(), 'username' => Auth::user()->username, 'terminated_session_id' => $sessionId, 'ip_address' => FacadeRequest::ip(),
         ]);
 
@@ -293,7 +293,7 @@ class UserController extends Controller
             ->where('id', '!=', Session::getId())
             ->delete();
 
-        Log::channel('audit_trail')->info('User terminated all other sessions.', [
+        Log::channel('audit_trail')->info('[USER] [SESSION] User terminated all other sessions.', [
             'user_id' => Auth::id(),
             'username' => Auth::user()->username,
             'current_session_id' => Session::getId(),
@@ -374,7 +374,7 @@ class UserController extends Controller
         if (!$user->password && $user->google_id) {
             return redirect()->route('profile.edit')->with('info', __('messages.info_password_change_not_available_google'));
         }
-        Log::channel('audit_trail')->info('User accessed change password form.', [
+        Log::channel('audit_trail')->info('[USER] [UPDATE] User accessed change password form.', [
             'user_id' => $user->id,
             'username' => $user->username,
             'ip_address' => request()->ip(),
@@ -408,7 +408,7 @@ class UserController extends Controller
             'password' => Hash::make($request->new_password),
         ]);
 
-        Log::channel('audit_trail')->info('User password changed successfully.', [
+        Log::channel('audit_trail')->info('[USER] [UPDATE] User password changed successfully.', [
             'user_id' => $user->id,
             'username' => $user->username,
             'ip_address' => request()->ip(),
@@ -928,7 +928,7 @@ class UserController extends Controller
 
         $request->session()->put('auth.password_confirmed_at', time());
 
-        Log::channel('audit_trail')->info('User set their password for the first time.', [
+        Log::channel('audit_trail')->info('[USER] [UPDATE] User set their password for the first time.', [
             'user_id' => $user->id,
             'ip_address' => $request->ip(),
         ]);
@@ -946,7 +946,7 @@ class UserController extends Controller
         session()->put('auth_action', 'link');
         session()->put('auth_link_redirect', route('profile.edit'));
 
-        Log::channel('audit_trail')->info('User initiating social link.', [
+        Log::channel('audit_trail')->info('[USER] [LINK] User initiating social link.', [
             'user_id' => Auth::id(), 'provider' => $provider, 'ip_address' => request()->ip(),
         ]);
 
@@ -978,7 +978,7 @@ class UserController extends Controller
 
         $user->forceFill($updateData)->save();
 
-        Log::channel('audit_trail')->info('User unlinked a social provider.', [
+        Log::channel('audit_trail')->info('[USER] [UNLINK] User unlinked a social provider.', [
             'user_id' => $user->id, 'provider' => $provider, 'ip_address' => $request->ip(),
         ]);
 
@@ -999,7 +999,7 @@ class UserController extends Controller
 
         $user->forceFill(['password' => null])->save();
 
-        Log::channel('audit_trail')->info('User removed their password.', [
+        Log::channel('audit_trail')->info('[USER] [UPDATE] User removed their password.', [
             'user_id' => $user->id, 'ip_address' => request()->ip(),
         ]);
 
@@ -1010,7 +1010,7 @@ class UserController extends Controller
     {
         $user = Auth::user();
 
-        Log::channel('audit_trail')->warning('User initiating account deactivation.', [
+        Log::channel('audit_trail')->warning('[USER] [DEACTIVATE] User initiating account deactivation.', [
             'user_id' => $user->id,
             'username' => $user->username,
             'ip_address' => $request->ip(),
@@ -1038,7 +1038,7 @@ class UserController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        Log::channel('audit_trail')->notice('User account DEACTIVATED successfully.',
+        Log::channel('audit_trail')->notice('[USER] [DEACTIVATE] User account DEACTIVATED successfully.',
             [
                 'user_id' => $user->id,
                 'username' => $user->username,
@@ -1060,7 +1060,7 @@ class UserController extends Controller
 
             $user->restore();
 
-            Log::channel('audit_trail')->info('User account REACTIVATED successfully.', [
+            Log::channel('audit_trail')->info('[USER] [REACTIVATE] User account REACTIVATED successfully.', [
                 'user_id' => $user->id,
                 'username' => $user->username,
             ]);
