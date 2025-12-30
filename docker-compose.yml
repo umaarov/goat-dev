@@ -90,6 +90,7 @@ services: #  traefik:
             - ./docker/certs:/etc/caddy/certs
             - goat-storage:/app/storage/app/public
             - ./docs:/app/docs
+            - ./storage/logs:/app/storage/logs
         depends_on:
             - db
             - redis
