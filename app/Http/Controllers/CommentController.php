@@ -23,10 +23,6 @@ class CommentController extends Controller
 {
     protected ModerationService $moderationService;
 
-    /**
-     * Inject the ModerationService.
-     * This keeps the controller clean and delegates logic to the dedicated service.
-     */
     public function __construct(ModerationService $moderationService)
     {
         $this->moderationService = $moderationService;
@@ -189,7 +185,7 @@ class CommentController extends Controller
 
         $this->dispatchNotifications($comment, $user, $parentComment);
 
-        Log::channel('audit_trail')->info('Comment created and passed Groq moderation.', [
+        Log::channel('audit_trail')->info('[COMMENT] [STORE] Comment created and passed Groq moderation.', [
             'user_id' => $user->id,
             'comment_id' => $comment->id,
             'post_id' => $post->id,
@@ -215,7 +211,7 @@ class CommentController extends Controller
     {
         $user = Auth::user();
         if (Auth::id() !== $comment->user_id) {
-            Log::channel('audit_trail')->warning('Unauthorized comment update attempt.', [
+            Log::channel('audit_trail')->warning('[COMMENT] [UPDATE] Unauthorized comment update attempt.', [
                 'user_id' => Auth::id(),
                 'comment_id' => $comment->id,
             ]);
@@ -262,7 +258,7 @@ class CommentController extends Controller
 
         $comment->update(['content' => $newContent]);
 
-        Log::channel('audit_trail')->info('Comment updated and passed Groq moderation.', [
+        Log::channel('audit_trail')->info('[COMMENT] [MODERATION] Comment updated and passed Groq moderation.', [
             'user_id' => $user->id,
             'comment_id' => $comment->id,
             'ip_address' => $request->ip(),
@@ -282,7 +278,7 @@ class CommentController extends Controller
         $postOwnerId = $comment->post->user_id;
 
         if ((int)Auth::id() !== (int)$comment->user_id && (int)Auth::id() !== (int)$postOwnerId) {
-            Log::channel('audit_trail')->warning('Unauthorized comment deletion attempt.', [
+            Log::channel('audit_trail')->warning('[COMMENT] [DESTROY] Unauthorized comment deletion attempt.', [
                 'user_id' => Auth::id(),
                 'comment_id' => $comment->id,
             ]);
@@ -293,7 +289,7 @@ class CommentController extends Controller
 
         $comment->delete();
 
-        Log::channel('audit_trail')->info('Comment deleted.', [
+        Log::channel('audit_trail')->info('[COMMENT] [DESTROY] Comment deleted.', [
             'user_id' => $user->id,
             'comment_id' => $comment->id,
             'ip_address' => $request->ip(),
@@ -385,7 +381,7 @@ class CommentController extends Controller
 
     private function logModerationFailure(User $user, int $postId, string $snippet, array $result, string $type): void
     {
-        Log::channel('audit_trail')->info("Comment rejected by Groq ({$type}).", [
+        Log::channel('audit_trail')->info("[COMMENT] [MODERATION] Comment rejected by Groq ({$type}).", [
             'user_id' => $user->id,
             'username' => $user->username,
             'post_id' => $postId,

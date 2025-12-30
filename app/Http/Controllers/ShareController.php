@@ -32,7 +32,7 @@ class ShareController extends Controller
         ]);
 
         $post->increment('shares_count');
-        Log::channel('audit_trail')->info('Post shared via platform.', [
+        Log::channel('audit_trail')->info('[POST_SHARE] Post shared via platform.', [
             'user_id' => $user ? $user->id : null,
             'username' => $user ? $user->username : 'Guest',
             'post_id' => $post->id,
