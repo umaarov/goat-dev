@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Umarov"
+    given-names: "Ismoiljon"
+    orcid: "https://orcid.org/0009-0002-7823-7975"
+title: "Goat.uz: Next-generation open-source social debate platform"
+version: 1.4.0
+date-released: 2025-12-25
+url: "https://www.goat.uz"
+repository-code: "https://github.com/umaarov/goat-dev"
+license: MIT
+keywords:
+  - "social-platform"
+  - "debate"
+  - "intelligent-discourse"
+  - "php"
+  - "laravel"
+  - "c"
+  - "frankenphp"
+  - "uzbek-open-source"
+abstract: >-
+  Goat.uz is a next-generation open-source social debate platform engineered for
+  intelligent discourse. It leverages a hybrid stack including PHP (Laravel),
+  C, and FrankenPHP to provide a high-performance environment for structured
+  social interaction.
