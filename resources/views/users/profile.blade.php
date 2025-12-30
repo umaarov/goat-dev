@@ -560,75 +560,91 @@
             if (!canvas || !header) return;
 
             const ctx = canvas.getContext('2d');
-            let width, height;
             let particles = [];
 
-            const particleCount = 80;
-            const gravity = 0.5;
+            const particleCount = 100;
+            let w, h;
+            let wind = 0;
+            let windTarget = 0;
 
             function resize() {
-                width = header.offsetWidth;
-                height = header.offsetHeight;
-
-                canvas.width = width;
-                canvas.height = height;
+                const rect = header.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                ctx.scale(dpr, dpr);
+                w = rect.width;
+                h = rect.height;
             }
 
             class Snowflake {
                 constructor() {
-                    this.reset(true);
+                    this.init(true);
                 }
 
-                reset(initial = false) {
-                    this.x = Math.random() * width;
-                    this.y = initial ? Math.random() * height : -5;
-                    this.z = Math.random();
-                    this.size = (1.5 * this.z) + 0.5;
-                    this.opacity = (0.8 * this.z) + 0.2;
-                    this.vy = (gravity * this.z) + 0.5;
-                    this.vx = (Math.random() - 0.5) * 0.5;
-                    this.oscillationSpeed = (Math.random() * 0.02) + 0.01;
-                    this.oscillationOffset = Math.random() * Math.PI * 2;
+                init(initial = false) {
+                    this.x = Math.random() * w;
+                    this.y = initial ? Math.random() * h : -10;
+                    this.depth = Math.random();
+                    this.size = (this.depth * 3) + 0.5;
+                    this.speed = (this.depth * 1.5) + 0.5;
+                    this.opacity = (this.depth * 0.6) + 0.2;
+                    this.sway = Math.random() * 100;
                 }
 
                 update() {
-                    this.y += this.vy;
-                    this.x += Math.sin(this.y * this.oscillationSpeed + this.oscillationOffset) * 0.5 + this.vx;
+                    this.y += this.speed;
 
-                    if (this.y > height || this.x > width || this.x < 0) {
-                        this.reset();
+                    this.x += Math.sin(this.y * 0.01 + this.sway) * 0.5 + wind;
+
+                    if (this.x > w + 5) this.x = -5;
+                    if (this.x < -5) this.x = w + 5;
+
+                    if (this.y > h) {
+                        this.init();
                     }
                 }
 
                 draw() {
                     ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(220, 235, 255, ${this.opacity})`;
+
+                    if (this.size > 2) {
+                        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+                        gradient.addColorStop(0, `rgba(255, 255, 255, ${this.opacity})`);
+                        gradient.addColorStop(1, `rgba(255, 255, 255, 0)`);
+                        ctx.fillStyle = gradient;
+                        ctx.arc(this.x, this.y, this.size * 1.5, 0, Math.PI * 2);
+                    } else {
+                        ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    }
+
                     ctx.fill();
                 }
             }
 
-            function init() {
-                resize();
-                window.addEventListener('resize', resize);
+            function animate() {
+                ctx.clearRect(0, 0, w, h);
 
-                for (let i = 0; i < particleCount; i++) {
-                    particles.push(new Snowflake());
-                }
+                wind += (windTarget - wind) * 0.01;
+                if (Math.random() < 0.005) windTarget = (Math.random() - 0.5) * 1.5;
 
-                loop();
-            }
-
-            function loop() {
-                ctx.clearRect(0, 0, width, height);
                 particles.forEach(p => {
                     p.update();
                     p.draw();
                 });
-                requestAnimationFrame(loop);
+
+                requestAnimationFrame(animate);
             }
 
-            init();
+            resize();
+            window.addEventListener('resize', resize);
+
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Snowflake());
+            }
+
+            animate();
         })();
     </script>
     {{-- END: Snow Effect --}}
