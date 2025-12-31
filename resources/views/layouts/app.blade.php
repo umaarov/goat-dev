@@ -337,6 +337,7 @@
     {{--        </div>--}}
     {{--    @endif--}}
 
+
     @yield('content')
     <footer class="mb-8 text-center text-gray-700 dark:text-gray-400 text-xs leading-relaxed px-4">
         <div class="space-y-4">
@@ -361,19 +362,20 @@
                          loading="lazy">
                 </a>
             </div>
-
-            <div class="w-full mt-6 flex justify-center overflow-hidden">
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-format="fluid"
-                     data-ad-layout-key="-6t+ed+2i-1n-4w"
-                     data-ad-client="ca-pub-2989575196315667"
-                     data-ad-slot="7674157999"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div>
         </div>
+
+        <div class="w-full mt-6 flex justify-center overflow-hidden">
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-2989575196315667"
+                 data-ad-slot="6545116955"
+                 data-ad-format="horizontal"
+                 data-full-width-responsive="true"></ins>
+            <script>
+                (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+        </div>
+
     </footer>
 
 </main>
