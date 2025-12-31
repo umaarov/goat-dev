@@ -1,5 +1,6 @@
 services:
   app:
+    build: .
     volumes:
       - ./:/app
       - ./docker/Caddyfile.dev:/etc/caddy/Caddyfile
@@ -11,25 +12,30 @@ services:
       SERVER_NAME: ":80"
     ports:
       - "8000:80"
-#      - "5173:5173"
     user: "root"
 
   worker:
+    build: .
+    command: php artisan queue:work
     volumes:
       - ./:/app
     environment:
       APP_ENV: local
 
   scheduler:
+    build: .
+    command: php artisan schedule:work
     volumes:
       - ./:/app
     environment:
       APP_ENV: local
 
   db:
+    image: mysql:8.0
     ports:
       - "3306:3306"
 
   redis:
+    image: redis:7
     ports:
       - "6379:6379"
