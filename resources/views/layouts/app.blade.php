@@ -2,7 +2,8 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+{{--    <meta name="viewport" content="width=device-width, initial-scale=1">--}}
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
@@ -106,6 +107,16 @@
     {{--        ezstandalone.cmd = ezstandalone.cmd || [];--}}
     {{--    </script>--}}
 
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YES4XC0B0N"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-YES4XC0B0N');
+    </script>
+
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="style"
           href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
@@ -128,7 +139,12 @@
     <meta name="description" content="@yield('meta_description', __('messages.app.meta_description_default'))">
     <meta name="keywords"
           content="Debate Platform, Uzbekistan Social Media, Intelligent Discourse, Laravel, AI Moderation, GOAT.uz, Online Community">
-    <link rel="canonical" href="@yield('canonical_url', url()->current())"/>
+    {{--    <link rel="canonical" href="@yield('canonical_url', url()->current())"/>--}}
+    @if(request()->routeIs('home'))
+        <link rel="canonical" href="{{ url('/') }}"/>
+    @else
+        <link rel="canonical" href="@yield('canonical_url', url()->current())"/>
+    @endif
 
     <meta property="og:type" content="@yield('og_type', 'website')">
     <meta property="og:url" content="@yield('canonical_url', url()->current())">
@@ -270,7 +286,7 @@
 </head>
 <body class="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900" @auth data-user-is-authenticated="true" @endauth>
 <nav
-    class="fixed top-0 left-0 right-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-b-xl shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] dark:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)] z-50 h-16 flex items-center px-4 max-w-[450px] mx-auto">
+    class="fixed safe-pt  top-0 left-0 right-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-b-xl shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] dark:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)] z-50 h-16 flex items-center px-4 max-w-[450px] mx-auto">
     <div class="w-full max-w-md mx-auto flex items-center justify-between">
         <div class="w-6"></div>
         <a href="{{route('home')}}">
@@ -308,7 +324,7 @@
     </div>
 </nav>
 
-<main class="flex-grow pt-20 mx-auto w-full max-w-[450px] px-4 pb-16">
+<main class="flex-grow pt-20 mx-auto w-full max-w-[450px] px-4 pb-24">
     {{--    @if (session('success'))--}}
     {{--        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md mb-4">--}}
     {{--            {{ session('success') }}--}}
@@ -364,12 +380,12 @@
             </div>
         </div>
 
-        <div class="w-full mt-6 flex justify-center overflow-hidden">
+        <div class="w-full mt-6 flex justify-center" style="min-height: 280px;">
             <ins class="adsbygoogle"
                  style="display:block"
                  data-ad-client="ca-pub-2989575196315667"
                  data-ad-slot="6545116955"
-                 data-ad-format="horizontal"
+                 data-ad-format="auto"
                  data-full-width-responsive="true"></ins>
             <script>
                 (adsbygoogle = window.adsbygoogle || []).push({});
@@ -382,7 +398,7 @@
 
 
 <nav
-    class="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] dark:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)] rounded-t-xl z-10 h-20 max-w-[450px] mx-auto">
+    class="fixed safe-pb bottom-0 left-0 right-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] dark:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)] rounded-t-xl z-10 h-20 max-w-[450px] mx-auto">
     <div class="w-full max-w-md mx-auto flex items-center justify-around h-full">
         <a href="{{ route('home') }}" title="{{ __('messages.home') }}"
            class="flex flex-col items-center justify-center text-gray-700  hover:text-blue-800 dark:text-gray-300 dark:hover:text-blue-400">

@@ -35,6 +35,11 @@ www.goat.uz {
                -X-Powered-By
            }
 
+    @emptyQuery {
+                    query ""
+                }
+    uri @emptyQuery strip_suffix ?
+
 # MAINTENANCE MODE: START
 #    respond `
 #         System Maintenance

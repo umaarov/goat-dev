@@ -465,3 +465,10 @@
 .w-full {
     width: 100% !important;
 }
+
+.safe-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+.safe-pt {
+    padding-top: env(safe-area-inset-top);
+}
