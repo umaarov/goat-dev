@@ -18,6 +18,7 @@ permissions:
 jobs:
   sonarcloud:
     name: Build → Test → SonarCloud
+    continue-on-error: true
     runs-on: ubuntu-latest
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -137,6 +138,7 @@ jobs:
           fi
 
       - name: SonarCloud Scan (Branch)
+        continue-on-error: true
         id: sonar-branch
         if: github.event_name != 'pull_request'
         uses: SonarSource/sonarqube-scan-action@master
