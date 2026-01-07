@@ -362,6 +362,7 @@
                 <a href="{{ route('privacy') }}"
                    class="hover:underline">{{ __('messages.privacy_policy.title_nav') }}</a>
                 <a href="{{ route('terms') }}" class="hover:underline">{{ __('messages.terms_of_use_nav') }}</a>
+                <a href="{{ route('copyright') }}" class="hover:underline">Copyright (DMCA)</a>
                 <a href="{{ route('sponsorship') }}" class="hover:underline">{{ __('messages.sponsorship_nav') }}</a>
                 <a href="{{ route('ads') }}" class="hover:underline">{{ __('messages.ads_nav') }}</a>
                 <a href="{{ route('contribution') }}"

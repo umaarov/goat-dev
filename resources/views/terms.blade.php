@@ -70,6 +70,12 @@
             <p class="text-gray-600 dark:text-gray-300 text-sm">
                 {{ __('messages.terms.section5_text') }}
             </p>
+
+            <h3 class="text-md font-semibold mb-1 mt-6 text-gray-900 dark:text-gray-100"
+                style="font-size: 1rem; font-weight: 600;">{{ __('messages.terms.disclaimer_heading') }}</h3>
+            <p class="text-gray-600 dark:text-gray-300 text-sm font-medium border-l-4 border-yellow-400 pl-3 py-1 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-600">
+                {{ __('messages.terms.disclaimer_text') }}
+            </p>
         </div>
     </div>
 @endsection

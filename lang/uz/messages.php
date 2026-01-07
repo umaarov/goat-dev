@@ -173,6 +173,22 @@ return [
     'ads_nav' => 'Reklama',
     'copyright_text' => 'GOAT © 2025',
 
+    'copyright' => [
+        'title' => 'Mualliflik Huquqi (DMCA)',
+        'meta_description' => 'GOAT.uz mualliflik huquqi siyosati va DMCA talablari.',
+        'heading' => 'Mualliflik Huquqi va Intellektual Mulk',
+        'intro_text' => 'GOAT.uz boshqalarning intellektual mulk huquqlarini hurmat qiladi. Raqamli davrdagi mualliflik huquqlari to‘g‘risidagi qonun (DMCA) va mahalliy qonunchilikka muvofiq, biz mualliflik huquqi buzilishi bo‘yicha asosli da’volarga tezkorlik bilan javob beramiz.',
+        'reporting_heading' => 'Huquqbuzarlik haqida xabar berish',
+        'reporting_text' => 'Agar sizning ishingiz mualliflik huquqini buzadigan tarzda nusxalangan deb hisoblasangiz, iltimos, bu haqda bizning vakilimizga xabar bering: :email',
+        'removal_heading' => 'Kontentni o‘chirish',
+        'removal_text' => 'Biz mualliflik huquqini buzgan deb topilgan har qanday kontentni oldindan ogohlantirmasdan va sizning oldingizda javobgarliksiz o‘chirish huquqini o‘zimizda saqlab qolamiz.',
+    ],
+
+    'terms' => [
+        'disclaimer_heading' => 'Disclaimer',
+        'disclaimer_text' => 'GOAT.uz saytida bildirilgan fikrlar, mulohazalar va bahslar faqat mualliflar va foydalanuvchilarning shaxsiy qarashlaridir. Ular GOAT.uz ning rasmiy siyosati yoki pozitsiyasini aks ettirmaydi. Biz foydalanuvchilar tomonidan yaratilgan kontentdagi xatolar, kamchiliklar yoki tuhmatlar uchun javobgar emasmiz.',
+    ],
+
     'error_comment_moderation_violation' => 'Izohingiz jamiyat qoidalarini buzganligi sababli e’lon qilinmadi.',
     'error_comment_content_inappropriate_reason' => 'Izohingiz nomaqbul deb topildi (:category). Sabab: :reason',
     'error_comment_content_inappropriate_category' => 'Izohingiz quyidagi sababga ko‘ra nomaqbul deb topildi: :category.',

@@ -176,6 +176,17 @@ return [
     'ads_nav' => 'Ads',
     'copyright_text' => 'GOAT © 2025',
 
+    'copyright' => [
+        'title' => 'Copyright Policy (DMCA)',
+        'meta_description' => 'Copyright Policy and DMCA takedown procedures for GOAT.uz.',
+        'heading' => 'Copyright & Intellectual Property',
+        'intro_text' => 'GOAT.uz respects the intellectual property rights of others. In accordance with the Digital Millennium Copyright Act (DMCA) and local laws, we will respond expeditiously to valid claims of copyright infringement.',
+        'reporting_heading' => 'Reporting Infringement',
+        'reporting_text' => 'If you believe your work has been copied in a way that constitutes copyright infringement, please report it to our designated Copyright Agent at: :email',
+        'removal_heading' => 'Content Removal',
+        'removal_text' => 'We reserve the right to remove content alleged to be infringing without prior notice, at our sole discretion, and without liability to you.',
+    ],
+
     'error_comment_moderation_violation' => 'Your comment could not be posted as it violates community guidelines.',
     'error_comment_content_inappropriate_reason' => 'Your comment was deemed inappropriate (:category). Reason: :reason',
     'error_comment_content_inappropriate_category' => 'Your comment was deemed inappropriate due to: :category.',
@@ -346,7 +357,7 @@ return [
     'sponsorship.opportunities_text' => 'We partner with brands & individuals that want to connect with our community in meaningful ways.',
     'sponsorship.reach_out_for_proposals' => 'for proposals and inquiries.',
 
-        'terms.intro_text' => 'By using this website, you agree to the following terms and conditions.',
+    'terms.intro_text' => 'By using this website, you agree to the following terms and conditions.',
     'terms.section1_heading' => '1. Acceptance of Terms',
     'terms.section1_text' => 'By accessing or using our platform, you agree to be bound by these Terms of Use. If you do not agree to these terms, please do not use the service.',
     'terms.section2_heading' => '2. User Responsibilities',
@@ -357,6 +368,11 @@ return [
     'terms.section4_text' => 'We reserve the right to update or change these terms at any time. Continued use of the platform after changes means you accept the revised terms.',
     'terms.section5_heading' => '5. Disclaimer',
     'terms.section5_text' => 'We provide this platform "as is" with no guarantees. We are not responsible for any loss, damages, or issues that may arise from using our service.',
+
+    'terms' => [
+        'disclaimer_heading' => 'Disclaimer of Liability',
+        'disclaimer_text' => 'The views, opinions, and debates expressed on GOAT.uz are solely those of the individual authors and users. They do not necessarily reflect the official policy or position of GOAT.uz. We are not liable for any errors, omissions, or defamatory statements in user-generated content.',
+    ],
 
     'contribution' => [
         'title' => 'Contribution Guidelines | GOAT.UZ',

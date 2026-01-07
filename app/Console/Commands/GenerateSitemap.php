@@ -40,6 +40,11 @@ class GenerateSitemap extends Command
             ->setChangeFrequency(Url::CHANGE_FREQUENCY_YEARLY)
             ->setPriority(0.3));
 
+        $sitemap->add(Url::create(route('copyright'))
+            ->setLastModificationDate(Carbon::parse('2024-01-01'))
+            ->setChangeFrequency(Url::CHANGE_FREQUENCY_YEARLY)
+            ->setPriority(0.3));
+
         $sitemap->add(Url::create(route('sponsorship'))
             ->setLastModificationDate(Carbon::parse('2024-01-01'))
             ->setChangeFrequency(Url::CHANGE_FREQUENCY_MONTHLY)

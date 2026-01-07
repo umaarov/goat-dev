@@ -64,6 +64,7 @@ Route::post('reset-password', [AuthController::class, 'reset'])->name('password.
 Route::view('about', 'about')->name('about')->middleware('cache.response:1440');
 Route::view('terms', 'terms')->name('terms')->middleware('cache.response:1440');
 Route::view('sponsorship', 'sponsorship')->name('sponsorship')->middleware('cache.response:1440');
+Route::view('copyright', 'copyright')->name('copyright')->middleware('cache.response:1440');
 Route::view('ads', 'ads')->name('ads')->middleware('cache.response:1440');
 Route::view('contribution', 'contribution')->name('contribution')->middleware('cache.response:1440');
 Route::view('privacy-policy', 'privacy')->name('privacy')->middleware('cache.response:1440');
