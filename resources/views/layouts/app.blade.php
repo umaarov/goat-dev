@@ -399,7 +399,7 @@
 
 
 <nav
-    class="fixed safe-pb bottom-0 left-0 right-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] dark:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)] rounded-t-xl z-10 h-20 max-w-[450px] mx-auto">
+    class="fixed safe-pb bottom-0 left-0 right-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] dark:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)] rounded-t-xl z-50 h-20 max-w-[450px] mx-auto">
     <div class="w-full max-w-md mx-auto flex items-center justify-around h-full">
         <a href="{{ route('home') }}" title="{{ __('messages.home') }}"
            class="flex flex-col items-center justify-center text-gray-700  hover:text-blue-800 dark:text-gray-300 dark:hover:text-blue-400">
