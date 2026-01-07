@@ -458,7 +458,7 @@
 }
 
 .adsbygoogle {
-    min-width: 250px !important;
+    /*min-width: 250px !important;*/
     width: 100% !important;
 }
 

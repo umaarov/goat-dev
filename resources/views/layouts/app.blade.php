@@ -2,8 +2,9 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
-{{--    <meta name="viewport" content="width=device-width, initial-scale=1">--}}
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
+    {{--    <meta name="viewport" content="width=device-width, initial-scale=1">--}}
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
@@ -111,7 +112,11 @@
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-YES4XC0B0N"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
         gtag('js', new Date());
 
         gtag('config', 'G-YES4XC0B0N');
@@ -384,7 +389,7 @@
             </div>
         </div>
 
-        <div class="w-full mt-6 flex justify-center" style="min-height: 280px;">
+        <div class="w-full mt-6 flex justify-center">
             <ins class="adsbygoogle"
                  style="display:block"
                  data-ad-client="ca-pub-2989575196315667"
