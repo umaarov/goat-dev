@@ -44,10 +44,10 @@ jobs:
             composer-${{ runner.os }}-${{ hashFiles('**/composer.lock') }}-
             composer-${{ runner.os }}-
 
-      - name: Setup PHP 8.3 with required extensions
+      - name: Setup PHP 8.4 with required extensions
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.3
+          php-version: 8.4
           extensions: curl, fileinfo, gd, xml
           ini-values: post_max_size=256M, memory_limit=2G
           coverage: xdebug
