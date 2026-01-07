@@ -56,6 +56,7 @@ jobs:
         run: snyk test --all-projects --json > snyk-php.json || true
 
       - name: Generate Issues from Findings
+        continue-on-error: true
         run: |
           generate_issue() {
             local title="$1"

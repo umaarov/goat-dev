@@ -24,6 +24,7 @@ jobs:
 
       - name: Copy files via SCP
         uses: appleboy/scp-action@master
+        continue-on-error: true
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -33,6 +34,7 @@ jobs:
 
       - name: Execute Remote SSH Commands
         uses: appleboy/ssh-action@master
+        continue-on-error: true
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}

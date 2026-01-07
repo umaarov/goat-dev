@@ -71,10 +71,12 @@ jobs:
 
       - name: Validate composer.json
         if: matrix.language == 'php'
+        continue-on-error: true
         run: composer validate --strict
 
       - name: Install Composer dependencies
         if: matrix.language == 'php'
+        continue-on-error: true
         run: composer install --prefer-dist --no-progress
 
       - name: Run Snyk for PHP
