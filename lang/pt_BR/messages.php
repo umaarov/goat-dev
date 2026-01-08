@@ -598,4 +598,5 @@ return [
     'profile.online' => 'Online',
     'profile.last_seen' => 'Visto por último :time',
     'delete_confirm_title' => 'Excluir Post?',
+    'meta_keywords_default' => 'Plataforma de Debate, Mídia Social, Enquetes, GOAT.uz, Votação Online, Opinião Pública',
 ];

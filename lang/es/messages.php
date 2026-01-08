@@ -598,4 +598,7 @@ return [
     'profile.online' => 'En línea',
     'profile.last_seen' => 'Visto por última vez :time',
     'delete_confirm_title' => '¿Eliminar Publicación?',
+
+//    'meta_keywords_default' => 'Debate Platform, Social Media, Polls, GOAT.uz, Online Voting, Public Opinion',
+    'meta_keywords_default' => 'Plataforma de Debate, Redes Sociales, Encuestas, GOAT.uz, Votación en Línea, Opinión Pública'
 ];

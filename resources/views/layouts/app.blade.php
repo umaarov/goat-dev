@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+{{--<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">--}}
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ in_array(app()->getLocale(), ['ar', 'he', 'ur', 'fa']) ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="utf-8">
     {{--    <meta name="viewport" content="width=device-width, initial-scale=1">--}}
@@ -145,8 +146,7 @@
             crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
     <meta name="title" content="GOAT.uz - Social Debate Platform">
     <meta name="description" content="@yield('meta_description', __('messages.app.meta_description_default'))">
-    <meta name="keywords"
-          content="Debate Platform, Uzbekistan Social Media, Intelligent Discourse, Laravel, AI Moderation, GOAT.uz, Online Community">
+    <meta name="keywords" content="@yield('meta_keywords', __('messages.app.meta_keywords_default', ['default' => 'Debate Platform, Social Media, Polls, GOAT.uz']))">
     {{--    <link rel="canonical" href="@yield('canonical_url', url()->current())"/>--}}
     @if(request()->routeIs('home'))
         <link rel="canonical" href="{{ url('/') }}"/>
@@ -166,6 +166,12 @@
     <meta name="twitter:title" content="@yield('title', config('app.name', 'GOAT'))">
     <meta name="twitter:description" content="@yield('meta_description', __('messages.app.meta_description_default'))">
     <meta name="twitter:image" content="@yield('og_image', asset('images/goat.jpg'))">
+
+    @foreach(config('app.available_locales', []) as $code => $name)
+        @if($code !== app()->getLocale())
+            <meta property="og:locale:alternate" content="{{ str_replace('-', '_', $code) }}" />
+        @endif
+    @endforeach
 
     <meta name="robots" content="@yield('meta_robots', 'index, follow')">
     @if(isset($alternateUrls))
@@ -191,9 +197,10 @@
             "@@id": "https://www.goat.uz#website",
             "name": "GOAT - Social Debate Platform",
             "url": "https://www.goat.uz",
+            "inLanguage": "{{ app()->getLocale() }}",
             "applicationCategory": "SocialNetworkingApplication",
             "operatingSystem": "Web, PWA",
-            "description": "A mission-critical social platform engineered for structured, high-quality debate and intelligent discourse.",
+            "description": "{{ __('messages.app.meta_description_default') }}",
             "offers": {
                 "@type": "Offer",
                 "price": "0",

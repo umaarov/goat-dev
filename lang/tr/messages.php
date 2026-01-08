@@ -598,4 +598,5 @@ return [
     'profile.online' => 'Çevrimiçi',
     'profile.last_seen' => 'Son görülme :time',
     'delete_confirm_title' => 'Gönderi Silinsin mi?',
+    'meta_keywords_default' => 'Tartışma Platformu, Sosyal Medya, Anketler, GOAT.uz, Çevrimiçi Oylama, Kamuoyu'
 ];

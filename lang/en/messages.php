@@ -604,4 +604,6 @@ return [
     'profile.online' => 'Online',
     'profile.last_seen' => 'Last seen :time',
     'delete_confirm_title' => 'Delete Post?',
+
+    'meta_keywords_default' => 'Debate Platform, Social Media, Polls, GOAT.uz, Online Voting, Public Opinion',
 ];

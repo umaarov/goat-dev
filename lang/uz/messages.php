@@ -585,4 +585,7 @@ return [
     'profile.online' => 'Online',
     'profile.last_seen' => 'Last seen :time',
     'delete_confirm_title' => 'Postni o‘chirmoqchimisiz?',
+
+    'meta_keywords_default' => 'Jamiyat so‘rovnomalari, Ijtimoiy tarmoqlar, Ovoz berish, Onlayn so‘rovnomalar, Jamoatchilik fikri, GOAT.uz'
+
 ];

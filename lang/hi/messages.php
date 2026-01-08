@@ -598,4 +598,9 @@ return [
     'profile.online' => 'ऑनलाइन',
     'profile.last_seen' => 'अंतिम बार देखा गया :time',
     'delete_confirm_title' => 'पोस्ट हटाएं?',
+
+//    'meta_keywords_default' => 'Debate Platform, Social Media, Polls, GOAT.uz, Online Voting, Public Opinion',
+    'meta_keywords_default' => 'बहस मंच, सोशल मीडिया, पोल, GOAT.uz, ऑनलाइन वोटिंग, सार्वजनिक राय'
+
+
 ];

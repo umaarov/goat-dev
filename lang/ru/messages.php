@@ -584,4 +584,6 @@ return [
     'profile.online' => 'В сети',
     'profile.last_seen' => 'Последний раз в сети :time',
     'delete_confirm_title' => 'Удалить пост?',
+
+    'meta_keywords_default' => 'Платформа для дебатов, Социальные медиа, Опросы, GOAT.uz, Онлайн голосование, Общественное мнение'
 ];

@@ -597,4 +597,6 @@ return [
     'profile.online' => 'Online',
     'profile.last_seen' => 'Terakhir dilihat :time',
     'delete_confirm_title' => 'Hapus Postingan?',
+    'meta_keywords_default' => 'Platform Debat, Media Sosial, Polling, GOAT.uz, Voting Online, Opini Publik'
+
 ];
