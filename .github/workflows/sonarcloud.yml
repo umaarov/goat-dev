@@ -29,12 +29,12 @@ jobs:
 
     steps:
       - name: Checkout (full history)
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Setup Cache - Composer vendor & cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: composer-cache
         with:
           path: |
@@ -111,7 +111,7 @@ jobs:
 
       - name: Collect test reports (if generated)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: test-reports
           path: |
