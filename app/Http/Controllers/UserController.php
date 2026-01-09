@@ -1078,6 +1078,7 @@ class UserController extends Controller
         Log::channel('audit_trail')->info('[USER] [EXPORT] User requested full data export.', [
             'user_id' => $user->id,
             'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
         ]);
 
         $sessions = [];
@@ -1095,8 +1096,11 @@ class UserController extends Controller
         }
 
         $personalData = [
-            'generated_at' => now()->toIso8601String(),
-            'user_id' => $user->id,
+            'meta' => [
+                'export_date' => now()->toIso8601String(),
+                'version' => '1.0',
+                'issuer' => config('app.name'),
+            ],
 
             'identity' => [
                 'username' => $user->username,
@@ -1104,96 +1108,95 @@ class UserController extends Controller
                 'last_name' => $user->last_name,
                 'email' => $user->email,
                 'locale' => $user->locale,
-                'created_at' => $user->created_at->toIso8601String(),
-                'updated_at' => $user->updated_at->toIso8601String(),
+                'joined_at' => $user->created_at->toIso8601String(),
+                'verified_at' => $user->email_verified_at?->toIso8601String(),
             ],
 
             'linked_accounts' => [
-                'google' => [
-                    'linked' => !empty($user->google_id),
-                    'google_id' => $user->google_id,
-                ],
-                'x_twitter' => [
-                    'linked' => !empty($user->x_id),
-                    'username' => $user->x_username,
-                    'x_id' => $user->x_id,
-                ],
-                'telegram' => [
-                    'linked' => !empty($user->telegram_id),
-                    'username' => $user->telegram_username,
-                    'telegram_id' => $user->telegram_id,
-                ],
-                'github' => [
-                    'linked' => !empty($user->github_id),
-                    'github_id' => $user->github_id,
-                ],
-                'has_password_set' => !empty($user->password),
+                'google' => $user->google_id ? ['linked' => true, 'id' => $user->google_id] : ['linked' => false],
+                'x_twitter' => $user->x_id ? ['linked' => true, 'id' => $user->x_id, 'username' => $user->x_username] : ['linked' => false],
+                'telegram' => $user->telegram_id ? ['linked' => true, 'id' => $user->telegram_id, 'username' => $user->telegram_username] : ['linked' => false],
+                'github' => $user->github_id ? ['linked' => true, 'id' => $user->github_id] : ['linked' => false],
             ],
 
-            'profile_settings' => [
-                'profile_picture_url' => $user->profile_picture,
-                'header_background_url' => $user->header_background,
+            'settings' => [
+                'profile_picture' => $user->profile_picture,
+                'header_background' => $user->header_background,
                 'external_links' => $user->external_links,
-                'privacy' => [
-                    'show_voted_posts_publicly' => (bool)$user->show_voted_posts_publicly,
-                ],
-                'notifications' => [
-                    'receives_email_notifications' => (bool)$user->receives_notifications,
-                ],
-                'preferences' => [
-                    'ai_insight_view' => $user->ai_insight_preference,
-                ],
+                'privacy_public_votes' => (bool)$user->show_voted_posts_publicly,
+                'notifications_email' => (bool)$user->receives_notifications,
+                'ai_preferences' => $user->ai_insight_preference,
             ],
 
-            'statistics' => [
-                'last_active_at' => $user->last_active_at,
-                'ai_generations' => [
-                    'daily_count' => $user->ai_generations_daily_count,
-                    'monthly_count' => $user->ai_generations_monthly_count,
-                    'last_generated_date' => $user->last_ai_generation_date,
-                ]
+            'security' => [
+                'active_sessions' => $sessions,
+                'password_set' => !empty($user->password),
+                '2fa_enabled' => false,
             ],
-            'active_sessions' => $sessions,
-            'posts' => $user->posts()->get()->map(function ($post) {
-                return [
-                    'id' => $post->id,
-                    'question' => $post->question,
-                    'option_one' => $post->option_one_title,
-                    'option_two' => $post->option_two_title,
-                    'slug' => $post->slug,
-                    'total_votes' => $post->total_votes,
-                    'shares_count' => $post->shares_count,
-                    'created_at' => $post->created_at->toIso8601String(),
-                ];
-            }),
 
-            'votes_history' => $user->votes()->with('post:id,question')->get()->map(function ($vote) {
-                return [
-                    'post_id' => $vote->post_id,
-                    'post_question_snippet' => $vote->post ? Str::limit($vote->post->question, 80) : 'Deleted Post',
-                    'voted_option' => $vote->vote_option,
-                    'voted_at' => $vote->created_at->toIso8601String(),
-                ];
-            }),
+            'posts' => $user->posts()
+                ->select('id', 'question', 'option_one_title', 'option_two_title', 'total_votes', 'shares_count', 'created_at')
+                ->get()
+                ->map(function ($post) {
+                    return [
+                        'id' => $post->id,
+                        'question' => $post->question,
+                        'options' => [
+                            'one' => $post->option_one_title,
+                            'two' => $post->option_two_title,
+                        ],
+//                        'slug' => $post->slug,
+                        'metrics' => [
+                            'votes' => $post->total_votes,
+                            'shares' => $post->shares_count,
+                        ],
+                        'created_at' => $post->created_at->toIso8601String(),
+                    ];
+                }),
 
-            'comments_history' => $user->comments()->with('post:id,question')->get()->map(function ($comment) {
-                return [
-                    'id' => $comment->id,
-                    'post_id' => $comment->post_id,
-                    'post_question_snippet' => $comment->post ? Str::limit($comment->post->question, 50) : 'Deleted Post',
-                    'content' => $comment->content,
-                    'likes_received' => $comment->likes_count ?? 0,
-                    'created_at' => $comment->created_at->toIso8601String(),
-                ];
-            }),
+            'votes_history' => $user->votes()
+                ->with('post:id,question')
+                ->get()
+                ->map(function ($vote) {
+                    return [
+                        'post_id' => $vote->post_id,
+                        'post_snippet' => $vote->post ? Str::limit($vote->post->question, 80) : 'Deleted Post',
+                        'selection' => $vote->vote_option,
+                        'voted_at' => $vote->created_at->toIso8601String(),
+                    ];
+                }),
+
+            'comments_history' => $user->comments()
+                ->with('post:id,question')
+                ->get()
+                ->map(function ($comment) {
+                    return [
+                        'id' => $comment->id,
+                        'post_id' => $comment->post_id,
+                        'on_post' => $comment->post ? Str::limit($comment->post->question, 50) : 'Deleted Post',
+                        'content' => $comment->content,
+                        'likes' => $comment->likes_count ?? 0,
+                        'created_at' => $comment->created_at->toIso8601String(),
+                    ];
+                }),
         ];
 
-        $filename = 'goat_data_export_' . $user->username . '_' . now()->format('Y_m_d_His') . '.json';
-        $jsonData = json_encode($personalData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $filename = 'goat_export_' . $user->username . '_' . now()->format('Y-m-d_His') . '.json';
+
+        try {
+            $jsonData = json_encode($personalData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        } catch (Exception $e) {
+            Log::error("JSON Export Encoding Error: " . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to generate data export. Please contact support.');
+        }
 
         return response($jsonData)
-            ->header('Content-Type', 'application/json')
-            ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
+            ->withHeaders([
+                'Content-Type' => 'application/json',
+                'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+                'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+                'Pragma' => 'no-cache',
+            ]);
     }
 
     final public function heartbeat(Request $request): JsonResponse

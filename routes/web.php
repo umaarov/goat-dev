@@ -160,9 +160,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/profile/sessions/terminate-all', [UserController::class, 'terminateAllOtherSessions'])
         ->name('profile.sessions.terminate_all')
         ->middleware('password.confirm');
-    Route::post('/profile/export', [App\Http\Controllers\UserController::class, 'exportData'])
+    Route::post('/profile/export', [UserController::class, 'exportData'])
         ->name('profile.export')
-        ->middleware('auth');
+        ->middleware(['auth', 'throttle:3,60']);
 //    Route::delete('/profile/password', [UserController::class, 'removePassword'])
 //        ->name('profile.password.remove')
 //        ->middleware('password.confirm');
