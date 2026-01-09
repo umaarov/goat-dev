@@ -622,6 +622,30 @@
         </div>
     </div>
 
+    {{-- Export Data Section --}}
+    <div
+        class="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] dark:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)] overflow-hidden mb-4">
+        <div class="p-6">
+            <h3 class="text-md font-semibold text-gray-900 dark:text-gray-100 mb-2">{{ __('Export Personal Data') }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                {{ __('Download a copy of your personal data, including your profile information, posts, and voting history, in JSON format for portability (GDPR compliance).') }}
+            </p>
+
+            <form method="POST" action="{{ route('profile.export') }}">
+                @csrf
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-transparent rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
+                         stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    {{ __('Export Data (JSON)') }}
+                </button>
+            </form>
+        </div>
+    </div>
+
     <div
         class="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] dark:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)] overflow-hidden mb-4">
         <div class="p-6 border-t-4 border-red-600 dark:border-red-500">

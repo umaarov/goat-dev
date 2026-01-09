@@ -10,7 +10,6 @@ use App\Http\Controllers\RatingController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\SonarWebhookController;
 use App\Http\Controllers\UserController;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/language/{locale}', [LocaleController::class, 'setLocale'])->name('language.set');
@@ -161,7 +160,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/profile/sessions/terminate-all', [UserController::class, 'terminateAllOtherSessions'])
         ->name('profile.sessions.terminate_all')
         ->middleware('password.confirm');
-
+    Route::post('/profile/export', [App\Http\Controllers\UserController::class, 'exportData'])
+        ->name('profile.export')
+        ->middleware('auth');
 //    Route::delete('/profile/password', [UserController::class, 'removePassword'])
 //        ->name('profile.password.remove')
 //        ->middleware('password.confirm');
