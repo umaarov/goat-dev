@@ -60,7 +60,6 @@ class AuthTokenService
             return null;
         }
 
-        // Check if token is revoked
         if ($token->revoked_at) {
             Log::channel('audit_trail')->warning('[AUTH] [TOKEN] Attempt to use revoked token', [
                 'token_id' => $token->id,
@@ -69,13 +68,12 @@ class AuthTokenService
             return null;
         }
 
-        // Check if token is expired
         if ($token->expires_at->isPast()) {
             Log::channel('audit_trail')->warning('[AUTH] [TOKEN] Attempt to use expired token', [
                 'token_id' => $token->id,
                 'expires_at' => $token->expires_at,
             ]);
-            $this->revokeToken($token); // Mark as revoked
+            $this->revokeToken($token);
             return null;
         }
 
@@ -130,8 +128,6 @@ class AuthTokenService
     {
         $plainTextToken = Str::random(64);
         $hashedToken = hash('sha256', $plainTextToken);
-
-        // Revoke previous tokens for same user, IP, and user agent
         RefreshToken::where('user_id', $user->id)
             ->where('ip_address', $request->ip())
             ->where('user_agent', $request->userAgent())

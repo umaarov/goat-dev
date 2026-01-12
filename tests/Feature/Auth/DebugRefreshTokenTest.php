@@ -6,7 +6,6 @@ namespace Tests\Feature\Auth;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cookie;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -17,7 +16,6 @@ class DebugRefreshTokenTest extends TestCase
     #[Test]
     public function test_refresh_token_flow(): void
     {
-        // Create user directly to avoid factory issues
         $user = User::create([
             'first_name' => 'Test',
             'last_name' => 'User',
@@ -27,7 +25,6 @@ class DebugRefreshTokenTest extends TestCase
             'email_verified_at' => now(),
         ]);
 
-        // Test 1: Login
         $response = $this->post('/login', [
             'login_identifier' => 'test@example.com',
             'password' => 'password123',
@@ -47,19 +44,16 @@ class DebugRefreshTokenTest extends TestCase
         echo "Is Secure: " . ($cookie->isSecure() ? 'Yes' : 'No') . "\n";
         echo "SameSite: " . $cookie->getSameSite() . "\n";
 
-        // Test 2: Access protected route (should work)
         $response = $this->get('/');
         $this->assertAuthenticated();
         echo "2. User is authenticated.\n";
 
-        // Test 3: Clear session but keep cookie (simulate session expiry)
         Auth::logout();
         $this->app['session']->flush();
 
         $this->assertGuest();
         echo "3. Session cleared. User is guest.\n";
 
-        // Test 4: Try to access with refresh token
         $response = $this->withCookie('refresh_token', $cookie->getValue())
             ->get('/');
 
@@ -74,7 +68,6 @@ class DebugRefreshTokenTest extends TestCase
             echo "New cookie issued: No\n";
         }
 
-        // Test 5: Logout
         $response = $this->post('/logout');
         $response->assertCookieExpired('refresh_token');
         echo "5. Logout successful. Cookie cleared.\n";
@@ -92,7 +85,6 @@ class DebugRefreshTokenTest extends TestCase
             'email_verified_at' => now(),
         ]);
 
-        // Login to check cookie properties
         $response = $this->post('/login', [
             'login_identifier' => 'test2@example.com',
             'password' => 'password123',
@@ -100,7 +92,6 @@ class DebugRefreshTokenTest extends TestCase
 
         $cookie = $response->getCookie('refresh_token');
 
-        // Check cookie settings match your config
         $this->assertEquals(config('session.secure'), $cookie->isSecure());
         $this->assertEquals(config('session.same_site'), $cookie->getSameSite());
         $this->assertTrue($cookie->isHttpOnly());

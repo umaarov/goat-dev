@@ -8,8 +8,6 @@ use App\Models\User;
 use App\Services\AuthTokenService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cookie;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -21,29 +19,9 @@ class RefreshTokenTest extends TestCase
     private User $user;
     private string $password = 'password123';
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->authTokenService = app(AuthTokenService::class);
-
-        // Create user with proper schema
-        $this->user = User::create([
-            'first_name' => 'Test',
-            'last_name' => 'User',
-            'username' => 'testuser',
-            'email' => 'test@example.com',
-            'password' => bcrypt($this->password),
-            'email_verified_at' => now(),
-        ]);
-    }
-
     #[Test]
     public function it_issues_refresh_token_on_successful_login(): void
     {
-        // Since we can't easily test the login route without proper setup,
-        // let's test the AuthTokenService directly
-
         $request = Request::create('/');
         $request->server->set('REMOTE_ADDR', '127.0.0.1');
         $request->headers->set('User-Agent', 'TestAgent');
@@ -53,7 +31,6 @@ class RefreshTokenTest extends TestCase
         $this->assertNotNull($cookie);
         $this->assertNotEmpty($cookie->getValue());
 
-        // Verify token is stored in database
         $hashedToken = hash('sha256', $cookie->getValue());
         $this->assertDatabaseHas('refresh_tokens', [
             'token' => $hashedToken,
@@ -84,16 +61,11 @@ class RefreshTokenTest extends TestCase
         $request = Request::create('/');
         $request->server->set('REMOTE_ADDR', '127.0.0.1');
         $request->headers->set('User-Agent', 'TestAgent');
-
         $cookie = $this->authTokenService->issueToken($this->user, $request);
-
-        // Manually expire the token
         $hashedToken = hash('sha256', $cookie->getValue());
         $token = RefreshToken::where('token', $hashedToken)->first();
         $token->update(['expires_at' => now()->subDay()]);
-
         $tokenModel = $this->authTokenService->getValidToken($cookie->getValue());
-
         $this->assertNull($tokenModel);
     }
 
@@ -103,8 +75,6 @@ class RefreshTokenTest extends TestCase
         $request = Request::create('/');
         $request->server->set('REMOTE_ADDR', '127.0.0.1');
         $request->headers->set('User-Agent', 'TestAgent');
-
-        // Create multiple tokens
         $this->authTokenService->issueToken($this->user, $request);
         $this->authTokenService->issueToken($this->user, $request);
 
@@ -113,10 +83,7 @@ class RefreshTokenTest extends TestCase
             ->count();
 
         $this->assertGreaterThan(0, $activeTokens);
-
-        // Revoke all tokens
         $this->authTokenService->revokeAllTokensForUser($this->user);
-
         $activeTokensAfter = RefreshToken::where('user_id', $this->user->id)
             ->whereNull('revoked_at')
             ->count();
@@ -132,8 +99,6 @@ class RefreshTokenTest extends TestCase
 
         $tokenModel = $this->authTokenService->getValidToken('');
         $this->assertNull($tokenModel);
-
-        // Don't test null since the method expects string
         // $tokenModel = $this->authTokenService->getValidToken(null);
         // $this->assertNull($tokenModel);
     }
@@ -144,20 +109,15 @@ class RefreshTokenTest extends TestCase
         $request = Request::create('/');
         $request->server->set('REMOTE_ADDR', '127.0.0.1');
         $request->headers->set('User-Agent', 'TestAgent');
-
-        // Create cookie
         $cookie = $this->authTokenService->issueToken($this->user, $request);
-
         $this->assertEquals('refresh_token', $cookie->getName());
         $this->assertNotEmpty($cookie->getValue());
         $this->assertTrue($cookie->isHttpOnly());
-
-        // Clear cookie
         $clearCookie = $this->authTokenService->clearCookie();
         $this->assertEquals('refresh_token', $clearCookie->getName());
-        // Check that cookie is expired (expiration time is in the past)
         $this->assertLessThan(time(), $clearCookie->getExpiresTime());
     }
+
     #[Test]
     public function it_revokes_specific_token(): void
     {
@@ -167,11 +127,8 @@ class RefreshTokenTest extends TestCase
 
         $cookie = $this->authTokenService->issueToken($this->user, $request);
         $tokenValue = $cookie->getValue();
-
         $tokenModel = $this->authTokenService->getValidToken($tokenValue);
         $this->assertNotNull($tokenModel);
-
-        // Revoke the token
         $this->authTokenService->revokeToken($tokenModel);
 
         $tokenModelAfter = $this->authTokenService->getValidToken($tokenValue);
@@ -187,16 +144,27 @@ class RefreshTokenTest extends TestCase
 
         $cookie = $this->authTokenService->issueToken($this->user, $request);
         $tokenValue = $cookie->getValue();
-
-        // Use token once
         $tokenModel = $this->authTokenService->getValidToken($tokenValue);
         $this->assertNotNull($tokenModel);
 
-        // Revoke it (simulating use)
         $this->authTokenService->revokeToken($tokenModel);
-
-        // Try to use same token again
         $tokenModelAgain = $this->authTokenService->getValidToken($tokenValue);
         $this->assertNull($tokenModelAgain);
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->authTokenService = app(AuthTokenService::class);
+
+        $this->user = User::create([
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'username' => 'testuser',
+            'email' => 'test@example.com',
+            'password' => bcrypt($this->password),
+            'email_verified_at' => now(),
+        ]);
     }
 }

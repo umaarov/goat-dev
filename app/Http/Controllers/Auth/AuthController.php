@@ -468,7 +468,7 @@ class AuthController extends Controller
 
         $name = $googleUser->getName();
         $nameParts = explode(' ', $name, 2);
-        $firstName = $googleUser->user['given_name'] ?? $nameParts[0] ?? Str::studly(Str::before($googleUser->getEmail(), '@')); // Fallback for first name
+        $firstName = $googleUser->user['given_name'] ?? $nameParts[0] ?? Str::studly(Str::before($googleUser->getEmail(), '@'));
         $lastName = $googleUser->user['family_name'] ?? ($nameParts[1] ?? null);
 
         $user = User::create([
@@ -1490,7 +1490,7 @@ class AuthController extends Controller
 
         if ($user) {
             $user->github_id = $githubUser->getId();
-            $user->is_developer = true; // Grant developer access!
+            $user->is_developer = true;
             $user->email_verified_at = $user->email_verified_at ?? now();
             $user->save();
             Log::channel('audit_trail')->info('[AUTH] [GITHUB] Linked existing user to GitHub and granted developer access.', ['user_id' => $user->id]);
