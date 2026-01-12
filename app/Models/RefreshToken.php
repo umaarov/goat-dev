@@ -16,6 +16,7 @@ class RefreshToken extends Model
         'token',
         'expires_at',
         'revoked_at',
+        'grace_period_ends_at',
         'ip_address',
         'user_agent',
     ];
@@ -23,6 +24,7 @@ class RefreshToken extends Model
     protected $casts = [
         'expires_at' => 'datetime',
         'revoked_at' => 'datetime',
+        'grace_period_ends_at' => 'datetime',
     ];
 
     final function user(): BelongsTo

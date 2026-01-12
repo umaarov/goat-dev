@@ -680,23 +680,18 @@ class AuthController extends Controller
     public function logout(Request $request): RedirectResponse
     {
         $user = Auth::user();
-        if ($user) {
-            Log::channel('audit_trail')->info('[AUTH] [LOGOUT] Session ended', [
-                'user_id' => $user->id,
-                'username' => $user->username,
-                'ip' => $request->ip(),
-            ]);
 
-            $refreshTokenCookie = $request->cookie('refresh_token');
-            if ($refreshTokenCookie) {
-                $token = $this->authTokenService->getValidToken($refreshTokenCookie);
-                if ($token) {
-                    $this->authTokenService->revokeToken($token);
-                }
+        $refreshToken = $request->cookie('refresh_token');
+        if ($refreshToken) {
+            $token = $this->authTokenService->getValidToken($refreshToken);
+            if ($token) {
+                $this->authTokenService->revokeToken($token);
             }
-        } else {
-            Log::channel('audit_trail')->info('[AUTH] [LOGOUT] Logout attempt by unauthenticated session.', [
-                'ip_address' => $request->ip(),
+        }
+
+        if ($user) {
+            Log::channel('audit_trail')->info('[AUTH] [LOGOUT] User logged out manually', [
+                'user_id' => $user->id
             ]);
         }
 
