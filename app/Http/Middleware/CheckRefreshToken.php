@@ -6,6 +6,7 @@ use App\Services\AuthTokenService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckRefreshToken
@@ -19,26 +20,43 @@ class CheckRefreshToken
 
     public function handle(Request $request, Closure $next): Response
     {
+        $wasAuthenticated = Auth::check();
+        $newCookie = null;
+        if ($wasAuthenticated) {
+            $newCookie = $this->authTokenService->validateAndExtendSession($request);
+        }
+
+        $response = $next($request);
+        if ($wasAuthenticated && !Auth::check()) {
+            return $response;
+        }
+        if ($newCookie) {
+            return $response->withCookie($newCookie);
+        }
         if (Auth::check()) {
-            return $next($request);
+            return $response;
+        }
+        $refreshToken = $request->cookie('refresh_token');
+        if (!$refreshToken) {
+            return $response;
         }
 
-        $refreshTokenCookie = $request->cookie('refresh_token');
-        if (!$refreshTokenCookie) {
-            return $next($request);
-        }
-
-        $tokenModel = $this->authTokenService->getValidToken($refreshTokenCookie);
+        $tokenModel = $this->authTokenService->getValidToken($refreshToken);
 
         if (!$tokenModel) {
-            $response = $next($request);
             return $response->withCookie($this->authTokenService->clearCookie());
         }
 
         Auth::login($tokenModel->user);
+        $request->session()->regenerate();
+
         $this->authTokenService->revokeToken($tokenModel);
-        $newCookie = $this->authTokenService->issueToken($tokenModel->user, $request);
-        $response = $next($request);
-        return $response->withCookie($newCookie);
+        $loginCookie = $this->authTokenService->issueToken($tokenModel->user, $request);
+
+        Log::channel('audit_trail')->info('[AUTH] [REFRESH_TOKEN] User authenticated via refresh token', [
+            'user_id' => $tokenModel->user->id,
+        ]);
+
+        return $next($request)->withCookie($loginCookie);
     }
 }
