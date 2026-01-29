@@ -35,10 +35,14 @@ www.goat.uz {
                -X-Powered-By
            }
 
-    @emptyQuery {
-                    query ""
-                }
-    uri @emptyQuery strip_suffix ?
+#    @emptyQuery {
+#                    query ""
+#                }
+#    uri @emptyQuery strip_suffix ?
+    @trailingQuestion {
+                          expression "{uri}.endsWith('?')"
+                      }
+    redir @trailingQuestion {path} 301
 
 # MAINTENANCE MODE: START
 #    respond `
