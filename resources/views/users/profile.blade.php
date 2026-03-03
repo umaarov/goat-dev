@@ -42,8 +42,8 @@
              {{--            class="bg-white rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] border border-gray-100 overflow-hidden mb-6">--}}
              class="relative rounded-lg shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.2)] dark:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.1)] border border-gray-100 dark:border-gray-700 overflow-hidden mb-6 @if(!$hasBackground) bg-white dark:bg-gray-800 @endif">
 
-            <canvas id="snow-canvas"
-                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20;"></canvas>
+{{--            <canvas id="snow-canvas"--}}
+{{--                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20;"></canvas>--}}
 
             {{-- Background Image & Gradient Overlay Layer --}}
             @if($hasBackground)
