@@ -25,6 +25,17 @@ class ReferralTracker
                     'user_agent' => $request->userAgent(),
                 ]);
             }
+
+            // Build the redirect URL without the 'ref' parameter
+            $query = $request->query();
+            unset($query['ref']);
+
+            $redirectUrl = $request->url();
+            if (!empty($query)) {
+                $redirectUrl .= '?' . http_build_query($query);
+            }
+
+            return redirect($redirectUrl, 302);
         }
 
         return $next($request);
