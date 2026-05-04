@@ -10,6 +10,8 @@ use App\Http\Controllers\RatingController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\SonarWebhookController;
 use App\Http\Controllers\UserController;
+use App\Mail\EmailVerification;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/language/{locale}', [LocaleController::class, 'setLocale'])->name('language.set');
@@ -224,3 +226,9 @@ Route::fallback(function () {
 //});
 
 Route::post('/webhooks/sonar', [SonarWebhookController::class, 'handle'])->name('webhooks.sonar');
+
+//Route::get('/mail-preview', function () {
+//    $user = User::first();
+//    $dummyUrl = url('/email/verify/1/dummy-hash-token-12345');
+//    return new EmailVerification($user, $dummyUrl);
+//});

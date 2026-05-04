@@ -34,3 +34,4 @@ public/build.zip
 /image_processor_dev/libwebp
 /dashboard/telemetry_latest.json
 /dashboard/telemetry.json
+.aider*
