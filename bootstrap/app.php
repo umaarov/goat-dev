@@ -45,6 +45,7 @@ return Application::configure(basePath: dirname(__DIR__))
             SetLocale::class,
 //            AddCspHeaders::class,
             UpdateLastActiveTimestamp::class,
+            \App\Http\Middleware\ReferralTracker::class,
         ]);
         $middleware->trustProxies(
             at: [

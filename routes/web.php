@@ -115,6 +115,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::get('/rating', [RatingController::class, 'index'])->name('rating.index');
+    Route::get('/analytics/referrals', [App\Http\Controllers\ReferralAnalyticsController::class, 'index'])->name('analytics.referrals');
 
     Route::controller(PostController::class)->group(function () {
         Route::get('/posts/create', 'create')->name('posts.create');
