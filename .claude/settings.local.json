@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(find /c/Users/i.umarov/Workspace/Dev/PhpstormProjects/goat-dev/database/migrations -type f -exec basename {} \\\\;)",
-      "Bash(find *)"
+      "Bash(find *)",
+      "Bash(php -v)"
     ]
   }
 }

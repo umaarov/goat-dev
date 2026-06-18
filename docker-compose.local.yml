@@ -1,0 +1,57 @@
+# Standalone LOCAL services for NATIVE development (you run the app with
+# `composer dev`, only MySQL + Redis live in Docker). This complements the
+# existing docker-compose.dev.yml, which instead runs the whole app in a
+# container. Use whichever workflow you prefer.
+#
+# Why this exists: it boots MySQL with your exact .env creds (root / empty
+# password / goat_db_2026_02_22); the production db service requires a real
+# password and so won't start locally.
+#
+#   docker compose -f docker-compose.local.yml up -d
+#   # in .env set:  DB_HOST=127.0.0.1
+#   php artisan migrate
+#   composer dev
+#
+# Optional local Redis for cache/queue/sessions, in .env:
+#   REDIS_HOST=127.0.0.1   REDIS_CLIENT=phpredis
+#
+# Stop (keep data):  docker compose -f docker-compose.local.yml stop
+# Wipe data:         docker compose -f docker-compose.local.yml down -v
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: goat-local-db
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "1"
+      MYSQL_DATABASE: "${DB_DATABASE:-goat_db_2026_02_22}"
+    ports:
+      - "127.0.0.1:${FORWARD_DB_PORT:-3306}:3306"
+    volumes:
+      - goat-local-db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: goat-local-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "127.0.0.1:${FORWARD_REDIS_PORT:-6379}:6379"
+    volumes:
+      - goat-local-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  goat-local-db-data:
+  goat-local-redis-data:

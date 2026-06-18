@@ -98,6 +98,20 @@ class User extends Authenticatable
         return $this->hasMany(RefreshToken::class);
     }
 
+    final function deviceTokens(): HasMany
+    {
+        return $this->hasMany(DeviceToken::class);
+    }
+
+    /**
+     * Push targets for the FCM notification channel.
+     * Returns DeviceToken models so the channel can prune invalid ones.
+     */
+    public function routeNotificationForFcm(): \Illuminate\Database\Eloquent\Collection
+    {
+        return $this->deviceTokens()->get();
+    }
+
     public function getActiveAuthMethodsCount(): int
     {
         $methods = [

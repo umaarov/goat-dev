@@ -9,29 +9,49 @@ use Tests\TestCase;
 
 class AvatarServiceTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Avatar rendering needs a TrueType font in storage/app/fonts. Skip
+        // rather than fail in environments where none is deployed (e.g. CI
+        // before assets are provisioned).
+        if (! glob(storage_path('app/fonts').DIRECTORY_SEPARATOR.'*.ttf')) {
+            $this->markTestSkipped('No .ttf font available in storage/app/fonts.');
+        }
+    }
+
     #[Test]
     public function it_generates_an_initials_avatar_and_saves_it()
     {
-        // Fake the storage to prevent actual file writes
         Storage::fake('public');
-        $service = new AvatarService();
-        $path = $service->generateInitialsAvatar('John', 'Doe', 'user123');
 
-        // Assert the file was "saved" to the fake storage disk
+        // Signature is (userId, firstName, lastName).
+        $path = (new AvatarService)->generateInitialsAvatar('user123', 'John', 'Doe');
+
         Storage::disk('public')->assertExists($path);
-
-        // Assert the path is what we expect
-        $this->assertEquals('profile_pictures/initial_user123.png', $path);
+        $this->assertMatchesRegularExpression('#^profile_pictures/initials_user123_[A-Za-z0-9]+\.webp$#', $path);
     }
 
     #[Test]
     public function it_generates_an_avatar_with_only_a_first_name()
     {
         Storage::fake('public');
-        $service = new AvatarService();
-        $path = $service->generateInitialsAvatar('Jane', '', 'user456');
+
+        $path = (new AvatarService)->generateInitialsAvatar('user456', 'Jane', '');
 
         Storage::disk('public')->assertExists($path);
-        $this->assertEquals('profile_pictures/initial_user456.png', $path);
+        $this->assertMatchesRegularExpression('#^profile_pictures/initials_user456_[A-Za-z0-9]+\.webp$#', $path);
+    }
+
+    #[Test]
+    public function it_falls_back_to_a_question_mark_for_empty_names()
+    {
+        Storage::fake('public');
+
+        $path = (new AvatarService)->generateInitialsAvatar('user789', '', '');
+
+        Storage::disk('public')->assertExists($path);
+        $this->assertStringStartsWith('profile_pictures/initials_user789_', $path);
     }
 }

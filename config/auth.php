@@ -7,6 +7,8 @@ return [
     ],
     'refresh_token_lifetime' => env('REFRESH_TOKEN_LIFETIME_DAYS', 90),
     'refresh_within_hours' => env('REFRESH_WITHIN_HOURS', 12),
+    // Lifetime (in minutes) of mobile API access tokens (Sanctum bearer tokens).
+    'api_access_token_minutes' => env('API_ACCESS_TOKEN_MINUTES', 60),
     'guards' => [
         'web' => [
             'driver' => 'session',

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Fast, dependency-free test config: runs the Unit suite and the mobile API
+  feature tests against an in-memory SQLite database (no MySQL needed).
+
+  Use via:  composer test:api      (or: vendor/bin/phpunit -c phpunit.sqlite.xml)
+
+  The committed phpunit.xml (MySQL `goat_test`) remains the source of truth for
+  the full suite / CI, including the web cookie-based auth tests which rely on
+  MySQL behaviour.
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Api">
+            <directory>tests/Feature/Api</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <env name="APP_ENV" value="testing" force="true"/>
+        <env name="BCRYPT_ROUNDS" value="4" force="true"/>
+        <env name="DB_CONNECTION" value="sqlite" force="true"/>
+        <env name="DB_DATABASE" value=":memory:" force="true"/>
+        <env name="MAIL_MAILER" value="array" force="true"/>
+        <env name="QUEUE_CONNECTION" value="sync" force="true"/>
+        <env name="SESSION_DRIVER" value="array" force="true"/>
+        <env name="CACHE_STORE" value="array" force="true"/>
+        <env name="BROADCAST_CONNECTION" value="null" force="true"/>
+        <env name="GROQ_API_KEY" value="" force="true"/>
+        <env name="GROQ_MODEL" value="" force="true"/>
+        <env name="FCM_PROJECT_ID" value="" force="true"/>
+        <env name="FCM_CREDENTIALS" value="" force="true"/>
+        <env name="TELESCOPE_ENABLED" value="false" force="true"/>
+    </php>
+</phpunit>

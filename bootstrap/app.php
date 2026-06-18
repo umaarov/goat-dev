@@ -23,7 +23,8 @@ use Symfony\Component\HttpFoundation\Request;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__ . '/../routes/web.php',
-//        api: __DIR__ . '/../routes/api.php',
+        api: __DIR__ . '/../routes/api.php',
+        apiPrefix: 'api',
         commands: __DIR__ . '/../routes/console.php',
         channels: __DIR__ . '/../routes/channels.php',
         health: '/up',
@@ -46,6 +47,12 @@ return Application::configure(basePath: dirname(__DIR__))
 //            AddCspHeaders::class,
             UpdateLastActiveTimestamp::class,
             \App\Http\Middleware\ReferralTracker::class,
+        ]);
+
+        // Mobile/JSON API group: force JSON responses for the whole /api surface
+        // so validation, auth and error handling never attempt a web redirect.
+        $middleware->api(prepend: [
+            \App\Http\Middleware\ForceJsonResponse::class,
         ]);
         $middleware->trustProxies(
             at: [
@@ -134,6 +141,23 @@ return Application::configure(basePath: dirname(__DIR__))
                         'error_code' => 'authentication_required',
                         'message' => 'Unauthenticated.',
                     ], 401);
+                }
+
+                if ($e instanceof \Illuminate\Validation\ValidationException) {
+                    return response()->json([
+                        'success' => false,
+                        'error_code' => 'validation_failed',
+                        'message' => $e->getMessage(),
+                        'errors' => $e->errors(),
+                    ], $e->status);
+                }
+
+                if ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
+                    return response()->json([
+                        'success' => false,
+                        'error_code' => 'not_found',
+                        'message' => 'Resource not found.',
+                    ], 404);
                 }
 
                 $status = 500;

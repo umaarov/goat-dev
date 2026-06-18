@@ -1,0 +1,253 @@
+{
+  "info": {
+    "name": "GOAT Mobile API v1",
+    "description": "Versioned JSON API for the GOAT platform. Set {{base_url}}; run Auth > Login (or Register+Verify) to auto-populate {{access_token}} and {{refresh_token}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000/api/v1" },
+    { "key": "access_token", "value": "" },
+    { "key": "refresh_token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "first_name", "value": "Jane", "type": "text" },
+                { "key": "username", "value": "jane_doe", "type": "text" },
+                { "key": "email", "value": "jane@example.com", "type": "text" },
+                { "key": "password", "value": "password123", "type": "text" },
+                { "key": "password_confirmation", "value": "password123", "type": "text" },
+                { "key": "terms_accepted", "value": "1", "type": "text" }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"id\": 1,\n  \"token\": \"PASTE_TOKEN_FROM_EMAIL\"\n}" },
+            "url": { "raw": "{{base_url}}/auth/email/verify", "host": ["{{base_url}}"], "path": ["auth", "email", "verify"] }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.success && json.data && json.data.access_token) {",
+                  "  pm.collectionVariables.set('access_token', json.data.access_token);",
+                  "  pm.collectionVariables.set('refresh_token', json.data.refresh_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"login_identifier\": \"jane@example.com\",\n  \"password\": \"password123\",\n  \"device_name\": \"Postman\"\n}" },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Refresh",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.success && json.data && json.data.access_token) {",
+                  "  pm.collectionVariables.set('access_token', json.data.access_token);",
+                  "  pm.collectionVariables.set('refresh_token', json.data.refresh_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}" },
+            "url": { "raw": "{{base_url}}/auth/refresh", "host": ["{{base_url}}"], "path": ["auth", "refresh"] }
+          }
+        },
+        {
+          "name": "Me",
+          "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{base_url}}/auth/me", "host": ["{{base_url}}"], "path": ["auth", "me"] } }
+        },
+        {
+          "name": "Social Login (Google)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"GOOGLE_ID_TOKEN\",\n  \"device_name\": \"Postman\"\n}" },
+            "url": { "raw": "{{base_url}}/auth/social/google", "host": ["{{base_url}}"], "path": ["auth", "social", "google"] }
+          }
+        },
+        {
+          "name": "Sessions",
+          "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{base_url}}/auth/sessions", "host": ["{{base_url}}"], "path": ["auth", "sessions"] } }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}" },
+            "url": { "raw": "{{base_url}}/auth/logout", "host": ["{{base_url}}"], "path": ["auth", "logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Posts",
+      "item": [
+        { "name": "Feed", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{base_url}}/posts?filter=latest", "host": ["{{base_url}}"], "path": ["posts"], "query": [{ "key": "filter", "value": "latest" }] } } },
+        { "name": "Search", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{base_url}}/posts/search?q=coffee", "host": ["{{base_url}}"], "path": ["posts", "search"], "query": [{ "key": "q", "value": "coffee" }] } } },
+        { "name": "Show", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{base_url}}/posts/1", "host": ["{{base_url}}"], "path": ["posts", "1"] } } },
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "question", "value": "Cats or dogs?", "type": "text" },
+                { "key": "option_one_title", "value": "Cats", "type": "text" },
+                { "key": "option_one_image", "type": "file", "src": [] },
+                { "key": "option_two_title", "value": "Dogs", "type": "text" },
+                { "key": "option_two_image", "type": "file", "src": [] }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/posts", "host": ["{{base_url}}"], "path": ["posts"] }
+          }
+        },
+        {
+          "name": "Vote",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"option\": \"option_one\"\n}" },
+            "url": { "raw": "{{base_url}}/posts/1/vote", "host": ["{{base_url}}"], "path": ["posts", "1", "vote"] }
+          }
+        },
+        {
+          "name": "Share",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"platform\": \"telegram\"\n}" },
+            "url": { "raw": "{{base_url}}/posts/1/share", "host": ["{{base_url}}"], "path": ["posts", "1", "share"] }
+          }
+        },
+        { "name": "Delete", "request": { "method": "DELETE", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{base_url}}/posts/1", "host": ["{{base_url}}"], "path": ["posts", "1"] } } }
+      ]
+    },
+    {
+      "name": "Comments",
+      "item": [
+        { "name": "List", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{base_url}}/posts/1/comments", "host": ["{{base_url}}"], "path": ["posts", "1", "comments"] } } },
+        { "name": "Replies", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{base_url}}/comments/1/replies", "host": ["{{base_url}}"], "path": ["comments", "1", "replies"] } } },
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"content\": \"Great question!\",\n  \"parent_id\": null\n}" },
+            "url": { "raw": "{{base_url}}/posts/1/comments", "host": ["{{base_url}}"], "path": ["posts", "1", "comments"] }
+          }
+        },
+        { "name": "Toggle Like", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{base_url}}/comments/1/like", "host": ["{{base_url}}"], "path": ["comments", "1", "like"] } } }
+      ]
+    },
+    {
+      "name": "Profile",
+      "item": [
+        { "name": "Public Profile", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{base_url}}/users/jane_doe", "host": ["{{base_url}}"], "path": ["users", "jane_doe"] } } },
+        { "name": "Check Username", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{base_url}}/users/check-username?username=newname", "host": ["{{base_url}}"], "path": ["users", "check-username"], "query": [{ "key": "username", "value": "newname" }] } } },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"first_name\": \"Jane\",\n  \"ai_insight_preference\": \"expanded\",\n  \"external_links\": [\"https://example.com\"]\n}" },
+            "url": { "raw": "{{base_url}}/me", "host": ["{{base_url}}"], "path": ["me"] }
+          }
+        },
+        {
+          "name": "Generate AI Picture",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"prompt\": \"a friendly cartoon goat avatar\"\n}" },
+            "url": { "raw": "{{base_url}}/me/profile-picture/generate", "host": ["{{base_url}}"], "path": ["me", "profile-picture", "generate"] }
+          }
+        },
+        { "name": "Export Data", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{base_url}}/me/export", "host": ["{{base_url}}"], "path": ["me", "export"] } } },
+        { "name": "Deactivate", "request": { "method": "DELETE", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{base_url}}/me", "host": ["{{base_url}}"], "path": ["me"] } } }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        { "name": "List", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{base_url}}/notifications", "host": ["{{base_url}}"], "path": ["notifications"] } } },
+        { "name": "Unread Count", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{base_url}}/notifications/unread-count", "host": ["{{base_url}}"], "path": ["notifications", "unread-count"] } } },
+        { "name": "Read All", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{base_url}}/notifications/read-all", "host": ["{{base_url}}"], "path": ["notifications", "read-all"] } } }
+      ]
+    },
+    {
+      "name": "Devices (Push)",
+      "item": [
+        { "name": "List Devices", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{base_url}}/me/devices", "host": ["{{base_url}}"], "path": ["me", "devices"] } } },
+        {
+          "name": "Register Device",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"FCM_DEVICE_TOKEN\",\n  \"platform\": \"android\"\n}" },
+            "url": { "raw": "{{base_url}}/me/devices", "host": ["{{base_url}}"], "path": ["me", "devices"] }
+          }
+        },
+        {
+          "name": "Unregister Device",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"FCM_DEVICE_TOKEN\"\n}" },
+            "url": { "raw": "{{base_url}}/me/devices", "host": ["{{base_url}}"], "path": ["me", "devices"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Meta & Ratings",
+      "item": [
+        { "name": "Config", "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{base_url}}/meta/config", "host": ["{{base_url}}"], "path": ["meta", "config"] } } },
+        { "name": "Ratings", "request": { "auth": { "type": "noauth" }, "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": { "raw": "{{base_url}}/ratings", "host": ["{{base_url}}"], "path": ["ratings"] } } }
+      ]
+    }
+  ]
+}

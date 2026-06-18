@@ -60,6 +60,12 @@ return [
         'graph_url' => 'https://graph.facebook.com',
     ],
 
+    'fcm' => [
+        // Firebase project id and path to a service-account JSON credential file.
+        'project_id' => env('FCM_PROJECT_ID'),
+        'credentials' => env('FCM_CREDENTIALS'),
+    ],
+
     'groq' => [
         'api_key' => env('GROQ_API_KEY'),
         'model' => env('GROQ_MODEL'),

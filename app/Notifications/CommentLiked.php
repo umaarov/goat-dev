@@ -4,6 +4,8 @@ namespace App\Notifications;
 
 use App\Models\Comment;
 use App\Models\User;
+use App\Notifications\Channels\FcmChannel;
+use App\Notifications\Messages\FcmMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
@@ -14,6 +16,7 @@ class CommentLiked extends Notification implements ShouldQueue
     use Queueable;
 
     protected User $liker;
+
     protected Comment $comment;
 
     public function __construct(User $liker, Comment $comment)
@@ -24,7 +27,20 @@ class CommentLiked extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', FcmChannel::class];
+    }
+
+    public function toFcm(object $notifiable): FcmMessage
+    {
+        return FcmMessage::create(
+            title: 'New like',
+            body: "@{$this->liker->username} liked your comment",
+            data: [
+                'type' => 'comment_liked',
+                'comment_id' => $this->comment->id,
+                'post_id' => $this->comment->post_id,
+            ],
+        );
     }
 
     public function toArray(object $notifiable): array
