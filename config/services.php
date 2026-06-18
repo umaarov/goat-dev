@@ -44,7 +44,7 @@ return [
         'access_token_secret' => env('X_ACCESS_TOKEN_SECRET'),
         'client_id' => env('X_CLIENT_ID'),
         'client_secret' => env('X_CLIENT_SECRET'),
-        'redirect' => env('APP_URL') . '/auth/x/callback',
+        'redirect' => env('APP_URL').'/auth/x/callback',
     ],
 
     'github' => [
@@ -66,14 +66,29 @@ return [
         'credentials' => env('FCM_CREDENTIALS'),
     ],
 
+    // DeepSeek handles all TEXT moderation + post context/tag generation.
+    // (DeepSeek is OpenAI-compatible but text-only — see 'groq' below for images.)
+    'deepseek' => [
+        'api_key' => env('DEEPSEEK_API_KEY'),
+        'model' => env('DEEPSEEK_MODEL', 'deepseek-chat'),
+        'base_url' => env('DEEPSEEK_BASE_URL', 'https://api.deepseek.com'),
+        'prompts' => [
+            // Reuse the existing moderation prompts unless DeepSeek-specific ones are set.
+            'text' => env('DEEPSEEK_PROMPT_TEXT', env('GROQ_PROMPT_TEXT')),
+            'url' => env('DEEPSEEK_PROMPT_URL', env('GROQ_PROMPT_URL')),
+            'comment' => env('DEEPSEEK_PROMPT_COMMENT', env('GROQ_PROMPT_COMMENT')),
+            'master' => env('DEEPSEEK_MASTER_PROMPT', env('GROQ_MASTER_PROMPT')),
+        ],
+    ],
+
+    // Groq is now used ONLY for IMAGE (vision) moderation, since DeepSeek has no
+    // vision model. Text moderation lives in 'deepseek' above.
     'groq' => [
         'api_key' => env('GROQ_API_KEY'),
         'model' => env('GROQ_MODEL'),
+        'vision_model' => env('GROQ_VISION_MODEL', env('GROQ_MODEL')),
         'prompts' => [
-            'text' => env('GROQ_PROMPT_TEXT'),
             'image' => env('GROQ_PROMPT_IMAGE'),
-            'url' => env('GROQ_PROMPT_URL'),
-            'comment' => env('GROQ_PROMPT_COMMENT'),
         ],
     ],
 ];

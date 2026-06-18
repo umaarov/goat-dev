@@ -36,53 +36,55 @@ class Post extends Model
         'option_two_percentage',
     ];
 
-    final function user(): BelongsTo
+    final public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
     }
 
-    final function votes(): HasMany
+    final public function votes(): HasMany
     {
         return $this->hasMany(Vote::class);
     }
 
-    final function voters(): BelongsToMany
+    final public function voters(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'votes', 'post_id', 'user_id')
             ->withPivot('vote_option')
             ->withTimestamps();
     }
 
-    final function comments(): HasMany
+    final public function comments(): HasMany
     {
         return $this->hasMany(Comment::class)->orderBy('created_at', 'desc');
     }
 
-    final function shares(): HasMany
+    final public function shares(): HasMany
     {
         return $this->hasMany(Share::class);
     }
 
-    final function getOptionOnePercentageAttribute(): float|int
+    final public function getOptionOnePercentageAttribute(): float|int
     {
         if (empty($this->total_votes) || $this->total_votes == 0) {
             return 0;
         }
+
         return round(($this->option_one_votes / $this->total_votes) * 100, 1);
     }
 
-    final function getOptionTwoPercentageAttribute(): float|int
+    final public function getOptionTwoPercentageAttribute(): float|int
     {
         if (empty($this->total_votes) || $this->total_votes == 0) {
             return 0;
         }
+
         return round(($this->option_two_votes / $this->total_votes) * 100, 1);
     }
 
-    final function scopeWithPostData(Builder $query): void
+    final public function scopeWithPostData(Builder $query): void
     {
         $query->with([
-            'user:id,username,profile_picture',
+            'user:id,username,first_name,last_name,profile_picture',
         ])
             ->withCount([
                 'comments',

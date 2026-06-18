@@ -121,7 +121,7 @@ class PostController extends ApiController
             return $this->error($violation[$field], 422, 'content_rejected', ['errors' => [$field => [$violation[$field]]]]);
         }
 
-        // 2. Groq master task: moderates text AND generates context + tags (mirrors the web).
+        // 2. Text master task (DeepSeek): moderates text AND generates context + tags.
         if ($this->enrichment->isConfigured()) {
             $analysis = $this->enrichment->analyzeText(
                 $request->question,
@@ -137,8 +137,10 @@ class PostController extends ApiController
 
             $generatedContext = $analysis['generated_context'] ?? null;
             $generatedTags = $analysis['generated_tags'] ?? null;
+        }
 
-            // 3. Context-aware vision moderation of both images.
+        // 3. Context-aware vision moderation of both images (Groq).
+        if ($this->enrichment->imageModerationConfigured()) {
             $imageCheck = $this->enrichment->moderateImages(
                 $request->file('option_one_image'),
                 $request->file('option_two_image'),
@@ -208,17 +210,35 @@ class PostController extends ApiController
         }
 
         $lang = $user->locale ?? config('app.locale');
+        $data = $request->only(['question', 'option_one_title', 'option_two_title']);
 
-        foreach (['question', 'option_one_title', 'option_two_title'] as $field) {
-            if ($request->input($field) !== $post->{$field}) {
-                $result = $this->moderation->moderateText($request->input($field), $lang);
-                if (! $result['is_appropriate']) {
-                    return $this->moderationError($field, $result);
-                }
+        // Text moderation via the same DeepSeek master task as store(), so create
+        // and edit use one engine. Only re-run when a text field actually changed;
+        // refresh the AI context/tags from the same call.
+        $textChanged = $request->question !== $post->question
+            || $request->option_one_title !== $post->option_one_title
+            || $request->option_two_title !== $post->option_two_title;
+
+        if ($textChanged && $this->enrichment->isConfigured()) {
+            $analysis = $this->enrichment->analyzeText(
+                $request->question,
+                $request->option_one_title,
+                $request->option_two_title
+            );
+
+            if (isset($analysis['is_safe']) && ! $analysis['is_safe']) {
+                $field = $analysis['violation_field'] ?? 'question';
+
+                return $this->moderationError($field, ['reason' => $analysis['moderation_reason'] ?? null]);
+            }
+
+            if (! empty($analysis['generated_context'])) {
+                $data['ai_generated_context'] = $analysis['generated_context'];
+            }
+            if (! empty($analysis['generated_tags'])) {
+                $data['ai_generated_tags'] = $analysis['generated_tags'];
             }
         }
-
-        $data = $request->only(['question', 'option_one_title', 'option_two_title']);
 
         foreach ([['option_one_image', 'remove_option_one_image', 'option_one_image_lqip'],
             ['option_two_image', 'remove_option_two_image', 'option_two_image_lqip']] as [$imageField, $removeField, $lqipField]) {
@@ -296,11 +316,23 @@ class PostController extends ApiController
             ]);
         }
 
-        Vote::create([
-            'user_id' => $user->id,
-            'post_id' => $post->id,
-            'vote_option' => $request->option,
-        ]);
+        try {
+            Vote::create([
+                'user_id' => $user->id,
+                'post_id' => $post->id,
+                'vote_option' => $request->option,
+            ]);
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            // Concurrent duplicate vote (race) — the votes table's unique
+            // (user_id, post_id) index caught it. Respond like the normal
+            // "already voted" path instead of a 500.
+            $post->refresh();
+            $existing = Vote::where('user_id', $user->id)->where('post_id', $post->id)->first();
+
+            return $this->error(__('messages.error_already_voted'), 409, 'already_voted', [
+                'data' => $this->voteState($post, $existing?->vote_option),
+            ]);
+        }
 
         $post->increment($request->option === 'option_one' ? 'option_one_votes' : 'option_two_votes');
         $post->increment('total_votes');

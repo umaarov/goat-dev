@@ -20,9 +20,22 @@ use Illuminate\Support\Facades\Log;
  */
 class PostEnrichmentService
 {
+    /**
+     * Whether the text "master task" (moderation + context + tags) can run.
+     * This is the DeepSeek text model.
+     */
     public function isConfigured(): bool
     {
-        return ! empty(env('GROQ_API_KEY'));
+        return ! empty(config('services.deepseek.api_key'));
+    }
+
+    /**
+     * Whether image (vision) moderation can run. DeepSeek has no vision model,
+     * so post images are still moderated by Groq.
+     */
+    public function imageModerationConfigured(): bool
+    {
+        return ! empty(config('services.groq.api_key')) && ! empty(config('services.groq.vision_model'));
     }
 
     public function checkLocalBannedWords(array $inputs): ?array
@@ -52,31 +65,32 @@ class PostEnrichmentService
     }
 
     /**
-     * Moderate text and generate context + tags in one call.
+     * Moderate text and generate context + tags in one call (DeepSeek).
      *
      * @return array{is_safe?:bool,violation_field?:string,moderation_reason?:string,generated_context?:string,generated_tags?:string}
      */
     public function analyzeText(string $q, string $o1, string $o2): array
     {
-        $apiKey = env('GROQ_API_KEY');
+        $apiKey = config('services.deepseek.api_key');
         $language = App::getLocale() === 'uz' ? 'Uzbek' : (App::getLocale() === 'ru' ? 'Russian' : 'English');
 
         $prompt = str_replace(
             ['{QUESTION}', '{OPTION_ONE}', '{OPTION_TWO}', '{LANGUAGE}'],
             [addslashes($q), addslashes($o1), addslashes($o2), $language],
-            env('GROQ_MASTER_PROMPT')
+            (string) config('services.deepseek.prompts.master')
         );
 
         try {
-            $response = Http::withToken($apiKey)->post('https://api.groq.com/openai/v1/chat/completions', [
-                'model' => env('GROQ_TEXT_MODEL'),
+            $url = rtrim((string) config('services.deepseek.base_url', 'https://api.deepseek.com'), '/').'/chat/completions';
+            $response = Http::withToken($apiKey)->post($url, [
+                'model' => config('services.deepseek.model', 'deepseek-chat'),
                 'messages' => [['role' => 'user', 'content' => $prompt]],
                 'response_format' => ['type' => 'json_object'],
                 'temperature' => 0.3,
             ]);
 
             if (! $response->successful()) {
-                Log::error('Groq API Error: '.$response->body());
+                Log::error('DeepSeek API Error: '.$response->body());
 
                 return ['is_safe' => true];
             }
@@ -90,7 +104,7 @@ class PostEnrichmentService
 
             return $data ?? ['is_safe' => true];
         } catch (Exception $e) {
-            Log::error('Groq Exception: '.$e->getMessage());
+            Log::error('DeepSeek Exception: '.$e->getMessage());
 
             return ['is_safe' => true];
         }

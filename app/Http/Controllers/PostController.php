@@ -22,7 +22,6 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -47,13 +46,15 @@ class PostController extends Controller
     private GoatSearchClient $searchEngine;
     private \App\Services\PostMediaService $postMediaService;
     private \App\Services\PostEnrichmentService $postEnrichmentService;
+    private \App\Services\ModerationService $moderationService;
 
-    public function __construct(LevenshteinService $levenshteinService, GoatSearchClient $searchEngine, \App\Services\PostMediaService $postMediaService, \App\Services\PostEnrichmentService $postEnrichmentService)
+    public function __construct(LevenshteinService $levenshteinService, GoatSearchClient $searchEngine, \App\Services\PostMediaService $postMediaService, \App\Services\PostEnrichmentService $postEnrichmentService, \App\Services\ModerationService $moderationService)
     {
         $this->levenshteinService = $levenshteinService;
         $this->searchEngine = $searchEngine;
         $this->postMediaService = $postMediaService;
         $this->postEnrichmentService = $postEnrichmentService;
+        $this->moderationService = $moderationService;
 
     }
 
@@ -83,9 +84,9 @@ class PostController extends Controller
             return redirect()->back()->withErrors($violation)->withInput();
         }
 
-        // 3. GROQ MASTER TASK
-        if (!empty(env('GROQ_API_KEY'))) {
-            Log::emergency('[CHECK] 3. STARTING GROQ CHECK');
+        // 3. TEXT MASTER TASK (DeepSeek): moderation + context + tags
+        if ($this->postEnrichmentService->isConfigured()) {
+            Log::emergency('[CHECK] 3. STARTING TEXT MODERATION CHECK');
             $groqResult = $this->postEnrichmentService->analyzeText(
                 $request->question,
                 $request->option_one_title,
@@ -102,8 +103,8 @@ class PostController extends Controller
             $generatedTags = $groqResult['generated_tags'] ?? null;
         }
 
-        // 4. GROQ IMAGE MODERATION (Context-Aware)
-        if (!empty(env('GROQ_API_KEY'))) {
+        // 4. IMAGE MODERATION (Groq vision, context-aware)
+        if ($this->postEnrichmentService->imageModerationConfigured()) {
             $imageCheck = $this->postEnrichmentService->moderateImages(
                 $request->file('option_one_image'),
                 $request->file('option_two_image'),
@@ -321,9 +322,11 @@ class PostController extends Controller
             'option_two_title' => $post->option_two_title,
         ];
 
+        $moderationLanguageCode = App::getLocale();
+
         foreach ($textFieldsToModerate as $field => $newContent) {
             if ($newContent !== $originalPostData[$field]) {
-                // 1. Banned Words Check
+                // 1. Banned Words Check (local)
                 $bannedWordCheck = $this->checkForBannedWords($newContent, $field);
                 if ($bannedWordCheck && !$bannedWordCheck['is_appropriate']) {
                     $moderationErrorMessage = __($bannedWordCheck['translation_key'], $bannedWordCheck['translation_params']);
@@ -331,20 +334,13 @@ class PostController extends Controller
                     return redirect()->back()->withErrors([$field => $moderationErrorMessage])->withInput();
                 }
 
-                // 2. Gemini Text Check
-                if (!empty(env('GROQ_API_KEY'))) {
-                    $geminiTextCheck = $this->moderateTextWithGemini($newContent, $field);
-                    if (!$geminiTextCheck['is_appropriate']) {
-                        $reasonText = $geminiTextCheck['reason'] ?? $geminiTextCheck['category'];
-                        if (str_starts_with($geminiTextCheck['category'], 'ERROR_') || str_starts_with($geminiTextCheck['category'], 'UNCHECKED_')) {
-                            $moderationErrorMessage = __('messages.error_post_moderation_system_issue', ['field' => $field]);
-                            Log::warning('Gemini Text Moderation Service Error during post update.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiTextCheck]));
-                        } else {
-                            $moderationErrorMessage = __('messages.error_post_content_inappropriate', ['field' => $field, 'reason' => $reasonText]);
-                            Log::channel('audit_trail')->info('[POST] [UPDATE] Post update rejected by Gemini text moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $geminiTextCheck['category']]));
-                        }
-                        return redirect()->back()->withErrors([$field => $moderationErrorMessage])->withInput();
-                    }
+                // 2. Text Moderation (DeepSeek)
+                $textCheck = $this->moderationService->moderateText($newContent, $moderationLanguageCode);
+                if (!$textCheck['is_appropriate']) {
+                    $reasonText = $textCheck['reason'] ?? $textCheck['category'];
+                    $moderationErrorMessage = __('messages.error_post_content_inappropriate', ['field' => $field, 'reason' => $reasonText]);
+                    Log::channel('audit_trail')->info('[POST] [UPDATE] Post update rejected by text moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $textCheck['category']]));
+                    return redirect()->back()->withErrors([$field => $moderationErrorMessage])->withInput();
                 }
             }
         }
@@ -354,29 +350,14 @@ class PostController extends Controller
         if ($request->hasFile('option_one_image')) $imagesToModerateOnUpdate['option_one_image'] = $request->file('option_one_image');
         if ($request->hasFile('option_two_image')) $imagesToModerateOnUpdate['option_two_image'] = $request->file('option_two_image');
 
-        // Create the context required for image moderation.
-        $postContextForUpdate = [
-            'question' => $request->input('question'),
-            'option_one_title' => $request->input('option_one_title'),
-            'option_two_title' => $request->input('option_two_title'),
-        ];
-
         foreach ($imagesToModerateOnUpdate as $field => $imageFile) {
-            // Moderate images
-            if (!empty(env('GROQ_API_KEY'))) {
-                // Pass the context to the moderation function.
-                $geminiImageCheck = $this->moderateImageWithGemini($imageFile, $field, $postContextForUpdate);
-                if (!$geminiImageCheck['is_appropriate']) {
-                    $reasonText = $geminiImageCheck['reason'] ?? $geminiImageCheck['category'];
-                    if (str_starts_with($geminiImageCheck['category'], 'ERROR_') || str_starts_with($geminiImageCheck['category'], 'UNCHECKED_')) {
-                        $moderationErrorMessage = __('messages.error_post_image_moderation_system_issue', ['field' => $field]);
-                        Log::warning('Gemini Image Moderation Service Error during post update.', array_merge($logContextBase, ['field' => $field, 'details' => $geminiImageCheck]));
-                    } else {
-                        $moderationErrorMessage = __('messages.error_post_image_inappropriate', ['field' => $field, 'reason' => $reasonText]);
-                        Log::channel('audit_trail')->info('[POST] [UPDATE] Post update rejected by Gemini image moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $geminiImageCheck['category']]));
-                    }
-                    return redirect()->back()->withErrors([$field => $moderationErrorMessage])->withInput();
-                }
+            // Image moderation (Groq vision)
+            $imageCheck = $this->moderationService->moderateImage($imageFile, $moderationLanguageCode);
+            if (!$imageCheck['is_appropriate']) {
+                $reasonText = $imageCheck['reason'] ?? $imageCheck['category'];
+                $moderationErrorMessage = __('messages.error_post_image_inappropriate', ['field' => $field, 'reason' => $reasonText]);
+                Log::channel('audit_trail')->info('[POST] [UPDATE] Post update rejected by image moderation.', array_merge($logContextBase, ['field' => $field, 'reason' => $reasonText, 'category' => $imageCheck['category']]));
+                return redirect()->back()->withErrors([$field => $moderationErrorMessage])->withInput();
             }
         }
         // --- End Moderation Stage for Update ---
@@ -438,136 +419,6 @@ class PostController extends Controller
             }
         }
         return null;
-    }
-
-    private function moderateTextWithGemini(string $textContent, string $contextLabel): array
-    {
-        $apiKey = Config::get('gemini.api_key');
-        $promptTemplate = Config::get('gemini.prompt_template');
-
-        if (!$apiKey || !$promptTemplate) {
-            Log::error('Gemini text moderation config missing.', ['context' => $contextLabel]);
-            return ['is_appropriate' => true, 'reason' => null, 'category' => 'UNCHECKED_CONFIG_ERROR', 'error' => 'Gemini config missing. Content allowed.'];
-        }
-
-        $currentLocale = App::getLocale();
-        $languageNames = [
-            'en' => 'English', 'ru' => 'Russian', 'uz' => 'Uzbek',
-        ];
-        $languageName = $languageNames[$currentLocale] ?? 'English';
-
-        $intermediatePrompt = str_replace("{LANGUAGE_NAME}", $languageName, $promptTemplate);
-        $finalPrompt = str_replace("{COMMENT_TEXT}", addslashes($textContent), $intermediatePrompt);
-
-        $model = Config::get('gemini.model', 'gemini-1.5-flash');
-        $apiUrl = rtrim(Config::get('gemini.api_url'), '/') . '/' . $model . ':generateContent?key=' . $apiKey;
-        $payload = ['contents' => [['parts' => [['text' => $finalPrompt]]]], 'generationConfig' => ['responseMimeType' => 'application/json']];
-
-        try {
-            $response = Http::timeout(15)->post($apiUrl, $payload);
-            if (!$response->successful()) {
-                Log::error('Gemini text API request failed.', ['status' => $response->status(), 'body' => $response->body(), 'context' => $contextLabel]);
-                return ['is_appropriate' => false, 'reason' => 'Text moderation service unavailable.', 'category' => 'ERROR_API_REQUEST', 'error' => 'API request failed'];
-            }
-            $responseData = $response->json();
-            $jsonString = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? null;
-            if (!$jsonString) {
-                Log::error('Gemini text API response format error.', ['response' => $responseData, 'context' => $contextLabel]);
-                return ['is_appropriate' => false, 'reason' => 'Text moderation service error.', 'category' => 'ERROR_API_RESPONSE_FORMAT', 'error' => 'Malformed API response'];
-            }
-            $moderationResult = json_decode($jsonString, true);
-            if (json_last_error() !== JSON_ERROR_NONE || !isset($moderationResult['is_appropriate'])) {
-                Log::error('Gemini text API response parsing error.', ['json_string' => $jsonString, 'context' => $contextLabel]);
-                return ['is_appropriate' => false, 'reason' => 'Text moderation service response error.', 'category' => 'ERROR_API_RESPONSE_PARSE', 'error' => 'Failed to parse result'];
-            }
-            return ['is_appropriate' => (bool)$moderationResult['is_appropriate'], 'reason' => $moderationResult['reason_if_inappropriate'] ?? null, 'category' => $moderationResult['violation_category'] ?? 'UNKNOWN', 'error' => null];
-        } catch (Exception $e) {
-            Log::error('Gemini text moderation exception.', ['message' => $e->getMessage(), 'context' => $contextLabel]);
-            return ['is_appropriate' => false, 'reason' => 'Unexpected error during text moderation.', 'category' => 'ERROR_UNKNOWN', 'error' => $e->getMessage()];
-        }
-    }
-
-    private function moderateImageWithGemini(UploadedFile $imageFile, string $contextLabel, array $postContext): array
-    {
-        $apiKey = Config::get('gemini.api_key');
-        $promptTemplate = Config::get('gemini.image_prompt_template');
-
-        if (!$apiKey || !$promptTemplate) {
-            Log::error('Gemini image moderation config missing.', ['context' => $contextLabel]);
-            return ['is_appropriate' => true, 'reason' => null, 'category' => 'UNCHECKED_CONFIG_ERROR', 'error' => 'Gemini image config missing. Image allowed.'];
-        }
-
-        $currentLocale = App::getLocale();
-        $languageNames = [
-            'en' => 'English', 'ru' => 'Russian', 'uz' => 'Uzbek',
-        ];
-        $languageName = $languageNames[$currentLocale] ?? 'English';
-
-        $optionTitleForContext = ($contextLabel === 'option_one_image')
-            ? $postContext['option_one_title']
-            : $postContext['option_two_title'];
-
-        $intermediatePrompt = str_replace(
-            ['{LANGUAGE_NAME}', '{QUESTION_TEXT}', '{OPTION_TITLE_TEXT}'],
-            [$languageName, addslashes($postContext['question']), addslashes($optionTitleForContext)],
-            $promptTemplate
-        );
-
-        $finalPromptForImage = $intermediatePrompt;
-
-        $model = Config::get('gemini.model', 'gemini-1.5-flash');
-        $apiUrl = rtrim(Config::get('gemini.api_url'), '/') . '/' . $model . ':generateContent?key=' . $apiKey;
-
-        try {
-            $imageData = file_get_contents($imageFile->getRealPath());
-            $base64Image = base64_encode($imageData);
-            $mimeType = $imageFile->getMimeType();
-        } catch (Exception $e) {
-            Log::error('Failed to read or encode image for moderation.', ['message' => $e->getMessage(), 'context' => $contextLabel]);
-            return ['is_appropriate' => false, 'reason' => 'Failed to process image file for moderation.', 'category' => 'ERROR_FILE_PROCESSING', 'error' => $e->getMessage()];
-        }
-
-        $payload = [
-            'contents' => [
-                [
-                    'parts' => [
-                        ['text' => $finalPromptForImage],
-                        [
-                            'inlineData' => [
-                                'mimeType' => $mimeType,
-                                'data' => $base64Image
-                            ]
-                        ]
-                    ]
-                ]
-            ],
-            'generationConfig' => [
-                'responseMimeType' => 'application/json'
-            ]
-        ];
-
-        try {
-            $response = Http::timeout(30)->post($apiUrl, $payload);
-            if (!$response->successful()) {
-                Log::error('Gemini image API request failed.', ['status' => $response->status(), 'body' => $response->body(), 'context' => $contextLabel]);
-                return ['is_appropriate' => false, 'reason' => 'Image moderation service unavailable.', 'category' => 'ERROR_API_REQUEST', 'error' => 'API request failed'];
-            }
-            $responseData = $response->json();
-            $jsonString = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? null;
-            if (!$jsonString) {
-                Log::error('Gemini image API response format error.', ['response' => $responseData, 'context' => $contextLabel]);
-                return ['is_appropriate' => false, 'reason' => 'Image moderation service error.', 'category' => 'ERROR_API_RESPONSE_FORMAT', 'error' => 'Malformed API response'];
-            }
-            $moderationResult = json_decode($jsonString, true);
-            if (json_last_error() !== JSON_ERROR_NONE || !isset($moderationResult['is_appropriate'])) {
-                Log::error('Gemini image API response parsing error.', ['json_string' => $jsonString, 'context' => $contextLabel]);
-                return ['is_appropriate' => false, 'reason' => 'Image moderation service response error.', 'category' => 'ERROR_API_RESPONSE_PARSE', 'error' => 'Failed to parse result'];
-            }
-            return ['is_appropriate' => (bool)$moderationResult['is_appropriate'], 'reason' => $moderationResult['reason_if_inappropriate'] ?? null, 'category' => $moderationResult['violation_category'] ?? 'UNKNOWN_IMAGE', 'error' => null];
-        } catch (Exception $e) {
-            Log::error('Gemini image moderation exception.', ['message' => $e->getMessage(), 'context' => $contextLabel]);
-            return ['is_appropriate' => false, 'reason' => 'Unexpected error during image moderation.', 'category' => 'ERROR_UNKNOWN', 'error' => $e->getMessage()];
-        }
     }
 
     final public function destroy(Post $post): RedirectResponse
@@ -845,72 +696,4 @@ class PostController extends Controller
         return view('posts.show', compact('post'));
     }
 
-    private function generateContextWithGemini(string $question, string $optionOne, string $optionTwo): ?string
-    {
-        $apiKey = Config::get('gemini.api_key');
-        $promptTemplate = Config::get('gemini.context_generation_prompt');
-
-        if (!$apiKey || !$promptTemplate) {
-            Log::error('Gemini context generation config missing.');
-            return null;
-        }
-
-        $prompt = str_replace(
-            ['{QUESTION}', '{OPTION_ONE}', '{OPTION_TWO}'],
-            [addslashes($question), addslashes($optionOne), addslashes($optionTwo)],
-            $promptTemplate
-        );
-
-        $model = Config::get('gemini.model', 'gemini-1.5-flash');
-        $apiUrl = rtrim(Config::get('gemini.api_url'), '/') . '/' . $model . ':generateContent?key=' . $apiKey;
-        $payload = ['contents' => [['parts' => [['text' => $prompt]]]]];
-
-        try {
-            $response = Http::timeout(25)->post($apiUrl, $payload);
-            if (!$response->successful()) {
-                Log::error('Gemini context API request failed.', ['status' => $response->status(), 'body' => $response->body()]);
-                return null;
-            }
-            $responseData = $response->json();
-            return $responseData['candidates'][0]['content']['parts'][0]['text'] ?? null;
-        } catch (Exception $e) {
-            Log::error('Gemini context generation exception.', ['message' => $e->getMessage()]);
-            return null;
-        }
-    }
-
-    private function generateTagsWithGemini(string $question, string $optionOne, string $optionTwo): ?string
-    {
-        $apiKey = Config::get('gemini.api_key');
-        $promptTemplate = Config::get('gemini.tag_generation_prompt');
-
-        if (!$apiKey) {
-            Log::error('Gemini API key is missing for tag generation.');
-            return null;
-        }
-
-        $prompt = str_replace(
-            ['{QUESTION}', '{OPTION_ONE}', '{OPTION_TWO}'],
-            [addslashes($question), addslashes($optionOne), addslashes($optionTwo)],
-            $promptTemplate
-        );
-
-        $model = Config::get('gemini.model', 'gemini-1.5-flash');
-        $apiUrl = rtrim(Config::get('gemini.api_url'), '/') . '/' . $model . ':generateContent?key=' . $apiKey;
-        $payload = ['contents' => [['parts' => [['text' => $prompt]]]]];
-
-        try {
-            $response = Http::timeout(20)->post($apiUrl, $payload);
-            if (!$response->successful()) {
-                Log::error('Gemini tags API request failed.', ['status' => $response->status(), 'body' => $response->body()]);
-                return null;
-            }
-            $responseData = $response->json();
-            $tags = $responseData['candidates'][0]['content']['parts'][0]['text'] ?? null;
-            return $tags ? str_replace(['#', '.', '"'], '', trim($tags)) : null;
-        } catch (Exception $e) {
-            Log::error('Gemini tags generation exception.', ['message' => $e->getMessage()]);
-            return null;
-        }
-    }
 }

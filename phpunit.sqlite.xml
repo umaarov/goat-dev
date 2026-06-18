@@ -34,6 +34,7 @@
         <env name="BROADCAST_CONNECTION" value="null" force="true"/>
         <env name="GROQ_API_KEY" value="" force="true"/>
         <env name="GROQ_MODEL" value="" force="true"/>
+        <env name="DEEPSEEK_API_KEY" value="" force="true"/>
         <env name="FCM_PROJECT_ID" value="" force="true"/>
         <env name="FCM_CREDENTIALS" value="" force="true"/>
         <env name="TELESCOPE_ENABLED" value="false" force="true"/>
