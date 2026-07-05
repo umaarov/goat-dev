@@ -39,7 +39,6 @@
         "laravel-echo": "^2.2.4",
         "laravel-vite-plugin": "^2.0.1",
         "lint-staged": "^16.2.6",
-        "probot": "^14.1.0",
         "pusher-js": "^8.4.0",
         "tailwindcss": "^4.1.15",
         "vite": "^7.1.11"
