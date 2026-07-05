@@ -82,7 +82,7 @@ class PostEnrichmentService
 
         try {
             $url = rtrim((string) config('services.deepseek.base_url', 'https://api.deepseek.com'), '/').'/chat/completions';
-            $response = Http::withToken($apiKey)->post($url, [
+            $response = Http::withToken($apiKey)->timeout(25)->retry(2, 300, throw: false)->post($url, [
                 'model' => config('services.deepseek.model', 'deepseek-chat'),
                 'messages' => [['role' => 'user', 'content' => $prompt]],
                 'response_format' => ['type' => 'json_object'],
@@ -136,7 +136,7 @@ class PostEnrichmentService
         $b64_2 = base64_encode(file_get_contents($img2->getRealPath()));
 
         try {
-            $response = Http::withToken($apiKey)->post('https://api.groq.com/openai/v1/chat/completions', [
+            $response = Http::withToken($apiKey)->timeout(30)->retry(2, 300, throw: false)->post('https://api.groq.com/openai/v1/chat/completions', [
                 'model' => env('GROQ_VISION_MODEL'),
                 'messages' => [
                     [

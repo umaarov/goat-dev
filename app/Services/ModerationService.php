@@ -188,6 +188,7 @@ class ModerationService
 
             $response = Http::withToken($apiKey)
                 ->timeout(20)
+                ->retry(2, 300, throw: false)
                 ->post($url, [
                     'model' => $model,
                     'messages' => $messages,

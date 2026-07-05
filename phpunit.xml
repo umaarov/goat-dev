@@ -20,6 +20,12 @@
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
+        <env name="CACHE_STORE" value="array"/>
+        <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
+        <!-- Never call live external services from tests. -->
+        <env name="DEEPSEEK_API_KEY" value=""/>
+        <env name="GROQ_API_KEY" value=""/>
+        <env name="FCM_PROJECT_ID" value=""/>
     </php>
 </phpunit>
