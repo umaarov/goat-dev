@@ -81,7 +81,6 @@ services: #  traefik:
             - /app/bootstrap/cache
         volumes: #            - ./:/app
             #            - /app/node_modules
-            - /app/vendor
             #            - /app/public/build
             - ./docker/Caddyfile:/etc/caddy/Caddyfile
             - caddy_data:/data
@@ -161,7 +160,6 @@ services: #  traefik:
             GD_WEBP: 1
         volumes:
             #            - ./:/app
-            - /app/vendor
             - /app/public/build
             - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
             - /tmp:/tmp
@@ -198,7 +196,6 @@ services: #  traefik:
             CACHE_STORE: redis
         volumes:
             #            - ./:/app
-            - /app/vendor
             - /app/public/build
             - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
             - goat-storage:/app/storage/app/public
