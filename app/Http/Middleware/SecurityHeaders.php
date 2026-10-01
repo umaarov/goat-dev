@@ -77,13 +77,13 @@ class SecurityHeaders
 
     /**
      * Enforced: nothing but nonced scripts can run (no injected tags, no inline handlers, no javascript: URLs).
-     * 'unsafe-eval' is only there for Alpine's expression engine; 'unsafe-inline' and https: are CSP2
-     * fallbacks that browsers ignore once a nonce is present.
+     * No 'unsafe-eval': Alpine runs its CSP build (logic in public/js/alpine-components.js).
+     * 'unsafe-inline' and https: are CSP2 fallbacks that browsers ignore once a nonce is present.
      */
     private function enforcedPolicy(bool $secure, string $nonce): string
     {
         $directives = [
-            "script-src 'nonce-{$nonce}' 'strict-dynamic' 'unsafe-eval' 'unsafe-inline' https:",
+            "script-src 'nonce-{$nonce}' 'strict-dynamic' 'unsafe-inline' https:",
             "script-src-attr 'none'",
             "worker-src 'self' blob:",
             "object-src 'none'",

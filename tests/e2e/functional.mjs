@@ -124,14 +124,6 @@ await step('sharePost handler fires', async () => {
   return JSON.stringify(reqs.slice(before));
 });
 
-await step('Alpine (needs unsafe-eval) works: delete-modal toggles', async () => {
-  const opener = await page.$('[x-data*="showDeleteModal"] button');
-  if (!opener) return 'n/a (post not owned by this user)';
-  await opener.click(); await sleep(700);
-  const visible = await page.$eval('[x-data*="showDeleteModal"] [x-show="showDeleteModal"]', e => getComputedStyle(e).display !== 'none');
-  if (!visible) throw new Error('modal did not open');
-});
-
 await page.goto(BASE + '/profile/edit', { waitUntil: 'networkidle2' });
 await sleep(800);
 

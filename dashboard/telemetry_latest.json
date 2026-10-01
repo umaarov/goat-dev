@@ -1,212 +1,26 @@
 {
     "debug_tree": {
         "ngrams": [
-            "hic",
-            "ich",
-            "whi"
+            "est",
+            "tes"
         ],
         "tokens": [
-            "which"
+            "test"
         ]
     },
-    "latency_ms": 0.379,
-    "query": "which",
+    "latency_ms": 1.404,
+    "query": "test",
     "results": [
         {
-            "id": 58,
-            "score": 188.7530051718283,
-            "snippet": "which one black white "
+            "id": 4,
+            "score": 0.24253563538406106,
+            "snippet": "Who is the greatest footballer of the modern era? Ronaldo Messi "
         },
         {
-            "id": 54,
-            "score": 188.73671690676167,
-            "snippet": "which one :/ cs2 dota2 "
-        },
-        {
-            "id": 26,
-            "score": 188.67547966661832,
-            "snippet": "Which one ? Javascript Java "
-        },
-        {
-            "id": 1,
-            "score": 180.171182150733,
-            "snippet": "Tea or coffee? Tea Coffee"
-        },
-        {
-            "id": 31,
-            "score": 172.63274727360894,
-            "snippet": "Which one is better this this "
-        },
-        {
-            "id": 45,
-            "score": 172.62531795629138,
-            "snippet": "Which one you prefer Iphone Pixel "
-        },
-        {
-            "id": 18,
-            "score": 172.6190329676262,
-            "snippet": "Which person is stronger Son Father "
-        },
-        {
-            "id": 43,
-            "score": 159.1007058333951,
-            "snippet": "which one is the best hubble james webb "
-        },
-        {
-            "id": 33,
-            "score": 159.08699152741235,
-            "snippet": "which is the best for coding chatgpt gemini "
-        },
-        {
-            "id": 46,
-            "score": 153.10944108015948,
-            "snippet": "Which one you spent more time? Instagram Tik tok "
-        },
-        {
-            "id": 118,
-            "score": 147.40738217198026,
-            "snippet": "Which framework better? FastAPI Django FastAPI Django, web framework, python"
-        },
-        {
-            "id": 39,
-            "score": 142.326226020361,
-            "snippet": "Which is more real today? World War III Civil Wars Everywhere "
-        },
-        {
-            "id": 99,
-            "score": 142.29477419835288,
-            "snippet": "which is the best Hamilton Schumacher Hamilton, Schumacher, F1, racing, motorsport"
-        },
-        {
-            "id": 92,
-            "score": 142.23437015289431,
-            "snippet": "Which one is better? MySQL PostgreSQL MySQL, PostgreSQL, database, SQL, comparison"
-        },
-        {
-            "id": 83,
-            "score": 137.57320218911585,
-            "snippet": "Which brand is better? Nike Adidas Nike, Adidas, sneakers, sportswear, athletic wear"
-        },
-        {
-            "id": 105,
-            "score": 137.51540429740652,
-            "snippet": "Which GPU is better? Nvidia AMD Nvidia, AMD, GPU, Graphics Card, Gaming"
-        },
-        {
-            "id": 53,
-            "score": 137.49754895532146,
-            "snippet": "which code editor is best for developers VS code Jet Brains products "
-        },
-        {
-            "id": 25,
-            "score": 137.49327500585937,
-            "snippet": "Which is the better choice for modern mobile app development KMP Flutter "
-        },
-        {
-            "id": 106,
-            "score": 137.48791841248422,
-            "snippet": "Which CPU is better? Intel AMD (Ryzen) Intel, Ryzen, CPU, processors, AMD"
-        },
-        {
-            "id": 125,
-            "score": 137.47608495064,
-            "snippet": "Which is better? VS Code VS Codium VSCode, VSCodium, code editor, IDE"
-        },
-        {
-            "id": 63,
-            "score": 132.97436798991208,
-            "snippet": "Which is better, Marvel vs DC? Marvel DC Marvel, DC, comics, superhero, fandom"
-        },
-        {
-            "id": 17,
-            "score": 132.97378730549946,
-            "snippet": "Coca-Cola or Milli Cola, which is the best? Coca Cola Milliy Cola "
-        },
-        {
-            "id": 128,
-            "score": 132.90613916246028,
-            "snippet": "Which is the better Linux distro? Ubuntu Fedora Linux, Ubuntu, Fedora, Distro, Comparison"
-        },
-        {
-            "id": 134,
-            "score": 132.90613916246028,
-            "snippet": "Which is better, chess or checkers? Chess Checkers chess, checkers, board games, strategy"
-        },
-        {
-            "id": 126,
-            "score": 128.68628910517631,
-            "snippet": "Which is better code editor? Vim Neovim Vim, Neovim, code editor, text editor, programming"
-        },
-        {
-            "id": 129,
-            "score": 124.83060496480556,
-            "snippet": "Which is better? Honda rebel 1100 Ducati panigale Honda Rebel, Ducati Panigale, Motorcycle, Cruiser,..."
-        },
-        {
-            "id": 82,
-            "score": 124.72615837035322,
-            "snippet": "Which fast food chain dominates worldwide? McDonald's KFC McDonalds, KFC, fast food, restaurants, ch..."
-        },
-        {
-            "id": 110,
-            "score": 124.72615837035322,
-            "snippet": "Which is the better assistant? Alisa Siri AI assistant, Alisa, Siri, voice assistant, virtual assist..."
-        },
-        {
-            "id": 111,
-            "score": 124.72615837035322,
-            "snippet": "Which name carries more revolutionary weight? Lenin Che Guevara Lenin, Che Guevara, revolution, soci..."
-        },
-        {
-            "id": 127,
-            "score": 124.72615837035322,
-            "snippet": "Which one is better for backend apps? Laravel Nest.js Laravel, NestJS, backend, frameworks, nodejs"
-        },
-        {
-            "id": 103,
-            "score": 121.00248536210583,
-            "snippet": "Which is the bigger sporting event? World Cup Olympics World Cup, Olympics, Soccer, Sports, Global e..."
-        },
-        {
-            "id": 109,
-            "score": 121.00248536210583,
-            "snippet": "Which was the greater empire? Roman Empire British Empire Roman Empire, British Empire, empires, his..."
-        },
-        {
-            "id": 68,
-            "score": 121.00248536210583,
-            "snippet": "Which one you use get a job Head hunter LinkedIn headhunter, linkedin, job search, recruitment, netw..."
-        },
-        {
-            "id": 95,
-            "score": 117.49470583574998,
-            "snippet": "Which framework is best for web development? Django Laravel Django, Laravel, Web framework, Python f..."
-        },
-        {
-            "id": 81,
-            "score": 117.49470583574998,
-            "snippet": "Which platform owns short-form content? TikTok YouTube Shorts TikTok, YouTube Shorts, short-form vid..."
-        },
-        {
-            "id": 65,
-            "score": 117.49470583574998,
-            "snippet": "Which medium provides a more immersive and impactful storytelling experience? Books Movies Books, Mo..."
-        },
-        {
-            "id": 133,
-            "score": 114.18457294064245,
-            "snippet": "Which one do you choose and think is more productive? Tik Tok Instagram TikTok, Instagram, productiv..."
-        },
-        {
-            "id": 114,
-            "score": 108.09399247233809,
-            "snippet": "Which film is better: Alice in Borderland or Squid Game? Alice in Borderland Squid Game AliceinBorde..."
-        },
-        {
-            "id": 49,
-            "score": 0.08660254140503831,
-            "snippet": "Dogs or Cats? Dogs Cats "
+            "id": 56,
+            "score": 0.23570225957257904,
+            "snippet": "Who's the greatest chess player? Bobby Fischer Magnus Carlsen "
         }
     ],
-    "timestamp": "14:42:10"
+    "timestamp": "15:13:48"
 }

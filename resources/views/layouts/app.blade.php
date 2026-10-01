@@ -135,8 +135,10 @@
     {{--    <script src="https://code.jquery.com/jquery-3.6.0.min.js"--}}
     {{--            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="--}}
     {{--            crossorigin="anonymous" defer></script>--}}
-    <script nonce="{{ $cspNonce ?? '' }}" src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"
-            integrity="sha256-tgDjY9mdlURNtUrL+y3v/smueSqpmgkim82geOW1VkM="
+    <script nonce="{{ $cspNonce ?? '' }}" src="{{ asset('js/alpine-components.js') }}?v={{ filemtime(public_path('js/alpine-components.js')) }}"></script>
+    {{-- Alpine CSP build: no eval, expressions live in alpine-components.js --}}
+    <script nonce="{{ $cspNonce ?? '' }}" src="https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.14.8/dist/cdn.min.js"
+            integrity="sha256-yY9GKRCH8Pk8nN77aC0SD+HSs9y2Sd6Dz8GtWx+sWOQ="
             crossorigin="anonymous" defer></script>
     {{-- Cropper.js --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css"
@@ -826,7 +828,7 @@
         @endif
 
         @if ($errors->any())
-        const errors = {!! json_encode($errors->all()) !!};
+        const errors = @json($errors->all());
         window.showToast(errors.join('<br>'), 'error');
         @endif
     });

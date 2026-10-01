@@ -6,7 +6,8 @@
     "csp": "node probe.mjs",
     "functional": "node functional.mjs",
     "injection": "node injection.mjs",
-    "sessions": "node sessions.mjs"
+    "sessions": "node sessions.mjs",
+    "alpine": "node alpine.mjs"
   },
   "devDependencies": {
     "puppeteer-core": "^24.43.1"

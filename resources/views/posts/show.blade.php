@@ -16,6 +16,7 @@
 @section('meta_description', Str::limit($post->ai_generated_context ?? $post->question, 160))
 @php $postUrl = route('posts.show.user-scoped', ['username' => $post->user->username, 'post' => $post->id]); @endphp
 @push('schema')
+    @php($breadcrumbTitle = Str::limit($post->question, 50)) {{-- @json splits on commas, so no call with arguments inside it --}}
     <script type="application/ld+json">
         {
             "@@context": "https://schema.org",
@@ -38,18 +39,18 @@
                 {
                     "@@type": "ListItem",
                     "position": 3,
-                    "name": {!! json_encode(Str::limit($post->question, 50)) !!},
+                    "name": @json($breadcrumbTitle),
                     "item": "{{ $postUrl }}"
                 }
             ]
         },
         {
             "@@type": "Question",
-            "name": {!! json_encode($post->question) !!},
+            "name": @json($post->question),
             "upvoteCount": {{ $post->total_votes }},
             "answerCount": 2,
         @if($post->ai_generated_context)
-            "text": {!! json_encode($post->ai_generated_context) !!},
+            "text": @json($post->ai_generated_context),
         @endif
         "dateCreated": "{{ $post->created_at->toIso8601String() }}",
             "author": {
@@ -59,7 +60,7 @@
             },
             "suggestedAnswer": {
                 "@@type": "Answer",
-                "text": {!! json_encode($post->option_one_text) !!},
+                "text": @json($post->option_one_text),
                 "upvoteCount": {{ $post->option_one_votes }},
                 "url": "{{ $postUrl }}#option1"
         @if($post->option_one_image)
@@ -69,7 +70,7 @@
         },
         "acceptedAnswer": {
             "@@type": "Answer",
-            "text": {!! json_encode($post->option_two_text) !!},
+            "text": @json($post->option_two_text),
                 "upvoteCount": {{ $post->option_two_votes }},
                 "url": "{{ $postUrl }}#option2"
         @if($post->option_two_image)

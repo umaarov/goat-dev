@@ -31,6 +31,7 @@ class SecurityWebTest extends TestCase
         // enforced: only nonced scripts, no inline handlers, no plugins, no base/form hijack
         $this->assertMatchesRegularExpression("/script-src 'nonce-[A-Za-z0-9+\\/=]+' 'strict-dynamic'/", $csp);
         $this->assertStringContainsString("script-src-attr 'none'", $csp);
+        $this->assertStringNotContainsString('unsafe-eval', $csp);
         $this->assertStringContainsString("object-src 'none'", $csp);
         $this->assertStringContainsString("base-uri 'self'", $csp);
         $this->assertStringContainsString("form-action 'self'", $csp);
@@ -316,6 +317,18 @@ class SecurityWebTest extends TestCase
         $this->flushSession();
         $this->actingAs($user->fresh())->withSession([\App\Http\Middleware\EnforceSessionRevocation::KEY => $otherDevice])
             ->get('/notifications')->assertRedirect(route('login'));
+    }
+
+    public function test_hostile_post_text_cannot_break_out_of_inline_script_or_json_ld(): void
+    {
+        $evil = '</script><script>window.__x=1</script><!--<script>';
+        $post = \App\Models\Post::factory()->create(['question' => $evil, 'option_one_title' => 'a', 'option_two_title' => 'b']);
+
+        $html = $this->get("/@{$post->user->username}/post/{$post->id}")->assertOk()->getContent();
+
+        $this->assertStringNotContainsString('</script><script>window.__x', $html);
+        $this->assertStringNotContainsString('<!--<script>', $html);
+        $this->assertStringContainsString('\u003C\/script\u003E', $html, 'the title must be present, hex-escaped, inside the JSON-LD');
     }
 
     public function test_forgot_password_is_rate_limited(): void

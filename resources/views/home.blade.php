@@ -33,7 +33,7 @@
                     "position": {{ $loop->iteration }},
                     "item": {
                         "@@type": "Question",
-                        "name": {!! json_encode($post->question) !!},
+                        "name": @json($post->question),
                         "url": "{{ route('posts.show.user-scoped', ['username' => $post->user->username, 'post' => $post->id]) }}"
                     }
                 }

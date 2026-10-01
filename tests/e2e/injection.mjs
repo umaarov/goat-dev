@@ -11,7 +11,7 @@ page.on('dialog', async d => { dialogs.push(d.message()); await (accept ? d.acce
 // 1. Alpine delete modal on an owned post
 await page.goto(`${BASE}/@goat`, { waitUntil: 'networkidle2' }); await sleep(2500);
 try {
-  const opener = await page.$('[x-data*="showDeleteModal"] button');
+  const opener = await page.$('[x-data="deleteModal"] button');
   if (!opener) throw new Error('no owner delete button on /@goat');
   await opener.click(); await sleep(900);
   const open = await page.$$eval('body > div[role="dialog"]', els => els.some(e => getComputedStyle(e).display !== 'none'));

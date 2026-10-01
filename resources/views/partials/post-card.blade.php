@@ -71,9 +71,9 @@
                 <p class="text-xs text-gray-500 dark:text-gray-400">{{ $post->created_at->format('Y-m-d H:i:s') }}</p>
             </div>
             @if ($showManagementOptions && Auth::check() && (int)Auth::id() === (int)$post->user_id)
-                <div x-data="{ showDeleteModal: false }" class="flex justify-end border-gray-200 dark:border-gray-700 pl-4 ml-auto">
+                <div x-data="deleteModal" class="flex justify-end border-gray-200 dark:border-gray-700 pl-4 ml-auto">
 
-                    <button @click="showDeleteModal = true"
+                    <button @click="open"
                             type="button"
                             class="bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900/50 dark:hover:bg-red-900/80 dark:text-red-300 text-sm py-1 px-3 rounded-md transition-colors duration-200 flex items-center gap-1">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -83,23 +83,23 @@
                     </button>
 
                     <template x-teleport="body">
-                        <div x-show="showDeleteModal"
+                        <div x-show="isOpen"
                              style="display: none;"
                              class="fixed inset-0 z-[9999] flex items-center justify-center px-4"
                              role="dialog"
                              aria-modal="true">
 
-                            <div x-show="showDeleteModal"
+                            <div x-show="isOpen"
                                  x-transition:enter="ease-out duration-300"
                                  x-transition:enter-start="opacity-0"
                                  x-transition:enter-end="opacity-100"
                                  x-transition:leave="ease-in duration-200"
                                  x-transition:leave-start="opacity-100"
                                  x-transition:leave-end="opacity-0"
-                                 @click="showDeleteModal = false"
+                                 @click="close"
                                  class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"></div>
 
-                            <div x-show="showDeleteModal"
+                            <div x-show="isOpen"
                                  x-transition:enter="ease-out duration-300"
                                  x-transition:enter-start="opacity-0 scale-95 translate-y-4"
                                  x-transition:enter-end="opacity-100 scale-100 translate-y-0"
@@ -122,7 +122,7 @@
                                 </p>
 
                                 <div class="flex items-center justify-center gap-3">
-                                    <button @click="showDeleteModal = false"
+                                    <button @click="close"
                                             type="button"
                                             class="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors">
                                         {{ __('messages.cancel_button') }}
@@ -147,25 +147,9 @@
 
     <div class="border-b w-full border-gray-200 dark:border-gray-700"></div>
 
-    <div x-data="{
-        isPanelVisible: false,
-        isExpanded: false,
-        showFeatureHint: false
-     }"
-         x-init="
-        const preference = '{{ $insightPreference }}';
-        if (preference !== 'hidden') { isPanelVisible = true; }
-        if (preference === 'expanded') { isExpanded = true; }
-
-        @if(Auth::check())
-            if (!localStorage.getItem('seenAiInsightHint')) {
-                // We show the hint only if the panel is visible on load
-                if (preference !== 'hidden') {
-                    setTimeout(() => { showFeatureHint = true }, 1500);
-                }
-            }
-        @endif
-     "
+    <div x-data="aiInsight"
+         data-preference="{{ $insightPreference }}"
+         data-authed="{{ Auth::check() ? '1' : '0' }}"
          class="pt-4 px-4 font-semibold text-center">
 
         <div>
@@ -173,10 +157,10 @@
                 {{ $post->question }}
 
                 @if($post->ai_generated_context)
-                    <button @click="isPanelVisible = !isPanelVisible"
+                    <button @click="togglePanel"
                             class="transition-colors duration-200 focus:outline-none inline-block align-text-top"
-                            :class="{ 'text-blue-600 dark:text-blue-400': isPanelVisible, 'text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400': !isPanelVisible }"
-                            :title="isPanelVisible ? 'Hide AI context' : 'Show AI context. You can change the default in Settings.'">
+                            :class="panelButtonClass"
+                            :title="panelButtonTitle">
                         <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM9.25 12.75a.75.75 0 001.5 0v-2.5a.75.75 0 00-1.5 0v2.5zM10 6a.75.75 0 01.75.75v.008a.75.75 0 01-1.5 0V6.75A.75.75 0 0110 6z" clip-rule="evenodd" />
                         </svg>
@@ -204,7 +188,7 @@
                                     <span class="font-bold">New!</span> You can now set the default view for these insights in
                                     <a href="{{ route('profile.edit') }}" class="font-bold underline hover:text-blue-900 dark:hover:text-blue-200">Settings</a>.
                                 </p>
-                                <button @click="showFeatureHint = false; localStorage.setItem('seenAiInsightHint', 'true')"
+                                <button @click="dismissHint"
                                         title="Dismiss"
                                         class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 ml-3">
                                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
@@ -218,12 +202,12 @@
                         AI Insight
                     </h3>
 
-                    <div class="relative transition-all duration-500 ease-in-out" :class="{ 'max-h-24 overflow-hidden': !isExpanded, 'max-h-screen': isExpanded }">
+                    <div class="relative transition-all duration-500 ease-in-out" :class="bodyClass">
                         <p class="text-gray-800 dark:text-gray-200 leading-relaxed">{!! nl2br(e($post->ai_generated_context)) !!}</p>
                         <div x-show="!isExpanded" class="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-blue-50 dark:from-blue-900/50 to-transparent"></div>
                     </div>
-                    <button @click="isExpanded = !isExpanded" class="text-blue-700 dark:text-blue-400 hover:underline text-xs font-bold mt-2">
-                        <span x-text="isExpanded ? 'Show less' : 'Show more'"></span>
+                    <button @click="toggleExpanded" class="text-blue-700 dark:text-blue-400 hover:underline text-xs font-bold mt-2">
+                        <span x-text="expandLabel"></span>
                     </button>
                 </div>
             </div>
