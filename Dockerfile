@@ -24,20 +24,19 @@ RUN composer install \
     --no-scripts
 COPY . .
 
-FROM dunglas/frankenphp:php8.4-alpine
+# the native image processor is compiled here so the runtime image carries no compiler or -dev headers
+FROM dunglas/frankenphp:php8.4-alpine AS c_builder
+RUN apk add --no-cache build-base libwebp-dev
+WORKDIR /src
+COPY image_processor_dev/ ./
+RUN gcc -O3 -o image_processor image_processor.c -lwebp -lm
+
+FROM dunglas/frankenphp:php8.4-alpine AS runtime
 RUN apk add --no-cache \
-    build-base \
-    libwebp-dev \
-    libjpeg-turbo-dev \
-    libpng-dev \
-    freetype-dev \
-    freetype \
-    libpng \
+    libwebp \
     libjpeg-turbo \
-    gcc \
-    musl-dev \
-    nodejs \
-    npm \
+    libpng \
+    freetype \
     curl
 
 RUN install-php-extensions \
@@ -56,9 +55,8 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 COPY --from=backend_builder /app/vendor /app/vendor
 COPY --from=frontend_builder /app/public/build /app/public/build
 COPY . /app
+COPY --from=c_builder --chmod=755 /src/image_processor /app/image_processor
 WORKDIR /app
-RUN gcc -O3 -o image_processor image_processor_dev/image_processor.c -lwebp -lm \
-    && chmod +x image_processor
 RUN chmod -R 777 /app/storage /app/bootstrap/cache \
     && rm -f /app/bootstrap/cache/*.php \
     && ln -sfn /app/storage/app/public /app/public/storage
@@ -67,3 +65,10 @@ COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]
+
+# docker-compose.dev.yml: the entrypoint runs `npm install && npm run build` outside production
+FROM runtime AS dev
+RUN apk add --no-cache nodejs npm
+
+# last stage = default target = what production builds
+FROM runtime AS production

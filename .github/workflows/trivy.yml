@@ -1,5 +1,5 @@
 # Trivy Vulnerability Scanner for Containers
-# Scans Docker images for OS package and application dependency vulnerabilities.
+# Builds the image and scans OS packages + app dependencies. Fails on new fixable HIGH/CRITICAL findings.
 
 name: Trivy Container Scan
 permissions:
@@ -10,8 +10,21 @@ on:
   push:
     branches: ["master"]
     paths:
-      - '../../docker-compose.backup.yml'
-      - '**/Dockerfile'
+      - 'Dockerfile'
+      - 'composer.lock'
+      - 'package-lock.json'
+      - 'docker/**'
+      - '.trivyignore'
+  pull_request:
+    paths:
+      - 'Dockerfile'
+      - 'composer.lock'
+      - 'package-lock.json'
+      - 'docker/**'
+      - '.trivyignore'
+  schedule:
+    - cron: '17 4 * * 1'   # weekly: new CVEs appear without any code change
+  workflow_dispatch:
 
 jobs:
   build-and-scan:
@@ -25,16 +38,29 @@ jobs:
         run: |
           docker build -t my-laravel-app:${{ github.sha }} .
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+      - name: Report to the Security tab
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: 'my-laravel-app:${{ github.sha }}'
           format: 'template'
           template: '@/contrib/sarif.tpl'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          trivyignores: '.trivyignore'
 
       - name: Upload Trivy scan results to GitHub Security tab
+        if: always()
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-results.sarif'
+
+      - name: Fail on new fixable HIGH/CRITICAL findings
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: 'my-laravel-app:${{ github.sha }}'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          trivyignores: '.trivyignore'
+          exit-code: '1'

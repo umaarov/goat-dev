@@ -61,7 +61,6 @@ return Application::configure(basePath: dirname(__DIR__))
             CheckRefreshToken::class,
             \App\Http\Middleware\EnforceSessionRevocation::class,
             SetLocale::class,
-//            AddCspHeaders::class,
             UpdateLastActiveTimestamp::class,
             \App\Http\Middleware\ReferralTracker::class,
         ]);

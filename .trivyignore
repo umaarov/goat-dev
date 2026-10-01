@@ -1,0 +1,12 @@
+# Findings we cannot fix ourselves. Each entry expires, so it comes back for review instead of rotting.
+#
+# Embedded Go modules in the upstream dunglas/frankenphp binary (newest php8.4-alpine image, checked 2026-10-01).
+# The Caddyfile loads no OpenAPI validator, SSH server or gRPC xDS client, so none of these paths is reachable.
+# Remove an entry as soon as a rebuilt base image no longer reports it.
+GHSA-r277-6w6q-xmqw exp:2026-12-01
+CVE-2026-76905 exp:2026-12-01
+CVE-2026-77354 exp:2026-12-01
+CVE-2026-56854 exp:2026-12-01
+CVE-2026-84304 exp:2026-12-01
+CVE-2026-84445 exp:2026-12-01
+GHSA-hrxh-6v49-42gf exp:2026-12-01

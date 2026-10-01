@@ -1,6 +1,8 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      target: dev
     volumes:
       - ./:/app
       - ./docker/Caddyfile.dev:/etc/caddy/Caddyfile
@@ -15,7 +17,9 @@ services:
     user: "root"
 
   worker:
-    build: .
+    build:
+      context: .
+      target: dev
     command: php artisan queue:work
     volumes:
       - ./:/app
@@ -23,7 +27,9 @@ services:
       APP_ENV: local
 
   scheduler:
-    build: .
+    build:
+      context: .
+      target: dev
     command: php artisan schedule:work
     volumes:
       - ./:/app
