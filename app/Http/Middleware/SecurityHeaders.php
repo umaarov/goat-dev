@@ -34,7 +34,7 @@ class SecurityHeaders
         $headers->set('X-Frame-Options', 'SAMEORIGIN');
         $headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=(), browsing-topics=()');
-        $headers->set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+        $headers->set('Cross-Origin-Opener-Policy', 'same-origin');
         $headers->set('X-Permitted-Cross-Domain-Policies', 'none');
         $headers->remove('X-Powered-By');
 

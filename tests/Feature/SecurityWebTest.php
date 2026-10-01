@@ -25,6 +25,7 @@ class SecurityWebTest extends TestCase
         $response->assertHeader('X-Content-Type-Options', 'nosniff');
         $response->assertHeader('X-Frame-Options', 'SAMEORIGIN');
         $response->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+        $response->assertHeader('Cross-Origin-Opener-Policy', 'same-origin');
         $this->assertStringContainsString('camera=()', $response->headers->get('Permissions-Policy'));
         $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
 

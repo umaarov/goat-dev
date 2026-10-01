@@ -17,8 +17,13 @@
     file_server
 
     header {
-               Cache-Control "no-cache, no-store, must-revalidate"
-           }
+        ?Cache-Control "no-cache, no-store, must-revalidate"
+        ?X-Content-Type-Options "nosniff"
+        ?Referrer-Policy "strict-origin-when-cross-origin"
+        ?Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=(), browsing-topics=()"
+        -Server
+        defer
+    }
 
     handle /up {
                    respond "Health OK" 200

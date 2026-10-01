@@ -27,13 +27,17 @@ www.goat.uz {
     tls /etc/caddy/certs/goat.uz.pem /etc/caddy/certs/goat.uz.key {
                                                                       protocols tls1.2 tls1.3
                                                                   }
+    # defaults for what PHP does not answer (static files, uploads); ? = only when the app did not already set it
     header {
-               X-Frame-Options "SAMEORIGIN"
-               X-Content-Type-Options "nosniff"
-               Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-               -Server
-               -X-Powered-By
-           }
+        ?X-Frame-Options "SAMEORIGIN"
+        ?X-Content-Type-Options "nosniff"
+        ?Referrer-Policy "strict-origin-when-cross-origin"
+        ?Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=(), browsing-topics=()"
+        ?Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        -Server
+        -X-Powered-By
+        defer
+    }
 
 #    @emptyQuery {
 #                    query ""

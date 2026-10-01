@@ -66,7 +66,6 @@
             textarea.addEventListener('input', () => {
                 clearTimeout(typingTimeout);
                 typingTimeout = setTimeout(() => {
-                    console.log(`[Whisper] Broadcasting 'typing' for post ${postId}`);
                     window.Echo.private(`post.${postId}`).whisper('typing', {
                         name: currentUsername
                     });
@@ -138,7 +137,6 @@
                 const channel = window.Echo.private(`post.${postId}`);
 
                 channel.listen('.NewCommentPosted', (e) => {
-                    console.log('[Echo] Real-time comment received!', e);
                     const newCommentData = e.comment;
                     const commentsSection = document.getElementById(`comments-section-${postId}`);
 
@@ -154,7 +152,6 @@
                 });
 
                 channel.listenForWhisper('typing', (e) => {
-                    console.log(`[Whisper] Received 'typing' event on post ${postId} from:`, e.name); // For debugging
                     const indicator = document.getElementById(`typing-indicator-${postId}`);
 
                     if (!indicator || e.name === currentUsername) {
@@ -274,7 +271,6 @@
             initializeEchoListeners();
 
             document.addEventListener('posts-loaded', () => {
-                console.log('[Event] posts-loaded triggered. Re-initializing scripts.');
                 initializeEchoListeners();
                 initializeImageLoading();
                 updateCommentFormState();
@@ -287,12 +283,10 @@
 
             if ({{ Auth::check() ? 'true' : 'false' }}) {
                 window.Echo.connector.pusher.connection.bind('connected', () => {
-                    console.log('Real-time connection established! Updating comment forms.');
                     updateCommentFormState();
                 });
 
                 window.Echo.connector.pusher.connection.bind('disconnected', () => {
-                    console.log('Real-time connection lost! Updating comment forms.');
                     updateCommentFormState();
                 });
 
@@ -336,7 +330,6 @@
         }
 
         function sharePost(postId) {
-            console.log(`[DEBUG] Attempting to share post #${postId}`);
             const postElement = document.getElementById(`post-${postId}`);
             if (!postElement) return;
 
@@ -360,7 +353,6 @@
                     title: question,
                     url: shareUrl
                 }).catch(error => {
-                    console.log('Error sharing:', error);
                     fallbackShare(shareUrl);
                 });
             } else {
@@ -443,7 +435,6 @@
     }
 
     async function fetchAndShowComment(postId, commentId) {
-        console.log(`[DEBUG] Starting fetchAndShowComment for post #${postId}, comment #${commentId}`);
         const commentsSection = document.getElementById(`comments-section-${postId}`);
         const commentsContainer = commentsSection.querySelector('.comments-list');
         const paginationContainer = document.querySelector(`#pagination-container-${postId}`);
@@ -468,12 +459,10 @@
 
         try {
             const fetchUrl = `/posts/${postId}/comments/context/${commentId}`;
-            console.log(`[DEBUG] Fetching comments from URL: ${fetchUrl}`);
             const contextResponse = await fetch(fetchUrl);
             if (!contextResponse.ok) throw new Error(`Failed to fetch comment context. Status: ${contextResponse.status}`);
             const contextData = await contextResponse.json();
             const targetPage = contextData.comments.current_page;
-            console.log(`[DEBUG] Target comment is on page ${targetPage}. Loading all pages up to it.`);
 
             const pageFetchPromises = [];
             for (let page = 1; page <= targetPage; page++) {
@@ -510,7 +499,6 @@
             setTimeout(() => {
                 const fullCommentId = 'comment-' + commentId;
                 const targetElement = document.getElementById(fullCommentId);
-                console.log(`[DEBUG] Attempting to find final element with ID: ${fullCommentId}. Found:`, targetElement);
 
                 if (targetElement) {
                     scrollToComment(fullCommentId);
@@ -756,33 +744,6 @@
             //         if (!commentData.content.includes(`@${parentUsername}`)) {
             //             replyToHTML = `<a href="#" ${actionAttrs('click', 'scrollToComment', ['comment-' + Number(commentData.parent_id)])} class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
             //         }
-            //     }
-            // }
-
-            // if (isReply) {
-            //     console.log('%c DEBUG: Checking reply logic... ', 'background: #f2f2f2; color: #333;', {
-            //         parent_id: commentData.parent_id,
-            //         root_comment_id: commentData.root_comment_id,
-            //         parent_id_type: typeof commentData.parent_id,
-            //         root_comment_id_type: typeof commentData.root_comment_id,
-            //     });
-            //
-            //     const isNestedReply = commentData.parent_id &&
-            //         commentData.root_comment_id &&
-            //         Number(commentData.parent_id) !== Number(commentData.root_comment_id);
-            //
-            //     console.log(`%c DEBUG: Is this a nested reply? -> ${isNestedReply}`, 'font-weight: bold;');
-            //
-            //     if (isNestedReply) {
-            //         if (commentData.parent && commentData.parent.user) {
-            //             const parentUsername = commentData.parent.user.username;
-            //             if (!commentData.content.includes(`@${parentUsername}`)) {
-            //                 console.log(`%c DEBUG: Decision: ADDING @mention for nested reply.`, 'color: green');
-            //                 replyToHTML = `<a href="#" ${actionAttrs('click', 'scrollToComment', ['comment-' + Number(commentData.parent_id)])} class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
-            //             }
-            //         }
-            //     } else {
-            //         console.log(`%c DEBUG: Decision: NOT adding @mention.`, 'color: orange');
             //     }
             // }
 
@@ -1515,7 +1476,6 @@
             const otherButtonOption = option === 'option_one' ? 'option_two' : 'option_one';
             const otherButton = postElement.querySelector(`button.vote-button[data-option="${otherButtonOption}"]`);
             if (clickedButton.disabled || otherButton.disabled) {
-                console.log('Vote already in progress. Ignoring click.');
                 return;
             }
             if (!clickedButton || !otherButton || clickedButton.disabled) return;

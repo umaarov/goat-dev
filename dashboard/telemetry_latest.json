@@ -1,26 +1,30 @@
 {
     "debug_tree": {
         "ngrams": [
-            "est",
-            "tes"
+            "che",
+            "cke",
+            "eck",
+            "ers",
+            "hec",
+            "ker"
         ],
         "tokens": [
-            "test"
+            "checkers"
         ]
     },
-    "latency_ms": 1.404,
-    "query": "test",
+    "latency_ms": 0.535,
+    "query": "checkers",
     "results": [
         {
-            "id": 4,
-            "score": 0.24253563538406106,
-            "snippet": "Who is the greatest footballer of the modern era? Ronaldo Messi "
+            "id": 134,
+            "score": 15.996299842470778,
+            "snippet": "Which is better, chess or checkers? Chess Checkers chess, checkers, board games, strategy"
         },
         {
-            "id": 56,
-            "score": 0.23570225957257904,
-            "snippet": "Who's the greatest chess player? Bobby Fischer Magnus Carlsen "
+            "id": 121,
+            "score": 0.10716517854980857,
+            "snippet": "Nix or Docker Nix Docker Nix, Docker, Containers, DevOps, Packaging"
         }
     ],
-    "timestamp": "15:13:48"
+    "timestamp": "15:38:31"
 }
