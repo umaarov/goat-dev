@@ -9,7 +9,7 @@
             "which"
         ]
     },
-    "latency_ms": 0.172,
+    "latency_ms": 0.379,
     "query": "which",
     "results": [
         {
@@ -208,5 +208,5 @@
             "snippet": "Dogs or Cats? Dogs Cats "
         }
     ],
-    "timestamp": "13:50:49"
+    "timestamp": "14:42:10"
 }

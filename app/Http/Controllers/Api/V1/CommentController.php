@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Services\CommentReplyPreview;
 use App\Events\NewCommentPosted;
 use App\Http\Requests\Api\V1\StoreCommentRequest;
 use App\Http\Requests\Api\V1\UpdateCommentRequest;
@@ -41,22 +42,14 @@ class CommentController extends ApiController
 
         $comments = $query->paginate($perPage);
 
-        $comments->getCollection()->each(function (Comment $comment) use ($userId) {
-            $this->markLiked($comment);
+        $comments->getCollection()->each(fn (Comment $comment) => $this->markLiked($comment));
 
-            $repliesQuery = $comment->flatReplies()
-                ->withCount('likes')
-                ->with('user:id,username,first_name,last_name,profile_picture', 'parent:id,user_id', 'parent.user:id,username')
-                ->orderBy('created_at', 'asc')
-                ->limit(3);
-
-            if ($userId) {
-                $repliesQuery->with(['likes' => fn ($q) => $q->where('user_id', $userId)]);
-            }
-
-            $replies = $repliesQuery->get()->each(fn (Comment $r) => $this->markLiked($r));
-            $comment->setRelation('flatReplies', $replies->reverse()->values());
-        });
+        CommentReplyPreview::attach(
+            $comments->getCollection(),
+            $userId,
+            'id,username,first_name,last_name,profile_picture',
+            fn (Comment $reply) => $this->markLiked($reply)
+        );
 
         return $this->paginated($comments, CommentResource::class);
     }

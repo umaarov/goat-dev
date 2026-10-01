@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\CommentReplyPreview;
 use App\Events\NewCommentPosted;
 use App\Models\Comment;
 use App\Models\Post;
@@ -46,29 +47,14 @@ class CommentController extends Controller
 
         $comments = $commentsQuery->paginate($perPage);
 
-        $comments->getCollection()->each(function ($comment) use ($userId) {
+        $markLiked = function ($comment) {
             $comment->is_liked_by_current_user = $comment->likes->isNotEmpty();
             unset($comment->likes);
+        };
 
-            $initialRepliesQuery = $comment->flatReplies()
-                ->withCount('likes')
-                ->with('user:id,username,profile_picture', 'parent:id,user_id', 'parent.user:id,username')
-                ->orderBy('created_at', 'asc')
-                ->limit(3);
+        $comments->getCollection()->each($markLiked);
 
-            if ($userId) {
-                $initialRepliesQuery->with(['likes' => fn($q) => $q->where('user_id', $userId)]);
-            }
-
-            $initialReplies = $initialRepliesQuery->get();
-
-            $processedReplies = $initialReplies->each(function ($reply) {
-                $reply->is_liked_by_current_user = $reply->likes->isNotEmpty();
-                unset($reply->likes);
-            });
-
-            $comment->setRelation('flatReplies', $processedReplies->reverse()->values());
-        });
+        CommentReplyPreview::attach($comments->getCollection(), $userId, 'id,username,profile_picture', $markLiked);
 
         return response()->json(['comments' => $comments]);
     }
