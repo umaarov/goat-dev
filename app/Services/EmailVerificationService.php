@@ -41,7 +41,7 @@ class EmailVerificationService
 
     final public function verify(User $user, string $token): bool
     {
-        if ($user->email_verification_token !== $token) {
+        if (!$user->email_verification_token || !hash_equals($user->email_verification_token, $token)) {
             return false;
         }
 

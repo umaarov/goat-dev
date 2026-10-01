@@ -13,6 +13,7 @@ use App\Http\Resources\SessionResource;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\ApiTokenService;
+use App\Support\TimingGuard;
 use App\Services\AvatarService;
 use App\Services\EmailVerificationService;
 use Illuminate\Http\JsonResponse;
@@ -79,8 +80,10 @@ class AuthController extends ApiController
         $user = User::withTrashed()->where($field, $identifier)->first();
 
         // always burn one hash so unknown accounts are indistinguishable by timing
-        $hash = $user?->password ?: self::dummyHash();
-        $valid = Hash::check($request->password, $hash) && $user && $user->password;
+        if (! $user || ! $user->password) {
+            TimingGuard::burn($request->password);
+        }
+        $valid = $user && $user->password && Hash::check($request->password, $user->password);
 
         if (! $valid) {
             Log::channel('audit_trail')->warning('[API] [LOGIN] Failed attempt.', [
@@ -121,13 +124,6 @@ class AuthController extends ApiController
         }
 
         return $this->respondWithTokens($user, $request);
-    }
-
-    private static function dummyHash(): string
-    {
-        static $hash = null;
-
-        return $hash ??= Hash::make(bin2hex(random_bytes(16)));
     }
 
     /**
@@ -216,7 +212,9 @@ class AuthController extends ApiController
      */
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
     {
+        $startedAt = microtime(true);
         Password::sendResetLink($request->only('email'));
+        TimingGuard::padTo($startedAt);
 
         // Always report success to avoid leaking which emails are registered.
         return $this->message(__(Password::RESET_LINK_SENT));

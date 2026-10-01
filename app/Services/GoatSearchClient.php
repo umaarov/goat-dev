@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Log;
 
 class GoatSearchClient
 {
+    private const MAX_RESPONSE_BYTES = 1_048_576;
+
     private string $host;
     private int $port;
     private int $timeout;
@@ -69,11 +71,17 @@ class GoatSearchClient
             return null;
         }
 
+        // a stuck daemon must not hold a PHP worker, and its answer is bounded
+        stream_set_timeout($socket, $this->timeout + 1);
         fwrite($socket, $data);
 
         $responseBuffer = '';
-        while (!feof($socket)) {
-            $responseBuffer .= fgets($socket, 8192);
+        while (!feof($socket) && strlen($responseBuffer) < self::MAX_RESPONSE_BYTES) {
+            $chunk = fgets($socket, 8192);
+            if ($chunk === false || stream_get_meta_data($socket)['timed_out']) {
+                break;
+            }
+            $responseBuffer .= $chunk;
         }
         fclose($socket);
 

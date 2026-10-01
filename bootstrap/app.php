@@ -59,6 +59,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
         $middleware->web(append: [
             CheckRefreshToken::class,
+            \App\Http\Middleware\EnforceSessionRevocation::class,
             SetLocale::class,
 //            AddCspHeaders::class,
             UpdateLastActiveTimestamp::class,

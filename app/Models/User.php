@@ -98,11 +98,19 @@ class User extends Authenticatable
         return $this->hasMany(RefreshToken::class);
     }
 
+    final public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new \App\Notifications\QueuedResetPassword($token));
+    }
+
     /** Kill every long-lived credential: web refresh tokens, mobile refresh tokens, API access tokens. */
     final public function revokeAllCredentials(): void
     {
         $this->refreshTokens()->whereNull('revoked_at')->update(['revoked_at' => now(), 'grace_period_ends_at' => null]);
         $this->tokens()->delete();
+
+        // also ends every live web session; callers that keep the current device re-stamp its session
+        $this->forceFill(['sessions_invalid_before' => time()])->saveQuietly();
     }
 
     final function deviceTokens(): HasMany

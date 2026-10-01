@@ -58,7 +58,7 @@ class PostController extends ApiController
      */
     public function search(Request $request): JsonResponse
     {
-        $term = trim((string) $request->input('q'));
+        $term = is_string($request->input('q')) ? mb_substr(trim($request->input('q')), 0, 100) : '';
 
         if ($term === '') {
             return $this->paginated(

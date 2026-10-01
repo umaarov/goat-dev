@@ -63,7 +63,8 @@ class AuthTokenService
             ->where('token', $hashedToken)
             ->first();
 
-        if (!$token) {
+        // no token, or its user was deactivated/deleted
+        if (!$token || !$token->user) {
             return null;
         }
 

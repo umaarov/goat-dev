@@ -9,7 +9,7 @@ use App\Services\TelegramAuthService;
 use App\Support\ImageGuard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Auth\Notifications\ResetPassword;
+use App\Notifications\QueuedResetPassword;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
@@ -140,7 +140,7 @@ class SecurityApiTest extends TestCase
         // an attacker cannot tell the two apart
         $this->assertSame($known->status(), $unknown->status());
         $this->assertSame($known->json(), $unknown->json());
-        Notification::assertSentTo($user, ResetPassword::class);
+        Notification::assertSentTo($user, QueuedResetPassword::class);
         Notification::assertCount(1);
 
         $this->postJson('/api/v1/auth/password/reset', [
@@ -154,6 +154,33 @@ class SecurityApiTest extends TestCase
         $this->withToken($old['access_token'])->getJson('/api/v1/auth/me')->assertUnauthorized();
         $this->postJson('/api/v1/auth/login', ['login_identifier' => $user->email, 'password' => 'correct-horse-1'])->assertStatus(401);
         $this->postJson('/api/v1/auth/login', ['login_identifier' => $user->email, 'password' => 'a-brand-new-passphrase'])->assertOk();
+    }
+
+    public function test_timing_guard_makes_the_dummy_hash_once_not_on_every_request(): void
+    {
+        Cache::flush();
+        $key = \App\Support\TimingGuard::cacheKey();
+        $this->assertFalse(Cache::has($key));
+
+        \App\Support\TimingGuard::burn('a');
+        $first = Cache::get($key);
+        $this->assertNotEmpty($first);
+
+        \App\Support\TimingGuard::burn('b');
+        $this->assertSame($first, Cache::get($key), 'the dummy hash must be reused, not regenerated');
+    }
+
+    public function test_forgot_password_takes_the_same_minimum_time_for_known_and_unknown_emails(): void
+    {
+        Notification::fake();
+        $user = $this->user();
+
+        foreach ([$user->email, 'ghost@example.com'] as $email) {
+            $started = microtime(true);
+            $this->postJson('/api/v1/auth/password/forgot', ['email' => $email])->assertOk();
+
+            $this->assertGreaterThanOrEqual(0.45, microtime(true) - $started, "{$email} answered too fast");
+        }
     }
 
     public function test_reset_token_table_exists_and_a_token_is_single_use(): void

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\AuthTokenService;
 use App\Services\AvatarService;
+use App\Support\TimingGuard;
 use App\Services\EmailVerificationService;
 use App\Services\TelegramAuthService;
 use Exception;
@@ -594,6 +595,10 @@ class AuthController extends Controller
             'password' => $password,
         ];
 
+        if (!User::where($fieldType, $loginInput)->exists()) {
+            TimingGuard::burn($password);
+        }
+
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
 
@@ -744,6 +749,7 @@ class AuthController extends Controller
     {
         $request->validate(['email' => 'required|email']);
 
+        $startedAt = microtime(true);
         $status = Password::sendResetLink($request->only('email'));
 
         Log::channel('audit_trail')->info('[AUTH] [PASSRESET] Password reset requested.', [
@@ -752,7 +758,9 @@ class AuthController extends Controller
             'status' => $status,
         ]);
 
-        // same answer whether or not the address is registered (no account enumeration)
+        // same answer, in the same time, whether or not the address is registered
+        TimingGuard::padTo($startedAt);
+
         return back()->with('success', __(Password::RESET_LINK_SENT));
     }
 

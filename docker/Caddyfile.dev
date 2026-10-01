@@ -6,6 +6,13 @@
                    resolve_root_symlink
                }
 
+    # /storage is user uploads: images only
+    @storageNonImage {
+        path /storage/*
+        not path *.webp *.jpg *.jpeg *.png *.gif *.avif
+    }
+    respond @storageNonImage 404
+
     try_files {path} {path}/ /index.php?{query}
     file_server
 

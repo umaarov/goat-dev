@@ -30,7 +30,8 @@ class CheckRefreshToken
 
         $tokenModel = $this->authTokenService->getValidToken($refreshToken);
 
-        if (!$tokenModel) {
+        // a token whose user is gone (deactivated/deleted) is as good as invalid
+        if (!$tokenModel || !$tokenModel->user) {
             return $next($request)->withCookie($this->authTokenService->clearCookie());
         }
 

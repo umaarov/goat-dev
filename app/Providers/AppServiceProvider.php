@@ -5,6 +5,9 @@ namespace App\Providers;
 use App\Extensions\SafeFailedJobProvider;
 use App\Models\User;
 use Illuminate\Filesystem\Filesystem;
+use App\Http\Middleware\EnforceSessionRevocation;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\View;
@@ -46,6 +49,13 @@ class AppServiceProvider extends ServiceProvider
 
             $view->with('alternateUrls', $alternateUrls)->with('defaultHreflangUrl', $defaultUrl);
         });
+        // every web login (password, social, refresh cookie) stamps its session
+        Event::listen(Login::class, function () {
+            if (request()->hasSession()) {
+                request()->session()->put(EnforceSessionRevocation::KEY, time());
+            }
+        });
+
         Password::defaults(function () {
             $rule = Password::min((int) config('security.password.min_length', 10))->max(128);
 

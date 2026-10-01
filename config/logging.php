@@ -10,7 +10,8 @@ return [
     'default' => env('LOG_CHANNEL', 'stack'),
 
     'deprecations' => [
-        'channel' => env('LOG_DEPRECATIONS_CHANNEL', 'null'),
+        // a bare `null` in .env becomes PHP null, so fall back to the channel named 'null'
+        'channel' => env('LOG_DEPRECATIONS_CHANNEL') ?: 'null',
         'trace' => env('LOG_DEPRECATIONS_TRACE', false),
     ],
 

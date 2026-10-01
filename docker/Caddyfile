@@ -68,6 +68,13 @@ www.goat.uz {
             }
     respond @hidden 403
 
+    # /storage is user uploads: images only, never an archive, dump or log
+    @storageNonImage {
+        path /storage/*
+        not path *.webp *.jpg *.jpeg *.png *.gif *.avif
+    }
+    respond @storageNonImage 404
+
     @static {
                 file
                 path *.ico *.css *.js *.gif *.jpg *.jpeg *.png *.svg *.woff *.woff2 *.wasm

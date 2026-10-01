@@ -289,8 +289,14 @@ class UserController extends Controller
         return redirect()->route('profile.edit')->with('success', __('messages.session_terminated_successfully'));
     }
 
-    final public function terminateAllOtherSessions(): RedirectResponse
+    final public function terminateAllOtherSessions(Request $request): RedirectResponse
     {
+        // works for any session driver: every other session, refresh token and API token dies
+        $user = Auth::user();
+        $user->revokeAllCredentials();
+        $cookie = app(AuthTokenService::class)->issueToken($user, $request);
+        $request->session()->put(\App\Http\Middleware\EnforceSessionRevocation::KEY, time());
+
         DB::table('sessions')
             ->where('user_id', Auth::id())
             ->where('id', '!=', Session::getId())
@@ -303,7 +309,7 @@ class UserController extends Controller
             'ip_address' => FacadeRequest::ip(),
         ]);
 
-        return redirect()->route('profile.edit')->with('success', __('messages.all_other_sessions_terminated'));
+        return redirect()->route('profile.edit')->with('success', __('messages.all_other_sessions_terminated'))->withCookie($cookie);
     }
 
     final public function edit(): View
@@ -414,6 +420,7 @@ class UserController extends Controller
         $user->revokeAllCredentials();
         $cookie = app(AuthTokenService::class)->issueToken($user, $request);
         $request->session()->regenerate();
+        $request->session()->put(\App\Http\Middleware\EnforceSessionRevocation::KEY, time());
 
         Log::channel('audit_trail')->info('[USER] [UPDATE] User password changed successfully.', [
             'user_id' => $user->id,
@@ -937,6 +944,7 @@ class UserController extends Controller
         Auth::logoutOtherDevices($request->password);
         $user->revokeAllCredentials();
         $cookie = app(AuthTokenService::class)->issueToken($user, $request);
+        $request->session()->put(\App\Http\Middleware\EnforceSessionRevocation::KEY, time());
 
         $request->session()->put('auth.password_confirmed_at', time());
 
@@ -1013,6 +1021,7 @@ class UserController extends Controller
         $user->forceFill(['password' => null])->save();
         $user->revokeAllCredentials();
         $cookie = app(AuthTokenService::class)->issueToken($user, request());
+        request()->session()->put(\App\Http\Middleware\EnforceSessionRevocation::KEY, time());
 
         Log::channel('audit_trail')->info('[USER] [UPDATE] User removed their password.', [
             'user_id' => $user->id, 'ip_address' => request()->ip(),
@@ -1047,7 +1056,7 @@ class UserController extends Controller
 
         $user->save();
         $user->delete();
-
+        $user->revokeAllCredentials();
 
         Auth::logout();
         $request->session()->invalidate();
@@ -1060,7 +1069,9 @@ class UserController extends Controller
                 'ip_address' => $request->ip(),
             ]);
 
-        return redirect('/')->with('success', __('messages.account_deactivated_successfully'));
+        return redirect('/')
+            ->with('success', __('messages.account_deactivated_successfully'))
+            ->withCookie(app(AuthTokenService::class)->clearCookie());
     }
 
     final public function reactivate(Request $request): RedirectResponse

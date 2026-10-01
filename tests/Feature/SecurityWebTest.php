@@ -6,7 +6,7 @@ use App\Models\RefreshToken;
 use App\Models\User;
 use App\Services\AuthTokenService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Auth\Notifications\ResetPassword;
+use App\Notifications\QueuedResetPassword;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
@@ -209,7 +209,7 @@ class SecurityWebTest extends TestCase
         $known->assertSessionHas('success')->assertSessionHasNoErrors();
         $unknown->assertSessionHas('success')->assertSessionHasNoErrors();
         $this->assertSame(session('success'), $known->getSession()->get('success'));
-        Notification::assertSentTo($user, ResetPassword::class);
+        Notification::assertSentTo($user, QueuedResetPassword::class);
         Notification::assertCount(1);
     }
 
@@ -229,6 +229,93 @@ class SecurityWebTest extends TestCase
 
         $this->assertNotNull($stolen->fresh()->revoked_at);
         $this->assertTrue(\Illuminate\Support\Facades\Hash::check('a-brand-new-passphrase', $user->fresh()->password));
+    }
+
+    public function test_deactivation_revokes_credentials_and_the_old_cookie_cannot_crash_or_log_in(): void
+    {
+        $user = User::factory()->create();
+        $cookie = app(AuthTokenService::class)->issueToken($user, \Illuminate\Http\Request::create('/'));
+
+        $this->actingAs($user)
+            ->withSession(['auth.password_confirmed_at' => time()])
+            ->delete('/profile/deactivate')
+            ->assertRedirect('/');
+
+        $this->assertSame(0, RefreshToken::where('user_id', $user->id)->whereNull('revoked_at')->count());
+
+        $this->flushSession();
+        $response = $this->withUnencryptedCookie(AuthTokenService::cookieName(), $cookie->getValue())->get('/about');
+
+        $response->assertOk();
+        $response->assertCookieExpired(AuthTokenService::cookieName());
+        $this->assertGuest();
+    }
+
+    public function test_verification_token_is_compared_safely(): void
+    {
+        $service = new \App\Services\EmailVerificationService();
+        $user = User::factory()->unverified()->create(['email_verification_token' => 'right-token']);
+
+        $this->assertFalse($service->verify($user, 'wrong-token'));
+        $this->assertFalse($service->verify($user, ''));
+        $this->assertNull($user->fresh()->email_verified_at);
+        $this->assertTrue($service->verify($user, 'right-token'));
+    }
+
+    public function test_sessions_issued_before_a_revocation_are_logged_out_but_the_current_one_survives(): void
+    {
+        $user = User::factory()->create();
+
+        $old = time() - 100;
+        $user->forceFill(['sessions_invalid_before' => time() - 10])->saveQuietly();
+
+        // issued before the cutoff: dead
+        $this->actingAs($user)->withSession([\App\Http\Middleware\EnforceSessionRevocation::KEY => $old])
+            ->get('/notifications')->assertRedirect(route('login'));
+        $this->assertGuest();
+
+        // unstamped (pre-feature) session with a cutoff: also dead
+        $this->flushSession();
+        $this->actingAs($user)->get('/notifications')->assertRedirect(route('login'));
+
+        // issued after the cutoff: fine
+        $this->flushSession();
+        $this->actingAs($user)->withSession([\App\Http\Middleware\EnforceSessionRevocation::KEY => time()])
+            ->get('/notifications')->assertOk();
+    }
+
+    public function test_logging_in_stamps_the_session_and_unrevoked_users_are_not_disturbed(): void
+    {
+        $user = User::factory()->create(['password' => bcrypt('correct-horse-1'), 'email' => 'stamp@example.com']);
+
+        $this->post('/login', ['login_identifier' => 'stamp@example.com', 'password' => 'correct-horse-1']);
+
+        $this->assertAuthenticated();
+        $this->assertNotNull(session(\App\Http\Middleware\EnforceSessionRevocation::KEY));
+        $this->get('/about')->assertOk();
+        $this->assertAuthenticated();
+    }
+
+    public function test_log_out_other_devices_really_ends_other_sessions_with_the_redis_style_driver(): void
+    {
+        config(['session.driver' => 'array']);
+        $user = User::factory()->create();
+        $request = \Illuminate\Http\Request::create('/');
+        app(AuthTokenService::class)->issueToken($user, $request);
+        $otherDevice = time() - 500;
+
+        $response = $this->actingAs($user)
+            ->withSession(['auth.password_confirmed_at' => time(), \App\Http\Middleware\EnforceSessionRevocation::KEY => time() - 5])
+            ->post('/profile/sessions/terminate-all');
+
+        $response->assertRedirect(route('profile.edit'));
+        $response->assertCookie(AuthTokenService::cookieName());
+        $this->assertSame(1, RefreshToken::where('user_id', $user->id)->whereNull('revoked_at')->count(), 'only this device keeps a refresh token');
+
+        // the other device's old session is rejected
+        $this->flushSession();
+        $this->actingAs($user->fresh())->withSession([\App\Http\Middleware\EnforceSessionRevocation::KEY => $otherDevice])
+            ->get('/notifications')->assertRedirect(route('login'));
     }
 
     public function test_forgot_password_is_rate_limited(): void

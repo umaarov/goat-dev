@@ -36,3 +36,19 @@ artisan-optimize:
 
 
 .PHONY: all up down stop logs artisan composer npm test setup composer-install artisan-migrate artisan-optimize
+
+# local stack (docker-compose.full-local.yml). artisan/composer/tests must run in the container, not on the host
+LOCAL = docker compose -f docker-compose.full-local.yml
+
+local-up:
+	$(LOCAL) up -d
+local-down:
+	$(LOCAL) down
+local-artisan:
+	$(LOCAL) exec app php artisan $(ARGS)
+local-test:
+	$(LOCAL) --profile tools run --rm test
+local-restore:
+	./docker/local-restore.sh
+
+.PHONY: local-up local-down local-artisan local-test local-restore
