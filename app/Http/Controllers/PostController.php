@@ -569,7 +569,7 @@ class PostController extends Controller
 
     final public function search(Request $request): View|JsonResponse
     {
-        $queryTerm = $request->input('q');
+        $queryTerm = is_string($request->input('q')) ? mb_substr(trim($request->input('q')), 0, 100) : null;
         $perPage = 15;
 
         if (!$queryTerm) {
@@ -584,11 +584,12 @@ class PostController extends Controller
         }
 
         $soundexCode = soundex($queryTerm);
+        $likeTerm = addcslashes($queryTerm, '\\%_');
         $candidateUsers = User::query()
-            ->where(function (Builder $subQuery) use ($queryTerm, $soundexCode) {
-                $subQuery->where('username', 'LIKE', "%{$queryTerm}%")
+            ->where(function (Builder $subQuery) use ($likeTerm, $soundexCode) {
+                $subQuery->where('username', 'LIKE', "%{$likeTerm}%")
                     ->orWhereRaw('SOUNDEX(username) = ?', [$soundexCode])
-                    ->orWhere('first_name', 'LIKE', "%{$queryTerm}%")
+                    ->orWhere('first_name', 'LIKE', "%{$likeTerm}%")
                     ->orWhereRaw('SOUNDEX(first_name) = ?', [$soundexCode]);
             })
             ->limit(50)
@@ -606,7 +607,7 @@ class PostController extends Controller
             $ids = $this->searchEngine->search($queryTerm);
 
             if (!empty($ids)) {
-                $idsString = implode(',', $ids);
+                $idsString = implode(',', array_map('intval', $ids));
 
                 $posts = Post::query()->withPostData()
                     ->whereIn('id', $ids)

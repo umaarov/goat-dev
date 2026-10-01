@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\ImageGuard;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
@@ -45,6 +46,7 @@ class PostMediaService
         $mainImageFilename = $baseFilename.'.webp';
         $mainImagePath = $directory.'/'.$mainImageFilename;
         $tempPath = $uploadedFile->getRealPath();
+        ImageGuard::assertSafe($tempPath);
         $finalStoragePath = Storage::disk('public')->path($mainImagePath);
 
         $binaryPath = base_path('image_processor');
@@ -62,7 +64,8 @@ class PostMediaService
                     self::LQIP_WIDTH,
                     self::LQIP_QUALITY
                 );
-                $lqipBase64 = exec($command, $output, $returnCode);
+                // CPU and memory caps for the native decoder
+                $lqipBase64 = exec('ulimit -t 15 -v 2000000; exec '.$command, $output, $returnCode);
                 if ($returnCode === 0) {
                     return ['main' => $mainImagePath, 'lqip' => 'data:image/jpeg;base64,'.$lqipBase64];
                 }

@@ -12,25 +12,31 @@ use Symfony\Component\HttpFoundation\Cookie as SymfonyCookie;
 
 class AuthTokenService
 {
-    private const COOKIE_NAME = 'refresh_token';
     private int $tokenLifetimeDays;
     private int $refreshWithinHours;
-    private int $gracePeriodSeconds = 60;
+    private int $gracePeriodSeconds;
 
     public function __construct()
     {
-        $this->tokenLifetimeDays = config('auth.refresh_token_lifetime', 90);
-        $this->refreshWithinHours = config('auth.refresh_within_hours', 12);
+        $this->tokenLifetimeDays = (int) config('auth.refresh_token_lifetime', 90);
+        $this->refreshWithinHours = (int) config('auth.refresh_within_hours', 12);
+        $this->gracePeriodSeconds = (int) config('security.refresh.grace_seconds', 10);
+    }
+
+    // __Host- pins the cookie to this exact host: no Domain, Path=/, Secure
+    public static function cookieName(): string
+    {
+        return config('session.secure') ? '__Host-refresh_token' : 'refresh_token';
     }
 
     public function revokeAllTokensForUser(User $user): void
     {
-        $user->refreshTokens()->update(['revoked_at' => now()]);
+        $user->revokeAllCredentials();
     }
 
     public function validateAndExtendSession(Request $request): ?SymfonyCookie
     {
-        $refreshToken = $request->cookie(self::COOKIE_NAME);
+        $refreshToken = $request->cookie(self::cookieName());
 
         if (!$refreshToken) {
             return null;
@@ -83,12 +89,12 @@ class AuthTokenService
         return $token;
     }
 
-    public function rotateToken(RefreshToken $oldToken, Request $request): SymfonyCookie
+    // null when another request already rotated this token
+    public function rotateToken(RefreshToken $oldToken, Request $request): ?SymfonyCookie
     {
-        $oldToken->update([
-            'revoked_at' => now(),
-            'grace_period_ends_at' => now()->addSeconds($this->gracePeriodSeconds)
-        ]);
+        if (!$this->claim($oldToken)) {
+            return null;
+        }
 
         return $this->issueToken($oldToken->user, $request);
     }
@@ -105,19 +111,16 @@ class AuthTokenService
 
     public function clearCookie(): SymfonyCookie
     {
-        $isSecure = config('session.secure', false);
-        $sameSite = $isSecure ? 'None' : 'Lax';
-
         return Cookie::make(
-            self::COOKIE_NAME,
+            self::cookieName(),
             null,
             -2628000,
             '/',
             config('session.domain'),
-            $isSecure,
+            (bool) config('session.secure', false),
             true,
             false,
-            $sameSite
+            'Lax'
         );
     }
 
@@ -130,8 +133,7 @@ class AuthTokenService
         }
 
         if ($tokenModel->expires_at->diffInHours(now()) <= $this->refreshWithinHours) {
-            $this->revokeToken($tokenModel);
-            return $this->issueToken($tokenModel->user, $request);
+            return $this->rotateToken($tokenModel, $request);
         }
 
         return null;
@@ -145,7 +147,6 @@ class AuthTokenService
         RefreshToken::where('user_id', $user->id)
             ->where('ip_address', $request->ip())
             ->where('user_agent', $request->userAgent())
-            ->where('id', '!=', $request->input('current_token_id'))
             ->whereNull('revoked_at')
             ->update(['revoked_at' => now()]);
 
@@ -167,33 +168,32 @@ class AuthTokenService
 
     public function createCookie(string $plainTextToken): SymfonyCookie
     {
-        $isSecure = config('session.secure', false);
-        $sameSite = $isSecure ? 'None' : 'Lax';
-
         return Cookie::make(
-            self::COOKIE_NAME,
+            self::cookieName(),
             $plainTextToken,
             $this->tokenLifetimeDays * 24 * 60,
             '/',
             config('session.domain'),
-            $isSecure,
+            (bool) config('session.secure', false),
             true,
             false,
-            $sameSite
+            'Lax'
         );
-    }
-
-    private function revokeTokenFamily(RefreshToken $token): void
-    {
-        RefreshToken::where('user_id', $token->user_id)
-            ->where('ip_address', $token->ip_address)
-            ->where('user_agent', $token->user_agent)
-            ->whereNull('revoked_at')
-            ->update(['revoked_at' => now()]);
     }
 
     public function shouldRotate(RefreshToken $token): bool
     {
         return $token->created_at->diffInHours(now()) >= $this->refreshWithinHours;
+    }
+
+    // atomic: only one concurrent request can win the rotation
+    private function claim(RefreshToken $token): bool
+    {
+        return RefreshToken::whereKey($token->id)
+                ->whereNull('revoked_at')
+                ->update([
+                    'revoked_at' => now(),
+                    'grace_period_ends_at' => now()->addSeconds($this->gracePeriodSeconds),
+                ]) === 1;
     }
 }

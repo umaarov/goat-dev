@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\RefreshToken;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -24,12 +25,13 @@ class ApiTokenService
 
     private int $refreshTokenDays;
 
-    private int $gracePeriodSeconds = 60;
+    private int $gracePeriodSeconds;
 
     public function __construct()
     {
-        $this->accessTokenMinutes = (int) config('auth.api_access_token_minutes', 60);
+        $this->accessTokenMinutes = (int) config('auth.api_access_token_minutes', 15);
         $this->refreshTokenDays = (int) config('auth.refresh_token_lifetime', 90);
+        $this->gracePeriodSeconds = (int) config('security.refresh.grace_seconds', 10);
     }
 
     /**
@@ -60,39 +62,46 @@ class ApiTokenService
      */
     public function refresh(string $plainRefreshToken, Request $request): ?array
     {
-        $token = $this->findToken($plainRefreshToken);
-
-        if (! $token) {
+        if ($plainRefreshToken === '') {
             return null;
         }
 
-        if ($token->revoked_at) {
-            // Reuse of an already-rotated token outside the grace period =>
-            // assume token theft and nuke the whole family.
-            if (! $token->grace_period_ends_at || $token->grace_period_ends_at->isPast()) {
+        // row lock: two concurrent refreshes with one token cannot both rotate it
+        return DB::transaction(function () use ($plainRefreshToken, $request) {
+            $token = RefreshToken::with('user')
+                ->where('token', hash('sha256', $plainRefreshToken))
+                ->lockForUpdate()
+                ->first();
+
+            if (! $token || ! $token->user) {
+                return null;
+            }
+
+            if ($token->revoked_at && (! $token->grace_period_ends_at || $token->grace_period_ends_at->isPast())) {
                 Log::channel('audit_trail')->warning('[API] [TOKEN_THEFT] Revoked refresh token reused. Revoking all sessions.', [
                     'user_id' => $token->user_id,
                     'token_id' => $token->id,
                 ]);
-                $token->user->refreshTokens()->update(['revoked_at' => now()]);
+                $token->user->revokeAllCredentials();
 
                 return null;
             }
-        }
 
-        if ($token->expires_at->isPast()) {
-            $token->update(['revoked_at' => now()]);
+            if ($token->expires_at->isPast()) {
+                $token->update(['revoked_at' => now()]);
 
-            return null;
-        }
+                return null;
+            }
 
-        // Rotate: revoke the old token with a short grace window, issue a new pair.
-        $token->update([
-            'revoked_at' => now(),
-            'grace_period_ends_at' => now()->addSeconds($this->gracePeriodSeconds),
-        ]);
+            if (! $token->revoked_at) {
+                $token->update([
+                    'revoked_at' => now(),
+                    'grace_period_ends_at' => now()->addSeconds($this->gracePeriodSeconds),
+                ]);
+            }
 
-        return $this->issueTokens($token->user, $request);
+            return $this->issueTokens($token->user, $request);
+        });
     }
 
     /**
@@ -114,7 +123,7 @@ class ApiTokenService
      */
     public function revokeAllRefreshTokens(User $user): void
     {
-        $user->refreshTokens()->whereNull('revoked_at')->update(['revoked_at' => now()]);
+        $user->revokeAllCredentials();
     }
 
     /**
@@ -142,16 +151,5 @@ class ApiTokenService
         ]);
 
         return $plainTextToken;
-    }
-
-    private function findToken(string $plainTextToken): ?RefreshToken
-    {
-        if (empty($plainTextToken)) {
-            return null;
-        }
-
-        return RefreshToken::with('user')
-            ->where('token', hash('sha256', $plainTextToken))
-            ->first();
     }
 }

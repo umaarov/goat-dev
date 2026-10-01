@@ -33,7 +33,7 @@ class DebugRefreshTokenTest extends TestCase
         $response->assertRedirect();
         $response->assertCookie('refresh_token');
 
-        $cookie = $response->getCookie('refresh_token');
+        $cookie = $response->getCookie('refresh_token', false);
         $this->assertNotNull($cookie);
         $this->assertNotEmpty($cookie->getValue());
 
@@ -54,13 +54,13 @@ class DebugRefreshTokenTest extends TestCase
         $this->assertGuest();
         echo "3. Session cleared. User is guest.\n";
 
-        $response = $this->withCookie('refresh_token', $cookie->getValue())
+        $response = $this->withUnencryptedCookie('refresh_token', $cookie->getValue())
             ->get('/');
 
         echo "4. Made request with refresh token.\n";
         echo "Status: {$response->getStatusCode()}\n";
 
-        $newCookie = $response->getCookie('refresh_token');
+        $newCookie = $response->getCookie('refresh_token', false);
         if ($newCookie) {
             echo "New cookie issued: Yes\n";
             echo "New cookie same as old: " . ($newCookie->getValue() === $cookie->getValue() ? 'Yes' : 'No') . "\n";
@@ -90,10 +90,10 @@ class DebugRefreshTokenTest extends TestCase
             'password' => 'password123',
         ]);
 
-        $cookie = $response->getCookie('refresh_token');
+        $cookie = $response->getCookie('refresh_token', false);
 
         $this->assertEquals(config('session.secure'), $cookie->isSecure());
-        $this->assertEquals(config('session.same_site'), $cookie->getSameSite());
+        $this->assertEqualsIgnoringCase((string) config('session.same_site'), $cookie->getSameSite());
         $this->assertTrue($cookie->isHttpOnly());
 
         echo "Cookie configuration check:\n";

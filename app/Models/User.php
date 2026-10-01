@@ -98,6 +98,13 @@ class User extends Authenticatable
         return $this->hasMany(RefreshToken::class);
     }
 
+    /** Kill every long-lived credential: web refresh tokens, mobile refresh tokens, API access tokens. */
+    final public function revokeAllCredentials(): void
+    {
+        $this->refreshTokens()->whereNull('revoked_at')->update(['revoked_at' => now(), 'grace_period_ends_at' => null]);
+        $this->tokens()->delete();
+    }
+
     final function deviceTokens(): HasMany
     {
         return $this->hasMany(DeviceToken::class);

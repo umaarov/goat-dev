@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Api\V1;
 
+use Illuminate\Validation\Rules\Password;
+
 class RegisterRequest extends ApiFormRequest
 {
     public function rules(): array
@@ -20,7 +22,7 @@ class RegisterRequest extends ApiFormRequest
                 'not_regex:/(.)\1{3,}/',
             ],
             'email' => 'required|string|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => ['required', 'string', Password::defaults(), 'confirmed'],
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'terms_accepted' => 'accepted',
         ];

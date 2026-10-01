@@ -41,7 +41,7 @@ class SocialAccountService
         }
 
         // 2. Known email -> link the provider to the existing account.
-        if ($data->email) {
+        if ($data->email && $data->emailVerified) {
             $user = User::where('email', $data->email)->first();
             if ($user) {
                 $user->{$idColumn} = $data->id;
@@ -99,7 +99,7 @@ class SocialAccountService
         $firstName = $nameParts[0] ?: 'User';
         $lastName = $nameParts[1] ?? null;
 
-        $email = $data->email ?: $data->id."@{$provider}-user.local";
+        $email = ($data->email && $data->emailVerified) ? $data->email : $data->id."@{$provider}-user.local";
         if (User::where('email', $email)->exists()) {
             $email = $data->id.'_'.Str::random(5)."@{$provider}-user.local";
         }

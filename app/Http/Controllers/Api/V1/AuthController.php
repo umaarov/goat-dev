@@ -78,13 +78,21 @@ class AuthController extends ApiController
 
         $user = User::withTrashed()->where($field, $identifier)->first();
 
-        if (! $user || ! $user->password || ! Hash::check($request->password, $user->password)) {
+        // always burn one hash so unknown accounts are indistinguishable by timing
+        $hash = $user?->password ?: self::dummyHash();
+        $valid = Hash::check($request->password, $hash) && $user && $user->password;
+
+        if (! $valid) {
             Log::channel('audit_trail')->warning('[API] [LOGIN] Failed attempt.', [
-                'identifier' => $identifier,
+                'identifier_hash' => substr(hash('sha256', strtolower($identifier)), 0, 16),
                 'ip' => $request->ip(),
             ]);
 
             return $this->error(__('messages.error_invalid_login_credentials'), 401, 'invalid_credentials');
+        }
+
+        if (Hash::needsRehash($user->password)) {
+            $user->forceFill(['password' => $request->password])->save();
         }
 
         // Reactivate a soft-deleted account on successful login (within 30 days), mirroring the web flow.
@@ -113,6 +121,13 @@ class AuthController extends ApiController
         }
 
         return $this->respondWithTokens($user, $request);
+    }
+
+    private static function dummyHash(): string
+    {
+        static $hash = null;
+
+        return $hash ??= Hash::make(bin2hex(random_bytes(16)));
     }
 
     /**
@@ -216,6 +231,7 @@ class AuthController extends ApiController
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user, string $password) {
                 $user->forceFill(['password' => Hash::make($password)])->save();
+                $user->revokeAllCredentials();
             }
         );
 

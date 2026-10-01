@@ -18,10 +18,10 @@ Route::get('/language/{locale}', [LocaleController::class, 'setLocale'])->name('
 
 Route::middleware('guest')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
-    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register');
 
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 });
 
 Route::get('/auth/google', [AuthController::class, 'googleRedirect'])->name('auth.google');
@@ -47,19 +47,19 @@ Route::get('/auth/github/redirect', [AuthController::class, 'githubRedirect'])->
 Route::get('/auth/github/callback', [AuthController::class, 'githubCallback']);
 
 Route::get('/', [PostController::class, 'index'])->name('home')->middleware('cache.response:10');
-Route::get('/search', [PostController::class, 'search'])->name('search');
+Route::get('/search', [PostController::class, 'search'])->name('search')->middleware('throttle:search');
 //Route::get('/p/{id}/{slug?}', [PostController::class, 'showBySlug'])->name('posts.showSlug')->middleware('cache.response:60');
 Route::get('/@{username}/post/{post}', [PostController::class, 'showUserPost'])
     ->name('posts.show.user-scoped')
     ->where('post', '[0-9]+');
 
 Route::get('/@{username}', [UserController::class, 'showProfile'])->name('profile.show');
-Route::get('/check-username', [UserController::class, 'checkUsername'])->name('check.username');
+Route::get('/check-username', [UserController::class, 'checkUsername'])->name('check.username')->middleware('throttle:search');
 
 Route::get('forgot-password', [AuthController::class, 'showLinkRequestForm'])->name('password.request');
-Route::post('forgot-password', [AuthController::class, 'sendResetLinkEmail'])->name('password.email');
+Route::post('forgot-password', [AuthController::class, 'sendResetLinkEmail'])->name('password.email')->middleware('throttle:password-reset');
 Route::get('reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
-Route::post('reset-password', [AuthController::class, 'reset'])->name('password.update');
+Route::post('reset-password', [AuthController::class, 'reset'])->name('password.update')->middleware('throttle:password-reset');
 
 
 Route::view('about', 'about')->name('about')->middleware('cache.response:1440');
@@ -71,7 +71,12 @@ Route::view('contribution', 'contribution')->name('contribution')->middleware('c
 Route::view('privacy-policy', 'privacy')->name('privacy')->middleware('cache.response:1440');
 
 Route::get('/notifications/unsubscribe/{token}', [NotificationController::class, 'unsubscribe'])
-    ->name('notifications.unsubscribe');
+    ->name('notifications.unsubscribe')
+    ->middleware('throttle:search');
+
+Route::post('/csp-report', \App\Http\Controllers\CspReportController::class)
+    ->middleware('throttle:csp-report')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]);
 
 
 //Route::get('/sss', SssController::class)->name('sss.show');
@@ -82,7 +87,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/profile/edit', 'edit')->name('profile.edit');
         Route::put('/profile/update', 'update')->name('profile.update');
         Route::get('/profile/change-password', 'showChangePasswordForm')->name('password.change.form');
-        Route::post('/profile/change-password', 'changePassword')->name('password.change');
+        Route::post('/profile/change-password', 'changePassword')->name('password.change')->middleware('throttle:sensitive');
         Route::get('/@{username}/posts-data', 'getUserPosts')->name('profile.posts.data');
         Route::get('/@{username}/voted-data', 'getUserVotedPosts')->name('profile.voted.data');
         Route::post('/profile/generate-picture', 'generateProfilePicture')->name('profile.picture.generate');
@@ -143,7 +148,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::controller(NotificationController::class)->group(function () {
         Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
         Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount'])->name('notifications.unread.count');
-        Route::post('/notifications/send', 'store')->name('notifications.store');
     });
 
     Route::controller(AuthController::class)->group(function () {
@@ -153,10 +157,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::get('password/set', [UserController::class, 'showSetPasswordForm'])->name('password.set.form');
-    Route::put('password/set', [UserController::class, 'setPassword'])->name('password.set');
+    Route::put('password/set', [UserController::class, 'setPassword'])->name('password.set')->middleware('throttle:sensitive');
 
     Route::get('confirm-password', [AuthController::class, 'showConfirmForm'])->name('password.confirm');
-    Route::post('confirm-password', [AuthController::class, 'confirm']);
+    Route::post('confirm-password', [AuthController::class, 'confirm'])->middleware('throttle:sensitive');
 
     Route::delete('/profile/sessions/{session_id}', [UserController::class, 'terminateSession'])->name('profile.sessions.terminate')->middleware(['password.is_set', 'password.confirm']);
 
@@ -184,7 +188,7 @@ Route::get('/sitemaps/static.xml', [SitemapController::class, 'static'])->name('
 Route::get('/sitemaps/posts.xml', [SitemapController::class, 'posts'])->name('sitemap.posts');
 Route::get('/sitemaps/users.xml', [SitemapController::class, 'users'])->name('sitemap.users');
 
-Route::get('/load-more-posts', [PostController::class, 'loadMorePosts'])->name('posts.load_more');
+Route::get('/load-more-posts', [PostController::class, 'loadMorePosts'])->name('posts.load_more')->middleware('throttle:search');
 
 Route::fallback(function () {
     return response()->view('errors.404', [], 404);
@@ -226,7 +230,7 @@ Route::fallback(function () {
 //    ]);
 //});
 
-Route::post('/webhooks/sonar', [SonarWebhookController::class, 'handle'])->name('webhooks.sonar');
+Route::post('/webhooks/sonar', [SonarWebhookController::class, 'handle'])->name('webhooks.sonar')->middleware('throttle:webhook');
 
 //Route::get('/mail-preview', function () {
 //    $user = User::first();

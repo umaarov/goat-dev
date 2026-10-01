@@ -23,7 +23,7 @@ class CheckRefreshToken
         if (Auth::check()) {
             return $next($request);
         }
-        $refreshToken = $request->cookie('refresh_token');
+        $refreshToken = $request->cookie(AuthTokenService::cookieName());
         if (!$refreshToken) {
             return $next($request);
         }
@@ -43,10 +43,12 @@ class CheckRefreshToken
         if ($tokenModel->revoked_at) {
             return $next($request);
         }
-        if ($this->authTokenService->shouldRotate($tokenModel)) {
-            $newCookie = $this->authTokenService->rotateToken($tokenModel, $request);
-            return $next($request)->withCookie($newCookie);
-        }
-        return $next($request);
+        $newCookie = $this->authTokenService->shouldRotate($tokenModel)
+            ? $this->authTokenService->rotateToken($tokenModel, $request)
+            : null;
+
+        $response = $next($request);
+
+        return $newCookie ? $response->withCookie($newCookie) : $response;
     }
 }

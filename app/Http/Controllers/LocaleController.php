@@ -50,7 +50,9 @@ class LocaleController extends Controller
         $previousUrl = URL::previous();
         $intendedTarget = route('home');
 
-        if ($previousUrl && !str_contains($previousUrl, route('language.set', ['locale' => 'any'], false))) {
+        if ($previousUrl
+            && parse_url($previousUrl, PHP_URL_HOST) === $request->getHost()
+            && !str_contains($previousUrl, route('language.set', ['locale' => 'any'], false))) {
             $intendedTarget = $previousUrl;
         }
 

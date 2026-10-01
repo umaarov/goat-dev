@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -104,7 +105,7 @@ class AuthController extends Controller
                 'not_regex:/(.)\1{3,}/',
             ],
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => ['required', 'string', PasswordRule::defaults(), 'confirmed'],
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'terms' => 'accepted',
         ];
@@ -224,7 +225,7 @@ class AuthController extends Controller
             $user = Auth::user();
 
             try {
-                $googleUser = Socialite::driver('google')->stateless()->user();
+                $googleUser = Socialite::driver('google')->user();
                 $existingUser = User::where('google_id', $googleUser->getId())->where('id', '!=', $user->id)->first();
 
                 if ($existingUser) {
@@ -276,7 +277,7 @@ class AuthController extends Controller
             $time_before_socialite_user = microtime(true);
             Log::channel('audit_trail')->info('[AUTH] [GOOGLE] Attempting to fetch Google user from Socialite.', ['time' => $time_before_socialite_user]);
 
-            $googleUser = Socialite::driver('google')->stateless()->user();
+            $googleUser = Socialite::driver('google')->user();
 
             $time_after_socialite_user = microtime(true);
             $duration_socialite_user_call = $time_after_socialite_user - $time_before_socialite_user;
@@ -389,12 +390,20 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
 
-            $cookie = $this->authTokenService->issueToken($user, $request);
-
             return redirect()->route('login')
-                ->with('error', __('messages.error_google_login_failed'))
-                ->withCookie($cookie);
+                ->with('error', __('messages.error_google_login_failed'));
         }
+    }
+
+    // only a provider-verified email may be used to attach a provider to an existing account
+    private function providerEmailVerified(string $provider, $socialUser): bool
+    {
+        return match ($provider) {
+            // Socialite's user is ArrayAccess, so read the raw provider payload property directly
+            'google' => filter_var(((array) ($socialUser->user ?? []))['email_verified'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            'github' => true, // GitHub only exposes verified addresses
+            default => false,
+        };
     }
 
     private function handleGoogleUser($googleUser): User
@@ -406,7 +415,9 @@ class AuthController extends Controller
             'time_start' => $time_start_handle
         ]);
 
-        $existingUserByEmail = User::where('email', $googleUser->getEmail())->first();
+        $existingUserByEmail = $this->providerEmailVerified('google', $googleUser)
+            ? User::where('email', $googleUser->getEmail())->first()
+            : null;
         $time_after_email_lookup = microtime(true);
         Log::channel('audit_trail')->info('[AUTH] [GOOGLE] DB lookup for existing email in handleGoogleUser.', [
             'duration_email_lookup_seconds' => $time_after_email_lookup - $time_start_handle,
@@ -681,7 +692,7 @@ class AuthController extends Controller
     {
         $user = Auth::user();
 
-        $refreshToken = $request->cookie('refresh_token');
+        $refreshToken = $request->cookie(AuthTokenService::cookieName());
         if ($refreshToken) {
             $token = $this->authTokenService->getValidToken($refreshToken);
             if ($token) {
@@ -764,7 +775,7 @@ class AuthController extends Controller
         $request->validate([
             'token' => 'required',
             'email' => 'required|email',
-            'password' => 'required|confirmed|min:8',
+            'password' => ['required', 'confirmed', PasswordRule::defaults()],
         ]);
 
         $status = Password::reset($request->only('email', 'password', 'password_confirmation', 'token'),
@@ -774,6 +785,7 @@ class AuthController extends Controller
                 ])->save();
 
                 Auth::logoutOtherDevices($password);
+                $user->revokeAllCredentials();
             }
         );
 
@@ -980,10 +992,8 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
 
-            $cookie = $this->authTokenService->issueToken($user, $request);
             return redirect()->route('login')
-                ->with('error', __('messages.error_x_login_failed'))
-                ->withCookie($cookie);
+                ->with('error', __('messages.error_x_login_failed'));
         }
     }
 
@@ -996,7 +1006,7 @@ class AuthController extends Controller
             'time_start' => $time_start_handle
         ]);
 
-        $existingUserByEmail = User::where('email', $xUser->getEmail())->first();
+        $existingUserByEmail = null;
         $time_after_email_lookup = microtime(true);
         Log::channel('audit_trail')->info('[AUTH] [X] DB lookup for existing email in handleXUser.', [
             'duration_email_lookup_seconds' => $time_after_email_lookup - $time_start_handle,
@@ -1200,11 +1210,7 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
 
-            $user = $userModel;
-            $cookie = $this->authTokenService->issueToken($user, $request);
-
-            return redirect()->route('login')->with('error', __('messages.error_telegram_login_failed'))
-                ->withCookie($cookie);
+            return redirect()->route('login')->with('error', __('messages.error_telegram_login_failed'));
         }
     }
 
@@ -1292,7 +1298,7 @@ class AuthController extends Controller
                 ];
 
             } else {
-                $socialUser = Socialite::driver($provider)->stateless()->user();
+                $socialUser = Socialite::driver($provider)->user();
             }
 
             Log::info("Socialite user data for {$provider}:", (array)$socialUser);
@@ -1324,26 +1330,29 @@ class AuthController extends Controller
 
             $user = User::where("{$provider}_id", $socialUser->id)->first();
             if ($user) {
-                Auth::login($user, true);
+                Auth::login($user);
+                $request->session()->regenerate();
                 Log::channel('audit_trail')->info("[AUTH] [SOCIAL] User {$user->username} logged in via {$provider}.");
-                return redirect()->intended(route('home'));
+                return redirect()->intended(route('home'))->withCookie($this->authTokenService->issueToken(Auth::user(), $request));
             }
 
-            if ($socialUser->email) {
+            if ($socialUser->email && $this->providerEmailVerified($provider, $socialUser)) {
                 $user = User::where('email', $socialUser->email)->first();
                 if ($user) {
                     $user->forceFill(["{$provider}_id" => $socialUser->id])->save();
-                    Auth::login($user, true);
+                    Auth::login($user);
+                    $request->session()->regenerate();
                     Log::channel('audit_trail')->info("[AUTH] [SOCIAL] User {$user->username} logged in via {$provider} (linked to existing email).");
-                    return redirect()->intended(route('home'));
+                    return redirect()->intended(route('home'))->withCookie($this->authTokenService->issueToken(Auth::user(), $request));
                 }
             }
 
             $newUser = $this->createUserFromSocial($provider, $socialUser);
-            Auth::login($newUser, true);
+            Auth::login($newUser);
+            $request->session()->regenerate();
             Log::channel('audit_trail')->info("[AUTH] [SOCIAL] New user {$newUser->username} registered and logged in via {$provider}.");
 
-            return redirect()->intended(route('home'));
+            return redirect()->intended(route('home'))->withCookie($this->authTokenService->issueToken(Auth::user(), $request));
 
         } catch (Exception $e) {
             Log::error("{$provider} auth callback failed", ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
@@ -1406,7 +1415,7 @@ class AuthController extends Controller
             $user = Auth::user();
 
             try {
-                $githubUser = Socialite::driver('github')->stateless()->user();
+                $githubUser = Socialite::driver('github')->user();
                 $existingUser = User::where('github_id', $githubUser->getId())->where('id', '!=', $user->id)->first();
 
                 if ($existingUser) {
@@ -1434,7 +1443,7 @@ class AuthController extends Controller
                 return redirect()->route('login')->with('error', __('messages.error_github_auth_denied_or_failed', [], 'en'));
             }
 
-            $githubUser = Socialite::driver('github')->stateless()->user();
+            $githubUser = Socialite::driver('github')->user();
             $userModel = User::where('github_id', $githubUser->getId())->first();
             $action = "Logged in";
 

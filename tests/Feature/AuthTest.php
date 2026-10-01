@@ -54,27 +54,20 @@ class AuthTest extends TestCase
             'terms' => 'on',
         ];
 
-        $this->mock(AvatarService::class, function ($mock) {
-            $mock->shouldReceive('generateInitialsAvatar')->once()->andReturn('profile_pictures/initial_user.png');
-        });
-        $this->mock(EmailVerificationService::class, function ($mock) {
-            $mock->shouldReceive('sendVerificationEmail')->once();
-            $mock->shouldReceive('generateToken')->once()->andReturn('fake-verification-token');
-        });
-
         $response = $this->post(route('register'), $userData);
 
         $response->assertRedirect(route('login'));
         $response->assertSessionHas('success', __('messages.registration_successful_verify_email'));
+        Mail::assertSent(EmailVerification::class, fn ($mail) => $mail->hasTo('user@example.com'));
 
         $this->assertDatabaseHas('users', [
             'username' => 'cooluser',
             'email' => 'user@example.com',
-            'profile_picture' => 'profile_pictures/initial_user.png',
         ]);
 
         $user = User::where('email', 'user@example.com')->first();
         $this->assertNotNull($user);
+        $this->assertNotEmpty($user->profile_picture);
         $this->assertNull($user->email_verified_at);
         $this->assertNotNull($user->email_verification_token);
     }
@@ -178,7 +171,7 @@ class AuthTest extends TestCase
     #[Test]
     public function email_can_be_verified_with_a_valid_link()
     {
-        $user = User::factory()->unverified()->create();
+        $user = User::factory()->unverified()->create(['email_verification_token' => 'valid-token']);
         $service = new EmailVerificationService();
         $verificationUrl = $service->generateVerificationUrl($user);
 
@@ -196,7 +189,7 @@ class AuthTest extends TestCase
     {
         $user = User::factory()->unverified()->create();
 
-        $this->actingAs($user)->post(route('verification.send'));
+        $this->actingAs($user)->post(route('verification.resend'));
 
         Mail::assertSent(EmailVerification::class, function ($mail) use ($user) {
             return $mail->hasTo($user->email);
@@ -209,7 +202,7 @@ class AuthTest extends TestCase
     {
         $response = $this->get(route('auth.google'));
         $response->assertRedirect();
-        $this->assertStringContainsString('https://accounts.google.com/o/oauth2/v2/auth', $response->getTargetUrl());
+        $this->assertStringContainsString('https://accounts.google.com/o/oauth2/auth', $response->getTargetUrl());
     }
 
     #[Test]
@@ -222,9 +215,9 @@ class AuthTest extends TestCase
         $googleUser->shouldReceive('getAvatar')->andReturn('http://example.com/avatar.jpg');
         $googleUser->user = ['given_name' => 'Google', 'family_name' => 'User'];
 
-        Socialite::shouldReceive('driver->stateless->user')->andReturn($googleUser);
+        Socialite::shouldReceive('driver->user')->andReturn($googleUser);
 
-        $response = $this->get('/auth/google/callback');
+        $response = $this->get('/auth/google/callback?code=test-code');
 
         $response->assertRedirect(route('home'));
         $this->assertDatabaseHas('users', [
@@ -247,9 +240,9 @@ class AuthTest extends TestCase
         $googleUser->shouldReceive('getId')->andReturn('12345');
         $googleUser->shouldReceive('getEmail')->andReturn('existing@example.com');
 
-        Socialite::shouldReceive('driver->stateless->user')->andReturn($googleUser);
+        Socialite::shouldReceive('driver->user')->andReturn($googleUser);
 
-        $response = $this->get('/auth/google/callback');
+        $response = $this->get('/auth/google/callback?code=test-code');
 
         $response->assertRedirect(route('home'));
         $this->assertAuthenticated();

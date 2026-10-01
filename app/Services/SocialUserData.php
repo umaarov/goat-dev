@@ -13,5 +13,6 @@ class SocialUserData
         public ?string $name = null,
         public ?string $nickname = null,
         public ?string $avatar = null,
+        public bool $emailVerified = false,
     ) {}
 }

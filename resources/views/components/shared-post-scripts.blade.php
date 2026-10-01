@@ -398,21 +398,50 @@
             }
         }
 
+    const HTML_ESCAPES = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#96;'};
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"'`]/g, ch => HTML_ESCAPES[ch]);
+    }
+
+    function safeHttpUrl(value) {
+        try {
+            const url = new URL(String(value), window.location.origin);
+            return (url.protocol === 'http:' || url.protocol === 'https:') ? url.href : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
     function linkifyContent(text) {
         if (typeof text !== 'string') return '';
-        const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])|(\bwww\.[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+        const urlRegex = /\b(?:https?:\/\/|www\.)[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|]/ig;
         const mentionRegex = /@([a-zA-Z0-9_]+)/g;
+        const linkMentions = chunk => escapeHtml(chunk).replace(mentionRegex, (match, username) =>
+            `<a href="/@${username}" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">@${username}</a>`);
 
-        let linkedText = text.replace(urlRegex, function(url, p1, p2, p3) {
-            const fullUrl = p3 ? 'http://' + p3 : p1;
-            return `<a href="${fullUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline break-all">${url}</a>`;
+        let out = '';
+        let last = 0;
+        let m;
+        while ((m = urlRegex.exec(text)) !== null) {
+            out += linkMentions(text.slice(last, m.index));
+            const raw = m[0];
+            const href = safeHttpUrl(/^www\./i.test(raw) ? 'http://' + raw : raw);
+            out += href
+                ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer nofollow ugc" class="text-blue-600 dark:text-blue-400 hover:underline break-all">${escapeHtml(raw)}</a>`
+                : escapeHtml(raw);
+            last = m.index + raw.length;
+        }
+
+        return out + linkMentions(text.slice(last));
+    }
+
+    if (!window.__replyDelegated) {
+        window.__replyDelegated = true;
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('[data-reply-user]');
+            if (btn) prepareReply(btn.dataset.replyPost, btn.dataset.replyComment, btn.dataset.replyUser);
         });
-
-        linkedText = linkedText.replace(mentionRegex, function(match, username) {
-            return `<a href="/@${username}" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">@${username}</a>`;
-        });
-
-        return linkedText;
     }
 
     async function fetchAndShowComment(postId, commentId) {
@@ -679,11 +708,13 @@
                 commentDiv.id = 'comment-' + commentData.id;
             }
 
-            const profilePic = commentData.user.profile_picture
-                ? (commentData.user.profile_picture.startsWith('http') ? commentData.user.profile_picture : '/storage/' + commentData.user.profile_picture)
-                : '/images/default-pfp.png';
+            const rawProfilePic = commentData.user.profile_picture;
+            const profilePic = escapeHtml(rawProfilePic
+                ? (/^https?:\/\//i.test(rawProfilePic) ? (safeHttpUrl(rawProfilePic) || '/images/default-pfp.png') : '/storage/' + encodeURI(rawProfilePic))
+                : '/images/default-pfp.png');
 
-            const altProfilePic = (window.translations.profile_alt_picture || 'Profile picture of :username').replace(':username', commentData.user.username);
+            const altProfilePic = escapeHtml((window.translations.profile_alt_picture || 'Profile picture of :username').replace(':username', commentData.user.username));
+            const safeUsername = escapeHtml(commentData.user.username);
 
             const isVerified = ['goat', 'umarov'].includes(commentData.user.username);
             const verifiedIconHTML = isVerified ? `<span class="ml-1 self-center" title="${window.translations.verified_account || 'Verified Account'}"><svg class="h-4 w-4 text-blue-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg></span>` : '';
@@ -761,7 +792,7 @@
             if (isNestedReply && commentData.parent && commentData.parent.user) {
                 const parentUsername = commentData.parent.user.username;
                 if (!commentData.content.includes(`@${parentUsername}`)) {
-                    replyToHTML = `<a href="javascript:void(0)" onclick="scrollToComment('comment-${commentData.parent_id}')" class="text-blue-600 dark:text-blue-400 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
+                    replyToHTML = `<a href="javascript:void(0)" onclick="scrollToComment('comment-${Number(commentData.parent_id)}')" class="text-blue-600 dark:text-blue-400 hover:underline mr-1 font-medium">@${escapeHtml(parentUsername)}</a>`;
                 }
             }
 
@@ -787,7 +818,7 @@
                 const viewText = (window.translations.view_replies_text || 'View replies (:count)').replace(':count', replyCount);
                 repliesToggleHTML = `<button class="view-replies-button font-semibold hover:underline" onclick="toggleRepliesContainer(this, 'comment-${commentData.id}')">${viewText}</button>`;
             }
-            const replyButton = `<button onclick="prepareReply('${postId}', '${commentData.id}', '${commentData.user.username}')" class="font-semibold hover:underline" title="Reply to ${commentData.user.username}">${window.translations.reply_button_text || 'Reply'}</button>`;
+            const replyButton = `<button data-reply-post="${escapeHtml(postId)}" data-reply-comment="${escapeHtml(commentData.id)}" data-reply-user="${safeUsername}" class="font-semibold hover:underline" title="Reply to ${safeUsername}">${window.translations.reply_button_text || 'Reply'}</button>`;
 
             commentDiv.innerHTML = `
             <div class="flex items-start space-x-3">
@@ -795,14 +826,14 @@
                 <div class="flex-1">
                     <div class="text-sm">
                        <div class="flex items-center">
-                            <a href="/@${commentData.user.username}" class="font-semibold text-gray-900 dark:text-gray-100 hover:underline">${commentData.user.username}</a>
+                            <a href="/@${encodeURIComponent(commentData.user.username)}" class="font-semibold text-gray-900 dark:text-gray-100 hover:underline">${safeUsername}</a>
                             ${verifiedIconHTML}
                             ${moderatorBadgeHTML}
                        </div>
                         <span class="text-gray-800 dark:text-gray-200">${replyToHTML} ${linkedCommentContent}</span>
                     </div>
                     <div class="comment-actions mt-1.5 flex items-center space-x-3 text-xs text-gray-500 dark:text-gray-400">
-                        <small class="text-xs" title="${commentData.created_at}">${formatTimestamp(commentData.created_at)}</small>
+                        <small class="text-xs" title="${escapeHtml(commentData.created_at)}">${formatTimestamp(commentData.created_at)}</small>
                         ${ {{ Auth::check() ? 'true' : 'false' }} ? `<div class="flex items-center">${likeButtonHTML}</div>` : ''}
                         ${replyButton}
                         ${goToParentArrowHTML}

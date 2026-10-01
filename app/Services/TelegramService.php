@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Post;
 use Exception;
 use GdImage;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
@@ -16,6 +17,11 @@ class TelegramService
 {
     public function share(Post $post): void
     {
+        if (!App::isProduction()) {
+            Log::info('Skipping Telegram share, not production.', ['post_id' => $post->id]);
+            return;
+        }
+
         $post = $post->fresh()->loadMissing('user');
 
         if (!$post) {

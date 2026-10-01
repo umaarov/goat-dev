@@ -26,14 +26,14 @@ class RefreshTokenStressTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $cookie = $response->getCookie('refresh_token');
+        $cookie = $response->getCookie('refresh_token', false);
         $this->assertNotNull($cookie);
         for ($day = 1; $day <= 10; $day++) {
-            $response = $this->withCookie('refresh_token', $cookie->getValue())
+            $response = $this->withUnencryptedCookie('refresh_token', $cookie->getValue())
                 ->get('/');
 
             $this->assertAuthenticated();
-            $newCookie = $response->getCookie('refresh_token');
+            $newCookie = $response->getCookie('refresh_token', false);
             if ($newCookie && $newCookie->getValue() !== $cookie->getValue()) {
                 $cookie = $newCookie;
             }
@@ -60,18 +60,23 @@ class RefreshTokenStressTest extends TestCase
             ]);
 
             $this->assertAuthenticated();
-            $cookie = $response->getCookie('refresh_token');
+            $cookie = $response->getCookie('refresh_token', false);
             $this->assertNotNull($cookie);
-            $response = $this->withCookie('refresh_token', $cookie->getValue())
+            $response = $this->withUnencryptedCookie('refresh_token', $cookie->getValue())
                 ->get('/');
             $this->assertAuthenticated();
-            $response = $this->withCookie('refresh_token', $cookie->getValue())
+            $response = $this->withUnencryptedCookie('refresh_token', $cookie->getValue())
                 ->post('/logout');
 
             $response->assertCookieExpired('refresh_token');
             $this->assertGuest();
             $this->app['session']->flush();
+            // the test client keeps cookies; a revoked one must not leak into the next login
+            $this->unencryptedCookies = [];
         }
+
+        // 5 logins used up the per-account limiter
+        \Illuminate\Support\Facades\Cache::flush();
 
         $response = $this->post('/login', [
             'login_identifier' => 'sequential@test.com',

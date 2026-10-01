@@ -32,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->encryptCookies(except: [
             'refresh_token',
+            '__Host-refresh_token',
         ]);
         $middleware->alias([
             'cache.response' => CacheResponse::class,
@@ -41,6 +42,21 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(HandleCors::class);
 //        $middleware->prepend(EnsureEmailIsVerified::class);
         $middleware->append(SecurityHeaders::class);
+        $middleware->throttleApi('api');
+        $middleware->web(prepend: [
+            \Illuminate\Routing\Middleware\ThrottleRequests::class.':web',
+        ]);
+        $middleware->trustHosts(at: function () {
+            $appHost = parse_url((string) config('app.url'), PHP_URL_HOST);
+
+            // 127.0.0.1/localhost are needed for container healthchecks
+            return array_values(array_unique(array_filter([
+                $appHost,
+                'localhost',
+                '127.0.0.1',
+                ...config('security.trusted_hosts', []),
+            ])));
+        });
         $middleware->web(append: [
             CheckRefreshToken::class,
             SetLocale::class,
@@ -128,6 +144,7 @@ return Application::configure(basePath: dirname(__DIR__))
         );
         $middleware->validateCsrfTokens(except: [
             'webhooks/sonar',
+            'csp-report',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
@@ -177,7 +194,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json([
                     'success' => false,
                     'error_code' => $errorCode,
-                    'message' => $e->getMessage(),
+                    'message' => ($status >= 500 && ! config('app.debug')) ? 'Server error.' : $e->getMessage(),
                 ], $status);
             }
 

@@ -1,3 +1,5 @@
+# docker compose -f docker-compose.full-local.yml up -d
+# app :8000, mailpit :8025, adminer (--profile tools) :8080
 name: goat-local
 
 x-app: &app
@@ -5,6 +7,30 @@ x-app: &app
   pull_policy: never
   env_file:
     - .env
+  environment:
+    NODE_AUTH_TOKEN: ""
+    GITHUB_API_TOKEN: ""
+    XDG_DATA_HOME: /tmp/caddy-data
+    XDG_CONFIG_HOME: /tmp/caddy-config
+  # no root, no caps, no writes outside tmpfs/volumes
+  user: "10001:10001"
+  read_only: true
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  tmpfs:
+    - /tmp
+    - /app/bootstrap/cache
+    - /app/storage/framework/views
+    - /app/storage/framework/cache
+    - /app/storage/framework/sessions
+  # posting-only hosts, so tokens in .env can never publish from here
+  extra_hosts:
+    - "api.telegram.org:0.0.0.0"
+    - "graph.facebook.com:0.0.0.0"
+    - "upload.twitter.com:0.0.0.0"
+    - "upload.x.com:0.0.0.0"
   restart: unless-stopped
   volumes:
     - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
@@ -28,12 +54,16 @@ services:
         VITE_PUSHER_APP_KEY: ${PUSHER_APP_KEY}
         VITE_PUSHER_APP_CLUSTER: ${PUSHER_APP_CLUSTER}
     pull_policy: build
+    # skip npm build of default entrypoint
     entrypoint:
       - /bin/sh
       - -c
       - 'php artisan storage:link || true; php artisan optimize:clear; exec "$$@"'
       - entrypoint
     command: frankenphp run --config /etc/caddy/Caddyfile
+    # the frankenphp binary carries this file capability
+    cap_add:
+      - NET_BIND_SERVICE
     ports:
       - "8000:80"
     volumes:
@@ -41,7 +71,6 @@ services:
       - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
       - goat-storage:/app/storage/app/public
       - ./storage/logs:/app/storage/logs
-      - caddy_data:/data
     healthcheck:
       test: [ "CMD-SHELL", "curl -sf http://127.0.0.1/up || exit 1" ]
       interval: 15s
@@ -93,14 +122,16 @@ services:
 
   redis:
     image: redis:7-alpine
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD:?set REDIS_PASSWORD}"
     restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
     volumes:
       - goat-redis-data:/data
     networks:
       - goat-network
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: [ "CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG" ]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -125,6 +156,30 @@ services:
     networks:
       - goat-network
 
+  # never uses .env: no tokens, no goat_app DB
+  test:
+    image: goat-app:local
+    pull_policy: never
+    profiles: [ "tools" ]
+    entrypoint: [ "/bin/sh", "-c" ]
+    command:
+      - composer install --no-interaction --prefer-dist -q && vendor/bin/phpunit -c phpunit.sqlite.xml && vendor/bin/phpunit
+    environment:
+      APP_ENV: testing
+      APP_KEY: ${APP_KEY}
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: goat_test
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - goat-vendor-dev:/app/vendor
+    networks:
+      - goat-network
+    depends_on:
+      db:
+        condition: service_healthy
+
   adminer:
     image: adminer
     profiles: [ "tools" ]
@@ -141,7 +196,7 @@ networks:
     driver: bridge
 
 volumes:
-  caddy_data:
   goat-db-data:
   goat-redis-data:
   goat-storage:
+  goat-vendor-dev:

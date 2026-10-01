@@ -15,9 +15,9 @@ class ImageGenerationService
 
     public function __construct()
     {
-        $this->accountId = config('cloudflare.account_id');
-        $this->apiToken = config('cloudflare.api_token');
-        $this->model = config('cloudflare.ai_model');
+        $this->accountId = (string) config('cloudflare.account_id');
+        $this->apiToken = (string) config('cloudflare.api_token');
+        $this->model = (string) config('cloudflare.ai_model');
         $this->apiUrl = "https://api.cloudflare.com/client/v4/accounts/{$this->accountId}/ai/run/{$this->model}";
     }
 

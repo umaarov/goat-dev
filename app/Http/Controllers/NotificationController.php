@@ -54,49 +54,18 @@ class NotificationController extends Controller
             return response()->json(['status' => 'ERROR', 'message' => 'USER_NOT_FOUND'], 404);
         }
 
-        $userId = $user->id;
-        Log::critical("--- STARTING UNSUBSCRIBE DIAGNOSTIC FOR USER: {$userId} ---");
-
         try {
-            $initialValue = DB::table('users')->where('id', $userId)->value('receives_notifications');
-            Log::critical("DIAGNOSTIC (STEP 1): Value BEFORE update is: [{$initialValue}]");
-
-            DB::beginTransaction();
-            Log::critical("DIAGNOSTIC (STEP 2): Manual transaction started.");
-
-            DB::table('users')->where('id', $userId)->update(['receives_notifications' => false]);
-            Log::critical("DIAGNOSTIC (STEP 3): UPDATE statement executed.");
-
-            $valueInsideTransaction = DB::table('users')->where('id', $userId)->value('receives_notifications');
-            Log::critical("DIAGNOSTIC (STEP 4): Value INSIDE transaction, AFTER update is: [{$valueInsideTransaction}]");
-
-            if ($valueInsideTransaction == 1) {
-                DB::rollBack(); // Abort everything.
-                Log::emergency("DIAGNOSTIC (FAILURE): Value is still 1 inside the transaction. PROBLEM IS A 'BEFORE UPDATE' TRIGGER ON YOUR 'users' TABLE. The trigger is reverting the change instantly. Talk to your DBA or check your database schema.");
-                return response()->json(['status' => 'ERROR', 'message' => 'SERVER_ERROR'], 500);
-            }
-
-            DB::commit();
-            Log::critical("DIAGNOSTIC (STEP 5): Transaction committed.");
-
+            DB::transaction(function () use ($user, $tokenRecord) {
+                DB::table('users')->where('id', $user->id)->update(['receives_notifications' => false]);
+                DB::table('unsubscribe_tokens')->where('id', $tokenRecord->id)->delete();
+            });
         } catch (Exception $e) {
-            DB::rollBack();
-            Log::error("DIAGNOSTIC (FAILURE): The entire transaction failed and was rolled back. Error: " . $e->getMessage());
+            Log::error('Unsubscribe failed', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+
             return response()->json(['status' => 'ERROR', 'message' => 'SERVER_ERROR'], 500);
         }
 
-        $finalValue = DB::table('users')->where('id', $userId)->value('receives_notifications');
-        Log::critical("DIAGNOSTIC (STEP 6): Value AFTER transaction commit is: [{$finalValue}]");
-
-        if ($finalValue == 1) {
-            Log::emergency("DIAGNOSTIC (FAILURE): Value reverted to 1 AFTER the transaction committed. PROBLEM IS AN 'AFTER UPDATE' TRIGGER OR DATABASE REPLICATION LAG. Check your database triggers and/or replication status.");
-        } else {
-            Log::info("DIAGNOSTIC (SUCCESS): The value was successfully updated to 0 for user {$userId}.");
-        }
-
         Mail::to($user)->queue(new UnsubscribedNotification($user, $request->ip()));
-        DB::table('unsubscribe_tokens')->where('id', $tokenRecord->id)->delete();
-        Log::critical("--- ENDING UNSUBSCRIBE DIAGNOSTIC FOR USER: {$userId} ---");
 
         return response()->json([
             'status' => 'SUCCESS',

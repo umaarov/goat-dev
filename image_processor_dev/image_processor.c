@@ -1,3 +1,9 @@
+// only the two formats the app accepts here; everything else goes to the GD fallback
+#define STBI_ONLY_JPEG
+#define STBI_ONLY_PNG
+#define STBI_MAX_DIMENSIONS 12000
+#define MAX_PIXELS 40000000LL
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -62,6 +68,12 @@ int main(int argc, char **argv) {
 
     // --- 1. Load Input Image ---
     int width, height, channels;
+    if (!stbi_info(argv[1], &width, &height, &channels) || width < 1 || height < 1
+        || (long long)width * height > MAX_PIXELS) {
+        fprintf(stderr, "Rejected image: unsupported or too large\n");
+        return 1;
+    }
+
     unsigned char *img_data = stbi_load(argv[1], &width, &height, &channels, 0);
     if (img_data == NULL) {
         fprintf(stderr, "Failed to load image %s: %s\n", argv[1], stbi_failure_reason());
@@ -84,7 +96,10 @@ int main(int argc, char **argv) {
         target_height = height;
     }
 
-    unsigned char *resized_data = (unsigned char *)malloc(target_width * target_height * channels);
+    if (target_width < 1) target_width = 1;
+    if (target_height < 1) target_height = 1;
+
+    unsigned char *resized_data = (unsigned char *)malloc((size_t)target_width * (size_t)target_height * (size_t)channels);
     if (resized_data == NULL) {
         fprintf(stderr, "Failed to allocate memory for resized image data\n");
         stbi_image_free(img_data);
@@ -153,10 +168,12 @@ int main(int argc, char **argv) {
     // --- 4. Create LQIP ---
     int lqip_width = atoi(argv[6]);
     int lqip_quality = atoi(argv[7]);
-    int lqip_height = (int)(lqip_width / ((float)target_width / (float)target_height));
-    if (lqip_height == 0) lqip_height = 1;
+    if (lqip_width < 1 || lqip_width > 1024) lqip_width = 32;
+    int lqip_height = (int)((long long)lqip_width * target_height / target_width);
+    if (lqip_height < 1) lqip_height = 1;
+    if (lqip_height > 1024) lqip_height = 1024;
 
-    unsigned char *lqip_data = (unsigned char *)malloc(lqip_width * lqip_height * channels);
+    unsigned char *lqip_data = (unsigned char *)malloc((size_t)lqip_width * (size_t)lqip_height * (size_t)channels);
     if (lqip_data == NULL) {
         fprintf(stderr, "Failed to allocate memory for LQIP data\n");
         free(resized_data);

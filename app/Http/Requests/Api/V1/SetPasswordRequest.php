@@ -2,12 +2,14 @@
 
 namespace App\Http\Requests\Api\V1;
 
+use Illuminate\Validation\Rules\Password;
+
 class SetPasswordRequest extends ApiFormRequest
 {
     public function rules(): array
     {
         return [
-            'password' => 'required|string|min:8|confirmed',
+            'password' => ['required', 'string', Password::defaults(), 'confirmed'],
         ];
     }
 }

@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class UserFactory extends Factory
@@ -18,7 +19,7 @@ class UserFactory extends Factory
             'username' => $this->faker->unique()->userName(),
             'email' => $this->faker->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'password' => bcrypt('password'),
+            'password' => Hash::make('password'),
             'profile_picture' => null,
             'google_id' => null,
             'x_id' => null,
@@ -39,7 +40,7 @@ class UserFactory extends Factory
     public function withPassword(string $password): static
     {
         return $this->state(fn(array $attributes) => [
-            'password' => bcrypt($password),
+            'password' => Hash::make($password),
         ]);
     }
 

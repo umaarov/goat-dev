@@ -99,7 +99,7 @@ class SocialAuthController extends ApiController
             return match ($provider) {
                 'google' => $this->verifyGoogle($request->input('token')),
                 'telegram' => $this->verifyTelegram($request->input('telegram', [])),
-                'x' => $this->verifyX($request->input('token')),
+                'x' => $this->verifyX($request),
                 'github' => $this->verifyGithub($request->input('token')),
                 default => null,
             };
@@ -129,6 +129,7 @@ class SocialAuthController extends ApiController
             name: $payload['name'] ?? trim(($payload['given_name'] ?? '').' '.($payload['family_name'] ?? '')),
             nickname: null,
             avatar: $payload['picture'] ?? null,
+            emailVerified: filter_var($payload['email_verified'] ?? false, FILTER_VALIDATE_BOOLEAN),
         );
     }
 
@@ -149,13 +150,37 @@ class SocialAuthController extends ApiController
         );
     }
 
-    private function verifyX(?string $accessToken): ?SocialUserData
+    private function verifyX(Request $request): ?SocialUserData
     {
+        $clientId = config('services.x.client_id');
+        $clientSecret = config('services.x.client_secret');
+        $redirectUri = (string) $request->input('redirect_uri');
+        $code = $request->input('code');
+
+        // an access token alone cannot be tied to our app, so only the code exchange is accepted
+        if (! $clientId || ! $clientSecret || ! $code || ! $request->filled('code_verifier')) {
+            return null;
+        }
+
+        if (! in_array($redirectUri, config('services.x.mobile_redirect_uris', []), true)) {
+            return null;
+        }
+
+        $token = Http::asForm()->withBasicAuth($clientId, $clientSecret)->timeout(10)
+            ->post('https://api.twitter.com/2/oauth2/token', [
+                'grant_type' => 'authorization_code',
+                'code' => $code,
+                'redirect_uri' => $redirectUri,
+                'code_verifier' => $request->input('code_verifier'),
+                'client_id' => $clientId,
+            ]);
+
+        $accessToken = $token->successful() ? $token->json('access_token') : null;
         if (! $accessToken) {
             return null;
         }
 
-        $response = Http::withToken($accessToken)
+        $response = Http::withToken($accessToken)->timeout(10)
             ->get('https://api.twitter.com/2/users/me', [
                 'user.fields' => 'profile_image_url,name,username',
             ]);
@@ -181,33 +206,43 @@ class SocialAuthController extends ApiController
             return null;
         }
 
-        $response = Http::withToken($accessToken)
-            ->withHeaders(['Accept' => 'application/vnd.github+json'])
-            ->get('https://api.github.com/user');
+        $clientId = config('services.github.client_id');
+        $clientSecret = config('services.github.client_secret');
+
+        // refuse to run unconfigured: any app's token would otherwise be accepted
+        if (! $clientId || ! $clientSecret || str_starts_with((string) $clientId, 'your_')) {
+            return null;
+        }
+
+        $gh = fn () => Http::withHeaders(['Accept' => 'application/vnd.github+json'])->timeout(10);
+
+        $bound = $gh()->withBasicAuth($clientId, $clientSecret)
+            ->post("https://api.github.com/applications/{$clientId}/token", ['access_token' => $accessToken]);
+
+        if (! $bound->successful() || data_get($bound->json(), 'app.client_id') !== $clientId) {
+            return null;
+        }
+
+        $response = $gh()->withToken($accessToken)->get('https://api.github.com/user');
 
         if (! $response->successful() || empty($response->json('id'))) {
             return null;
         }
 
         $u = $response->json();
-        $email = $u['email'] ?? null;
 
-        if (! $email) {
-            $emails = Http::withToken($accessToken)
-                ->withHeaders(['Accept' => 'application/vnd.github+json'])
-                ->get('https://api.github.com/user/emails');
-            if ($emails->successful()) {
-                $primary = collect($emails->json())->firstWhere('primary', true);
-                $email = $primary['email'] ?? null;
-            }
-        }
+        $emails = $gh()->withToken($accessToken)->get('https://api.github.com/user/emails');
+        $primary = $emails->successful()
+            ? collect($emails->json())->first(fn ($e) => ($e['primary'] ?? false) && ($e['verified'] ?? false))
+            : null;
 
         return new SocialUserData(
             id: (string) $u['id'],
-            email: $email,
+            email: $primary['email'] ?? null,
             name: $u['name'] ?? ($u['login'] ?? null),
             nickname: $u['login'] ?? null,
             avatar: $u['avatar_url'] ?? null,
+            emailVerified: $primary !== null,
         );
     }
 }

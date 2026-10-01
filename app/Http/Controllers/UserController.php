@@ -32,6 +32,9 @@ use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\ImageManager;
 use Jenssegers\Agent\Agent;
+use App\Services\AuthTokenService;
+use App\Support\ImageGuard;
+use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
 {
@@ -396,7 +399,7 @@ class UserController extends Controller
                     $fail(__('validation.current_password'));
                 }
             }],
-            'new_password' => 'required|string|min:8|confirmed',
+            'new_password' => ['required', 'string', Password::defaults(), 'confirmed'],
         ]);
 
         if ($validator->fails()) {
@@ -408,13 +411,19 @@ class UserController extends Controller
             'password' => Hash::make($request->new_password),
         ]);
 
+        $user->revokeAllCredentials();
+        $cookie = app(AuthTokenService::class)->issueToken($user, $request);
+        $request->session()->regenerate();
+
         Log::channel('audit_trail')->info('[USER] [UPDATE] User password changed successfully.', [
             'user_id' => $user->id,
             'username' => $user->username,
             'ip_address' => request()->ip(),
         ]);
 
-        return redirect()->route('password.change.form')->with('success', __('messages.password_changed_successfully'));
+        return redirect()->route('password.change.form')
+            ->with('success', __('messages.password_changed_successfully'))
+            ->withCookie($cookie);
     }
 
     final public function update(Request $request): RedirectResponse
@@ -428,7 +437,6 @@ class UserController extends Controller
         Log::info('UserController@update: Process started.');
         Log::info('UserController@update: Authenticated User ID: ' . $user->id . ', Username: ' . $user->username);
         Log::info('UserController@update: Current user locale (before update): ' . $user->locale);
-        Log::info('UserController@update: All request data: ', $request->all());
         Log::info('UserController@update: Request has "locale" field: ' . ($request->has('locale') ? 'Yes' : 'No'));
         Log::info('UserController@update: Request "locale" value: ' . $request->input('locale'));
         Log::info('UserController@update: Request "locale" is filled: ' . ($request->filled('locale') ? 'Yes' : 'No'));
@@ -743,6 +751,7 @@ class UserController extends Controller
 
     private function processAndStoreHeaderImage(UploadedFile $uploadedFile, string $directory, string $baseFilename): string
     {
+        ImageGuard::assertSafe($uploadedFile->getRealPath(), 'header_background');
         $manager = new ImageManager(new GdDriver());
         $image = $manager->read($uploadedFile->getRealPath());
 
@@ -760,6 +769,7 @@ class UserController extends Controller
 
     private function processAndStoreProfileImage(UploadedFile $uploadedFile, string $directory, string $baseFilename): string
     {
+        ImageGuard::assertSafe($uploadedFile->getRealPath(), 'profile_picture');
         $manager = new ImageManager(new GdDriver());
         $image = $manager->read($uploadedFile->getRealPath());
 
@@ -917,7 +927,7 @@ class UserController extends Controller
         }
 
         $request->validate([
-            'password' => 'required|string|min:8|confirmed',
+            'password' => ['required', 'string', Password::defaults(), 'confirmed'],
         ]);
 
         $user->update([
@@ -925,6 +935,8 @@ class UserController extends Controller
         ]);
 
         Auth::logoutOtherDevices($request->password);
+        $user->revokeAllCredentials();
+        $cookie = app(AuthTokenService::class)->issueToken($user, $request);
 
         $request->session()->put('auth.password_confirmed_at', time());
 
@@ -934,7 +946,8 @@ class UserController extends Controller
         ]);
 
         return redirect()->intended(route('profile.edit'))
-            ->with('success', __('messages.password_set_successfully'));
+            ->with('success', __('messages.password_set_successfully'))
+            ->withCookie($cookie);
     }
 
     final public function linkSocial(string $provider): RedirectResponse
@@ -998,12 +1011,14 @@ class UserController extends Controller
         }
 
         $user->forceFill(['password' => null])->save();
+        $user->revokeAllCredentials();
+        $cookie = app(AuthTokenService::class)->issueToken($user, request());
 
         Log::channel('audit_trail')->info('[USER] [UPDATE] User removed their password.', [
             'user_id' => $user->id, 'ip_address' => request()->ip(),
         ]);
 
-        return redirect()->route('profile.edit')->with('success', 'Your password has been successfully removed.');
+        return redirect()->route('profile.edit')->with('success', 'Your password has been successfully removed.')->withCookie($cookie);
     }
 
     final public function deactivate(Request $request): RedirectResponse

@@ -26,12 +26,12 @@ Route::prefix('v1')->group(function () {
 
     /* ---------------------------- Authentication ---------------------------- */
     Route::prefix('auth')->group(function () {
-        Route::post('register', [AuthController::class, 'register'])->middleware('throttle:5,1');
-        Route::post('login', [AuthController::class, 'login'])->middleware('throttle:5,1');
+        Route::post('register', [AuthController::class, 'register'])->middleware('throttle:register');
+        Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login');
         Route::post('refresh', [AuthController::class, 'refresh'])->middleware('throttle:20,1');
         Route::post('email/verify', [AuthController::class, 'verifyEmail'])->middleware('throttle:10,1');
-        Route::post('password/forgot', [AuthController::class, 'forgotPassword'])->middleware('throttle:5,1');
-        Route::post('password/reset', [AuthController::class, 'resetPassword'])->middleware('throttle:5,1');
+        Route::post('password/forgot', [AuthController::class, 'forgotPassword'])->middleware('throttle:password-reset');
+        Route::post('password/reset', [AuthController::class, 'resetPassword'])->middleware('throttle:password-reset');
 
         Route::post('social/{provider}', [SocialAuthController::class, 'login'])
             ->where('provider', 'google|x|telegram|github')
@@ -49,10 +49,10 @@ Route::prefix('v1')->group(function () {
 
     /* -------------------------------- Posts --------------------------------- */
     Route::get('posts', [PostController::class, 'index']);
-    Route::get('posts/search', [PostController::class, 'search']);
+    Route::get('posts/search', [PostController::class, 'search'])->middleware('throttle:search');
     Route::get('posts/{post}', [PostController::class, 'show'])->whereNumber('post');
 
-    Route::get('users/check-username', [ProfileController::class, 'checkUsername']);
+    Route::get('users/check-username', [ProfileController::class, 'checkUsername'])->middleware('throttle:search');
     Route::get('users/{username}', [ProfileController::class, 'show']);
     Route::get('users/{username}/posts', [PostController::class, 'userPosts']);
     Route::get('users/{username}/voted-posts', [PostController::class, 'userVotedPosts']);
@@ -81,9 +81,9 @@ Route::prefix('v1')->group(function () {
 
         // Profile / account ("me")
         Route::put('me', [ProfileController::class, 'update']);
-        Route::post('me/change-password', [ProfileController::class, 'changePassword']);
-        Route::post('me/password', [ProfileController::class, 'setPassword']);
-        Route::delete('me/password', [ProfileController::class, 'removePassword']);
+        Route::post('me/change-password', [ProfileController::class, 'changePassword'])->middleware('throttle:sensitive');
+        Route::post('me/password', [ProfileController::class, 'setPassword'])->middleware('throttle:sensitive');
+        Route::delete('me/password', [ProfileController::class, 'removePassword'])->middleware('throttle:sensitive');
         Route::post('me/profile-picture/generate', [ProfileController::class, 'generatePicture']);
         Route::delete('me', [ProfileController::class, 'deactivate']);
         Route::get('me/export', [ProfileController::class, 'export'])->middleware('throttle:3,60');

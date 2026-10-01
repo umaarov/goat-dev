@@ -142,6 +142,19 @@ class ProfileController extends ApiController
         return $this->ok(new UserResource($user->fresh()));
     }
 
+    // revoke every old credential, hand this device a fresh pair
+    private function credentialsRotated(Request $request, string $message): JsonResponse
+    {
+        $user = $request->user();
+        $user->revokeAllCredentials();
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'data' => $this->tokens->issueTokens($user, $request, $request->input('device_name', 'mobile')),
+        ]);
+    }
+
     /**
      * POST /me/change-password
      */
@@ -149,7 +162,7 @@ class ProfileController extends ApiController
     {
         $request->user()->update(['password' => Hash::make($request->new_password)]);
 
-        return $this->message(__('messages.password_changed_successfully'));
+        return $this->credentialsRotated($request, __('messages.password_changed_successfully'));
     }
 
     /**
@@ -164,7 +177,7 @@ class ProfileController extends ApiController
 
         $user->update(['password' => Hash::make($request->password)]);
 
-        return $this->message(__('messages.password_set_successfully'));
+        return $this->credentialsRotated($request, __('messages.password_set_successfully'));
     }
 
     /**
@@ -182,7 +195,7 @@ class ProfileController extends ApiController
 
         $user->forceFill(['password' => null])->save();
 
-        return $this->message('Password removed.');
+        return $this->credentialsRotated($request, 'Password removed.');
     }
 
     /**

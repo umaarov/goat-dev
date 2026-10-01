@@ -36,3 +36,7 @@ public/build.zip
 /dashboard/telemetry.json
 .aider*
 /backup
+/image_processor
+
+# moderation prompts, never publish
+/resources/prompts

@@ -16,7 +16,7 @@ FROM composer:2 AS backend_builder
 WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install \
-    --ignore-platform-reqs \
+    --ignore-platform-req=ext-* \
     --no-interaction \
     --prefer-dist \
     --optimize-autoloader \
@@ -24,7 +24,7 @@ RUN composer install \
     --no-scripts
 COPY . .
 
-FROM dunglas/frankenphp:php8.3-alpine
+FROM dunglas/frankenphp:php8.4-alpine
 RUN apk add --no-cache \
     build-base \
     libwebp-dev \
@@ -50,6 +50,8 @@ RUN install-php-extensions \
     bcmath \
     redis
 
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 COPY --from=backend_builder /app/vendor /app/vendor
 COPY --from=frontend_builder /app/public/build /app/public/build
@@ -58,7 +60,8 @@ WORKDIR /app
 RUN gcc -O3 -o image_processor image_processor_dev/image_processor.c -lwebp -lm \
     && chmod +x image_processor
 RUN chmod -R 777 /app/storage /app/bootstrap/cache \
-    && rm -f /app/bootstrap/cache/*.php
+    && rm -f /app/bootstrap/cache/*.php \
+    && ln -sfn /app/storage/app/public /app/public/storage
 ENV SERVER_NAME=":80"
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh

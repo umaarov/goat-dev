@@ -8,6 +8,7 @@ use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\View;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -45,6 +46,12 @@ class AppServiceProvider extends ServiceProvider
 
             $view->with('alternateUrls', $alternateUrls)->with('defaultHreflangUrl', $defaultUrl);
         });
+        Password::defaults(function () {
+            $rule = Password::min((int) config('security.password.min_length', 10))->max(128);
+
+            return config('security.password.check_breached') ? $rule->uncompromised(3) : $rule;
+        });
+
         Gate::define('viewPulse', function (User $user) {
             return $user->isAdmin();
         });

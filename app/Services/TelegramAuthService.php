@@ -2,25 +2,29 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class TelegramAuthService
 {
+    private const MAX_AGE_SECONDS = 300;
+
     protected string $botToken;
 
     public function __construct()
     {
-        $this->botToken = config('services.telegram.bot_token');
+        $this->botToken = (string) config('services.telegram.bot_token');
     }
 
     public function validate(array $authData): ?array
     {
-        if (empty($this->botToken) || !isset($authData['hash'])) {
-            Log::error('Telegram Auth Failed: Bot token or hash is missing from auth data.');
+        $checkHash = $authData['hash'] ?? null;
+
+        if (empty($this->botToken) || !is_string($checkHash) || $checkHash === '') {
+            Log::error('Telegram Auth Failed: Bot token or hash is missing.');
             return null;
         }
 
-        $checkHash = $authData['hash'];
         unset($authData['hash']);
         ksort($authData);
 
@@ -29,27 +33,26 @@ class TelegramAuthService
             ->implode("\n");
 
         $secretKey = hash('sha256', $this->botToken, true);
-        $hash = hash_hmac('sha256', $dataCheckString, $secretKey);
+        $expected = hash_hmac('sha256', $dataCheckString, $secretKey);
 
-        $authDate = (int)($authData['auth_date'] ?? 0);
-        if (time() - $authDate > 300) {
-            Log::warning('Telegram Auth Failed: Stale auth_date.', [
-                'auth_date' => $authDate,
-                'current_time' => time(),
-                'difference_seconds' => time() - $authDate
-            ]);
+        // never log $expected or the data string: they are enough to forge a login
+        if (!hash_equals($expected, strtolower($checkHash))) {
+            Log::warning('Telegram Auth Failed: Invalid hash.');
             return null;
         }
 
-        if (hash_equals($hash, $checkHash)) {
-            return $authData;
+        $authDate = (int) ($authData['auth_date'] ?? 0);
+        if ($authDate <= 0 || abs(time() - $authDate) > self::MAX_AGE_SECONDS) {
+            Log::warning('Telegram Auth Failed: Stale or missing auth_date.');
+            return null;
         }
 
-        Log::warning('Telegram Auth Failed: Invalid hash.', [
-            'data_check_string' => $dataCheckString,
-            'expected_hash' => $hash,
-            'received_hash' => $checkHash,
-        ]);
-        return null;
+        // a signed payload is single use
+        if (!Cache::add('tg_auth:' . $expected, 1, self::MAX_AGE_SECONDS * 2)) {
+            Log::warning('Telegram Auth Failed: Replayed payload.');
+            return null;
+        }
+
+        return $authData;
     }
 }

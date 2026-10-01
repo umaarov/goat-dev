@@ -28,12 +28,12 @@ class RefreshTokenSystemTest extends TestCase
             'password' => 'password',
         ]);
 
-        $cookie = $response->getCookie('refresh_token');
+        $cookie = $response->getCookie('refresh_token', false);
         $this->assertNotNull($cookie);
         $this->assertNotEmpty($cookie->getValue());
         $this->assertTrue($cookie->isHttpOnly());
         // $this->assertTrue($cookie->isSecure());
-        $this->assertEquals('lax', $cookie->getSameSite());
+        $this->assertEqualsIgnoringCase('lax', $cookie->getSameSite());
         $hashedToken = hash('sha256', $cookie->getValue());
         $tokenExists = RefreshToken::where('token', $hashedToken)->exists();
         $this->assertTrue($tokenExists);
@@ -48,13 +48,11 @@ class RefreshTokenSystemTest extends TestCase
         $cookie = $this->authTokenService->issueToken($this->user, $request);
         Auth::logout();
         $this->app['session']->flush();
-        $response = $this->withCookie('refresh_token', $cookie->getValue())
-            ->get('/api/user');
+        $response = $this->withUnencryptedCookie('refresh_token', $cookie->getValue())
+            ->get('/');
 
         $this->assertAuthenticatedAs($this->user);
-        $newCookie = $response->getCookie('refresh_token');
-        $this->assertNotNull($newCookie);
-        $this->assertNotEquals($cookie->getValue(), $newCookie->getValue());
+        $this->assertNull($response->getCookie('refresh_token', false), 'a fresh token is not rotated');
     }
 
     #[Test]
@@ -67,8 +65,8 @@ class RefreshTokenSystemTest extends TestCase
         $hashedToken = hash('sha256', $cookie->getValue());
         $token = RefreshToken::where('token', $hashedToken)->first();
         $token->update(['expires_at' => now()->subDay()]);
-        $response = $this->withCookie('refresh_token', $cookie->getValue())
-            ->get('/api/user');
+        $response = $this->withUnencryptedCookie('refresh_token', $cookie->getValue())
+            ->get('/');
 
         $this->assertGuest();
         $response->assertCookieExpired('refresh_token');
@@ -82,14 +80,14 @@ class RefreshTokenSystemTest extends TestCase
             'password' => 'password',
         ]);
 
-        $cookie = $response->getCookie('refresh_token');
+        $cookie = $response->getCookie('refresh_token', false);
         $this->assertNotNull($cookie);
         $tokenValue = $cookie->getValue();
         $hashedToken = hash('sha256', $tokenValue);
         $tokenBefore = RefreshToken::where('token', $hashedToken)->first();
         $this->assertNotNull($tokenBefore);
         $this->assertNull($tokenBefore->revoked_at);
-        $response = $this->withCookie('refresh_token', $tokenValue)
+        $response = $this->withUnencryptedCookie('refresh_token', $tokenValue)
             ->post('/logout');
 
         $tokenAfter = RefreshToken::where('token', $hashedToken)->first();
@@ -120,8 +118,9 @@ class RefreshTokenSystemTest extends TestCase
         $hashedToken2 = hash('sha256', $cookie2->getValue());
         $this->assertTrue(RefreshToken::where('token', $hashedToken1)->exists());
         $this->assertTrue(RefreshToken::where('token', $hashedToken2)->exists());
-        $this->withCookie('refresh_token', $cookie1->getValue())
-            ->get('/api/user');
+        RefreshToken::where('token', $hashedToken1)->update(['created_at' => now()->subHours(13)]);
+        $this->withUnencryptedCookie('refresh_token', $cookie1->getValue())
+            ->get('/');
 
         $token1 = RefreshToken::where('token', $hashedToken1)->first();
         $token2 = RefreshToken::where('token', $hashedToken2)->first();
@@ -139,11 +138,11 @@ class RefreshTokenSystemTest extends TestCase
         $cookie = $this->authTokenService->issueToken($this->user, $request);
         $hashedToken = hash('sha256', $cookie->getValue());
         $token = RefreshToken::where('token', $hashedToken)->first();
-        $token->update(['expires_at' => now()->addHour()]);
-        $response = $this->withCookie('refresh_token', $cookie->getValue())
-            ->get('/api/user');
+        RefreshToken::whereKey($token->id)->update(['created_at' => now()->subHours(13)]);
+        $response = $this->withUnencryptedCookie('refresh_token', $cookie->getValue())
+            ->get('/');
 
-        $newCookie = $response->getCookie('refresh_token');
+        $newCookie = $response->getCookie('refresh_token', false);
         $this->assertNotNull($newCookie);
         $this->assertNotEquals($cookie->getValue(), $newCookie->getValue());
         $token->refresh();
@@ -151,18 +150,18 @@ class RefreshTokenSystemTest extends TestCase
     }
 
     #[Test]
-    public function it_preserves_session_on_token_refresh()
+    public function it_regenerates_the_session_when_a_cookie_signs_the_user_in()
     {
-        $this->post('/login', [
-            'login_identifier' => 'test@example.com',
-            'password' => 'password',
-        ]);
+        $request = Request::create('/');
+        $cookie = $this->authTokenService->issueToken($this->user, $request);
+        Auth::logout();
+        $this->app['session']->flush();
+        $before = session()->getId();
 
-        session(['test_key' => 'test_value']);
-        $sessionId = session()->getId();
-        $response = $this->get('/api/user');
-        $this->assertEquals('test_value', session('test_key'));
-        $this->assertNotEquals($sessionId, session()->getId());
+        $this->withUnencryptedCookie('refresh_token', $cookie->getValue())->get('/');
+
+        $this->assertAuthenticatedAs($this->user);
+        $this->assertNotEquals($before, session()->getId(), 'session id must change on privilege change');
     }
 
     #[Test]
@@ -183,8 +182,8 @@ class RefreshTokenSystemTest extends TestCase
             $this->assertNull($tokenModel->revoked_at);
         }
 
-        $this->withCookie('refresh_token', $tokens[0]->getValue())
-            ->get('/api/user');
+        $this->withUnencryptedCookie('refresh_token', $tokens[0]->getValue())
+            ->get('/');
 
         $hashedToken1 = hash('sha256', $tokens[1]->getValue());
         $hashedToken2 = hash('sha256', $tokens[2]->getValue());
@@ -224,17 +223,17 @@ class RefreshTokenSystemTest extends TestCase
     #[Test]
     public function it_handles_cookie_manipulation_attempts()
     {
-        $response = $this->withCookie('refresh_token', 'malformed_token')
-            ->get('/api/user');
+        $response = $this->withUnencryptedCookie('refresh_token', 'malformed_token')
+            ->get('/');
 
         $this->assertGuest();
         $response->assertCookieExpired('refresh_token');
-        $response = $this->withCookie('refresh_token', '')
-            ->get('/api/user');
+        $response = $this->withUnencryptedCookie('refresh_token', '')
+            ->get('/');
 
         $this->assertGuest();
-        $response = $this->withCookie('refresh_token', "' OR '1'='1")
-            ->get('/api/user');
+        $response = $this->withUnencryptedCookie('refresh_token', "' OR '1'='1")
+            ->get('/');
 
         $this->assertGuest();
         $response->assertCookieExpired('refresh_token');
@@ -243,31 +242,33 @@ class RefreshTokenSystemTest extends TestCase
     #[Test]
     public function it_resists_token_replay_attacks()
     {
-        $response = $this->post('/login', [
-            'login_identifier' => 'test@example.com',
-            'password' => 'password',
-        ]);
-
-        $cookie = $response->getCookie('refresh_token');
+        $request = Request::create('/');
+        $cookie = $this->authTokenService->issueToken($this->user, $request);
         $tokenValue = $cookie->getValue();
-        $this->withCookie('refresh_token', $tokenValue)
-            ->get('/');
+        $hashed = hash('sha256', $tokenValue);
+
+        // legitimate use after 13h rotates it
+        RefreshToken::where('token', $hashed)->update(['created_at' => now()->subHours(13)]);
+        $this->withUnencryptedCookie('refresh_token', $tokenValue)->get('/');
+        $old = RefreshToken::where('token', $hashed)->first();
+        $this->assertNotNull($old->revoked_at);
+
+        // the attacker replays it once the grace window is over
+        $old->update(['grace_period_ends_at' => now()->subSecond()]);
         Auth::logout();
         $this->app['session']->flush();
-        $response = $this->withCookie('refresh_token', $tokenValue)
-            ->get('/');
-        $newCookie = $response->getCookie('refresh_token');
-        $this->assertNotNull($newCookie);
-        $this->assertNotEquals($tokenValue, $newCookie->getValue());
-        $hashedToken = hash('sha256', $tokenValue);
-        $oldToken = RefreshToken::where('token', $hashedToken)->first();
-        $this->assertNotNull($oldToken->revoked_at);
+        $response = $this->withUnencryptedCookie('refresh_token', $tokenValue)->get('/');
+
+        $this->assertGuest();
+        $response->assertCookieExpired('refresh_token');
+        $this->assertSame(0, RefreshToken::where('user_id', $this->user->id)->whereNull('revoked_at')->count(),
+            'theft detection must revoke every session');
     }
 
     #[Test]
     public function it_gracefully_handles_database_failures()
     {
-        $response = $this->withCookie('refresh_token', 'any_token')
+        $response = $this->withUnencryptedCookie('refresh_token', 'any_token')
             ->get('/');
 
         $this->assertGuest();

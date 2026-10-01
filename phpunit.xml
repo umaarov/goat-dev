@@ -20,6 +20,10 @@
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
+        <env name="SESSION_SECURE_COOKIE" value="false"/>
+        <env name="HASH_DRIVER" value="bcrypt"/>
+        <env name="PASSWORD_CHECK_BREACHED" value="false"/>
+        <env name="SONAR_WEBHOOK_SECRET" value="test-sonar-secret"/>
         <env name="CACHE_STORE" value="array"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="TELESCOPE_ENABLED" value="false"/>

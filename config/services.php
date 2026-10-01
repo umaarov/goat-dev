@@ -45,9 +45,12 @@ return [
         'client_id' => env('X_CLIENT_ID'),
         'client_secret' => env('X_CLIENT_SECRET'),
         'redirect' => env('APP_URL').'/auth/x/callback',
+        // redirect URIs the mobile app may use for the code exchange
+        'mobile_redirect_uris' => array_values(array_filter(array_map('trim', explode(',', (string) env('X_MOBILE_REDIRECT_URIS', ''))))),
     ],
 
     'github' => [
+        'api_token' => env('GITHUB_API_TOKEN'),
         'client_id' => env('GITHUB_CLIENT_ID'),
         'client_secret' => env('GITHUB_CLIENT_SECRET'),
         'redirect' => env('GITHUB_REDIRECT_URI'),
@@ -68,15 +71,20 @@ return [
 
     // DeepSeek handles all TEXT moderation + post context/tag generation.
     // (DeepSeek is OpenAI-compatible but text-only — see 'groq' below for images.)
+    // true: block content when moderation is unavailable (API error, bad key). Default allows it.
+    'moderation' => [
+        'fail_closed' => env('MODERATION_FAIL_CLOSED', false),
+    ],
+
     'deepseek' => [
         'api_key' => env('DEEPSEEK_API_KEY'),
         'model' => env('DEEPSEEK_MODEL', 'deepseek-chat'),
         'base_url' => env('DEEPSEEK_BASE_URL', 'https://api.deepseek.com'),
         'prompts' => [
             // Reuse the existing moderation prompts unless DeepSeek-specific ones are set.
-            'text' => env('DEEPSEEK_PROMPT_TEXT', env('GROQ_PROMPT_TEXT')),
-            'url' => env('DEEPSEEK_PROMPT_URL', env('GROQ_PROMPT_URL')),
-            'comment' => env('DEEPSEEK_PROMPT_COMMENT', env('GROQ_PROMPT_COMMENT')),
+            'text' => env('DEEPSEEK_PROMPT_TEXT', env('GROQ_PROMPT_TEXT', @file_get_contents(resource_path('prompts/moderation/text.txt')) ?: null)),
+            'url' => env('DEEPSEEK_PROMPT_URL', env('GROQ_PROMPT_URL', @file_get_contents(resource_path('prompts/moderation/url.txt')) ?: null)),
+            'comment' => env('DEEPSEEK_PROMPT_COMMENT', env('GROQ_PROMPT_COMMENT', @file_get_contents(resource_path('prompts/moderation/comment.txt')) ?: null)),
             'master' => env('DEEPSEEK_MASTER_PROMPT', env('GROQ_MASTER_PROMPT')),
         ],
     ],
@@ -88,7 +96,7 @@ return [
         'model' => env('GROQ_MODEL'),
         'vision_model' => env('GROQ_VISION_MODEL', env('GROQ_MODEL')),
         'prompts' => [
-            'image' => env('GROQ_PROMPT_IMAGE'),
+            'image' => env('GROQ_PROMPT_IMAGE', @file_get_contents(resource_path('prompts/moderation/image.txt')) ?: null),
         ],
     ],
 ];

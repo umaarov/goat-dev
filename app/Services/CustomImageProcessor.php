@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\ImageGuard;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -15,6 +16,7 @@ class CustomImageProcessor
 {
     public function process(string $inputPath, string $outputRelativePath, int $width, int $height, int $quality, int $lqipWidth, int $lqipQuality): array
     {
+        ImageGuard::assertSafe($inputPath);
 
         $fullOutputPath = Storage::disk('public')->path($outputRelativePath);
         $binaryPath = base_path('image_processor');

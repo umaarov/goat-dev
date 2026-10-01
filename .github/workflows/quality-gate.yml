@@ -44,9 +44,11 @@ jobs:
         continue-on-error: true
         run: vendor/bin/psalm --output-format=github
 
-      - name: Security Audit (Composer)
-        continue-on-error: true
-        run: composer audit
+      - name: Security Audit (Composer, production deps)
+        run: composer audit --no-dev --ignore-severity=low
+
+      - name: Security Audit (npm, production deps)
+        run: npm audit --omit=dev --audit-level=high
 
   security:
     name: Security Scans

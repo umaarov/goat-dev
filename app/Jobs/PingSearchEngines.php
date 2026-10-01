@@ -8,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -20,6 +21,10 @@ class PingSearchEngines implements ShouldQueue
 
     public function handle()
     {
+        if (!App::isProduction()) {
+            return;
+        }
+
         $sitemapUrl = "https://www.goat.uz/sitemap.xml";
 
         try {

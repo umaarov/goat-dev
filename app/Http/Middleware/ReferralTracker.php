@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\ReferralClick;
 use Closure;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -17,9 +18,9 @@ class ReferralTracker
             // Basic sanitization: allow only alphanumeric, dots, hyphens, underscores
             $referrer = preg_replace('/[^a-zA-Z0-9._-]/', '', $referrer);
 
-            if (!empty($referrer)) {
+            if (!empty($referrer) && RateLimiter::attempt('ref-click:'.$request->ip(), 20, fn () => true, 60)) {
                 ReferralClick::create([
-                    'referrer'   => $referrer,
+                    'referrer'   => substr($referrer, 0, 64),
                     'url'        => $request->fullUrl(),
                     'ip'         => $request->ip(),
                     'user_agent' => $request->userAgent(),

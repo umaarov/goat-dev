@@ -109,6 +109,8 @@ services: #  traefik:
             - SETGID
             - SETUID
             - NET_BIND_SERVICE
+        security_opt:
+            - no-new-privileges:true
         healthcheck:
             test: [ "CMD-SHELL", "curl -sf http://127.0.0.1/up || exit 1" ]
             interval: 30s
@@ -123,6 +125,10 @@ services: #  traefik:
         image: goat-app:latest
         restart: unless-stopped
         command: php artisan queue:work --tries=3 --timeout=90
+        cap_drop:
+            - ALL
+        security_opt:
+            - no-new-privileges:true
         healthcheck:
             disable: true
             test: [ "CMD-SHELL", "pgrep -f 'php artisan queue:work' || exit 1" ]
@@ -174,6 +180,12 @@ services: #  traefik:
         image: goat-app:latest
         restart: unless-stopped
         command: php artisan schedule:work
+        env_file:
+            - .env
+        cap_drop:
+            - ALL
+        security_opt:
+            - no-new-privileges:true
         healthcheck:
             disable: false
             test: [ "CMD-SHELL", "pgrep -f 'php artisan schedule:work' || exit 1" ]
@@ -231,7 +243,7 @@ services: #  traefik:
     redis:
         image: redis:alpine
         restart: always
-        command: redis-server --appendonly yes
+        command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}"
         deploy:
             resources:
                 limits:

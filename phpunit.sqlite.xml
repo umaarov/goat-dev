@@ -30,6 +30,10 @@
         <env name="MAIL_MAILER" value="array" force="true"/>
         <env name="QUEUE_CONNECTION" value="sync" force="true"/>
         <env name="SESSION_DRIVER" value="array" force="true"/>
+        <env name="SESSION_SECURE_COOKIE" value="false" force="true"/>
+        <env name="HASH_DRIVER" value="bcrypt" force="true"/>
+        <env name="PASSWORD_CHECK_BREACHED" value="false" force="true"/>
+        <env name="SONAR_WEBHOOK_SECRET" value="test-sonar-secret" force="true"/>
         <env name="CACHE_STORE" value="array" force="true"/>
         <env name="BROADCAST_CONNECTION" value="null" force="true"/>
         <env name="GROQ_API_KEY" value="" force="true"/>

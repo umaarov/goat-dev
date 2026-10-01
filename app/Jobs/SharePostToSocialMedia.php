@@ -37,6 +37,11 @@ class SharePostToSocialMedia implements ShouldQueue
         XService         $xService
     ): void
     {
+        if (!App::isProduction()) {
+            Log::info('Skipping social share, not production.', ['post_id' => $this->post->id]);
+            return;
+        }
+
         $masterLockKey = "job_lock_share_post_{$this->post->id}";
 
         if (Cache::has($masterLockKey)) {

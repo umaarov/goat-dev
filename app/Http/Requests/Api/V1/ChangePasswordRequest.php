@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Api\V1;
 
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class ChangePasswordRequest extends ApiFormRequest
 {
@@ -14,7 +15,7 @@ class ChangePasswordRequest extends ApiFormRequest
                     $fail(__('validation.current_password'));
                 }
             }],
-            'new_password' => 'required|string|min:8|confirmed',
+            'new_password' => ['required', 'string', Password::defaults(), 'confirmed'],
         ];
     }
 }

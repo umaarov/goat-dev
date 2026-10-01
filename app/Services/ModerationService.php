@@ -66,6 +66,17 @@ class ModerationService
         if (! $this->textConfigured) {
             Log::warning('ModerationService: DeepSeek text moderation is not configured. Text checks will be skipped (allowed).');
         }
+
+        if (! $this->imageConfigured) {
+            Log::warning('ModerationService: Groq image moderation is not configured. Image checks will be skipped (allowed).');
+        }
+
+        // the prompt files are gitignored, a deploy without them would silently disable moderation
+        $missing = collect(['text' => $this->textPrompt, 'comment' => $this->commentPrompt, 'url' => $this->urlPrompt, 'image' => $this->imagePrompt])
+            ->filter(fn ($p) => empty($p))->keys();
+        if ($this->textConfigured && $missing->isNotEmpty()) {
+            Log::critical('ModerationService: moderation prompts missing: '.$missing->implode(', ').'. Set GROQ_PROMPT_* or deploy resources/prompts/moderation.');
+        }
     }
 
     public function moderateText(string $text, string $languageCode = 'en'): array
@@ -134,7 +145,7 @@ class ModerationService
         } catch (Exception $e) {
             Log::error("ModerationService: Image Processing Error for $logContext: ".$e->getMessage());
 
-            return ['is_appropriate' => true, 'category' => 'EXCEPTION'];
+            return $this->unavailable('EXCEPTION');
         }
     }
 
@@ -152,6 +163,15 @@ class ModerationService
             ['role' => 'system', 'content' => $finalPrompt],
             ['role' => 'user', 'content' => "Input: \"$text\""],
         ], $logContext);
+    }
+
+    private function unavailable(string $category): array
+    {
+        if (Config::get('services.moderation.fail_closed')) {
+            return ['is_appropriate' => false, 'reason' => null, 'category' => $category];
+        }
+
+        return ['is_appropriate' => true, 'category' => $category];
     }
 
     private function getLanguageName(string $localeCode): string
@@ -199,7 +219,7 @@ class ModerationService
             if ($response->failed()) {
                 Log::error("ModerationService: API Failure ({$response->status()}) for $logContext: ".$response->body());
 
-                return ['is_appropriate' => true, 'category' => 'API_ERROR'];
+                return $this->unavailable('API_ERROR');
             }
 
             $jsonContent = $response->json('choices.0.message.content');
@@ -207,7 +227,7 @@ class ModerationService
             if (! $jsonContent) {
                 Log::error("ModerationService: Empty response content for $logContext");
 
-                return ['is_appropriate' => true, 'category' => 'EMPTY_RESPONSE'];
+                return $this->unavailable('EMPTY_RESPONSE');
             }
 
             $data = json_decode($jsonContent, true);
@@ -215,13 +235,13 @@ class ModerationService
             if (json_last_error() !== JSON_ERROR_NONE) {
                 Log::error("ModerationService: JSON Parse Error for $logContext: ".json_last_error_msg());
 
-                return ['is_appropriate' => true, 'category' => 'JSON_PARSE_ERROR'];
+                return $this->unavailable('JSON_PARSE_ERROR');
             }
 
             if (! isset($data['is_appropriate'])) {
                 Log::error("ModerationService: Invalid Schema for $logContext", $data);
 
-                return ['is_appropriate' => true, 'category' => 'SCHEMA_ERROR'];
+                return $this->unavailable('SCHEMA_ERROR');
             }
 
             return [
@@ -232,7 +252,7 @@ class ModerationService
         } catch (Exception $e) {
             Log::error("ModerationService: Critical Exception for $logContext: ".$e->getMessage());
 
-            return ['is_appropriate' => true, 'category' => 'CRITICAL_EXCEPTION'];
+            return $this->unavailable('CRITICAL_EXCEPTION');
         }
     }
 }

@@ -52,23 +52,21 @@ class LoginWithRefreshTokenTest extends TestCase
             'password' => $this->password,
         ]);
 
-        $cookie = $loginResponse->getCookie('refresh_token');
+        $cookie = $loginResponse->getCookie('refresh_token', false);
         $tokenValue = $cookie->getValue();
         Auth::logout();
         $this->app['session']->flush();
         $this->assertGuest();
-        $response = $this->withCookie('refresh_token', $tokenValue)
+        $response = $this->withUnencryptedCookie('refresh_token', $tokenValue)
             ->get('/');
 
-        $newCookie = $response->getCookie('refresh_token');
-        $this->assertNotNull($newCookie);
-        $this->assertNotEquals($tokenValue, $newCookie->getValue());
+        $this->assertAuthenticated();
     }
 
     #[Test]
     public function invalid_refresh_token_gets_cleared(): void
     {
-        $response = $this->withCookie('refresh_token', 'invalid_token_value')
+        $response = $this->withUnencryptedCookie('refresh_token', 'invalid_token_value')
             ->get('/');
 
         $response->assertCookieExpired('refresh_token');
@@ -83,7 +81,7 @@ class LoginWithRefreshTokenTest extends TestCase
             'password' => $this->password,
         ]);
 
-        $cookie = $loginResponse->getCookie('refresh_token');
+        $cookie = $loginResponse->getCookie('refresh_token', false);
         $tokenValue = $cookie->getValue();
 
         $hashedToken = hash('sha256', $tokenValue);
@@ -91,7 +89,7 @@ class LoginWithRefreshTokenTest extends TestCase
             ->update(['expires_at' => now()->subDay()]);
 
         Auth::logout();
-        $response = $this->withCookie('refresh_token', $tokenValue)
+        $response = $this->withUnencryptedCookie('refresh_token', $tokenValue)
             ->get('/');
 
         $response->assertCookieExpired('refresh_token');
