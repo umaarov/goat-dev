@@ -1,38 +1,36 @@
 {
     "debug_tree": {
         "ngrams": [
-            "hit",
-            "itl",
-            "ler",
-            "tle"
+            "goa",
+            "oat"
         ],
         "tokens": [
-            "hitler"
+            "goat"
         ]
     },
-    "latency_ms": 0.148,
-    "query": "Hitler",
+    "latency_ms": 0.457,
+    "query": "goat",
     "results": [
         {
-            "id": 72,
-            "score": 11.09426250167337,
-            "snippet": "Who had a more dangerous ideology in practice? Hitler’s Nazism Stalin’s Communism Nazism, Commun..."
+            "id": 76,
+            "score": 7.215387571061687,
+            "snippet": "Who is the GOAT of Boxing? Muhammad Ali Mike Tyson boxing, ali, tyson, goat, greatest"
         },
         {
-            "id": 146,
-            "score": 2.6054648013470154,
-            "snippet": "hitler was a nice guy 1 2 Hitler, Debate, Free Speech, Historical Figures, Controversy"
+            "id": 75,
+            "score": 7.196279134230364,
+            "snippet": "Who is the GOAT of Tennis? Roger Federer Novak Djokovic tennis, federer, djokovic, goat, rivalry"
         },
         {
-            "id": 142,
-            "score": 2.4279462484054544,
-            "snippet": "Hitler was a good commander Yes No Hitler, World War II, Military Strategy, Historical Debate, Contr..."
+            "id": 42,
+            "score": 5.246557019573124,
+            "snippet": "Who would you consider to be the GOAT of programming? Nikolai Durov Linus Torvalds "
         },
         {
-            "id": 130,
-            "score": 0.06837634538482593,
-            "snippet": "Whose songs do you like more? Eminem XXXTENTACION Eminem, XXXTENTACION, Rap, Music, Hip-Hop"
+            "id": 20,
+            "score": 4.871730867337196,
+            "snippet": "Janob @goat, saytingizni kompyuterga moslashni iloji bormi? Kompyuterda ishlash ozgina noqulay ekan,..."
         }
     ],
-    "timestamp": "10:46:21"
+    "timestamp": "10:43:49"
 }

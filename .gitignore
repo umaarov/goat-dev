@@ -35,3 +35,4 @@ public/build.zip
 /dashboard/telemetry_latest.json
 /dashboard/telemetry.json
 .aider*
+/backup
