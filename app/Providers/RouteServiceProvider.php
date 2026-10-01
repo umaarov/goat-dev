@@ -69,6 +69,19 @@ class RouteServiceProvider extends ServiceProvider
 
         RateLimiter::for('search', fn (Request $r) => Limit::perMinute(30)->by('q:'.$actor($r)));
 
+        // paid image generation (Cloudflare) + moderation per call
+        RateLimiter::for('ai-generate', fn (Request $r) => [
+            Limit::perMinute(2)->by('ai-m:'.$actor($r)),
+            Limit::perHour(6)->by('ai-h:'.$actor($r)),
+            Limit::perDay(20)->by('ai-d:'.$actor($r)),
+        ]);
+
+        // edits re-run paid moderation (DeepSeek/Groq) on every save
+        RateLimiter::for('moderated-write', fn (Request $r) => [
+            Limit::perMinute(12)->by('mw-m:'.$actor($r)),
+            Limit::perHour(120)->by('mw-h:'.$actor($r)),
+        ]);
+
         RateLimiter::for('webhook', fn (Request $r) => Limit::perMinute(20)->by('wh:'.$r->ip()));
 
         RateLimiter::for('csp-report', fn (Request $r) => Limit::perMinute(120)->by('csp:'.$r->ip()));

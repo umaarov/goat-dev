@@ -85,12 +85,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::controller(UserController::class)->group(function () {
         Route::get('/profile/edit', 'edit')->name('profile.edit');
-        Route::put('/profile/update', 'update')->name('profile.update');
+        Route::put('/profile/update', 'update')->name('profile.update')->middleware('throttle:moderated-write');
         Route::get('/profile/change-password', 'showChangePasswordForm')->name('password.change.form');
         Route::post('/profile/change-password', 'changePassword')->name('password.change')->middleware('throttle:sensitive');
         Route::get('/@{username}/posts-data', 'getUserPosts')->name('profile.posts.data');
         Route::get('/@{username}/voted-data', 'getUserVotedPosts')->name('profile.voted.data');
-        Route::post('/profile/generate-picture', 'generateProfilePicture')->name('profile.picture.generate');
+        Route::post('/profile/generate-picture', 'generateProfilePicture')->name('profile.picture.generate')->middleware('throttle:ai-generate');
     });
 
     Route::post('/heartbeat', [UserController::class, 'heartbeat'])->name('user.heartbeat');
@@ -126,7 +126,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/posts/create', 'create')->name('posts.create');
         Route::post('/posts', 'store')->name('posts.store')->middleware('throttle:10,1');
         Route::get('/posts/{post}/edit', 'edit')->name('posts.edit');
-        Route::put('/posts/{post}', 'update')->name('posts.update');
+        Route::put('/posts/{post}', 'update')->name('posts.update')->middleware('throttle:moderated-write');
         Route::delete('/posts/{post}', 'destroy')->name('posts.destroy');
         Route::get('/posts/{post}', 'show')->name('posts.show');
 
@@ -137,7 +137,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::controller(CommentController::class)->group(function () {
         Route::get('/posts/{post}/comments', 'index')->name('comments.index');
         Route::post('/posts/{post}/comments', 'store')->name('comments.store')->middleware('throttle:30,1');
-        Route::put('/comments/{comment}', 'update')->name('comments.update');
+        Route::put('/comments/{comment}', 'update')->name('comments.update')->middleware('throttle:moderated-write');
         Route::delete('/comments/{comment}', 'destroy')->name('comments.destroy');
         Route::get('/comments/{comment}/replies', 'getReplies')->name('comments.getReplies');
         Route::get('/posts/{post}/comments/context/{comment}', 'showCommentContext')->name('comments.showContext');
@@ -169,7 +169,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('password.confirm');
     Route::post('/profile/export', [UserController::class, 'exportData'])
         ->name('profile.export')
-        ->middleware(['auth', 'throttle:3,60']);
+        ->middleware(['auth', 'password.is_set', 'password.confirm', 'throttle:3,60']);
 //    Route::delete('/profile/password', [UserController::class, 'removePassword'])
 //        ->name('profile.password.remove')
 //        ->middleware('password.confirm');

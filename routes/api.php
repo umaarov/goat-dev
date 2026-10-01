@@ -68,23 +68,23 @@ Route::prefix('v1')->group(function () {
 
         // Posts (write)
         Route::post('posts', [PostController::class, 'store'])->middleware('throttle:10,1');
-        Route::put('posts/{post}', [PostController::class, 'update'])->whereNumber('post');
+        Route::put('posts/{post}', [PostController::class, 'update'])->whereNumber('post')->middleware('throttle:moderated-write');
         Route::delete('posts/{post}', [PostController::class, 'destroy'])->whereNumber('post');
         Route::post('posts/{post}/vote', [PostController::class, 'vote'])->whereNumber('post')->middleware('throttle:30,1');
         Route::post('posts/{post}/share', [PostController::class, 'share'])->whereNumber('post')->middleware('throttle:30,1');
 
         // Comments (write)
         Route::post('posts/{post}/comments', [CommentController::class, 'store'])->whereNumber('post')->middleware('throttle:30,1');
-        Route::put('comments/{comment}', [CommentController::class, 'update'])->whereNumber('comment');
+        Route::put('comments/{comment}', [CommentController::class, 'update'])->whereNumber('comment')->middleware('throttle:moderated-write');
         Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->whereNumber('comment');
         Route::post('comments/{comment}/like', [CommentLikeController::class, 'toggle'])->whereNumber('comment')->middleware('throttle:60,1');
 
         // Profile / account ("me")
-        Route::put('me', [ProfileController::class, 'update']);
+        Route::put('me', [ProfileController::class, 'update'])->middleware('throttle:moderated-write');
         Route::post('me/change-password', [ProfileController::class, 'changePassword'])->middleware('throttle:sensitive');
         Route::post('me/password', [ProfileController::class, 'setPassword'])->middleware('throttle:sensitive');
         Route::delete('me/password', [ProfileController::class, 'removePassword'])->middleware('throttle:sensitive');
-        Route::post('me/profile-picture/generate', [ProfileController::class, 'generatePicture']);
+        Route::post('me/profile-picture/generate', [ProfileController::class, 'generatePicture'])->middleware('throttle:ai-generate');
         Route::delete('me', [ProfileController::class, 'deactivate']);
         Route::get('me/export', [ProfileController::class, 'export'])->middleware('throttle:3,60');
         Route::post('me/heartbeat', [ProfileController::class, 'heartbeat']);
@@ -93,7 +93,7 @@ Route::prefix('v1')->group(function () {
         Route::get('me/devices', [DeviceController::class, 'index']);
         Route::post('me/devices', [DeviceController::class, 'store']);
         Route::delete('me/devices', [DeviceController::class, 'destroy']);
-        Route::post('me/social/{provider}', [SocialAuthController::class, 'link'])->where('provider', 'google|x|telegram|github');
+        Route::post('me/social/{provider}', [SocialAuthController::class, 'link'])->where('provider', 'google|x|telegram|github')->middleware('throttle:sensitive');
         Route::delete('me/social/{provider}', [ProfileController::class, 'unlinkSocial'])->where('provider', 'google|x|telegram|github');
 
         // Notifications

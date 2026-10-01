@@ -737,7 +737,8 @@ class AuthController extends Controller
 
         $request->session()->put('auth.password_confirmed_at', time());
 
-        return redirect()->intended(route('profile.sessions.terminate_all'));
+        // the fallback must be a page you can open with GET (terminate-all is POST only)
+        return redirect()->intended(route('profile.edit'));
     }
 
     public function showLinkRequestForm(): View

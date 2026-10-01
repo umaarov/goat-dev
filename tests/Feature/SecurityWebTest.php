@@ -331,6 +331,56 @@ class SecurityWebTest extends TestCase
         $this->assertStringContainsString('\u003C\/script\u003E', $html, 'the title must be present, hex-escaped, inside the JSON-LD');
     }
 
+    public function test_personal_data_export_needs_a_recent_password_confirmation(): void
+    {
+        $user = User::factory()->create(['password' => bcrypt('correct-horse-1')]);
+
+        $this->actingAs($user)->post('/profile/export')->assertRedirect(route('password.confirm'));
+
+        $this->flushSession();
+        $this->actingAs($user)->withSession(['auth.password_confirmed_at' => time()])
+            ->post('/profile/export')->assertOk();
+    }
+
+    public function test_confirming_the_password_never_lands_on_a_post_only_url(): void
+    {
+        $user = User::factory()->create(['password' => bcrypt('correct-horse-1')]);
+
+        // no stored intended url: the fallback must be a GET-able page
+        $this->actingAs($user)->post('/confirm-password', ['password' => 'correct-horse-1'])
+            ->assertRedirect(route('profile.edit'));
+    }
+
+    public function test_social_only_users_are_sent_to_set_a_password_before_exporting(): void
+    {
+        $user = User::factory()->create(['password' => null, 'google_id' => 'g-123']);
+
+        $this->actingAs($user)->post('/profile/export')->assertRedirect(route('password.set.form'));
+    }
+
+    public function test_ai_picture_generation_is_tightly_rate_limited(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        // 2 per minute: the third attempt is refused before any paid API is reached
+        $codes = collect(range(1, 3))->map(fn () => $this->post('/profile/generate-picture', ['prompt' => 'a goat'])->getStatusCode());
+
+        $this->assertSame(429, $codes->last(), 'statuses: '.$codes->implode(','));
+        $this->assertNotContains(429, $codes->take(2)->all());
+    }
+
+    public function test_edits_that_trigger_paid_moderation_are_rate_limited_per_user(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $codes = collect(range(1, 14))->map(fn () => $this->put('/profile/update', [])->getStatusCode());
+
+        $this->assertContains(429, $codes->all(), 'no throttle after 14 edits: '.$codes->implode(','));
+        $this->assertSame(12, $codes->reject(fn ($c) => $c === 429)->count());
+    }
+
     public function test_forgot_password_is_rate_limited(): void
     {
         for ($i = 0; $i < 3; $i++) {

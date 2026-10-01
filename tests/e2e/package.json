@@ -7,7 +7,8 @@
     "functional": "node functional.mjs",
     "injection": "node injection.mjs",
     "sessions": "node sessions.mjs",
-    "alpine": "node alpine.mjs"
+    "alpine": "node alpine.mjs",
+    "export": "node export.mjs"
   },
   "devDependencies": {
     "puppeteer-core": "^24.43.1"
