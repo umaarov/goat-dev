@@ -298,7 +298,7 @@
             class="vote-button p-2 text-[16px] text-center rounded-md relative
                    {{ $highlightOptionForViewer === 'option_one' ? 'bg-blue-800 dark:bg-blue-600 text-white dark:text-white' : 'bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 dark:text-white' }}
                    {{ $isNotLoggedIn ? 'opacity-75 cursor-not-allowed' : '' }}"
-            onclick="voteForOption('{{ $post->id }}', 'option_one')"
+            data-click="voteForOption" data-args="{{ json_encode([(string) $post->id, 'option_one']) }}"
             data-option="option_one"
             @if($showPercentagesOnButtons) data-tooltip-show-count="true" @endif
             @if($showVotedByOwnerIcon && $voteByProfileOwner === 'option_one') data-tooltip-is-owner-choice="true" @endif
@@ -322,7 +322,7 @@
             class="vote-button p-2 text-[16px] text-center rounded-md relative
                    {{ $highlightOptionForViewer === 'option_two' ? 'bg-blue-800 dark:bg-blue-600 text-white dark:text-white' : 'bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 dark:text-white' }}
                    {{ $isNotLoggedIn ? 'opacity-75 cursor-not-allowed' : '' }}"
-            onclick="voteForOption('{{ $post->id }}', 'option_two')"
+            data-click="voteForOption" data-args="{{ json_encode([(string) $post->id, 'option_two']) }}"
             data-option="option_two"
             @if($showPercentagesOnButtons) data-tooltip-show-count="true" @endif
             @if($showVotedByOwnerIcon && $voteByProfileOwner === 'option_two') data-tooltip-is-owner-choice="true" @endif
@@ -362,7 +362,7 @@
     <div class="border-b w-full border-gray-200 dark:border-gray-700"></div>
 
     <div class="flex justify-between items-center px-8 py-3 text-sm text-gray-600 dark:text-gray-400">
-        <button class="flex flex-col items-center gap-1 cursor-pointer" onclick="toggleComments('{{ $post->id }}')">
+        <button class="flex flex-col items-center gap-1 cursor-pointer" data-click="toggleComments" data-args="{{ json_encode([(string) $post->id]) }}">
             <div class="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                      stroke="currentColor">
@@ -379,7 +379,7 @@
         </div>
 
 
-        <button class="flex flex-col items-center gap-1 cursor-pointer" onclick="sharePost('{{ $post->id }}')">
+        <button class="flex flex-col items-center gap-1 cursor-pointer" data-click="sharePost" data-args="{{ json_encode([(string) $post->id]) }}">
             <div class="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                      stroke="currentColor">
@@ -396,18 +396,18 @@
 
         @if (Auth::check())
             <div class="p-4 border-b border-gray-200 dark:border-gray-700 comment-form-container">
-                <form id="comment-form-{{ $post->id }}" onsubmit="submitComment('{{ $post->id }}', event)" class="flex flex-col space-y-2">
+                <form id="comment-form-{{ $post->id }}" data-submit="submitComment" data-args="{{ json_encode([(string) $post->id, '$event']) }}" class="flex flex-col space-y-2">
                     @csrf
                     <input type="hidden" name="parent_id" value="">
                     <textarea name="content" rows="2" placeholder="{{ __('messages.add_comment_placeholder') }}" required
                               class="w-full border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-gray-50 dark:placeholder-gray-400"></textarea>
                     <div id="reply-indicator-{{ $post->id }}" class="text-xs text-gray-500 dark:text-gray-400 hidden items-center">
                         <span></span>
-                        <button type="button" onclick="cancelReply('{{ $post->id }}')" class="ml-2 text-red-500 dark:text-red-400 hover:underline">{{ __('messages.cancel_button') }}</button>
+                        <button type="button" data-click="cancelReply" data-args="{{ json_encode([(string) $post->id]) }}" class="ml-2 text-red-500 dark:text-red-400 hover:underline">{{ __('messages.cancel_button') }}</button>
                     </div>
                     <div id="typing-indicator-{{ $post->id }}" class="text-xs text-gray-500 dark:text-gray-400 italic h-5"></div>
                     <div class="flex justify-between">
-                        <button type="button" onclick="toggleComments('{{ $post->id }}')"
+                        <button type="button" data-click="toggleComments" data-args="{{ json_encode([(string) $post->id]) }}"
                                 class="bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 text-sm py-1 px-4 rounded-md">{{ __('messages.cancel_button') }}</button>
                         <button type="submit" disabled
                                 class="bg-blue-400 dark:bg-blue-800/50 cursor-not-allowed text-white text-sm py-1 px-4 rounded-md transition-colors duration-300">

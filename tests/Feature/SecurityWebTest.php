@@ -6,7 +6,10 @@ use App\Models\RefreshToken;
 use App\Models\User;
 use App\Services\AuthTokenService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -17,21 +20,60 @@ class SecurityWebTest extends TestCase
     public function test_security_headers_are_sent(): void
     {
         $response = $this->get('/login');
+        $csp = $response->headers->get('Content-Security-Policy');
 
         $response->assertHeader('X-Content-Type-Options', 'nosniff');
         $response->assertHeader('X-Frame-Options', 'SAMEORIGIN');
         $response->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
         $this->assertStringContainsString('camera=()', $response->headers->get('Permissions-Policy'));
-        $this->assertStringContainsString("object-src 'none'", $response->headers->get('Content-Security-Policy'));
-        $this->assertStringContainsString("frame-ancestors 'self'", $response->headers->get('Content-Security-Policy'));
-        $this->assertMatchesRegularExpression("/script-src 'nonce-[A-Za-z0-9+\\/=]+' 'strict-dynamic'/", $response->headers->get('Content-Security-Policy-Report-Only'));
         $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
+
+        // enforced: only nonced scripts, no inline handlers, no plugins, no base/form hijack
+        $this->assertMatchesRegularExpression("/script-src 'nonce-[A-Za-z0-9+\\/=]+' 'strict-dynamic'/", $csp);
+        $this->assertStringContainsString("script-src-attr 'none'", $csp);
+        $this->assertStringContainsString("object-src 'none'", $csp);
+        $this->assertStringContainsString("base-uri 'self'", $csp);
+        $this->assertStringContainsString("form-action 'self'", $csp);
+        $this->assertStringContainsString("frame-ancestors 'self'", $csp);
+
+        // monitored: broad fetch directives
+        $this->assertStringContainsString("img-src 'self'", $response->headers->get('Content-Security-Policy-Report-Only'));
+    }
+
+    public function test_every_script_tag_in_a_rendered_page_carries_the_csp_nonce(): void
+    {
+        $response = $this->get('/login');
+        $nonce = preg_match("/'nonce-([^']+)'/", $response->headers->get('Content-Security-Policy'), $m) ? $m[1] : null;
+        $this->assertNotNull($nonce);
+
+        preg_match_all('/<script\b[^>]*>/i', $response->getContent(), $tags);
+        foreach ($tags[0] as $tag) {
+            if (str_contains($tag, 'application/ld+json')) {
+                continue;
+            }
+            $this->assertStringContainsString('nonce="'.$nonce.'"', $tag, "script tag without nonce: {$tag}");
+        }
+        $this->assertDoesNotMatchRegularExpression('/\son(click|change|input|submit|load|error)=/i', $response->getContent());
+    }
+
+    public function test_cached_pages_always_carry_the_nonce_of_the_current_response(): void
+    {
+        config(['responsecache.enabled' => true]);
+        \Spatie\ResponseCache\Facades\ResponseCache::clear();
+
+        foreach ([1, 2, 3] as $i) {
+            $response = $this->get('/about');
+            preg_match("/'nonce-([^']+)'/", $response->headers->get('Content-Security-Policy'), $m);
+
+            $this->assertStringContainsString('nonce="'.$m[1].'"', $response->getContent(), "request {$i}: body nonce != header nonce");
+            $this->assertStringNotContainsString(\App\Http\Middleware\SecurityHeaders::placeholder(), $response->getContent());
+        }
     }
 
     public function test_csp_nonce_differs_per_request(): void
     {
-        $a = $this->get('/login')->headers->get('Content-Security-Policy-Report-Only');
-        $b = $this->get('/login')->headers->get('Content-Security-Policy-Report-Only');
+        $a = $this->get('/login')->headers->get('Content-Security-Policy');
+        $b = $this->get('/login')->headers->get('Content-Security-Policy');
 
         $this->assertNotSame($a, $b);
     }
@@ -154,6 +196,39 @@ class SecurityWebTest extends TestCase
         $response->assertSessionHasNoErrors();
         $this->assertNotNull($stolen->fresh()->revoked_at);
         $response->assertCookie(AuthTokenService::cookieName());
+    }
+
+    public function test_web_forgot_password_does_not_reveal_registered_emails(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create();
+
+        $known = $this->from('/forgot-password')->post('/forgot-password', ['email' => $user->email]);
+        $unknown = $this->from('/forgot-password')->post('/forgot-password', ['email' => 'ghost@example.com']);
+
+        $known->assertSessionHas('success')->assertSessionHasNoErrors();
+        $unknown->assertSessionHas('success')->assertSessionHasNoErrors();
+        $this->assertSame(session('success'), $known->getSession()->get('success'));
+        Notification::assertSentTo($user, ResetPassword::class);
+        Notification::assertCount(1);
+    }
+
+    public function test_web_password_reset_revokes_old_sessions_and_sets_the_new_password(): void
+    {
+        $user = User::factory()->create(['password' => bcrypt('correct-horse-1')]);
+        $request = \Illuminate\Http\Request::create('/');
+        app(AuthTokenService::class)->issueToken($user, $request);
+        $stolen = RefreshToken::where('user_id', $user->id)->first();
+
+        $this->post('/reset-password', [
+            'token' => Password::createToken($user),
+            'email' => $user->email,
+            'password' => 'a-brand-new-passphrase',
+            'password_confirmation' => 'a-brand-new-passphrase',
+        ])->assertRedirect(route('login'));
+
+        $this->assertNotNull($stolen->fresh()->revoked_at);
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('a-brand-new-passphrase', $user->fresh()->password));
     }
 
     public function test_forgot_password_is_rate_limited(): void

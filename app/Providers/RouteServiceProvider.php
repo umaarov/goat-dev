@@ -71,6 +71,6 @@ class RouteServiceProvider extends ServiceProvider
 
         RateLimiter::for('webhook', fn (Request $r) => Limit::perMinute(20)->by('wh:'.$r->ip()));
 
-        RateLimiter::for('csp-report', fn (Request $r) => Limit::perMinute(30)->by('csp:'.$r->ip()));
+        RateLimiter::for('csp-report', fn (Request $r) => Limit::perMinute(120)->by('csp:'.$r->ip()));
     }
 }

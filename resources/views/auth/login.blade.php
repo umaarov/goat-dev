@@ -9,7 +9,7 @@
             @if(isset($available_locales) && is_array($available_locales) && count($available_locales) > 1)
                 <div class="absolute top-6 right-6 z-10">
                     <div class="relative">
-                        <select onchange="window.location.href=this.value;"
+                        <select data-change="navigateToValue" data-args='["$el"]'
                                 aria-label="{{ __('messages.select_language_label') ?? 'Select Language' }}"
                                 class="block appearance-none w-auto bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:border-gray-400 px-3 py-1.5 pr-7 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-xs text-gray-700 dark:text-gray-300">
                             @foreach($available_locales as $localeKey => $localeName)
@@ -159,7 +159,7 @@
             </p>
         </div>
     </div>
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         document.addEventListener('DOMContentLoaded', function () {
             const githubBtn = document.getElementById('github-auth-btn');
 

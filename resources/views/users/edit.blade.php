@@ -97,7 +97,7 @@
                     </label>
                     <input id="profile_picture_trigger" type="file" class="hidden"
                            accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
-                           onchange="openImageCropper(event, 'profile_picture_final', 'profile_picture_img_preview', 'profile_picture_placeholder_icon', 'profile_picture_preview_cropper')">
+                           data-change="openImageCropper" data-args='["$event", "profile_picture_final", "profile_picture_img_preview", "profile_picture_placeholder_icon", "profile_picture_preview_cropper"]'>
                     <input id="profile_picture_final" type="file" name="profile_picture" class="hidden">
 
                     @error('profile_picture')
@@ -380,7 +380,7 @@
                                        value="{{ old('external_links.' . $i, ($user->external_links[$i] ?? null) ?: '') }}"
                                        placeholder="{{ __('messages.external_link_placeholder') }}"
                                        class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-50 dark:placeholder-gray-400"
-                                       oninput="updateDynamicLinkIcon(this, 'icon_container_external_link_{{ $i }}')">
+                                       data-input="updateDynamicLinkIcon" data-args="{{ json_encode(['$el', 'icon_container_external_link_'.$i]) }}">
                             </div>
                             @error('external_links.' . $i)
                             <span class="text-red-500 dark:text-red-400 text-sm mt-1">{{ $message }}</span>
@@ -439,7 +439,7 @@
                                     @if(!$session->is_current_device)
                                         <form method="POST"
                                               action="{{ route('profile.sessions.terminate', $session->id) }}"
-                                              onsubmit="return confirm('{{ __('messages.session_terminate_confirm') }}');">
+                                              data-confirm="{{ __('messages.session_terminate_confirm') }}">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
@@ -464,7 +464,7 @@
                                     <p class="text-xs text-center text-gray-500 dark:text-gray-400 mt-2">{{ __('messages.password_confirm_notice_sessions') }}</p>
                                 @else
                                     <form method="POST" action="{{ route('profile.sessions.terminate_all') }}"
-                                          onsubmit="return confirm('{{ __('Are you sure you want to log out all other devices?') }}');">
+                                          data-confirm="{{ __('Are you sure you want to log out all other devices?') }}">
                                         @csrf
                                         <button type="submit"
                                                 class="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
@@ -566,7 +566,7 @@
                                 <div class="flex-shrink-0 ml-4">
                                     @if($authMethods[$provider])
                                         <button type="button"
-                                                onclick="unlinkProvider('{{ $provider }}', '{{ route('profile.unlink.social', $provider) }}')"
+                                                data-click="unlinkProvider" data-args="{{ json_encode([$provider, route('profile.unlink.social', $provider)]) }}"
                                                 class="text-sm font-medium text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 hover:underline disabled:text-gray-400 disabled:no-underline disabled:cursor-not-allowed"
                                                 @if($authMethodsCount <= 1) disabled
                                                 title="{{ __('Cannot unlink the last authentication method.') }}" @endif>
@@ -751,7 +751,7 @@
 @endsection
 {{--    @section('scripts')--}}
 @push('scripts')
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         document.addEventListener('DOMContentLoaded', function () {
             const themeSwitcher = document.getElementById('theme-switcher');
             if (!themeSwitcher || !window.themeManager) return;
@@ -771,7 +771,7 @@
             updateRadioSelection(window.themeManager.get());
         });
     </script>
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         document.addEventListener('DOMContentLoaded', function () {
             const openModalBtn = document.getElementById('deactivate-account-button');
             const closeModalBtn = document.getElementById('cancel-deactivation-button');
@@ -802,7 +802,7 @@
             }
         });
     </script>
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         const usernameTranslations = {
             checking: @json(__('messages.username_availability_checking')),
             available: @json(__('messages.username_available')),
@@ -1093,7 +1093,7 @@
         });
     </script>
 
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         document.addEventListener('DOMContentLoaded', function () {
             const generateBtn = document.getElementById('generate-ai-image-btn');
             const promptInput = document.getElementById('ai-prompt');

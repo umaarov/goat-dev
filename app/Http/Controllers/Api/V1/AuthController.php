@@ -216,10 +216,10 @@ class AuthController extends ApiController
      */
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
     {
-        $status = Password::sendResetLink($request->only('email'));
+        Password::sendResetLink($request->only('email'));
 
         // Always report success to avoid leaking which emails are registered.
-        return $this->message(__($status));
+        return $this->message(__(Password::RESET_LINK_SENT));
     }
 
     /**

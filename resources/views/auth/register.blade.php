@@ -9,7 +9,7 @@
             @if(isset($available_locales) && is_array($available_locales) && count($available_locales) > 1)
                 <div class="absolute top-6 right-6 z-10">
                     <div class="relative">
-                        <select onchange="window.location.href=this.value;"
+                        <select data-change="navigateToValue" data-args='["$el"]'
                                 aria-label="{{ __('messages.select_language_label') ?? 'Select Language' }}"
                                 class="block appearance-none w-auto bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:border-gray-400 px-3 py-1.5 pr-7 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-xs text-gray-700 dark:text-gray-300">
                             @foreach($available_locales as $localeKey => $localeName)
@@ -113,7 +113,7 @@
                                 <div class="flex items-center justify-between">
                                     <span
                                         class="text-sm text-gray-500 dark:text-gray-400">{{ __('messages.auth.upload_profile_picture_cta') }}</span>
-                                    <button type="button" onclick="document.getElementById('profile_picture').click()"
+                                    <button type="button" data-click="clickElement" data-args='["profile_picture"]'
                                             class="text-sm text-blue-800 dark:text-blue-400 hover:underline">
                                         {{ __('messages.choose_file_button') }}
                                     </button>
@@ -122,7 +122,7 @@
                         </div>
                         <input id="profile_picture" type="file" name="profile_picture"
                                class="hidden" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
-                               onchange="previewProfilePicture(this)">
+                               data-change="previewProfilePicture" data-args='["$el"]'>
                     </div>
                     @error('profile_picture')
                     <span class="text-red-500 dark:text-red-400 text-sm">{{ $message }}</span>
@@ -228,7 +228,7 @@
         </div>
     </div>
 
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         function previewProfilePicture(input) {
             const preview = document.getElementById('profile_picture_preview');
             if (input.files && input.files[0]) {

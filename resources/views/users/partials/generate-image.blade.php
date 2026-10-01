@@ -56,7 +56,7 @@
 </div>
 
 @push('scripts')
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         document.addEventListener('DOMContentLoaded', function () {
             const generateBtn = document.getElementById('generate-ai-image-btn');
             const promptInput = document.getElementById('ai-prompt');

@@ -1,0 +1,13 @@
+{
+  "name": "goat-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "csp": "node probe.mjs",
+    "functional": "node functional.mjs",
+    "injection": "node injection.mjs"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^24.43.1"
+  }
+}

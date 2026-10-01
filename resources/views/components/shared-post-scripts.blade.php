@@ -3,7 +3,8 @@
 
 @endphp
 
-<script>
+@once
+<script nonce="{{ $cspNonce ?? '' }}">
 
     // if (typeof window.postScriptInitialized === 'undefined') {
     //     window.postScriptInitialized = true;
@@ -398,7 +399,7 @@
             }
         }
 
-    const HTML_ESCAPES = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#96;'};
+    var HTML_ESCAPES = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#96;'};
 
     function escapeHtml(value) {
         return String(value ?? '').replace(/[&<>"'`]/g, ch => HTML_ESCAPES[ch]);
@@ -411,6 +412,11 @@
         } catch (e) {
             return null;
         }
+    }
+
+    // markup for the CSP-safe action dispatcher (public/js/csp-actions.js)
+    function actionAttrs(type, name, args) {
+        return `data-${type}="${name}" data-args="${escapeHtml(JSON.stringify(args))}"`;
     }
 
     function linkifyContent(text) {
@@ -434,14 +440,6 @@
         }
 
         return out + linkMentions(text.slice(last));
-    }
-
-    if (!window.__replyDelegated) {
-        window.__replyDelegated = true;
-        document.addEventListener('click', function (e) {
-            const btn = e.target.closest('[data-reply-user]');
-            if (btn) prepareReply(btn.dataset.replyPost, btn.dataset.replyComment, btn.dataset.replyUser);
-        });
     }
 
     async function fetchAndShowComment(postId, commentId) {
@@ -502,7 +500,7 @@
                 const loadMoreWrapper = document.createElement('div');
                 loadMoreWrapper.className = 'load-more-comments-wrapper text-start mt-4 py-2';
                 const remainingCount = lastPageData.total - lastPageData.to;
-                loadMoreWrapper.innerHTML = `<button class="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline" onclick="loadMoreComments(this, ${postId})">${(window.translations.js_view_more_comments || 'View :count more comments').replace(':count', remainingCount)}</button>`;
+                loadMoreWrapper.innerHTML = `<button class="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline" ${actionAttrs('click', 'loadMoreComments', ['$el', postId])}>${(window.translations.js_view_more_comments || 'View :count more comments').replace(':count', remainingCount)}</button>`;
                 commentsContainer.appendChild(loadMoreWrapper);
             }
 
@@ -634,7 +632,7 @@
                     const loadMoreWrapper = document.createElement('div');
                     loadMoreWrapper.className = 'load-more-comments-wrapper text-center mt-4 py-2';
                     const remainingCount = data.comments.total - data.comments.to;
-                    loadMoreWrapper.innerHTML = `<button class="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline" onclick="loadMoreComments(this, ${postId})">${(window.translations.js_view_more_comments || 'View :count more comments').replace(':count', remainingCount)}</button>`;
+                    loadMoreWrapper.innerHTML = `<button class="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline" ${actionAttrs('click', 'loadMoreComments', ['$el', postId])}>${(window.translations.js_view_more_comments || 'View :count more comments').replace(':count', remainingCount)}</button>`;
                     commentsContainer.appendChild(loadMoreWrapper);
                 }
 
@@ -732,7 +730,7 @@
 
             const likeButtonHTML = `
             <div class="flex items-center text-xs">
-                <button onclick="toggleCommentLike(${commentData.id}, this)"
+                <button ${actionAttrs('click', 'toggleCommentLike', [commentData.id, '$el'])}
                         class="like-comment-button flex items-center mb-0.5 rounded-full transition-all duration-150 ease-in-out group ${isLiked ? 'text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50' : 'text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/50'}"
                         data-comment-id="${commentData.id}"
                         title="${isLiked ? (window.translations.unlike_comment_title || 'Unlike') : (window.translations.like_comment_title || 'Like')}">
@@ -756,7 +754,7 @@
             //     if (commentData.parent.user) {
             //         const parentUsername = commentData.parent.user.username;
             //         if (!commentData.content.includes(`@${parentUsername}`)) {
-            //             replyToHTML = `<a href="javascript:void(0)" onclick="scrollToComment('comment-${commentData.parent_id}')" class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
+            //             replyToHTML = `<a href="#" ${actionAttrs('click', 'scrollToComment', ['comment-' + Number(commentData.parent_id)])} class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
             //         }
             //     }
             // }
@@ -780,7 +778,7 @@
             //             const parentUsername = commentData.parent.user.username;
             //             if (!commentData.content.includes(`@${parentUsername}`)) {
             //                 console.log(`%c DEBUG: Decision: ADDING @mention for nested reply.`, 'color: green');
-            //                 replyToHTML = `<a href="javascript:void(0)" onclick="scrollToComment('comment-${commentData.parent_id}')" class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
+            //                 replyToHTML = `<a href="#" ${actionAttrs('click', 'scrollToComment', ['comment-' + Number(commentData.parent_id)])} class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
             //             }
             //         }
             //     } else {
@@ -792,14 +790,14 @@
             if (isNestedReply && commentData.parent && commentData.parent.user) {
                 const parentUsername = commentData.parent.user.username;
                 if (!commentData.content.includes(`@${parentUsername}`)) {
-                    replyToHTML = `<a href="javascript:void(0)" onclick="scrollToComment('comment-${Number(commentData.parent_id)}')" class="text-blue-600 dark:text-blue-400 hover:underline mr-1 font-medium">@${escapeHtml(parentUsername)}</a>`;
+                    replyToHTML = `<a href="#" ${actionAttrs('click', 'scrollToComment', ['comment-' + Number(commentData.parent_id)])} class="text-blue-600 dark:text-blue-400 hover:underline mr-1 font-medium">@${escapeHtml(parentUsername)}</a>`;
                 }
             }
 
             // if (isReply && commentData.parent && commentData.parent.user && commentData.parent_id !== commentData.root_comment_id) {
             //     const parentUsername = commentData.parent.user.username;
             //     if (!commentData.content.includes(`@${parentUsername}`)) {
-            //         replyToHTML = `<a href="javascript:void(0)" onclick="scrollToComment('comment-${commentData.parent_id}')" class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
+            //         replyToHTML = `<a href="#" ${actionAttrs('click', 'scrollToComment', ['comment-' + Number(commentData.parent_id)])} class="text-blue-600 hover:underline mr-1 font-medium">@${parentUsername}</a>`;
             //     }
             // }
 
@@ -809,16 +807,16 @@
 
             let goToParentArrowHTML = '';
             if (isReply && Number(commentData.parent_id) !== Number(commentData.root_comment_id)) {
-                goToParentArrowHTML = `<button onclick="scrollToComment('comment-${commentData.parent_id}')" class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700" title="${window.translations.go_to_parent_comment_title || 'Go to parent comment'}"><svg class="h-4 w-4 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612L5.28 9.68a.75.75 0 01-1.06-1.06l5.25-5.25a.75.75 0 011.06 0l5.25 5.25a.75.75 0 11-1.06 1.06L10.75 5.612V16.25A.75.75 0 0110 17z" clip-rule="evenodd" /></svg></button>`;
+                goToParentArrowHTML = `<button ${actionAttrs('click', 'scrollToComment', ['comment-' + Number(commentData.parent_id)])} class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700" title="${window.translations.go_to_parent_comment_title || 'Go to parent comment'}"><svg class="h-4 w-4 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612L5.28 9.68a.75.75 0 01-1.06-1.06l5.25-5.25a.75.75 0 011.06 0l5.25 5.25a.75.75 0 11-1.06 1.06L10.75 5.612V16.25A.75.75 0 0110 17z" clip-rule="evenodd" /></svg></button>`;
             }
 
             let repliesToggleHTML = '';
             if (!isReply && commentData.flat_replies && commentData.flat_replies.length > 0) {
                 const replyCount = commentData.flat_replies.length;
                 const viewText = (window.translations.view_replies_text || 'View replies (:count)').replace(':count', replyCount);
-                repliesToggleHTML = `<button class="view-replies-button font-semibold hover:underline" onclick="toggleRepliesContainer(this, 'comment-${commentData.id}')">${viewText}</button>`;
+                repliesToggleHTML = `<button class="view-replies-button font-semibold hover:underline" ${actionAttrs('click', 'toggleRepliesContainer', ['$el', 'comment-' + commentData.id])}>${viewText}</button>`;
             }
-            const replyButton = `<button data-reply-post="${escapeHtml(postId)}" data-reply-comment="${escapeHtml(commentData.id)}" data-reply-user="${safeUsername}" class="font-semibold hover:underline" title="Reply to ${safeUsername}">${window.translations.reply_button_text || 'Reply'}</button>`;
+            const replyButton = `<button ${actionAttrs('click', 'prepareReply', [String(postId), String(commentData.id), commentData.user.username])} class="font-semibold hover:underline" title="Reply to ${safeUsername}">${window.translations.reply_button_text || 'Reply'}</button>`;
 
             commentDiv.innerHTML = `
             <div class="flex items-start space-x-3">
@@ -841,7 +839,7 @@
                 </div>
                 ${canDeleteComment(commentData) ? `
                 <div class="ml-2 pl-1 flex-shrink-0">
-                    <form onsubmit="deleteComment('${commentData.id}', event)" class="inline">
+                    <form ${actionAttrs('submit', 'deleteComment', [String(commentData.id), '$event'])} class="inline">
                         <button type="submit" class="text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors duration-150 ease-in-out text-xs p-1 mt-0.5" title="${window.translations.delete_comment_title || 'Delete comment'}">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
@@ -877,7 +875,7 @@
                     const remainingCount = totalRepliesCount - loadedRepliesCount;
                     const loadMoreWrapper = document.createElement('div');
                     loadMoreWrapper.className = 'load-more-replies-wrapper mt-2';
-                    loadMoreWrapper.innerHTML = `<button class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline" onclick="loadMoreReplies(this, ${commentData.id})">${(window.translations.view_more_replies_text || 'View :count more replies').replace(':count', remainingCount)}</button>`;
+                    loadMoreWrapper.innerHTML = `<button class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline" ${actionAttrs('click', 'loadMoreReplies', ['$el', commentData.id])}>${(window.translations.view_more_replies_text || 'View :count more replies').replace(':count', remainingCount)}</button>`;
                     repliesContainer.appendChild(loadMoreWrapper);
                 }
             }
@@ -1291,7 +1289,7 @@
             pageItem.className = `page-item ${isActive ? 'active' : ''}`;
             const link = document.createElement('a');
             link.className = 'page-link';
-            link.href = 'javascript:void(0)';
+            link.href = '#';
             link.innerHTML = text;
             link.onclick = (e) => {
                 e.preventDefault();
@@ -1662,3 +1660,4 @@
         }
     // }
 </script>
+@endonce

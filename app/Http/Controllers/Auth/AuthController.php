@@ -746,20 +746,14 @@ class AuthController extends Controller
 
         $status = Password::sendResetLink($request->only('email'));
 
-        if ($status === Password::RESET_LINK_SENT) {
-            Log::channel('audit_trail')->info('[AUTH] [PASSRESET] Password reset link sent.', [
-                'email' => $request->email,
-                'ip_address' => $request->ip(),
-            ]);
-            return back()->with('success', __($status));
-        }
-
-        Log::channel('audit_trail')->warning('[AUTH] [PASSRESET] Password reset link failed to send.', [
-            'email' => $request->email,
+        Log::channel('audit_trail')->info('[AUTH] [PASSRESET] Password reset requested.', [
+            'email_hash' => substr(hash('sha256', strtolower((string) $request->email)), 0, 16),
             'ip_address' => $request->ip(),
             'status' => $status,
         ]);
-        return back()->withErrors(['email' => __($status)]);
+
+        // same answer whether or not the address is registered (no account enumeration)
+        return back()->with('success', __(Password::RESET_LINK_SENT));
     }
 
     public function showResetForm(Request $request, string $token): View

@@ -321,7 +321,7 @@
 @endsection
 
 @push('scripts')
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         window.i18n = {
             profile: {
                 js: {
@@ -334,7 +334,7 @@
         window.profileUsername = '{{ addslashes($user->username) }}';
     </script>
     <x-shared-post-scripts/>
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         document.addEventListener('DOMContentLoaded', function () {
             @if(session('scrollToPost'))
             scrollToPost({{ session('scrollToPost') }});
@@ -552,7 +552,7 @@
         });
     </script>
     {{-- START: Snow Effect --}}
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         (function () {
             const canvas = document.getElementById('snow-canvas');
             const header = document.getElementById('profile-header');

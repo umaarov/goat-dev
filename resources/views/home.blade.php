@@ -4,7 +4,7 @@
 @section('meta_description', __('messages.home.meta_description'))
 
 @push('schema')
-    <script type="speculationrules">
+    <script nonce="{{ $cspNonce ?? '' }}" type="speculationrules">
         {
           "prerender": [
             {
@@ -100,7 +100,7 @@
 @endsection
 
 @push('scripts')
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         document.addEventListener('DOMContentLoaded', function () {
             const shimmer = document.getElementById('posts-loading-shimmer');
             const container = document.getElementById('posts-container');

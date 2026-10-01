@@ -49,7 +49,7 @@
                         </label>
                         <input type="file" id="option_one_image_trigger" class="hidden"
                                accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
-                               onchange="openImageCropper(event, 'option_one_image_final', 'option_one_img', 'option_one_placeholder', 'option_one_preview')">
+                               data-change="openImageCropper" data-args='["$event", "option_one_image_final", "option_one_img", "option_one_placeholder", "option_one_preview"]'>
                         <input type="file" name="option_one_image" id="option_one_image_final" class="hidden">
 
                         @error('option_one_image')
@@ -89,7 +89,7 @@
                         </label>
                         <input type="file" id="option_two_image_trigger" class="hidden"
                                accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
-                               onchange="openImageCropper(event, 'option_two_image_final', 'option_two_img', 'option_two_placeholder', 'option_two_preview')">
+                               data-change="openImageCropper" data-args='["$event", "option_two_image_final", "option_two_img", "option_two_placeholder", "option_two_preview"]'>
                         <input type="file" name="option_two_image" id="option_two_image_final" class="hidden">
 
                         @error('option_two_image')
@@ -147,7 +147,7 @@
         </div>
     </div>
 
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         async function setFileInputFromUrl(url, inputId, fileName) {
             try {
                 const response = await fetch(url, {cache: 'no-store'});

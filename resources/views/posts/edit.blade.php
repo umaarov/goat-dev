@@ -90,7 +90,7 @@
 
                             <input type="file" id="option_one_image_trigger_edit" class="hidden"
                                    accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
-                                   onchange="document.getElementById('option_one_new_image_preview_container_edit').classList.remove('hidden'); const cb = document.getElementById('remove_option_one_image_checkbox'); if(cb) cb.checked = false; openImageCropper(event, 'option_one_image_final_edit', 'option_one_new_image_preview_edit', 'option_one_new_image_placeholder_edit', 'option_one_new_image_preview_container_edit')">
+                                   data-change="showAndCrop" data-args='["$event", "option_one_new_image_preview_container_edit", "remove_option_one_image_checkbox", "option_one_image_final_edit", "option_one_new_image_preview_edit", "option_one_new_image_placeholder_edit", "option_one_new_image_preview_container_edit"]'>
                             <input type="file" name="option_one_image" id="option_one_image_final_edit" class="hidden">
 
                             @error('option_one_image')
@@ -155,7 +155,7 @@
 
                             <input type="file" id="option_two_image_trigger_edit" class="hidden"
                                    accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
-                                   onchange="document.getElementById('option_two_new_image_preview_container_edit').classList.remove('hidden'); const cb = document.getElementById('remove_option_two_image_checkbox'); if(cb) cb.checked = false; openImageCropper(event, 'option_two_image_final_edit', 'option_two_new_image_preview_edit', 'option_two_new_image_placeholder_edit', 'option_two_new_image_preview_container_edit')">
+                                   data-change="showAndCrop" data-args='["$event", "option_two_new_image_preview_container_edit", "remove_option_two_image_checkbox", "option_two_image_final_edit", "option_two_new_image_preview_edit", "option_two_new_image_placeholder_edit", "option_two_new_image_preview_container_edit"]'>
                             <input type="file" name="option_two_image" id="option_two_image_final_edit" class="hidden">
 
                             @error('option_two_image')
@@ -179,7 +179,7 @@
         @endif
     </div>
 
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         document.addEventListener('DOMContentLoaded', function () {
             const editPostForm = document.getElementById('editPostForm');
 

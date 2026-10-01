@@ -1,36 +1,26 @@
 {
     "debug_tree": {
         "ngrams": [
-            "goa",
-            "oat"
+            "est",
+            "tes"
         ],
         "tokens": [
-            "goat"
+            "test"
         ]
     },
-    "latency_ms": 0.457,
-    "query": "goat",
+    "latency_ms": 0.314,
+    "query": "test",
     "results": [
         {
-            "id": 76,
-            "score": 7.215387571061687,
-            "snippet": "Who is the GOAT of Boxing? Muhammad Ali Mike Tyson boxing, ali, tyson, goat, greatest"
+            "id": 4,
+            "score": 0.24253563538406106,
+            "snippet": "Who is the greatest footballer of the modern era? Ronaldo Messi "
         },
         {
-            "id": 75,
-            "score": 7.196279134230364,
-            "snippet": "Who is the GOAT of Tennis? Roger Federer Novak Djokovic tennis, federer, djokovic, goat, rivalry"
-        },
-        {
-            "id": 42,
-            "score": 5.246557019573124,
-            "snippet": "Who would you consider to be the GOAT of programming? Nikolai Durov Linus Torvalds "
-        },
-        {
-            "id": 20,
-            "score": 4.871730867337196,
-            "snippet": "Janob @goat, saytingizni kompyuterga moslashni iloji bormi? Kompyuterda ishlash ozgina noqulay ekan,..."
+            "id": 56,
+            "score": 0.23570225957257904,
+            "snippet": "Who's the greatest chess player? Bobby Fischer Magnus Carlsen "
         }
     ],
-    "timestamp": "10:43:49"
+    "timestamp": "13:01:51"
 }

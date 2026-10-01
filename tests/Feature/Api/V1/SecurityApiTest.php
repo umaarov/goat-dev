@@ -9,7 +9,10 @@ use App\Services\TelegramAuthService;
 use App\Support\ImageGuard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -123,6 +126,44 @@ class SecurityApiTest extends TestCase
         }
 
         $this->postJson('/api/v1/auth/password/forgot', ['email' => 'a@example.com'])->assertStatus(429);
+    }
+
+    public function test_password_reset_journey_is_uniform_and_revokes_everything(): void
+    {
+        Notification::fake();
+        $user = $this->user();
+        $old = $this->login($user);
+
+        $known = $this->postJson('/api/v1/auth/password/forgot', ['email' => $user->email]);
+        $unknown = $this->postJson('/api/v1/auth/password/forgot', ['email' => 'ghost@example.com']);
+
+        // an attacker cannot tell the two apart
+        $this->assertSame($known->status(), $unknown->status());
+        $this->assertSame($known->json(), $unknown->json());
+        Notification::assertSentTo($user, ResetPassword::class);
+        Notification::assertCount(1);
+
+        $this->postJson('/api/v1/auth/password/reset', [
+            'token' => Password::createToken($user),
+            'email' => $user->email,
+            'password' => 'a-brand-new-passphrase',
+            'password_confirmation' => 'a-brand-new-passphrase',
+        ])->assertOk();
+
+        $this->postJson('/api/v1/auth/refresh', ['refresh_token' => $old['refresh_token']])->assertStatus(401);
+        $this->withToken($old['access_token'])->getJson('/api/v1/auth/me')->assertUnauthorized();
+        $this->postJson('/api/v1/auth/login', ['login_identifier' => $user->email, 'password' => 'correct-horse-1'])->assertStatus(401);
+        $this->postJson('/api/v1/auth/login', ['login_identifier' => $user->email, 'password' => 'a-brand-new-passphrase'])->assertOk();
+    }
+
+    public function test_reset_token_table_exists_and_a_token_is_single_use(): void
+    {
+        $user = $this->user();
+        $token = Password::createToken($user);
+        $payload = ['token' => $token, 'email' => $user->email, 'password' => 'another-long-passphrase', 'password_confirmation' => 'another-long-passphrase'];
+
+        $this->postJson('/api/v1/auth/password/reset', $payload)->assertOk();
+        $this->postJson('/api/v1/auth/password/reset', $payload)->assertStatus(422);
     }
 
     public function test_server_errors_do_not_leak_internals(): void

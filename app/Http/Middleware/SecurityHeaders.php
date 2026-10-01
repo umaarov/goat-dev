@@ -6,19 +6,26 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SecurityHeaders
 {
     public function handle(Request $request, Closure $next): Response
     {
         $nonce = base64_encode(random_bytes(16));
+        $placeholder = self::placeholder();
         $request->attributes->set('csp_nonce', $nonce);
-        view()->share('cspNonce', $nonce);
-        Vite::useCspNonce($nonce);
+
+        // views render a placeholder so cached HTML stays valid; the real nonce is swapped in below
+        view()->share('cspNonce', $placeholder);
+        Vite::useCspNonce($placeholder);
 
         /** @var Response $response */
         $response = $next($request);
+
+        $this->injectNonce($response, $placeholder, $nonce);
 
         $secure = $request->isSecure();
         $headers = $response->headers;
@@ -36,8 +43,8 @@ class SecurityHeaders
         }
 
         if (config('security.csp.enabled')) {
-            $headers->set('Content-Security-Policy', $this->enforcedPolicy($secure));
-            $headers->set('Content-Security-Policy-Report-Only', $this->strictPolicy($nonce));
+            $headers->set('Content-Security-Policy', $this->enforcedPolicy($secure, $nonce).'; report-uri '.URL::to('/csp-report', [], false));
+            $headers->set('Content-Security-Policy-Report-Only', $this->monitoredPolicy($secure));
         }
 
         if ($request->is('api/v1/auth/*', 'login', 'register', 'forgot-password', 'reset-password*', 'confirm-password')) {
@@ -48,14 +55,41 @@ class SecurityHeaders
         return $response;
     }
 
-    /** Enforced baseline, safe for the current markup. */
-    private function enforcedPolicy(bool $secure): string
+    // secret per deployment, so injected markup cannot pre-claim a valid nonce
+    public static function placeholder(): string
+    {
+        return 'csp-'.substr(hash_hmac('sha256', 'csp-nonce-placeholder', (string) config('app.key')), 0, 32);
+    }
+
+    private function injectNonce(Response $response, string $placeholder, string $nonce): void
+    {
+        if ($response instanceof StreamedResponse || $response instanceof BinaryFileResponse) {
+            return;
+        }
+
+        $type = (string) $response->headers->get('Content-Type');
+        $content = $response->getContent();
+
+        if ($content !== false && $content !== '' && str_contains($type, 'text/html') && str_contains($content, $placeholder)) {
+            $response->setContent(str_replace($placeholder, $nonce, $content));
+        }
+    }
+
+    /**
+     * Enforced: nothing but nonced scripts can run (no injected tags, no inline handlers, no javascript: URLs).
+     * 'unsafe-eval' is only there for Alpine's expression engine; 'unsafe-inline' and https: are CSP2
+     * fallbacks that browsers ignore once a nonce is present.
+     */
+    private function enforcedPolicy(bool $secure, string $nonce): string
     {
         $directives = [
+            "script-src 'nonce-{$nonce}' 'strict-dynamic' 'unsafe-eval' 'unsafe-inline' https:",
+            "script-src-attr 'none'",
+            "worker-src 'self' blob:",
             "object-src 'none'",
             "base-uri 'self'",
-            "frame-ancestors 'self'",
             "form-action 'self'",
+            "frame-ancestors 'self'",
         ];
 
         if ($secure) {
@@ -65,21 +99,19 @@ class SecurityHeaders
         return implode('; ', $directives);
     }
 
-    /** Strict nonce policy, report-only until the remaining inline handlers are removed. */
-    private function strictPolicy(string $nonce): string
+    /** Report-only: everything else (images, styles, fonts, connections, frames), to watch before enforcing. */
+    private function monitoredPolicy(bool $secure): string
     {
+        $connect = $secure ? "'self' https: wss:" : "'self' https: wss: ws:";
+
+        // no default-src: scripts are governed by the enforced policy above
         $directives = [
-            "default-src 'self'",
-            "script-src 'nonce-{$nonce}' 'strict-dynamic' 'unsafe-inline' https:",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com",
             "img-src 'self' data: blob: https:",
             "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com",
-            "connect-src 'self' https: wss:",
+            "connect-src {$connect}",
             'frame-src https:',
-            "object-src 'none'",
-            "base-uri 'self'",
-            "form-action 'self'",
-            "frame-ancestors 'self'",
+            "media-src 'self' blob: https:",
             'report-uri '.URL::to('/csp-report', [], false),
         ];
 

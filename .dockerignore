@@ -1,7 +1,7 @@
 .git
 .idea
 .vscode
-node_modules
+**/node_modules
 vendor
 public/build
 public/storage

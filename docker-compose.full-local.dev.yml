@@ -1,0 +1,8 @@
+# live view/js/lang edits without a rebuild:
+# docker compose -f docker-compose.full-local.yml -f docker-compose.full-local.dev.yml up -d
+services:
+  app:
+    volumes:
+      - ./resources/views:/app/resources/views:ro
+      - ./lang:/app/lang:ro
+      - ./public/js:/app/public/js:ro

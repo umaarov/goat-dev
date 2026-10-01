@@ -155,7 +155,7 @@
 
                                 @if (($loop->iteration % 6) == 0)
                                     <div class="w-full mb-4">
-                                        <script async
+                                        <script nonce="{{ $cspNonce ?? '' }}" async
                                                 src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2889575196315667"
                                                 crossorigin="anonymous"></script>
                                         <ins class="adsbygoogle"
@@ -164,7 +164,7 @@
                                              data-ad-layout-key="-6t+ed+2i-1n-4w"
                                              data-ad-client="ca-pub-2889575196315667"
                                              data-ad-slot="7674157999"></ins>
-                                        <script>
+                                        <script nonce="{{ $cspNonce ?? '' }}">
                                             (function () {
                                                 const adIns = document.currentScript.previousElementSibling;
                                                 const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
@@ -200,7 +200,7 @@
 @endsection
 
 @push('scripts')
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         document.addEventListener('DOMContentLoaded', function () {
             const initialPostsExist = {{ $posts->count() > 0 ? 'true' : 'false' }};
             if (!initialPostsExist) return;

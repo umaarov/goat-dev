@@ -20,7 +20,7 @@
     <meta name="msapplication-config" content="/browserconfig.xml">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="color-scheme" content="light dark">
-    <script type="speculationrules">
+    <script nonce="{{ $cspNonce ?? '' }}" type="speculationrules">
         {
           "prerender": [
             {
@@ -42,7 +42,8 @@
           href="{{ asset('opensearch.xml') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @stack('styles')
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}" src="{{ asset('js/csp-actions.js') }}?v={{ filemtime(public_path('js/csp-actions.js')) }}"></script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         (function () {
             window.themeManager = {
                 key: 'theme',
@@ -98,7 +99,7 @@
     {{--    </noscript>--}}
     {{--    @vite(['resources/js/app.js'])--}}
     {{--    @include('partials.critical-css')--}}
-    {{--    <link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}" media="print" onload="this.media='all'">--}}
+    {{--    <link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}" media="print" data-async-css>--}}
     {{--    <noscript><link rel="stylesheet" href="{{ Illuminate\Support\Facades\Vite::asset('resources/css/app.css') }}"></noscript>--}}
 
     {{--    <script src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false"></script>--}}
@@ -110,8 +111,8 @@
     {{--    </script>--}}
 
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YES4XC0B0N"></script>
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}" async src="https://www.googletagmanager.com/gtag/js?id=G-YES4XC0B0N"></script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         window.dataLayer = window.dataLayer || [];
 
         function gtag() {
@@ -130,18 +131,18 @@
     <link rel="preload" as="style"
           href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
-          media="print" onload="this.media='all'">
+          media="print" data-async-css>
     {{--    <script src="https://code.jquery.com/jquery-3.6.0.min.js"--}}
     {{--            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="--}}
     {{--            crossorigin="anonymous" defer></script>--}}
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"
+    <script nonce="{{ $cspNonce ?? '' }}" src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"
             integrity="sha256-tgDjY9mdlURNtUrL+y3v/smueSqpmgkim82geOW1VkM="
             crossorigin="anonymous" defer></script>
     {{-- Cropper.js --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css"
           integrity="sha512-hvNR0F/e2J7zPPfLC9auFe3/SE0yG4aJCOd/qxew74NN7eyiSKjr7xJJMu1Jy2wf7FXITpWS1E/RY8yzuXN7VA=="
-          crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'"/>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"
+          crossorigin="anonymous" referrerpolicy="no-referrer" media="print" data-async-css />
+    <script nonce="{{ $cspNonce ?? '' }}" src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"
             integrity="sha512-9KkIqdfN7ipEW6B6k+Aq20PV31bjODg4AA52W+tYtAE0jE0kMx49bjJ3FgvS56wzmyfMUHbQ4Km2b7l9+Y/+Eg=="
             crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
     <meta name="title" content="GOAT.uz - Social Debate Platform">
@@ -182,7 +183,7 @@
     @if(isset($defaultHreflangUrl))
         <link rel="alternate" hreflang="x-default" href="{{ $defaultHreflangUrl }}"/>
     @endif
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
+    <script nonce="{{ $cspNonce ?? '' }}" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
             crossorigin="anonymous"></script>
     {{--    <script src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false"></script>--}}
     {{--    <script src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false"></script>--}}
@@ -251,7 +252,7 @@
     </script>
 
     @stack('schema')
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         window.translations = {
             cropperModalTitle: "{{ __('messages.app.js.cropper_modal_title') }}",
             cancelButton: "{{ __('messages.cancel_button') }}",
@@ -403,7 +404,7 @@
                  data-ad-slot="6545116955"
                  data-ad-format="auto"
                  data-full-width-responsive="true"></ins>
-            <script>
+            <script nonce="{{ $cspNonce ?? '' }}">
                 (adsbygoogle = window.adsbygoogle || []).push({});
             </script>
         </div>
@@ -478,8 +479,8 @@
 <x-toast/>
 
 @stack('scripts')
-<script src="{{ asset('js/app-ui.js') }}" defer></script>
-<script src="{{ asset('js/toast.js') }}"></script>
+<script nonce="{{ $cspNonce ?? '' }}" src="{{ asset('js/app-ui.js') }}?v={{ filemtime(public_path('js/app-ui.js')) }}" defer></script>
+<script nonce="{{ $cspNonce ?? '' }}" src="{{ asset('js/toast.js') }}?v={{ filemtime(public_path('js/toast.js')) }}"></script>
 <div id="voteCountTooltip"
      class="fixed hidden bg-gray-700 text-white text-xs px-2 py-1 rounded-md shadow-lg z-[10001] dark:bg-black dark:border dark:border-gray-600"
      style="pointer-events: none; white-space: nowrap;">
@@ -528,7 +529,7 @@
         }
     }
 </style>
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
     document.addEventListener('DOMContentLoaded', function () {
         const modal = document.getElementById('imageViewerModal');
         const modalImage = document.getElementById('imageViewerModalImage');
@@ -727,7 +728,7 @@
 </script>
 
 @if (session('scrollToPost'))
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         document.addEventListener('DOMContentLoaded', function () {
             const postIdToFind = @json(session('scrollToPost'));
 
@@ -754,7 +755,7 @@
 @endif
 
 @auth
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         document.addEventListener('DOMContentLoaded', function () {
             const badge = document.getElementById('notification-badge');
 
@@ -810,18 +811,18 @@
 {{--    window.addEventListener('load', loadGoogleAds);--}}
 {{--</script>--}}
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
     document.addEventListener('DOMContentLoaded', () => {
         @if (session('success'))
-        window.showToast("{{ session('success') }}", 'success');
+        window.showToast(@json(session('success')), 'success');
         @endif
 
         @if (session('error'))
-        window.showToast("{{ session('error') }}", 'error');
+        window.showToast(@json(session('error')), 'error');
         @endif
 
         @if (session('info'))
-        window.showToast("{{ session('info') }}", 'info');
+        window.showToast(@json(session('info')), 'info');
         @endif
 
         @if ($errors->any())
@@ -831,7 +832,7 @@
     });
 </script>
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
     (function () {
         const urlFragment = window.location.hash.substring(1);
 
@@ -864,7 +865,7 @@
     })();
 </script>
 
-<script>
+<script nonce="{{ $cspNonce ?? '' }}">
     document.addEventListener('DOMContentLoaded', () => {
         const isUserAuthenticated = document.body.dataset.userIsAuthenticated === 'true';
 

@@ -98,7 +98,7 @@
 @endsection
 
 @push('scripts')
-    <script>
+    <script nonce="{{ $cspNonce ?? '' }}">
         document.addEventListener('DOMContentLoaded', function () {
             const postElement = document.getElementById('post-{{ $post->id }}');
             if (postElement) {
