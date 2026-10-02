@@ -400,7 +400,7 @@ class UserController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'current_password' => ['required', 'string', function ($attribute, $value, $fail) use ($user) {
+            'current_password' => ['bail', 'required', 'string', function ($attribute, $value, $fail) use ($user) {
                 if (!Hash::check($value, $user->password)) {
                     $fail(__('validation.current_password'));
                 }
@@ -796,7 +796,7 @@ class UserController extends Controller
     {
         $username = $request->input('username');
 
-        if (empty($username)) {
+        if (empty($username) || !is_string($username)) {
             return response()->json(['available' => false, 'message' => '']);
         }
 

@@ -10,7 +10,7 @@ class ChangePasswordRequest extends ApiFormRequest
     public function rules(): array
     {
         return [
-            'current_password' => ['required', 'string', function ($attr, $value, $fail) {
+            'current_password' => ['bail', 'required', 'string', function ($attr, $value, $fail) {
                 if (! $this->user()->password || ! Hash::check($value, $this->user()->password)) {
                     $fail(__('validation.current_password'));
                 }

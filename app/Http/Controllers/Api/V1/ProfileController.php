@@ -256,7 +256,7 @@ class ProfileController extends ApiController
      */
     public function checkUsername(Request $request): JsonResponse
     {
-        $username = (string) $request->input('username');
+        $username = is_string($request->input('username')) ? $request->input('username') : '';
 
         if (strlen($username) < 5 || strlen($username) > 24
             || ! preg_match('/^[a-zA-Z][a-zA-Z0-9_-]*$/', $username)

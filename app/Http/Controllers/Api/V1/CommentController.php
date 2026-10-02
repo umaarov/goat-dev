@@ -27,7 +27,8 @@ class CommentController extends ApiController
     public function index(Request $request, Post $post): JsonResponse
     {
         $userId = $request->user()?->id;
-        $perPage = (int) $request->input('per_page', 15);
+        $requested = $request->integer('per_page', 15);
+        $perPage = $requested >= 1 ? min($requested, 50) : 15;
 
         $query = Comment::where('post_id', $post->id)
             ->whereNull('parent_id')

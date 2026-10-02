@@ -68,6 +68,20 @@ class CommentReplyPreviewTest extends TestCase
         $this->assertSame($count($few), $count($many), 'comment listing is back to N+1');
     }
 
+    public function test_per_page_is_clamped_so_it_cannot_dump_a_thread_or_crash_the_query(): void
+    {
+        $post = Post::factory()->create();
+        Comment::factory()->count(60)->create(['post_id' => $post->id]);
+
+        foreach (['100000' => 50, '1e9' => 50, '-1' => 15, '0' => 15, 'abc' => 15, '5' => 5] as $value => $expected) {
+            $response = $this->getJson("/api/v1/posts/{$post->id}/comments?per_page={$value}")->assertOk();
+
+            $this->assertSame($expected, count($response->json('data')), "per_page={$value}");
+        }
+
+        $this->getJson("/api/v1/posts/{$post->id}/comments?per_page[]=5&per_page[]=9")->assertOk();
+    }
+
     public function test_the_viewers_own_likes_are_marked_on_replies(): void
     {
         $post = Post::factory()->create();

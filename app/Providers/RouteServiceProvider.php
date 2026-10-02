@@ -30,6 +30,8 @@ class RouteServiceProvider extends ServiceProvider
     protected function configureRateLimiting(): void
     {
         $actor = fn (Request $r) => $r->user()?->id ?: $r->ip();
+        // limiters run before validation, so input can be an array: never cast it blindly
+        $text = fn (mixed $v) => is_scalar($v) ? (string) $v : '';
 
         RateLimiter::for('api', fn (Request $r) => [
             Limit::perMinute(120)->by($actor($r)),
@@ -40,8 +42,8 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('web', fn (Request $r) => Limit::perMinute(600)->by($r->ip()));
 
         // credential stuffing: per account and per IP, independently
-        RateLimiter::for('login', function (Request $r) {
-            $id = Str::lower((string) ($r->input('login_identifier') ?? $r->input('email')));
+        RateLimiter::for('login', function (Request $r) use ($text) {
+            $id = Str::lower($text($r->input('login_identifier') ?? $r->input('email')));
 
             return [
                 Limit::perMinute(5)->by('login:'.sha1($id).'|'.$r->ip()),
@@ -55,8 +57,8 @@ class RouteServiceProvider extends ServiceProvider
             Limit::perHour(20)->by($r->ip()),
         ]);
 
-        RateLimiter::for('password-reset', function (Request $r) {
-            $email = Str::lower((string) $r->input('email'));
+        RateLimiter::for('password-reset', function (Request $r) use ($text) {
+            $email = Str::lower($text($r->input('email')));
 
             return [
                 Limit::perMinute(3)->by('pr-ip:'.$r->ip()),

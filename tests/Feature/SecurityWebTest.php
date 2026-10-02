@@ -382,6 +382,51 @@ class SecurityWebTest extends TestCase
         $this->assertSame(12, $codes->reject(fn ($c) => $c === 429)->count());
     }
 
+    public function test_web_comment_listing_clamps_per_page(): void
+    {
+        $user = User::factory()->create();
+        $post = \App\Models\Post::factory()->create();
+        \App\Models\Comment::factory()->count(60)->create(['post_id' => $post->id]);
+
+        foreach (['100000' => 50, '-1' => 15, 'abc' => 15] as $value => $expected) {
+            $response = $this->actingAs($user)->getJson("/posts/{$post->id}/comments?per_page={$value}")->assertOk();
+
+            $this->assertSame($expected, count($response->json('comments.data')), "per_page={$value}");
+        }
+    }
+
+    public function test_referral_tracking_survives_arrays_and_oversized_headers(): void
+    {
+        // array-typed ref used to crash with "Array to string conversion"
+        $this->get('/about?ref[]=x&ref[a][b]=y')->assertOk();
+
+        // a huge query string and User-Agent overflowed the referral_clicks columns (SQLSTATE 22001 -> 500)
+        $this->withHeader('User-Agent', str_repeat('A', 3000))
+            ->get('/about?ref=campaign&pad='.str_repeat('p', 5000))
+            ->assertRedirect();
+
+        $click = \App\Models\ReferralClick::where('referrer', 'campaign')->first();
+        $this->assertNotNull($click);
+        $this->assertLessThanOrEqual(500, strlen($click->user_agent));
+        $this->assertLessThanOrEqual(1000, strlen($click->url));
+    }
+
+    public function test_web_change_password_rejects_non_string_current_password_without_crashing(): void
+    {
+        $user = User::factory()->create(['password' => bcrypt('correct-horse-1')]);
+
+        $this->actingAs($user)->post('/profile/change-password', [
+            'current_password' => ['x'],
+            'new_password' => 'a-brand-new-passphrase',
+            'new_password_confirmation' => 'a-brand-new-passphrase',
+        ])->assertSessionHasErrors('current_password');
+    }
+
+    public function test_web_check_username_survives_non_string_input(): void
+    {
+        $this->getJson('/check-username?username[]=a&username[b]=c')->assertOk()->assertJsonPath('available', false);
+    }
+
     public function test_forgot_password_is_rate_limited(): void
     {
         for ($i = 0; $i < 3; $i++) {

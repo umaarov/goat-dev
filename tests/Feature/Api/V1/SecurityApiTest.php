@@ -156,6 +156,42 @@ class SecurityApiTest extends TestCase
         $this->postJson('/api/v1/auth/login', ['login_identifier' => $user->email, 'password' => 'a-brand-new-passphrase'])->assertOk();
     }
 
+    public function test_array_typed_input_is_a_validation_error_never_a_server_error(): void
+    {
+        // rate limiters run before validation and used to cast these to string (ErrorException -> 500)
+        $cases = [
+            ['/api/v1/auth/login', ['login_identifier' => ['x'], 'password' => ['y']]],
+            ['/api/v1/auth/login', ['login_identifier' => ['a' => ['b' => 'c']], 'password' => 'secret123']],
+            ['/api/v1/auth/password/forgot', ['email' => ['x@example.com']]],
+            ['/api/v1/auth/password/reset', ['email' => ['x@example.com'], 'token' => ['t'], 'password' => ['p'], 'password_confirmation' => ['p']]],
+        ];
+
+        foreach ($cases as [$url, $body]) {
+            $status = $this->postJson($url, $body)->getStatusCode();
+
+            $this->assertContains($status, [401, 422, 429], "{$url} answered {$status}");
+        }
+    }
+
+    public function test_change_password_rejects_non_string_current_password_without_crashing(): void
+    {
+        $tokens = $this->login($this->user());
+
+        foreach ([['x'], ['a' => 'b'], 12345, true] as $bad) {
+            $this->withToken($tokens['access_token'])->postJson('/api/v1/me/change-password', [
+                'current_password' => $bad,
+                'new_password' => 'a-brand-new-passphrase',
+                'new_password_confirmation' => 'a-brand-new-passphrase',
+            ])->assertStatus(422);
+        }
+    }
+
+    public function test_check_username_survives_non_string_input(): void
+    {
+        $this->getJson('/api/v1/users/check-username?username[]=a&username[b]=c')->assertOk();
+        $this->getJson('/api/v1/users/check-username?username='.str_repeat('a', 5000))->assertOk();
+    }
+
     public function test_timing_guard_makes_the_dummy_hash_once_not_on_every_request(): void
     {
         Cache::flush();

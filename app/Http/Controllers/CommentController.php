@@ -31,7 +31,8 @@ class CommentController extends Controller
 
     public function index(Request $request, Post $post): JsonResponse
     {
-        $perPage = $request->input('per_page', 15);
+        $requested = $request->integer('per_page', 15);
+        $perPage = $requested >= 1 ? min($requested, 50) : 15;
         $userId = Auth::id();
 
         $commentsQuery = Comment::where('post_id', $post->id)
