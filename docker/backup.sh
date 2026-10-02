@@ -11,7 +11,8 @@ KEEP=${KEEP:-14}
 KEY_FILE=${BACKUP_KEY_FILE:-$HOME/.goat-backup.key}
 
 [ -r "$KEY_FILE" ] || { echo "missing key file $KEY_FILE (create: openssl rand -hex 32 > $KEY_FILE; chmod 600 $KEY_FILE)" >&2; exit 1; }
-export BACKUP_KEY=$(tr -d '[:space:]' < "$KEY_FILE")
+BACKUP_KEY=$(tr -d '[:space:]' < "$KEY_FILE")
+export BACKUP_KEY
 
 dc() { docker compose -f "$COMPOSE_FILE" "$@"; }
 # plain `docker run` of the stack's own image: no compose build/run side effects on the data stream
@@ -29,7 +30,7 @@ finish() { mv "$1.partial" "$1"; echo "ok  $1 ($(wc -c < "$1" | tr -d ' ') bytes
 trap 'rm -f "$OUT"/*.partial' EXIT
 
 db="$OUT/goat_db_$ts.sql.gz.enc"
-dc exec -T db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mysqldump --single-transaction --quick --no-tablespaces -uroot "$MYSQL_DATABASE"' \
+dc exec -T db sh -c "MYSQL_PWD=\"\$MYSQL_ROOT_PASSWORD\" exec mysqldump --single-transaction --quick --no-tablespaces -uroot \"\$MYSQL_DATABASE\"" \
   | gzip -9 | crypt encrypt > "$db.partial"
 crypt decrypt < "$db.partial" | gunzip -t
 finish "$db"
@@ -40,6 +41,10 @@ crypt decrypt < "$photos.partial" | tar -tz > /dev/null
 finish "$photos"
 
 # retention: newest $KEEP of each kind (encrypted files only, old plain backups are left alone)
+shopt -s nullglob
 for kind in goat_db_ goat_photos_; do
-  ls -t "$OUT/${kind}"*.enc 2>/dev/null | tail -n +$((KEEP + 1)) | xargs -r rm -f --
+  files=("$OUT/${kind}"*.enc)
+  for ((i = 0; i < ${#files[@]} - KEEP; i++)); do
+    rm -f -- "${files[i]}"
+  done
 done

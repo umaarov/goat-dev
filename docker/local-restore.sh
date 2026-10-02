@@ -6,12 +6,21 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 dc() { docker compose -f docker-compose.full-local.yml "$@"; }
-sql() { dc exec -T db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mysql -uroot --default-character-set=utf8mb4 "$@"' sh "$@"; }
+sql() { dc exec -T db sh -c "MYSQL_PWD=\"\$MYSQL_ROOT_PASSWORD\" exec mysql -uroot --default-character-set=utf8mb4 \"\$@\"" sh "$@"; }
+
+latest() {
+  local f best=
+  for f in "$@"; do
+    [ -e "$f" ] || continue
+    if [ -z "$best" ] || [ "$f" -nt "$best" ]; then best=$f; fi
+  done
+  echo "$best"
+}
 
 BDIR=${BACKUP_DIR:-backup}
-DUMP=$(ls -t "$BDIR"/goat_db_*.sql.gz "$BDIR"/goat_db_*.sql.gz.enc 2>/dev/null | head -1 || true)
-PHOTOS=$(ls -t "$BDIR"/goat_photos_*.tar.gz "$BDIR"/goat_photos_*.tar.gz.enc 2>/dev/null | head -1 || true)
-AUDIT=$(ls -t "$BDIR"/audit_trail-*.log.gz 2>/dev/null | head -1 || true)
+DUMP=$(latest "$BDIR"/goat_db_*.sql.gz "$BDIR"/goat_db_*.sql.gz.enc)
+PHOTOS=$(latest "$BDIR"/goat_photos_*.tar.gz "$BDIR"/goat_photos_*.tar.gz.enc)
+AUDIT=$(latest "$BDIR"/audit_trail-*.log.gz)
 
 [ -n "$DUMP" ] && [ -n "$PHOTOS" ] || { echo "no db/photos backup found in $BDIR" >&2; exit 1; }
 
@@ -94,7 +103,7 @@ if [ -n "$AUDIT" ]; then
   gunzip -c "$AUDIT" | sed -E 's/"ip_address":"[^"]*"/"ip_address":"0.0.0.0"/g' > "storage/logs/$(basename "${AUDIT%.gz}")"
 fi
 
-dc exec -T redis sh -c 'redis-cli -a "$REDIS_PASSWORD" --no-auth-warning flushall' >/dev/null
+dc exec -T redis sh -c "redis-cli -a \"\$REDIS_PASSWORD\" --no-auth-warning flushall" >/dev/null
 dc up -d
 until [ "$(docker inspect -f '{{.State.Health.Status}}' goat-local-app-1)" = healthy ]; do sleep 2; done
 dc exec -T app php artisan migrate --force
