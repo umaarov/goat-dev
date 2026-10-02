@@ -98,6 +98,17 @@ jobs:
       - name: Install Deps
         run: composer install --prefer-dist --no-progress
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Build assets
+        run: |
+          npm ci
+          npm run build
+
       - name: App key
         run: echo "APP_KEY=$(php artisan key:generate --show)" >> "$GITHUB_ENV"
 
