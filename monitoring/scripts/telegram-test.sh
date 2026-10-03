@@ -10,8 +10,18 @@ CHAT_ID=${TELEGRAM_ALERT_CHAT_ID:-$(sed -nE 's/^[[:space:]]*chat_id:[[:space:]]*
 [ -n "$CHAT_ID" ] || { echo "chat id not found" >&2; exit 1; }
 
 echo "sending to chat $CHAT_ID"
-curl -fsS --max-time 15 "https://api.telegram.org/bot$(cat "$TOKEN_FILE")/sendMessage" \
+# no -f: Telegram explains its errors in the body
+reply=$(curl -sS --max-time 15 "https://api.telegram.org/bot$(cat "$TOKEN_FILE")/sendMessage" \
   --data-urlencode "chat_id=$CHAT_ID" \
   --data-urlencode "parse_mode=HTML" \
   --data-urlencode "text=✅ <b>Monitoring test</b>
-Alerts from $(hostname) reach this channel." | python3 -c "import sys,json; r=json.load(sys.stdin); print('sent' if r.get('ok') else r)"
+Alerts from $(hostname) reach this channel.")
+python3 -c "
+import sys, json
+r = json.loads(sys.argv[1])
+if r.get('ok'):
+    print('sent')
+else:
+    print('FAILED:', r.get('error_code'), r.get('description'))
+    sys.exit(1)
+" "$reply"

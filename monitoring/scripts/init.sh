@@ -52,6 +52,7 @@ port=3306
 fi
 
 if [ "$MODE" = prod ]; then
+  [ -n "$(dc ps -q app)" ] && [ -n "$(dc ps -q scheduler)" ] || { echo "the prod app stack is not running here (docker compose up -d first); the token and secrets are already saved" >&2; exit 1; }
   net=$(docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' "$(dc ps -q app)" | awk '{print $1}')
   vol=$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app/storage/metrics"}}{{.Name}}{{end}}{{end}}' "$(dc ps -q scheduler)")
   [ -n "$net" ] && [ -n "$vol" ] || { echo "start the app stack first (needs the app network and the goat-metrics volume)" >&2; exit 1; }
