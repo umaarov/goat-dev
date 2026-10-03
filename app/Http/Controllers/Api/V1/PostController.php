@@ -181,7 +181,7 @@ class PostController extends ApiController
         }
 
         SharePostToSocialMedia::dispatch($post);
-        PingSearchEngines::dispatch();
+        PingSearchEngines::dispatch(PingSearchEngines::urlsFor($post));
         PostCreated::dispatch($post);
 
         Log::channel('audit_trail')->info('[API] [POST] [STORE] Post created.', [
@@ -261,7 +261,7 @@ class PostController extends ApiController
         }
 
         $post->update($data);
-        PingSearchEngines::dispatch();
+        PingSearchEngines::dispatch(PingSearchEngines::urlsFor($post));
 
         $post->load('user:id,username,first_name,last_name,profile_picture')
             ->loadCount(['comments', 'shares as shares_relation_count']);
@@ -289,7 +289,7 @@ class PostController extends ApiController
         Vote::where('post_id', $post->id)->delete();
         $post->delete();
 
-        PingSearchEngines::dispatch();
+        PingSearchEngines::dispatch(PingSearchEngines::urlsFor($post));
 
         Log::channel('audit_trail')->info('[API] [POST] [DELETE] Post deleted.', [
             'user_id' => $user->id,

@@ -208,7 +208,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ProcessNotificationSchedules::class,
     )->withSchedule(function ($schedule) {
         $schedule->command('users:cleanup-unverified')->everyTenMinutes();
-        $schedule->command('sitemap:generate')->dailyAt('02:00');
         $schedule->command('app:schedule-daily-digests')->dailyAt('01:00');
         $schedule->command('app:process-notification-schedules')->everyMinute();
         // encrypted backups to the backup Telegram channel (production only, see config/backup.php)

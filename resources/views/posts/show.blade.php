@@ -1,113 +1,43 @@
 @extends('layouts.app')
 
-@section('title', $post->question . ' - GOAT.uz')
-
 @php
     $postUrl = route('posts.show.user-scoped', ['username' => $post->user->username, 'post' => $post->id]);
     $ogImage = route('posts.card', ['username' => $post->user->username, 'post' => $post->id, 'v' => app(\App\Services\PostCardImage::class)->version($post)]);
+    $metaDescription = $post->ai_generated_context ?: __('messages.post_meta_description', [
+        'question' => $post->question,
+        'one' => $post->option_one_title,
+        'two' => $post->option_two_title,
+        'votes' => (int) $post->total_votes,
+    ]);
 @endphp
 
-@section('title', $post->question . ' - GOAT.uz')
-@section('meta_description', Str::limit($post->ai_generated_context ?? $post->question, 160))
+@section('title', Str::limit($post->question, 49, '…') . ' - GOAT.uz')
+@section('meta_description', Str::limit($metaDescription, 160))
 @section('canonical_url', $postUrl)
 @section('og_type', 'article')
 @section('og_image', $ogImage)
 
-@section('meta_description', Str::limit($post->ai_generated_context ?? $post->question, 160))
-@php $postUrl = route('posts.show.user-scoped', ['username' => $post->user->username, 'post' => $post->id]); @endphp
 @push('schema')
-    @php($breadcrumbTitle = Str::limit($post->question, 50)) {{-- @json splits on commas, so no call with arguments inside it --}}
-    <script type="application/ld+json">
-        {
-            "@@context": "https://schema.org",
-    "@@graph": [
-        {
-            "@@type": "BreadcrumbList",
-            "itemListElement": [
-                {
-                    "@@type": "ListItem",
-                    "position": 1,
-                    "name": "Home",
-                    "item": "{{ route('home') }}"
-                },
-                {
-                    "@@type": "ListItem",
-                    "position": 2,
-                    "name": "{{ '@' . $post->user->username }}",
-                    "item": "{{ route('profile.show', $post->user->username) }}"
-                },
-                {
-                    "@@type": "ListItem",
-                    "position": 3,
-                    "name": @json($breadcrumbTitle),
-                    "item": "{{ $postUrl }}"
-                }
-            ]
-        },
-        {
-            "@@type": "Question",
-            "name": @json($post->question),
-            "upvoteCount": {{ $post->total_votes }},
-            "answerCount": 2,
-        @if($post->ai_generated_context)
-            "text": @json($post->ai_generated_context),
-        @endif
-        "dateCreated": "{{ $post->created_at->toIso8601String() }}",
-            "author": {
-                "@@type": "Person",
-                "name": "{{ '@' . $post->user->username }}",
-                "url": "{{ route('profile.show', $post->user->username) }}"
-            },
-            "suggestedAnswer": {
-                "@@type": "Answer",
-                "text": @json($post->option_one_text),
-                "upvoteCount": {{ $post->option_one_votes }},
-                "url": "{{ $postUrl }}#option1"
-        @if($post->option_one_image)
-            ,
-            "image": "{{ asset('storage/' . $post->option_one_image) }}"
-        @endif
-        },
-        "acceptedAnswer": {
-            "@@type": "Answer",
-            "text": @json($post->option_two_text),
-                "upvoteCount": {{ $post->option_two_votes }},
-                "url": "{{ $postUrl }}#option2"
-        @if($post->option_two_image)
-            ,
-            "image": "{{ asset('storage/' . $post->option_two_image) }}"
-        @endif
-        },
-        "interactionStatistic": [
-            {
-                "@@type": "InteractionCounter",
-                "interactionType": { "@@type": "CommentAction" },
-                "userInteractionCount": {{ $post->comments_count }}
-        }
-    ],
-    "publisher": {"@@id": "https://www.goat.uz#organization"}
-}
-]
-}
-    </script>
+    <script type="application/ld+json">{!! \App\Support\QuestionSchema::json(\App\Support\QuestionSchema::for($post, $postUrl, app()->getLocale())) !!}</script>
 @endpush
 
 @section('content')
     <div class="container mx-auto">
-        @include('partials.post-card', ['post' => $post])
+        @include('partials.post-card', ['post' => $post, 'headingTag' => 'h1'])
+
+        @php $related = \App\Support\RelatedQuestions::for($post); @endphp
+        @if ($related !== [])
+            <nav class="px-4 pb-8" aria-labelledby="related-heading">
+                <h2 id="related-heading" class="text-base font-semibold text-gray-800 dark:text-gray-100 mb-2">{{ __('messages.related_questions_heading') }}</h2>
+                <ul class="space-y-1">
+                    @foreach ($related as $item)
+                        <li>
+                            <a href="{{ $item['url'] }}" class="text-blue-600 dark:text-blue-400 hover:underline">{{ $item['question'] }}</a>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">· {{ __('messages.related_votes', ['count' => $item['votes']]) }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+            </nav>
+        @endif
     </div>
 @endsection
-
-@push('scripts')
-    <script nonce="{{ $cspNonce ?? '' }}">
-        document.addEventListener('DOMContentLoaded', function () {
-            const postElement = document.getElementById('post-{{ $post->id }}');
-            if (postElement) {
-                const commentsButton = postElement.querySelector('button[onclick^="toggleComments"]');
-                if (commentsButton) {
-                    commentsButton.click();
-                }
-            }
-        });
-    </script>
-@endpush

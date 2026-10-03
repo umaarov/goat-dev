@@ -586,6 +586,16 @@ return [
     'profile.last_seen' => 'Last seen :time',
     'delete_confirm_title' => 'Postni o‘chirmoqchimisiz?',
 
-    'meta_keywords_default' => 'Jamiyat so‘rovnomalari, Ijtimoiy tarmoqlar, Ovoz berish, Onlayn so‘rovnomalar, Jamoatchilik fikri, GOAT.uz'
+    'meta_keywords_default' => 'Jamiyat so‘rovnomalari, Ijtimoiy tarmoqlar, Ovoz berish, Onlayn so‘rovnomalar, Jamoatchilik fikri, GOAT.uz',
 
+    'post_meta_description' => ':question :one yoki :two? Hozircha :votes ta ovoz. GOAT.uz da ovoz bering va muhokamada qatnashing.',
+    'related_questions_heading' => 'Yana savollar',
+    'related_votes' => ':count ta ovoz',
+    'home_heading' => 'Mashhur so‘rovnomalar va savollar',
+
+    'seo_about_description' => 'GOAT.uz — munozara platformasi: “bu yoki u” savollarida ovoz bering, fikringizni ayting va mashhur mavzularni muhokama qiling.',
+    'seo_terms_description' => 'GOAT.uz foydalanish shartlari: ovoz berish, izoh qoldirish va savol berish qoidalari, huquq va majburiyatlaringiz.',
+    'seo_sponsorship_description' => 'GOAT.uz homiysi bo‘ling: platformani qanday qo‘llab-quvvatlash va har kuni ovoz berib munozara qiladigan jamoaga yetib borish.',
+    'seo_ads_description' => 'GOAT.uz da reklama: har kuni ovoz berib munozara qiladigan faol auditoriyaga yetib boring.',
+    'seo_contribution_description' => 'GOAT.uz ga hissa qo‘shing: ochiq manbali munozara platformasini kod, tarjima va g‘oyalar bilan rivojlantirishga yordam bering.',
 ];

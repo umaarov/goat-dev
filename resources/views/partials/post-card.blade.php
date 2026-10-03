@@ -153,7 +153,7 @@
          class="pt-4 px-4 font-semibold text-center">
 
         <div>
-            <h2 class="text-lg text-gray-800 dark:text-gray-100" style="font-size: inherit; font-weight: inherit; margin: 0; padding: 0;">
+            <{{ $headingTag ?? 'h2' }} class="text-lg text-gray-800 dark:text-gray-100" style="font-size: inherit; font-weight: inherit; margin: 0; padding: 0;">
                 {{ $post->question }}
 
                 @if($post->ai_generated_context)
@@ -166,12 +166,12 @@
                         </svg>
                     </button>
                 @endif
-            </h2>
+            </{{ $headingTag ?? 'h2' }}>
         </div>
 
         {{-- AI Context Panel --}}
         @if($post->ai_generated_context)
-            <div x-show="isPanelVisible" x-transition class="text-sm font-normal text-left mt-4">
+            <div x-show="isPanelVisible" x-transition class="text-sm font-normal text-left mt-4"@if($insightPreference === 'hidden') style="display: none;"@endif>
                 <div class="bg-blue-50 dark:bg-blue-900/50 border-l-4 border-blue-400 dark:border-blue-500 p-4 rounded-r-lg">
 
                     @if(Auth::check())
@@ -202,12 +202,12 @@
                         AI Insight
                     </h3>
 
-                    <div class="relative transition-all duration-500 ease-in-out" :class="bodyClass">
+                    <div class="relative transition-all duration-500 ease-in-out {{ $insightPreference === 'expanded' ? 'max-h-screen' : 'max-h-24 overflow-hidden' }}" :class="bodyClass">
                         <p class="text-gray-800 dark:text-gray-200 leading-relaxed">{!! nl2br(e($post->ai_generated_context)) !!}</p>
-                        <div x-show="!isExpanded" class="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-blue-50 dark:from-blue-900/50 to-transparent"></div>
+                        <div x-show="!isExpanded" class="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-blue-50 dark:from-blue-900/50 to-transparent"@if($insightPreference === 'expanded') style="display: none;"@endif></div>
                     </div>
                     <button @click="toggleExpanded" class="text-blue-700 dark:text-blue-400 hover:underline text-xs font-bold mt-2">
-                        <span x-text="expandLabel"></span>
+                        <span x-text="expandLabel">{{ $insightPreference === 'expanded' ? 'Show less' : 'Show more' }}</span>
                     </button>
                 </div>
             </div>
@@ -223,10 +223,10 @@
                  @if($post->option_one_image_lqip) style="background-image: url('{{ $post->option_one_image_lqip }}');" @endif>
 
                 @if($post->option_one_image)
-                    <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-                         data-src="{{ asset('storage/' . $post->option_one_image) }}"
+                    <img src="{{ asset('storage/' . $post->option_one_image) }}"
                          alt="{{ $post->question }} - {{ $post->option_one_title }}"
-                         class="progressive-image h-full w-full object-cover object-center cursor-pointer zoomable-image transition-all duration-300"
+                         class="progressive-image loaded h-full w-full object-cover object-center cursor-pointer zoomable-image transition-all duration-300"
+                         @if($isFirst || ($headingTag ?? null) === 'h1') loading="eager" fetchpriority="high" @else loading="lazy" @endif
                          decoding="async">
                 @else
                     <div class="h-full w-full flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-md p-2">
@@ -248,10 +248,10 @@
                  @if($post->option_two_image_lqip) style="background-image: url('{{ $post->option_two_image_lqip }}');" @endif>
 
                 @if($post->option_two_image)
-                    <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-                         data-src="{{ asset('storage/' . $post->option_two_image) }}"
+                    <img src="{{ asset('storage/' . $post->option_two_image) }}"
                          alt="{{ $post->question }} - {{ $post->option_two_title }}"
-                         class="progressive-image h-full w-full object-cover object-center cursor-pointer zoomable-image transition-all duration-300"
+                         class="progressive-image loaded h-full w-full object-cover object-center cursor-pointer zoomable-image transition-all duration-300"
+                         @if($isFirst || ($headingTag ?? null) === 'h1') loading="eager" fetchpriority="high" @else loading="lazy" @endif
                          decoding="async">
                 @else
                     <div class="h-full w-full flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-md p-2">

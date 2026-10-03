@@ -606,4 +606,15 @@ return [
     'delete_confirm_title' => 'Delete Post?',
 
     'meta_keywords_default' => 'Debate Platform, Social Media, Polls, GOAT.uz, Online Voting, Public Opinion',
+
+    'post_meta_description' => ':question :one or :two? :votes votes so far. Vote and join the discussion on GOAT.uz.',
+    'related_questions_heading' => 'More questions',
+    'related_votes' => ':count votes',
+    'home_heading' => 'Trending polls and questions',
+
+    'seo_about_description' => 'GOAT.uz is a social debate platform where people vote on “this or that” questions, share opinions and discuss what is trending.',
+    'seo_terms_description' => 'Terms of use of GOAT.uz: the rules for voting, commenting and asking questions, and your rights and responsibilities.',
+    'seo_sponsorship_description' => 'Sponsor GOAT.uz: how to support the platform and reach a community that votes and debates every day.',
+    'seo_ads_description' => 'Advertise on GOAT.uz: reach an engaged audience of people who vote and debate every day.',
+    'seo_contribution_description' => 'Contribute to GOAT.uz: help build the open-source debate platform with code, translations and ideas.',
 ];

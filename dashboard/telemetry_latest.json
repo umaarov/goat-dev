@@ -1,68 +1,18 @@
 {
     "debug_tree": {
-        "ngrams": [
-            "set",
-            "coo",
-            "kie",
-            "oki",
-            "ook"
-        ],
+        "ngrams": [],
         "tokens": [
-            "a",
-            "set",
-            "cookie",
-            "x",
-            "1"
+            "x"
         ]
     },
-    "latency_ms": 0.124,
-    "query": "a  Set-Cookie: x=1",
+    "latency_ms": 0.303,
+    "query": "x",
     "results": [
         {
-            "id": 71,
-            "score": 12.57856149598177,
-            "snippet": "cs 1.6 or cs 2 cs 1.6 cs 2 cs16, cs2, counter-strike, fps, gaming"
-        },
-        {
             "id": 66,
-            "score": 10.225067431723023,
+            "score": 10.15479870459164,
             "snippet": "choose PlayStation 5 Xbox series X PS5, Xbox, Gaming, Console, Next-gen"
-        },
-        {
-            "id": 135,
-            "score": 4.338077631951406,
-            "snippet": "Would you choose a historical film or a documentary film? historical documentary historical film, do..."
-        },
-        {
-            "id": 96,
-            "score": 3.4402131535718894,
-            "snippet": "A better football gaming? EA FC EFootball EA FC, EFootball, football game, soccer game"
-        },
-        {
-            "id": 68,
-            "score": 3.2347994852612634,
-            "snippet": "Which one you use get a job Head hunter LinkedIn headhunter, linkedin, job search, recruitment, netw..."
-        },
-        {
-            "id": 65,
-            "score": 3.141024854332737,
-            "snippet": "Which medium provides a more immersive and impactful storytelling experience? Books Movies Books, Mo..."
-        },
-        {
-            "id": 132,
-            "score": 3.141024854332737,
-            "snippet": "Who is a better actor? Tom Cruise Brad Pitt Tom Cruise, Brad Pitt, actors, movie stars, hollywood"
-        },
-        {
-            "id": 72,
-            "score": 2.9688925158617385,
-            "snippet": "Who had a more dangerous ideology in practice? Hitler’s Nazism Stalin’s Communism Nazism, Commun..."
-        },
-        {
-            "id": 137,
-            "score": 2.8897124729543564,
-            "snippet": "Who was a bigger nightmare of USA and CIA ? Osama bin Laden Fidel Castro CIA, Osama, Castro, Bin Lad..."
         }
     ],
-    "timestamp": "16:02:42"
+    "timestamp": "11:33:05"
 }

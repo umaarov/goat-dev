@@ -31,24 +31,6 @@ class AppServiceProvider extends ServiceProvider
 
     final function boot(): void
     {
-        View::composer('layouts.app', function ($view) {
-            $alternateUrls = [];
-            $availableLocales = config('app.available_locales', []);
-
-            $currentPath = Request::url();
-
-            $queryParameters = Request::except('lang');
-
-            foreach ($availableLocales as $locale => $language) {
-                $queryParameters['lang'] = $locale;
-
-                $alternateUrls[$locale] = $currentPath . '?' . http_build_query($queryParameters);
-            }
-
-            $defaultUrl = $currentPath . '?' . http_build_query(Request::except('lang'));
-
-            $view->with('alternateUrls', $alternateUrls)->with('defaultHreflangUrl', $defaultUrl);
-        });
         // every web login (password, social, refresh cookie) stamps its session
         Event::listen(Login::class, function () {
             if (request()->hasSession()) {

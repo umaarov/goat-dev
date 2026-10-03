@@ -4,8 +4,7 @@
 <head>
     <meta charset="utf-8">
     {{--    <meta name="viewport" content="width=device-width, initial-scale=1">--}}
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
@@ -111,7 +110,6 @@
     {{--    </script>--}}
 
     <!-- Google tag (gtag.js) -->
-    <script nonce="{{ $cspNonce ?? '' }}" async src="https://www.googletagmanager.com/gtag/js?id=G-YES4XC0B0N"></script>
     <script nonce="{{ $cspNonce ?? '' }}">
         window.dataLayer = window.dataLayer || [];
 
@@ -122,6 +120,17 @@
         gtag('js', new Date());
 
         gtag('config', 'G-YES4XC0B0N');
+
+        // the tag itself is fetched once the page has finished loading
+        window.addEventListener('load', function () {
+            const load = function () {
+                const tag = document.createElement('script');
+                tag.async = true;
+                tag.src = 'https://www.googletagmanager.com/gtag/js?id=G-YES4XC0B0N';
+                document.head.appendChild(tag);
+            };
+            'requestIdleCallback' in window ? requestIdleCallback(load, {timeout: 4000}) : setTimeout(load, 2000);
+        });
     </script>
 
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -151,39 +160,43 @@
     <meta name="description" content="@yield('meta_description', __('messages.app.meta_description_default'))">
     <meta name="keywords" content="@yield('meta_keywords', __('messages.app.meta_keywords_default', ['default' => 'Debate Platform, Social Media, Polls, GOAT.uz']))">
     {{--    <link rel="canonical" href="@yield('canonical_url', url()->current())"/>--}}
-    @if(request()->routeIs('home'))
-        <link rel="canonical" href="{{ url('/') }}"/>
-    @else
-        <link rel="canonical" href="@yield('canonical_url', url()->current())"/>
-    @endif
+    @php
+        // one address per page and language: the same value feeds canonical, og:url and hreflang
+        $seoBase = trim($__env->yieldContent('canonical_url')) ?: (request()->routeIs('home') ? url('/') : url()->current());
+        if (request()->routeIs('home') && (int) request()->query('page', 1) > 1) {
+            $seoBase .= '?page=' . (int) request()->query('page');
+        }
+        $seoCanonical = \App\Support\SeoUrls::canonical($seoBase, is_string(request()->query('lang')) ? request()->query('lang') : null);
+        $seoIndexable = !str_contains($__env->yieldContent('meta_robots', 'index, follow'), 'noindex');
+    @endphp
+    <link rel="canonical" href="{{ $seoCanonical }}"/>
 
     <meta property="og:type" content="@yield('og_type', 'website')">
-    <meta property="og:url" content="@yield('canonical_url', url()->current())">
+    <meta property="og:url" content="{{ $seoCanonical }}">
     <meta property="og:title" content="@yield('title', config('app.name', 'GOAT'))">
     <meta property="og:description" content="@yield('meta_description', __('messages.app.meta_description_default'))">
     <meta property="og:image" content="@yield('og_image', asset('images/goat.jpg'))">
     <meta property="og:site_name" content="GOAT.uz">
 
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="@yield('canonical_url', url()->current())">
+    <meta name="twitter:url" content="{{ $seoCanonical }}">
     <meta name="twitter:title" content="@yield('title', config('app.name', 'GOAT'))">
     <meta name="twitter:description" content="@yield('meta_description', __('messages.app.meta_description_default'))">
     <meta name="twitter:image" content="@yield('og_image', asset('images/goat.jpg'))">
 
-    @foreach(config('app.available_locales', []) as $code => $name)
+    <meta property="og:locale" content="{{ \App\Support\SeoUrls::ogLocale(app()->getLocale()) }}">
+    @foreach(\App\Support\SeoUrls::locales() as $code)
         @if($code !== app()->getLocale())
-            <meta property="og:locale:alternate" content="{{ str_replace('-', '_', $code) }}" />
+            <meta property="og:locale:alternate" content="{{ \App\Support\SeoUrls::ogLocale($code) }}" />
         @endif
     @endforeach
 
     <meta name="robots" content="@yield('meta_robots', 'index, follow')">
-    @if(isset($alternateUrls))
-        @foreach($alternateUrls as $locale => $url)
-            <link rel="alternate" hreflang="{{ $locale }}" href="{{ $url }}"/>
+    @if($seoIndexable)
+        @foreach(\App\Support\SeoUrls::variants($seoBase) as $code => $url)
+            <link rel="alternate" hreflang="{{ \App\Support\SeoUrls::hreflang($code) }}" href="{{ $url }}"/>
         @endforeach
-    @endif
-    @if(isset($defaultHreflangUrl))
-        <link rel="alternate" hreflang="x-default" href="{{ $defaultHreflangUrl }}"/>
+        <link rel="alternate" hreflang="x-default" href="{{ $seoBase }}"/>
     @endif
     <script nonce="{{ $cspNonce ?? '' }}" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989575196315667"
             crossorigin="anonymous"></script>
@@ -308,7 +321,7 @@
     <div class="w-full max-w-md mx-auto flex items-center justify-between">
         <div class="w-6"></div>
         <a href="{{route('home')}}">
-            <img src="{{ asset('images/main_logo.png') }}" alt="{{ __('messages.app.logo_alt') }}"
+            <img src="{{ asset('images/main_logo-184.webp') }}" alt="{{ __('messages.app.logo_alt') }}"
                  class="h-23 w-23 cursor-pointer dark:invert" width="92" height="92">
         </a>
         <div>
@@ -392,8 +405,8 @@
                 <a href="https://buymeacoffee.com/umarov" target="_blank" rel="noopener noreferrer"
                    title="Support this project with a coffee"
                    class="inline-block transition-transform duration-200 hover:scale-105">
-                    <img src="{{ asset('images/bmc-logo-no-background.png') }}" alt="Buy Me A Coffee"
-                         class="h-4 w-auto dark:invert"
+                    <img src="{{ asset('images/bmc-logo-32.webp') }}" alt="Buy Me A Coffee"
+                         class="h-4 w-auto dark:invert" width="22" height="32"
                          loading="lazy">
                 </a>
             </div>

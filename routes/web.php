@@ -53,6 +53,17 @@ Route::get('/@{username}/post/{post}', [PostController::class, 'showUserPost'])
     ->name('posts.show.user-scoped')
     ->where('post', '[0-9]+');
 
+// proves to IndexNow that we own the host
+Route::get('/indexnow-key.txt', function () {
+    abort_unless($key = config('services.indexnow.key'), 404);
+
+    return response($key, 200, ['Content-Type' => 'text/plain; charset=utf-8']);
+})->name('indexnow.key');
+
+// older addresses (emails, notifications, shared links) go to the one real address of the question
+Route::get('/posts/{post}', [PostController::class, 'canonical'])->whereNumber('post')->name('posts.show');
+Route::get('/p/{post}/{slug?}', [PostController::class, 'canonical'])->whereNumber('post')->name('posts.showSlug');
+
 Route::get('/@{username}/post/{post}/card.jpg', \App\Http\Controllers\PostCardController::class)
     ->name('posts.card')
     ->where('post', '[0-9]+')
@@ -132,7 +143,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/posts/{post}/edit', 'edit')->name('posts.edit');
         Route::put('/posts/{post}', 'update')->name('posts.update')->middleware('throttle:moderated-write');
         Route::delete('/posts/{post}', 'destroy')->name('posts.destroy');
-        Route::get('/posts/{post}', 'show')->name('posts.show');
 
         Route::post('/posts/{post}/vote', 'vote')->name('posts.vote')->middleware('throttle:30,1');
         Route::post('/posts/{post}/share', 'incrementShareCount')->name('posts.share')->middleware('throttle:30,1');

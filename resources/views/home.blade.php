@@ -55,17 +55,13 @@
         <span class="font-medium">{{ __('messages.app.telegram_ad') }}</span>
     </a>
 
-    <div id="posts-wrapper">
-        <div id="posts-loading-shimmer">
-            @for ($i = 0; $i < 5; $i++)
-                @include('partials.post-card-shimmer')
-            @endfor
-        </div>
+    <h1 class="sr-only">{{ __('messages.home_heading') }}</h1>
 
-        <div id="posts-container" class="hidden">
+    <div id="posts-wrapper">
+        <div id="posts-container">
             @if ($posts->count() > 0)
                 @foreach($posts as $post)
-                    @include('partials.post-card', ['post' => $post])
+                    @include('partials.post-card', ['post' => $post, 'isFirst' => $loop->first])
                     @if (($loop->iteration % 6) == 0)
                         <div class="w-full min-w-[250px] mb-4">
                             <ins class="adsbygoogle"
@@ -102,7 +98,6 @@
 @push('scripts')
     <script nonce="{{ $cspNonce ?? '' }}">
         document.addEventListener('DOMContentLoaded', function () {
-            const shimmer = document.getElementById('posts-loading-shimmer');
             const container = document.getElementById('posts-container');
             const postContainer = document.getElementById('posts-container');
             const trigger = document.getElementById('infinite-scroll-trigger');
@@ -142,17 +137,9 @@
                 });
             }
 
-            if (shimmer && container) {
-                if (noPostsMessage) {
-                    shimmer.style.display = 'none';
-                    container.classList.remove('hidden');
-                } else {
-                    setTimeout(() => {
-                        shimmer.style.display = 'none';
-                        container.classList.remove('hidden');
-                        setTimeout(() => loadNewAds(container), 150);
-                    }, 250);
-                }
+            // the list is already in the page; only the ad slots need their width, so they start a moment later
+            if (container && !noPostsMessage) {
+                setTimeout(() => loadNewAds(container), 150);
             }
 
             if (!hasMorePages) {

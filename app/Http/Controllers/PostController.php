@@ -60,7 +60,7 @@ class PostController extends Controller
 
     final public function store(Request $request): RedirectResponse
     {
-        Log::emergency('[CHECK] 1. CONTROLLER HIT');
+        Log::debug('[CHECK] 1. CONTROLLER HIT');
         // 1. Validation
         $validator = Validator::make($request->all(), [
             'question' => 'required|string|max:255',
@@ -72,7 +72,7 @@ class PostController extends Controller
 
 
         if ($validator->fails()) {
-            Log::emergency('[CHECK] 2. VALIDATION FAILED: ' . json_encode($validator->errors()));
+            Log::debug('[CHECK] 2. VALIDATION FAILED: ' . json_encode($validator->errors()));
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
@@ -86,7 +86,7 @@ class PostController extends Controller
 
         // 3. TEXT MASTER TASK (DeepSeek): moderation + context + tags
         if ($this->postEnrichmentService->isConfigured()) {
-            Log::emergency('[CHECK] 3. STARTING TEXT MODERATION CHECK');
+            Log::debug('[CHECK] 3. STARTING TEXT MODERATION CHECK');
             $groqResult = $this->postEnrichmentService->analyzeText(
                 $request->question,
                 $request->option_one_title,
@@ -151,11 +151,11 @@ class PostController extends Controller
             }
         }
 
-        Log::emergency('[CHECK] 4. DISPATCHING JOB');
-        Log::emergency('[CHECK] DISPATCHING SOCIAL SHARE FOR POST ID: ' . $post->id);
+        Log::debug('[CHECK] 4. DISPATCHING JOB');
+        Log::debug('[CHECK] DISPATCHING SOCIAL SHARE FOR POST ID: ' . $post->id);
 //        SharePostToSocialMedia::dispatch($post)->delay(now()->addSeconds(5));
         SharePostToSocialMedia::dispatch($post);
-        PingSearchEngines::dispatch();
+        PingSearchEngines::dispatch(PingSearchEngines::urlsFor($post));
         PostCreated::dispatch($post);
 
         return redirect()->route('home')->with('success', __('messages.post_created_successfully'));
@@ -225,6 +225,14 @@ class PostController extends Controller
             $post->user_vote = $userVoteMap->get($post->id);
             return $post;
         });
+    }
+
+    // one address per question: /posts/ID and /p/ID/slug land on /@author/post/ID for everyone, signed in or not
+    final public function canonical(Post $post): RedirectResponse
+    {
+        $post->loadMissing('user:id,username');
+
+        return redirect()->route('posts.show.user-scoped', ['username' => $post->user->username, 'post' => $post->id], 301);
     }
 
     final public function show(Post $post): View
@@ -386,7 +394,7 @@ class PostController extends Controller
 
         $post->update($data);
         Log::channel('audit_trail')->info('[POST] [UPDATE] Post updated and passed all moderation.', array_merge($logContextBase, ['updated_fields' => array_keys($data)]));
-        PingSearchEngines::dispatch();
+        PingSearchEngines::dispatch(PingSearchEngines::urlsFor($post));
         return redirect()->route('profile.show', ['username' => $post->user->username])->with('success', __('messages.post_updated_successfully'));
     }
 
@@ -452,7 +460,7 @@ class PostController extends Controller
                 'ip_address' => request()->ip(),
             ]);
 
-            PingSearchEngines::dispatch();
+            PingSearchEngines::dispatch(PingSearchEngines::urlsFor($post));
         } catch (Exception $e) {
             Log::error('Post deleted, but cleanup jobs failed: ' . $e->getMessage());
         }

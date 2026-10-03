@@ -99,4 +99,11 @@ return [
             'image' => env('GROQ_PROMPT_IMAGE', @file_get_contents(resource_path('prompts/moderation/image.txt')) ?: null),
         ],
     ],
+
+    // IndexNow: openssl rand -hex 16, the same value is served at /indexnow-key.txt
+    'indexnow' => [
+        'key' => env('INDEXNOW_KEY'),
+        'endpoint' => env('INDEXNOW_ENDPOINT', 'https://api.indexnow.org/indexnow'),
+    ],
+
 ];

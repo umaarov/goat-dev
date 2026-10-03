@@ -155,7 +155,7 @@ class PostCardTest extends TestCase
 
         $this->assertSame("/@{$name}/post/{$post->id}/card.jpg", parse_url($this->card($post), PHP_URL_PATH));
         $this->get("/@someone-else/post/{$post->id}/card.jpg?v=abc")->assertRedirect("/@{$name}/post/{$post->id}/card.jpg?v=abc")->assertStatus(301);
-        $this->assertSame(404, $this->get("/p/{$post->id}/card.jpg")->getStatusCode(), 'the old short path is gone');
+        $this->get("/p/{$post->id}/card.jpg")->assertStatus(301)->assertRedirect("/@{$name}/post/{$post->id}"); // the old short path now lands on the question, like any /p/ID/... link
     }
 
     public function test_unknown_and_deleted_questions_are_404(): void

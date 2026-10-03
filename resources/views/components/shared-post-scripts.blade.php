@@ -333,7 +333,7 @@
             const postElement = document.getElementById(`post-${postId}`);
             if (!postElement) return;
 
-            const questionElement = postElement.querySelector('.pt-4.px-4.font-semibold.text-center h2');
+            const questionElement = postElement.querySelector('.pt-4.px-4.font-semibold.text-center h1, .pt-4.px-4.font-semibold.text-center h2');
             if (!questionElement) {
                 console.error('Could not find the question element for sharing.');
                 return;

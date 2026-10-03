@@ -18,6 +18,10 @@ return [
         'id' => 'Bahasa Indonesia',
         'tr' => 'Türkçe',
     ],
+    // the language of the plain URLs; app.locale is overwritten per request by App::setLocale(), this is not
+    'default_locale' => env('APP_LOCALE', 'en'),
+    // languages that get their own indexable URL (?lang=xx) and hreflang; the rest are interface-only
+    'seo_locales' => array_values(array_filter(explode(',', env('SEO_LOCALES', 'en,uz,ru')))),
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
     'cipher' => 'AES-256-CBC',
     'key' => env('APP_KEY'),
