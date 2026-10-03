@@ -70,6 +70,33 @@ groups:
           summary: "{{ $value | printf \"%.0f\" }} refresh tokens revoked in the last hour"
           description: Many users are being signed out. A bug, an attack or token theft handling.
 
+  - name: backups
+    rules:
+      - alert: BackupStale
+        expr: time() - goat_backup_last_success_timestamp_seconds > 30 * 3600
+        for: 30m
+        labels:
+          severity: critical
+        annotations:
+          summary: "No {{ $labels.type }} backup reached Telegram for {{ $value | humanizeDuration }}"
+          description: Run php artisan backup:telegram ping, then check the audit log for [BACKUP].
+
+      - alert: BackupLastRunFailed
+        expr: goat_backup_last_run_ok == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "The last {{ $labels.type }} backup run failed"
+
+      - alert: BackupNeverRan
+        expr: absent(goat_backup_last_success_timestamp_seconds{type="db"}) and on() goat_backup_enabled == 1
+        for: 30h
+        labels:
+          severity: critical
+        annotations:
+          summary: Backups are enabled but no database backup was ever sent
+
   - name: uptime
     rules:
       - alert: SiteDown

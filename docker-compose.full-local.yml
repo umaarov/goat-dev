@@ -37,6 +37,7 @@ x-app: &app
     - goat-storage:/app/storage/app/public
     - ./storage/logs:/app/storage/logs
     - goat-metrics:/app/storage/metrics
+    - goat-backup-tmp:/app/storage/backup-tmp
   networks:
     - goat-network
   depends_on:
@@ -86,9 +87,10 @@ services:
     image: goat-app:local
     pull_policy: never
     user: "0:0"
-    entrypoint: [ "/bin/sh", "-c", "chown 10001:10001 /m && chmod 755 /m" ]
+    entrypoint: [ "/bin/sh", "-c", "chown 10001:10001 /m /b && chmod 755 /m && chmod 700 /b" ]
     volumes:
       - goat-metrics:/m
+      - goat-backup-tmp:/b
     restart: "no"
 
   worker:
@@ -213,4 +215,5 @@ volumes:
   goat-redis-data:
   goat-storage:
   goat-metrics:
+  goat-backup-tmp:
   goat-vendor-dev:

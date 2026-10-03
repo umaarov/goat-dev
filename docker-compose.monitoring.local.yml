@@ -23,9 +23,11 @@ services:
       - "127.0.0.1:8081:8081"
     volumes:
       - ./monitoring/mock-telegram/server.py:/server.py:ro
+    # the app containers reach it too, to test the Telegram backups
     networks:
       - monitoring
-    mem_limit: 64m
+      - app
+    mem_limit: 512m
 
 secrets:
   telegram_bot_token:

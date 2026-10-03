@@ -211,6 +211,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('sitemap:generate')->dailyAt('02:00');
         $schedule->command('app:schedule-daily-digests')->dailyAt('01:00');
         $schedule->command('app:process-notification-schedules')->everyMinute();
+        // encrypted backups to the backup Telegram channel (production only, see config/backup.php)
+        $backups = fn () => (bool) config('backup.telegram.enabled');
+        // 23:55 sends the day so far, 00:10 the lines written in between: each line goes out exactly once
+        $schedule->command('backup:telegram logs')->dailyAt('23:55')->when($backups)->withoutOverlapping(60)->runInBackground();
+        $schedule->command('backup:telegram logs --date=yesterday')->dailyAt('00:10')->when($backups)->withoutOverlapping(60)->runInBackground();
+        $schedule->command('backup:telegram db')->dailyAt('04:00')->when($backups)->withoutOverlapping(120)->runInBackground();
+        $schedule->command('backup:telegram photos')->dailyAt('04:15')->when($backups)->withoutOverlapping(240)->runInBackground();
         $schedule->job(new \App\Jobs\QueueHeartbeat)->everyMinute();
         $schedule->command('app:export-metrics')->everyMinute()->withoutOverlapping(5);
     })

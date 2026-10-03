@@ -25,6 +25,7 @@ class ExportMetrics extends Command
             'failed_jobs' => fn () => $this->failedJobs(),
             'content' => fn () => $this->content(),
             'tokens' => fn () => $this->tokens(),
+            'backups' => fn () => $this->backups(),
         ];
 
         foreach ($collectors as $name => $collect) {
@@ -78,6 +79,28 @@ class ExportMetrics extends Command
     {
         $this->gauge('goat_refresh_tokens_active', 'Refresh tokens that can still be used', DB::table('refresh_tokens')->whereNull('revoked_at')->where('expires_at', '>', now())->count());
         $this->gauge('goat_refresh_tokens_revoked_last_hour', 'Refresh tokens revoked in the last hour', DB::table('refresh_tokens')->where('revoked_at', '>=', now()->subHour())->count());
+    }
+
+    private function backups(): void
+    {
+        $enabled = config('backup.telegram.enabled') && config('backup.telegram.token') && config('backup.telegram.chat_id');
+        $this->gauge('goat_backup_enabled', 'Telegram backups are configured to run', $enabled ? 1 : 0);
+
+        foreach (TelegramBackup::TYPES as $type) {
+            $state = Cache::get("backup:telegram:{$type}");
+            if (!is_array($state)) {
+                continue;
+            }
+            $labels = ['type' => $type];
+            if (isset($state['at'])) {
+                $this->gauge('goat_backup_last_success_timestamp_seconds', 'Unix time of the last backup that reached Telegram', $state['at'], $labels);
+                $this->gauge('goat_backup_last_size_bytes', 'Size of the last backup that reached Telegram', $state['bytes'] ?? 0, $labels);
+            }
+            if (isset($state['failed_at'])) {
+                $this->gauge('goat_backup_last_failure_timestamp_seconds', 'Unix time of the last failed backup', $state['failed_at'], $labels);
+            }
+            $this->gauge('goat_backup_last_run_ok', '1 when the latest backup run succeeded, 0 when it failed', ($state['ok'] ?? false) ? 1 : 0, $labels);
+        }
     }
 
     private function gauge(string $name, string $help, int|float $value, array $labels = []): void

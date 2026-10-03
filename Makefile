@@ -50,6 +50,8 @@ local-test:
 	$(LOCAL) --profile tools run --rm test
 local-restore:
 	./docker/local-restore.sh
+local-backup-test:
+	./docker/test-backup.sh
 
 # monitoring (docker-compose.monitoring.yml): local runs against the local stack with a mock Telegram
 MON_LOCAL = docker compose --env-file .env --env-file monitoring/.env.local -f docker-compose.monitoring.yml -f docker-compose.monitoring.local.yml
@@ -69,4 +71,4 @@ monitoring-prod-up:
 monitoring-prod-down:
 	$(MON_PROD) down
 
-.PHONY: local-up local-down local-artisan local-test local-restore monitoring-up monitoring-down monitoring-test monitoring-prod-init monitoring-prod-up monitoring-prod-down
+.PHONY: local-up local-down local-artisan local-test local-restore local-backup-test monitoring-up monitoring-down monitoring-test monitoring-prod-init monitoring-prod-up monitoring-prod-down

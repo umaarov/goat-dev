@@ -1231,7 +1231,7 @@
     {
       "id": 23,
       "type": "row",
-      "title": "Host",
+      "title": "Backups (Telegram)",
       "collapsed": false,
       "gridPos": {
         "h": 1,
@@ -1243,6 +1243,344 @@
     },
     {
       "id": 24,
+      "type": "stat",
+      "title": "Database backup age",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 31
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "time() - goat_backup_last_success_timestamp_seconds{type=\"db\"}",
+          "legendFormat": "",
+          "editorMode": "code",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 97200
+              },
+              {
+                "color": "red",
+                "value": 108000
+              }
+            ]
+          },
+          "decimals": 0,
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "center"
+      },
+      "description": "Seconds since the last backup reached the Telegram channel; nothing shown until the first one"
+    },
+    {
+      "id": 25,
+      "type": "stat",
+      "title": "Photos backup age",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 31
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "time() - goat_backup_last_success_timestamp_seconds{type=\"photos\"}",
+          "legendFormat": "",
+          "editorMode": "code",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 97200
+              },
+              {
+                "color": "red",
+                "value": 108000
+              }
+            ]
+          },
+          "decimals": 0,
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "center"
+      },
+      "description": "Seconds since the last backup reached the Telegram channel; nothing shown until the first one"
+    },
+    {
+      "id": 26,
+      "type": "stat",
+      "title": "Audit log backup age",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 31
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "time() - goat_backup_last_success_timestamp_seconds{type=\"logs\"}",
+          "legendFormat": "",
+          "editorMode": "code",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 97200
+              },
+              {
+                "color": "red",
+                "value": 108000
+              }
+            ]
+          },
+          "decimals": 0,
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "center"
+      },
+      "description": "Seconds since the last backup reached the Telegram channel; nothing shown until the first one"
+    },
+    {
+      "id": 27,
+      "type": "stat",
+      "title": "Last run",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 31
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "min(goat_backup_last_run_ok)",
+          "legendFormat": "",
+          "editorMode": "code",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "OK",
+                  "color": "green"
+                },
+                "0": {
+                  "text": "FAILED",
+                  "color": "red"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 28,
+      "type": "timeseries",
+      "title": "Backup size",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 35
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "goat_backup_last_size_bytes",
+          "legendFormat": "{{type}}",
+          "editorMode": "code"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 15,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "mode": "none"
+            }
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 29,
+      "type": "row",
+      "title": "Host",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 42
+      },
+      "panels": []
+    },
+    {
+      "id": 30,
       "type": "timeseries",
       "title": "CPU",
       "datasource": {
@@ -1253,7 +1591,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 31
+        "y": 43
       },
       "targets": [
         {
@@ -1313,7 +1651,7 @@
       }
     },
     {
-      "id": 25,
+      "id": 31,
       "type": "timeseries",
       "title": "Memory",
       "datasource": {
@@ -1324,7 +1662,7 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 31
+        "y": 43
       },
       "targets": [
         {
@@ -1384,7 +1722,7 @@
       }
     },
     {
-      "id": 26,
+      "id": 32,
       "type": "timeseries",
       "title": "Load",
       "datasource": {
@@ -1395,7 +1733,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 31
+        "y": 43
       },
       "targets": [
         {
@@ -1466,7 +1804,7 @@
       }
     },
     {
-      "id": 27,
+      "id": 33,
       "type": "timeseries",
       "title": "Disk free",
       "datasource": {
@@ -1477,7 +1815,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 38
+        "y": 50
       },
       "targets": [
         {
@@ -1537,7 +1875,7 @@
       }
     },
     {
-      "id": 28,
+      "id": 34,
       "type": "timeseries",
       "title": "Network",
       "datasource": {
@@ -1548,7 +1886,7 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 38
+        "y": 50
       },
       "targets": [
         {
@@ -1600,7 +1938,7 @@
       }
     },
     {
-      "id": 29,
+      "id": 35,
       "type": "timeseries",
       "title": "Disk I/O",
       "datasource": {
@@ -1611,7 +1949,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 38
+        "y": 50
       },
       "targets": [
         {
@@ -1663,7 +2001,7 @@
       }
     },
     {
-      "id": 30,
+      "id": 36,
       "type": "row",
       "title": "Containers (needs a Linux docker host)",
       "collapsed": false,
@@ -1671,12 +2009,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 45
+        "y": 57
       },
       "panels": []
     },
     {
-      "id": 31,
+      "id": 37,
       "type": "timeseries",
       "title": "CPU by service",
       "datasource": {
@@ -1687,7 +2025,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 46
+        "y": 58
       },
       "targets": [
         {
@@ -1729,7 +2067,7 @@
       }
     },
     {
-      "id": 32,
+      "id": 38,
       "type": "timeseries",
       "title": "Memory by service",
       "datasource": {
@@ -1740,7 +2078,7 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 46
+        "y": 58
       },
       "targets": [
         {
@@ -1782,7 +2120,7 @@
       }
     },
     {
-      "id": 33,
+      "id": 39,
       "type": "timeseries",
       "title": "Memory vs limit",
       "datasource": {
@@ -1793,7 +2131,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 46
+        "y": 58
       },
       "targets": [
         {
@@ -1853,7 +2191,7 @@
       }
     },
     {
-      "id": 34,
+      "id": 40,
       "type": "row",
       "title": "MySQL",
       "collapsed": false,
@@ -1861,12 +2199,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 53
+        "y": 65
       },
       "panels": []
     },
     {
-      "id": 35,
+      "id": 41,
       "type": "timeseries",
       "title": "Connections",
       "datasource": {
@@ -1877,7 +2215,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 54
+        "y": 66
       },
       "targets": [
         {
@@ -1938,7 +2276,7 @@
       }
     },
     {
-      "id": 36,
+      "id": 42,
       "type": "timeseries",
       "title": "Queries/s",
       "datasource": {
@@ -1949,7 +2287,7 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 54
+        "y": 66
       },
       "targets": [
         {
@@ -2001,7 +2339,7 @@
       }
     },
     {
-      "id": 37,
+      "id": 43,
       "type": "timeseries",
       "title": "InnoDB buffer pool hit",
       "datasource": {
@@ -2012,7 +2350,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 54
+        "y": 66
       },
       "targets": [
         {
@@ -2056,7 +2394,7 @@
       }
     },
     {
-      "id": 38,
+      "id": 44,
       "type": "row",
       "title": "Redis",
       "collapsed": false,
@@ -2064,12 +2402,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 61
+        "y": 73
       },
       "panels": []
     },
     {
-      "id": 39,
+      "id": 45,
       "type": "timeseries",
       "title": "Memory",
       "datasource": {
@@ -2080,7 +2418,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 62
+        "y": 74
       },
       "targets": [
         {
@@ -2132,7 +2470,7 @@
       }
     },
     {
-      "id": 40,
+      "id": 46,
       "type": "timeseries",
       "title": "Commands/s and clients",
       "datasource": {
@@ -2143,7 +2481,7 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 62
+        "y": 74
       },
       "targets": [
         {
@@ -2194,7 +2532,7 @@
       }
     },
     {
-      "id": 41,
+      "id": 47,
       "type": "timeseries",
       "title": "Cache hit rate",
       "datasource": {
@@ -2205,7 +2543,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 62
+        "y": 74
       },
       "targets": [
         {
@@ -2257,7 +2595,7 @@
       }
     },
     {
-      "id": 42,
+      "id": 48,
       "type": "row",
       "title": "Uptime",
       "collapsed": false,
@@ -2265,12 +2603,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 69
+        "y": 81
       },
       "panels": []
     },
     {
-      "id": 43,
+      "id": 49,
       "type": "timeseries",
       "title": "Check duration",
       "datasource": {
@@ -2281,7 +2619,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 70
+        "y": 82
       },
       "targets": [
         {
@@ -2323,7 +2661,7 @@
       }
     },
     {
-      "id": 44,
+      "id": 50,
       "type": "timeseries",
       "title": "HTTP status of checks",
       "datasource": {
@@ -2334,7 +2672,7 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 70
+        "y": 82
       },
       "targets": [
         {
@@ -2375,7 +2713,7 @@
       }
     },
     {
-      "id": 45,
+      "id": 51,
       "type": "timeseries",
       "title": "TLS certificate days left",
       "datasource": {
@@ -2386,7 +2724,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 70
+        "y": 82
       },
       "targets": [
         {

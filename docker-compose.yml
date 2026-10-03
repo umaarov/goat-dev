@@ -170,6 +170,7 @@ services: #  traefik:
             - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
             - /tmp:/tmp
             - goat-storage:/app/storage/app/public
+            - ./storage/logs:/app/storage/logs
         depends_on:
             - db
             - redis
@@ -212,6 +213,8 @@ services: #  traefik:
             - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
             - goat-storage:/app/storage/app/public
             - goat-metrics:/app/storage/metrics
+            - goat-backup-tmp:/app/storage/backup-tmp
+            - ./storage/logs:/app/storage/logs
         depends_on:
             - db
             - redis
@@ -316,4 +319,5 @@ volumes:
     goat-search-data:
     goat-storage:
     goat-metrics:
+    goat-backup-tmp:
     portainer_data:
