@@ -1,16 +1,8 @@
-@component('mail::message')
-    # {{ __('messages.mail.registration_expired.title') }}
+<x-mail.layout :title="__('mail.expired.title')" :preheader="__('mail.expired.preheader')" :reason="__('mail.footer.account')">
+    <x-mail.title>{{ __('mail.expired.title') }}</x-mail.title>
+    <x-mail.p>{{ __('mail.greeting', ['name' => $name]) }}</x-mail.p>
+    <x-mail.p>{{ __('mail.expired.intro', ['time' => $time]) }}</x-mail.p>
+    <x-mail.p>{{ __('mail.expired.again') }}</x-mail.p>
 
-    {{ __('messages.mail.greeting', ['name' => $user->first_name]) }}
-
-    {{ __('messages.mail.registration_expired.line1', ['app_name' => config('app.name')]) }}
-
-    {{ __('messages.mail.registration_expired.line2') }}
-
-    @component('mail::button', ['url' => route('register')])
-        {{ __('messages.mail.registration_expired.button') }}
-    @endcomponent
-
-    {{ __('messages.mail.thank_you') }}<br>
-    {{ config('app.name') }}
-@endcomponent
+    <x-mail.button :url="$url">{{ __('mail.expired.button') }}</x-mail.button>
+</x-mail.layout>

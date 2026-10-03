@@ -10,6 +10,9 @@ use Illuminate\Support\Str;
 
 class EmailVerificationService
 {
+    // the link in the email and the text that says how long it works
+    final public const TTL_MINUTES = 60;
+
     final public function generateToken(): string
     {
         return Str::random(64);
@@ -19,7 +22,7 @@ class EmailVerificationService
     {
         return URL::temporarySignedRoute(
             'verification.verify',
-            now()->addHour(),
+            now()->addMinutes(self::TTL_MINUTES),
             [
                 'id' => $user->id,
                 'token' => $user->email_verification_token
@@ -36,7 +39,7 @@ class EmailVerificationService
 
         $verificationUrl = $this->generateVerificationUrl($user);
 
-        Mail::to($user->email)->send(new EmailVerification($user, $verificationUrl));
+        Mail::to($user)->send(new EmailVerification($user, $verificationUrl));
     }
 
     final public function verify(User $user, string $token): bool

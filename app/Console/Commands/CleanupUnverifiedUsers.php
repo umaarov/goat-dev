@@ -47,6 +47,6 @@ class CleanupUnverifiedUsers extends Command
 
     final public function sendExpirationNotification(User $user): void
     {
-        Mail::to($user->email)->send(new RegistrationExpired($user));
+        Mail::to($user)->send(new RegistrationExpired($user));
     }
 }

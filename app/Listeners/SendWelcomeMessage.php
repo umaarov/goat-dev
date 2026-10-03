@@ -23,7 +23,7 @@ class SendWelcomeMessage
         Log::info('SendWelcomeMessage listener handled for user: ' . $event->user->email);
 
         try {
-            Mail::to($event->user->email)->send(new WelcomeMessage($event->user));
+            Mail::to($event->user)->send(new WelcomeMessage($event->user));
             Log::info('Welcome email dispatched successfully for: ' . $event->user->email);
         } catch (Exception $e) {
             Log::error('Failed to send welcome email for ' . $event->user->email . '. Error: ' . $e->getMessage());

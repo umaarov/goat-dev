@@ -3,39 +3,34 @@
 namespace App\Mail;
 
 use App\Models\User;
-use Illuminate\Bus\Queueable;
+use App\Support\MailText;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Queue\SerializesModels;
 
 class WelcomeMessage extends Mailable
 {
-    use Queueable, SerializesModels;
-
-    public User $user;
-
-    public function __construct(User $user)
+    public function __construct(public User $user)
     {
-        $this->user = $user;
     }
 
     public function envelope(): Envelope
     {
-        return new Envelope(
-            subject: 'Welcome to ' . config('app.name') . '!',
-        );
+        return new Envelope(subject: __('mail.welcome.subject', ['name' => MailText::name($this->user)]));
     }
 
     public function content(): Content
     {
         return new Content(
-            markdown: 'emails.auth.welcome',
+            view: 'emails.auth.welcome',
+            text: 'emails.text.welcome',
+            with: [
+                'name' => MailText::name($this->user),
+                'trendingUrl' => route('home'),
+                'askUrl' => route('posts.create'),
+                'profileUrl' => route('profile.edit'),
+                'preferencesUrl' => route('profile.edit'),
+            ],
         );
-    }
-
-    public function attachments(): array
-    {
-        return [];
     }
 }

@@ -1,242 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="x-apple-disable-message-reformatting">
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
-    <meta name="color-scheme" content="light dark">
-    <meta name="supported-color-schemes" content="light dark">
-    <style>
-        :root {
-            color-scheme: light dark;
-            supported-color-schemes: light dark;
-        }
+<x-mail.layout :title="__('mail.digest.subject')" :preheader="$main['question']" :reason="__('mail.footer.digest')" :unsubscribe-url="$unsubscribeUrl" :preferences-url="$preferencesUrl">
+    <x-mail.title>{{ __('mail.digest.title', ['name' => $name]) }}</x-mail.title>
+    <x-mail.p>{{ __('mail.digest.intro') }}</x-mail.p>
 
-        .hover-text-indigo-500:hover {
-            color: #6366f1 !important;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            body, .body, .email-container {
-                background-color: #111827 !important;
-                color: #f3f4f6 !important;
-            }
-
-            .email-content {
-                background-color: #1f2937 !important;
-            }
-
-            .email-header, .email-footer, .card, .card-body {
-                background-color: #374151 !important;
-                border-color: #4b5563 !important;
-            }
-
-            h1, h2, h3, .dark-text-white {
-                color: #ffffff !important;
-            }
-
-            p, .dark-text-gray {
-                color: #d1d5db !important;
-            }
-
-            .button {
-                background-color: #818cf8 !important;
-            }
-
-            .button a {
-                color: #111827 !important;
-            }
-
-            .border-gray {
-                border-color: #4b5563 !important;
-            }
-
-            .text-gray {
-                color: #9ca3af !important;
-            }
-
-            .logo-dark {
-                display: block !important;
-            }
-
-            .logo-light {
-                display: none !important;
-            }
-        }
-    </style>
-</head>
-
-<body class="body"
-      style="mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%;word-break: break-word;margin: 0;width: 100%;background-color: #f8fafc;padding: 0;">
-<div role="article" aria-roledescription="email" aria-label="New Posts on GOAT.uz" lang="en">
-    <table class="email-container" role="presentation" align="center" width="100%" cellpadding="0" cellspacing="0"
-           style="width: 100%; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;">
+    {{-- the hottest debate: its share card shows both options and the live split --}}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="dm-soft" style="border-collapse: separate; margin: 8px 0 8px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px;">
         <tr>
-            <td align="center">
-                <table class="email-content" role="presentation" width="100%" cellpadding="0" cellspacing="0"
-                       style="max-width: 600px; background-color: #ffffff;">
-
-                    {{-- HEADER --}}
-                    <tr>
-                        <td class="email-header" style="background-color: #f8fafc; padding: 24px; text-align: center;">
-                            <a href="{{ url('/') }}">
-                                <img src="{{ asset('images/main_logo.png') }}" width="120" alt="GOAT.uz Logo"
-                                     class="logo-light"
-                                     style="border: 0; max-width: 100%; vertical-align: middle; line-height: 100%;">
-                                <img src="{{ asset('images/main_logo_white.png') }}" width="120" alt="GOAT.uz Logo"
-                                     class="logo-dark"
-                                     style="display: none; border: 0; max-width: 100%; vertical-align: middle; line-height: 100%;">
-                            </a>
-                        </td>
-                    </tr>
-
-                    {{-- BODY --}}
-                    <tr>
-                        <td style="padding: 32px 24px;">
-                            <h1 class="dark-text-white"
-                                style="margin: 0 0 16px; font-size: 24px; font-weight: 700; color: #111827;">
-                                Hi, {{ $user->first_name }}!</h1>
-                            <p class="dark-text-gray"
-                               style="margin: 0 0 24px; font-size: 16px; line-height: 24px; color: #4b5563;">New debates
-                                are live and the community is already weighing in. See the hottest topics and cast your
-                                vote.</p>
-
-                            {{-- MAIN POST CARD --}}
-                            <table class="card" role="presentation" width="100%" cellpadding="0" cellspacing="0"
-                                   style="border-radius: 8px; border: 1px solid #e5e7eb; background-color: #f8fafc;">
-                                <tr>
-                                    <td class="card-body" style="padding: 24px;">
-                                        <p style="margin: 0 0 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; color: #6366f1;">
-                                            Hottest Debate</p>
-                                        <h2 class="dark-text-white"
-                                            style="margin: 0 0 16px; font-size: 20px; font-weight: 700; color: #111827;">{{ $mainPostData['question'] }}</h2>
-                                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                                            <tr>
-                                                <td width="50%" valign="top" style="width: 50%; padding-right: 8px;">
-                                                    <a href="{{ $mainPostData['url'] }}"><img
-                                                            src="{{ $mainPostData['option_one_image'] }}"
-                                                            alt="{{ $mainPostData['option_one_title'] }}"
-                                                            style="width: 100%; max-width: 100%; border-radius: 6px; display: block; border: 0; vertical-align: middle; line-height: 100%;"></a>
-                                                </td>
-                                                <td width="50%" valign="top" style="width: 50%; padding-left: 8px;">
-                                                    <a href="{{ $mainPostData['url'] }}"><img
-                                                            src="{{ $mainPostData['option_two_image'] }}"
-                                                            alt="{{ $mainPostData['option_two_title'] }}"
-                                                            style="width: 100%; max-width: 100%; border-radius: 6px; display: block; border: 0; vertical-align: middle; line-height: 100%;"></a>
-                                                </td>
-                                            </tr>
-                                        </table>
-                                        <p class="dark-text-gray"
-                                           style="margin: 16px 0; text-align: center; font-size: 16px; font-weight: 500; color: #4b5563;">{{ $mainPostData['option_one_title'] }}
-                                            vs {{ $mainPostData['option_two_title'] }}</p>
-                                        @if($mainPostData['total_votes'] > 5)
-                                            <p class="text-gray"
-                                               style="text-align: center; font-size: 14px; margin: -8px 0 16px;">
-                                                🔥 {{ $mainPostData['total_votes'] }} people have already voted!</p>
-                                        @endif
-                                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                                            <tr>
-                                                <td align="center">
-                                                    <table class="button" role="presentation" border="0" cellpadding="0"
-                                                           cellspacing="0"
-                                                           style="border-radius: 6px; background-color: #4f46e5;">
-                                                        <tr>
-                                                            <td align="center"
-                                                                style="font-size: 16px; font-weight: 600; padding: 14px 24px;">
-                                                                <a href="{{ $mainPostData['url'] }}"
-                                                                   style="text-decoration: none; color: #ffffff;">See
-                                                                    More &amp; Vote</a>
-                                                            </td>
-                                                        </tr>
-                                                    </table>
-                                                </td>
-                                            </tr>
-                                        </table>
-                                    </td>
-                                </tr>
-                            </table>
-
-                            @if(!empty($gridPostsData))
-                                {{-- MORE FOR YOU HEADER --}}
-                                <h3 class="dark-text-white"
-                                    style="margin: 32px 0 16px; padding-top: 24px; font-size: 18px; font-weight: 700; border-top: 1px solid #e5e7eb; color: #111827;">
-                                    More For You</h3>
-
-                                {{-- DYNAMIC LAYOUT SWITCH --}}
-                                @switch($layoutVariation)
-
-                                    @case('vertical_list')
-                                        {{-- Vertical List Layout --}}
-                                        @foreach($gridPostsData as $post)
-                                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-                                                   style="margin-bottom: 16px;">
-                                                <tr>
-                                                    <td width="80" style="padding-right: 16px;">
-                                                        <a href="{{ $post['url'] }}"><img
-                                                                src="{{ $post['option_one_image'] }}" alt="" width="80"
-                                                                style="border-radius: 6px; aspect-ratio: 1/1; object-fit: cover; border: 0; max-width: 100%; vertical-align: middle; line-height: 100%;"></a>
-                                                    </td>
-                                                    <td>
-                                                        <a href="{{ $post['url'] }}" class="dark-text-white"
-                                                           style="text-decoration: none; font-size: 16px; font-weight: 600; color: #1f2937;">{{ Str::limit($post['question'], 60) }}</a>
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        @endforeach
-                                        @break
-
-                                    @case('grid_2x2')
-                                    @default
-                                        {{-- 2x2 Grid Layout --}}
-                                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                                            @foreach(array_chunk($gridPostsData, 2) as $chunk)
-                                                <tr>
-                                                    @foreach($chunk as $post)
-                                                        <td width="50%" valign="top"
-                                                            style="width: 50%; padding: 0 8px 16px;">
-                                                            <a href="{{ $post['url'] }}"><img
-                                                                    src="{{ $post['option_one_image'] }}" alt=""
-                                                                    style="width: 100%; max-width: 100%; border-radius: 6px; margin-bottom: 8px; aspect-ratio: 1/1; object-fit: cover; border: 0; vertical-align: middle; line-height: 100%;"></a>
-                                                            <a href="{{ $post['url'] }}" class="dark-text-white"
-                                                               style="text-decoration: none; font-size: 14px; font-weight: 600; color: #1f2937;">{{ Str::limit($post['question'], 50) }}</a>
-                                                        </td>
-                                                    @endforeach
-                                                    @if (count($chunk) < 2)
-                                                        <td width="50%"></td>
-                                                    @endif
-                                                </tr>
-                                            @endforeach
-                                        </table>
-                                        @break
-
-                                @endswitch
-                            @endif
-                        </td>
-                    </tr>
-
-                    {{-- FOOTER --}}
-                    <tr>
-                        <td class="email-footer" style="padding: 24px; text-align: center; background-color: #f8fafc;">
-                            <p class="text-gray" style="margin: 0 0 12px; font-size: 12px; line-height: 16px; color: #6b7280;">
-                                You received this email because you opted in for updates.
-                            </p>
-                            <p style="margin: 0; font-size: 12px;">
-                                <a href="{{ route('notifications.unsubscribe', ['token' => $unsubscribeToken]) }}" class="hover-text-indigo-500"
-                                   style="text-decoration: none; color: #6366f1;">Unsubscribe</a> &bull;
-                                <a href="{{ route('profile.edit') }}" class="hover-text-indigo-500"
-                                   style="text-decoration: none; color: #6366f1;">Email Preferences</a>
-                            </p>
-                            <p class="text-gray" style="margin: 12px 0 0; font-size: 12px; line-height: 16px; color: #6b7280;">
-                                GOAT.uz, Sergeli, Tashkent, 100022, Uzbekistan
-                            </p>
-                        </td>
-                    </tr>
-                </table>
+            <td style="padding: 20px 20px 22px;">
+                <p class="dm-accent" style="margin: 0 0 8px; font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #1d4ed8;">{{ __('mail.digest.hottest') }}</p>
+                <a href="{{ $main['url'] }}" target="_blank" style="text-decoration: none;">
+                    <img src="{{ $main['card'] }}" width="520" alt="{{ $main['question'] }}" style="display: block; width: 100%; max-width: 520px; height: auto; border-radius: 10px; background-color: #e2e8f0;">
+                </a>
+                <h2 class="dm-heading" style="margin: 16px 0 6px; font-size: 20px; line-height: 28px; font-weight: 700; color: #0f172a;">
+                    <a href="{{ $main['url'] }}" target="_blank" class="dm-heading" style="color: #0f172a; text-decoration: none;">{{ $main['question'] }}</a>
+                </h2>
+                <p class="dm-muted" style="margin: 0 0 4px; font-size: 15px; line-height: 22px; color: #64748b;">{{ $main['one'] }} <strong>vs</strong> {{ $main['two'] }}</p>
+                @if($main['votes'] > 0)
+                    <p class="dm-muted" style="margin: 0; font-size: 14px; line-height: 22px; color: #64748b;">🔥 {{ __('mail.digest.votes', ['count' => number_format($main['votes'])]) }}</p>
+                @endif
+                <x-mail.button :url="$main['url']" :width="220" :flush="true">{{ __('mail.digest.cta') }}</x-mail.button>
             </td>
         </tr>
     </table>
-</div>
-</body>
-</html>
+
+    @if($more !== [])
+        <h3 class="dm-heading" style="margin: 28px 0 4px; font-size: 18px; line-height: 26px; font-weight: 700; color: #0f172a;">{{ __('mail.digest.more') }}</h3>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            @foreach($more as $item)
+                <tr>
+                    <td class="dm-border" style="padding: 14px 0; border-bottom: 1px solid #e2e8f0;">
+                        <a href="{{ $item['url'] }}" target="_blank" class="dm-heading" style="display: block; font-size: 16px; line-height: 24px; font-weight: 600; color: #0f172a; text-decoration: none;">{{ $item['question'] }}</a>
+                        <span class="dm-muted" style="font-size: 14px; line-height: 22px; color: #64748b;">{{ $item['one'] }} vs {{ $item['two'] }}@if($item['votes'] > 0) &nbsp;&middot;&nbsp; {{ __('mail.digest.votes', ['count' => number_format($item['votes'])]) }}@endif</span>
+                        &nbsp;<a href="{{ $item['url'] }}" target="_blank" class="dm-link" style="font-size: 14px; font-weight: 600; color: #1d4ed8; text-decoration: none; white-space: nowrap;">{{ __('mail.digest.view') }} &rarr;</a>
+                    </td>
+                </tr>
+            @endforeach
+        </table>
+    @endif
+</x-mail.layout>

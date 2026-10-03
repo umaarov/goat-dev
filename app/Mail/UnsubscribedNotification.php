@@ -3,37 +3,38 @@
 namespace App\Mail;
 
 use App\Models\User;
-use Illuminate\Bus\Queueable;
+use App\Support\MailText;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\URL;
 
 class UnsubscribedNotification extends Mailable implements ShouldQueue
 {
-    use Queueable, SerializesModels;
-
-    public User $user;
-    public string $ipAddress;
-
-    public function __construct(User $user, string $ipAddress)
+    public function __construct(public User $user, public string $ipAddress)
     {
-        $this->user = $user;
-        $this->ipAddress = $ipAddress;
     }
 
     public function envelope(): Envelope
     {
-        return new Envelope(
-            subject: 'Confirmation: You Have Been Unsubscribed',
-        );
+        return new Envelope(subject: __('mail.unsubscribed.subject'));
     }
 
     public function content(): Content
     {
+        $when = now()->tz(config('app.timezone'))->locale(MailText::carbonLocale())->translatedFormat('j F Y, H:i').' ('.config('app.timezone').')';
+
         return new Content(
-            markdown: 'emails.notifications.unsubscribed',
+            view: 'emails.notifications.unsubscribed',
+            text: 'emails.text.unsubscribed',
+            with: [
+                'name' => MailText::name($this->user),
+                'when' => $when,
+                'ip' => $this->ipAddress,
+                // the same signed page: it shows "turn updates back on" while they are off
+                'resubscribeUrl' => URL::signedRoute('notifications.email.unsubscribe', ['user' => $this->user->id]),
+            ],
         );
     }
 }

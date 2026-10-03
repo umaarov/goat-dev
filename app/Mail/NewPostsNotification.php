@@ -4,72 +4,73 @@ namespace App\Mail;
 
 use App\Models\Post;
 use App\Models\User;
-use Illuminate\Bus\Queueable;
-use Illuminate\Database\Eloquent\Collection;
+use App\Services\PostCardImage;
+use App\Support\MailText;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Illuminate\Mail\Mailables\Headers;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\URL;
 
 class NewPostsNotification extends Mailable
 {
-    use Queueable, SerializesModels;
+    public array $main;
 
-    public User $user;
-    public string $layoutVariation;
-    public array $mainPostData;
-    public array $gridPostsData;
-    public string $unsubscribeToken;
+    public array $more;
 
-    public function __construct(User $user, Post $mainPost, Collection $gridPosts)
+    public string $unsubscribeUrl;
+
+    public function __construct(public User $user, Post $mainPost, Collection $gridPosts)
     {
-        $this->user = $user;
-        $this->layoutVariation = ['grid_2x2', 'vertical_list'][array_rand(['grid_2x2', 'vertical_list'])];
-        $this->mainPostData = $this->formatPostData($mainPost);
-        $this->gridPostsData = $gridPosts->map(fn($post) => $this->formatPostData($post))->all();
-
-        $this->unsubscribeToken = Str::random(60);
-
-        DB::table('unsubscribe_tokens')->insert([
-            'user_id' => $this->user->id,
-            'token' => $this->unsubscribeToken,
-            'expires_at' => Carbon::now()->addDays(7),
-            'created_at' => Carbon::now(),
-        ]);
+        $this->main = $this->format($mainPost);
+        $this->more = $gridPosts->map(fn (Post $post) => $this->format($post))->all();
+        // signed, so it needs no stored token and never expires; the page asks before it does anything
+        $this->unsubscribeUrl = URL::signedRoute('notifications.email.unsubscribe', ['user' => $user->id]);
     }
 
-    private function formatPostData(Post $post): array
+    private function format(Post $post): array
     {
+        $post->loadMissing('user:id,username');
+        $route = ['username' => $post->user->username, 'post' => $post->id];
+
         return [
             'question' => $post->question,
-            'url' => route('posts.show', $post),
-            'option_one_title' => $post->option_one_title,
-            'option_one_image' => asset('storage/' . $post->option_one_image),
-            'option_two_title' => $post->option_two_title,
-            'option_two_image' => asset('storage/' . $post->option_two_image),
-            'total_votes' => $post->total_votes,
+            'url' => route('posts.show.user-scoped', $route),
+            // a JPEG of both options and the live split: every mail client can show it (WebP photos are not universal)
+            'card' => route('posts.card', $route + ['v' => app(PostCardImage::class)->version($post)]),
+            'one' => $post->option_one_title,
+            'two' => $post->option_two_title,
+            'votes' => (int) $post->total_votes,
         ];
     }
 
     public function envelope(): Envelope
     {
-        return new Envelope(
-            subject: '🔥 New Debates are heating up on GOAT.uz!',
-        );
+        return new Envelope(subject: __('mail.digest.subject'));
     }
 
     public function content(): Content
     {
         return new Content(
             view: 'emails.new_posts_notification',
+            text: 'emails.text.digest',
+            with: [
+                'name' => MailText::name($this->user),
+                'main' => $this->main,
+                'more' => $this->more,
+                'unsubscribeUrl' => $this->unsubscribeUrl,
+                'preferencesUrl' => route('profile.edit'),
+            ],
         );
     }
 
-    public function attachments(): array
+    // RFC 8058 one-click unsubscribe: Gmail and Yahoo require it from bulk senders
+    public function headers(): Headers
     {
-        return [];
+        return new Headers(text: [
+            'List-Unsubscribe' => '<'.$this->unsubscribeUrl.'>',
+            'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',
+        ]);
     }
 }

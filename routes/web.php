@@ -89,6 +89,15 @@ Route::get('/notifications/unsubscribe/{token}', [NotificationController::class,
     ->name('notifications.unsubscribe')
     ->middleware('throttle:search');
 
+// debate-update emails: signed links (see EmailPreferenceController); the POSTs also take the one-click requests of mail clients
+Route::middleware('throttle:30,1')->group(function () {
+    Route::get('/email/{user}/unsubscribe', [\App\Http\Controllers\EmailPreferenceController::class, 'show'])
+        ->whereNumber('user')->name('notifications.email.unsubscribe');
+    Route::post('/email/{user}/unsubscribe', [\App\Http\Controllers\EmailPreferenceController::class, 'unsubscribe'])->whereNumber('user');
+    Route::post('/email/{user}/resubscribe', [\App\Http\Controllers\EmailPreferenceController::class, 'resubscribe'])
+        ->whereNumber('user')->name('notifications.email.resubscribe');
+});
+
 Route::post('/csp-report', \App\Http\Controllers\CspReportController::class)
     ->middleware('throttle:csp-report')
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]);

@@ -597,26 +597,27 @@
                 </div>
             </form>
 
-            @if($user->password)
-                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 flex justify-between">
+            {{-- logout is for everyone, including accounts that have no password (X, Telegram, GitHub, Google) --}}
+            <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                @if($user->password)
                     <a href="{{ route('password.change.form') }}"
                        class="text-blue-800 dark:text-blue-400 hover:underline">
                         {{ __('messages.change_password_link') }}
                     </a>
+                @endif
 
-                    <form action="{{ route('logout') }}" method="POST" class="inline">
-                        @csrf
-                        <button type="submit" class="text-red-600 dark:text-red-400 hover:underline cursor-pointer">
-                            {{ __('messages.logout_button') }}
-                        </button>
-                    </form>
-                </div>
-            @elseif($user->google_id)
-                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <p class="text-gray-600 dark:text-gray-300 text-sm">
-                        {{ __('messages.password_not_available_google') }}
-                    </p>
-                </div>
+                <form action="{{ route('logout') }}" method="POST" class="inline ml-auto">
+                    @csrf
+                    <button type="submit" class="text-red-600 dark:text-red-400 hover:underline cursor-pointer">
+                        {{ __('messages.logout_button') }}
+                    </button>
+                </form>
+            </div>
+
+            @if(!$user->password && $user->google_id)
+                <p class="mt-4 text-gray-600 dark:text-gray-300 text-sm">
+                    {{ __('messages.password_not_available_google') }}
+                </p>
             @endif
 
         </div>

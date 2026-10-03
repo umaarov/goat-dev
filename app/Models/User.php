@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,7 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements HasLocalePreference
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
@@ -98,9 +99,16 @@ class User extends Authenticatable
         return $this->hasMany(RefreshToken::class);
     }
 
+    // mail to this user is written in their saved language, when they have one
+    final public function preferredLocale(): ?string
+    {
+        return array_key_exists((string) $this->locale, (array) config('app.available_locales')) ? $this->locale : null;
+    }
+
+    // the reset form was filled in in the current language, and the queue worker does not know it
     final public function sendPasswordResetNotification($token): void
     {
-        $this->notify(new \App\Notifications\QueuedResetPassword($token));
+        $this->notify((new \App\Notifications\QueuedResetPassword($token))->locale(app()->getLocale()));
     }
 
     /** Kill every long-lived credential: web refresh tokens, mobile refresh tokens, API access tokens. */

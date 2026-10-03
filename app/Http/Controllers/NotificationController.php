@@ -6,6 +6,8 @@ use App\Mail\UnsubscribedNotification;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -35,7 +37,8 @@ class NotificationController extends Controller
         return response()->json(['count' => Auth::user()->unreadNotifications->count()]);
     }
 
-    public function unsubscribe(Request $request, string $token): JsonResponse
+    // links of emails sent before the signed ones; they answer with a page, not JSON
+    public function unsubscribe(Request $request, string $token): Response
     {
         $tokenRecord = DB::table('unsubscribe_tokens')->where('token', $token)->first();
 
@@ -43,15 +46,16 @@ class NotificationController extends Controller
             if ($tokenRecord) {
                 DB::table('unsubscribe_tokens')->where('id', $tokenRecord->id)->delete();
             }
-            return response()->json(['status' => 'ERROR', 'message' => 'LINK_INVALID_OR_EXPIRED'], 410);
+
+            return $this->resultPage('invalid', 410);
         }
 
         $user = User::find($tokenRecord->user_id);
-
         if (!$user) {
             DB::table('unsubscribe_tokens')->where('id', $tokenRecord->id)->delete();
             Log::warning("Unsubscribe attempt for non-existent user. Token ID: {$tokenRecord->id}");
-            return response()->json(['status' => 'ERROR', 'message' => 'USER_NOT_FOUND'], 404);
+
+            return $this->resultPage('invalid', 404);
         }
 
         try {
@@ -62,14 +66,20 @@ class NotificationController extends Controller
         } catch (Exception $e) {
             Log::error('Unsubscribe failed', ['user_id' => $user->id, 'error' => $e->getMessage()]);
 
-            return response()->json(['status' => 'ERROR', 'message' => 'SERVER_ERROR'], 500);
+            return $this->resultPage('invalid', 500);
         }
 
-        Mail::to($user)->queue(new UnsubscribedNotification($user, $request->ip()));
+        Mail::to($user)->queue(new UnsubscribedNotification($user, (string) $request->ip()));
 
-        return response()->json([
-            'status' => 'SUCCESS',
-            'message' => 'UNSUBSCRIBED'
-        ]);
+        return $this->resultPage('done', 200, $user);
+    }
+
+    private function resultPage(string $state, int $status, ?User $user = null): Response
+    {
+        return response()->view('notifications.email-preferences', [
+            'state' => $state,
+            'unsubscribeUrl' => null,
+            'resubscribeUrl' => $user ? URL::signedRoute('notifications.email.resubscribe', ['user' => $user->id]) : null,
+        ], $status);
     }
 }

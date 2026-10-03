@@ -1,18 +1,9 @@
-<x-mail::message>
-    # Unsubscribe Confirmation
+<x-mail.layout :title="__('mail.unsubscribed.title')" :preheader="__('mail.unsubscribed.preheader')" :reason="__('mail.footer.account')">
+    <x-mail.title>{{ __('mail.unsubscribed.title') }}</x-mail.title>
+    <x-mail.p>{{ __('mail.greeting', ['name' => $name]) }}</x-mail.p>
+    <x-mail.p>{{ __('mail.unsubscribed.intro') }}</x-mail.p>
+    <x-mail.p :muted="true">{{ __('mail.unsubscribed.details', ['when' => $when, 'ip' => $ip]) }}</x-mail.p>
+    <x-mail.p>{{ __('mail.unsubscribed.changed_mind') }}</x-mail.p>
 
-    Hi {{ $user->first_name }},
-
-    This email confirms that you have been unsubscribed from new post notifications.
-
-    This action was initiated on **{{ now()->toDayDateTimeString() }} (Tashkent Time)** from the IP address: **{{ $ipAddress }}**.
-
-    If you did not request this or wish to receive notifications again, you can securely manage your preferences in your profile settings at any time.
-
-    <x-mail::button :url="route('profile.edit')">
-        Manage Preferences
-    </x-mail::button>
-
-    Thanks,<br>
-    {{ config('app.name') }}
-</x-mail::message>
+    <x-mail.button :url="$resubscribeUrl">{{ __('mail.unsubscribed.button') }}</x-mail.button>
+</x-mail.layout>

@@ -75,4 +75,8 @@ return [
             resource_path('views/vendor/mail'),
         ],
     ],
+
+    // shown in the footer of every email
+    'footer_address' => env('MAIL_FOOTER_ADDRESS', 'GOAT.uz · Sergeli, Tashkent, 100022, Uzbekistan'),
+
 ];

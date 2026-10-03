@@ -145,6 +145,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'webhooks/sonar',
             'csp-report',
+            'email/*/unsubscribe',
+            'email/*/resubscribe',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

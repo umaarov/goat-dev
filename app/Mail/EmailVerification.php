@@ -3,41 +3,33 @@
 namespace App\Mail;
 
 use App\Models\User;
-use Illuminate\Bus\Queueable;
+use App\Services\EmailVerificationService;
+use App\Support\MailText;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Queue\SerializesModels;
 
 class EmailVerification extends Mailable
 {
-    use Queueable, SerializesModels;
-
-    public User $user;
-    public string $verificationUrl;
-
-    public function __construct(User $user, string $verificationUrl)
+    public function __construct(public User $user, public string $verificationUrl)
     {
-        $this->user = $user;
-        $this->verificationUrl = $verificationUrl;
     }
 
     public function envelope(): Envelope
     {
-        return new Envelope(
-            subject: __('messages.mail.verify_email.subject'),
-        );
+        return new Envelope(subject: __('mail.verify.subject'));
     }
 
     public function content(): Content
     {
         return new Content(
             view: 'emails.verification',
+            text: 'emails.text.verification',
+            with: [
+                'name' => MailText::name($this->user),
+                'url' => $this->verificationUrl,
+                'time' => MailText::duration(EmailVerificationService::TTL_MINUTES),
+            ],
         );
-    }
-
-    public function attachments(): array
-    {
-        return [];
     }
 }
