@@ -1,5 +1,8 @@
 version = 1
 
+exclude_patterns = ["tests/**", "public/**", "database/**"]
+test_patterns = ["tests/**"]
+
 [[analyzers]]
 name = "php"
 enabled = true
@@ -23,11 +26,6 @@ enabled = true
 [analyzers.settings]
 exclude_dirs = ["vendor", "node_modules", "public"]
 auto_fix = true
-
-[[filters]]
-name = "exclude-tests-and-assets"
-paths = ["tests/*", "public/*", "database/*"]
-exclude = true
 
 [auto_fix]
 enabled = true

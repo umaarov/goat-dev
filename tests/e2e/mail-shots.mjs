@@ -18,7 +18,8 @@ for (const file of fs.readdirSync(dir).filter(f => f.endsWith('.html') && (!only
       await page.setRequestInterception(true);
       // remote images are fetched, scripts are never run in an email
       page.on('request', r => (r.resourceType() === 'script' ? r.abort() : r.continue()));
-      await page.goto('file://' + path.resolve(dir, file), { waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {});
+      await page.goto(`file://${path.resolve(dir, file)}`, { waitUntil: 'networkidle2', timeout: 30000 })
+        .catch(e => process.stderr.write(`${file}: ${e.message}\n`));
       const out = path.join(dir, `${file.replace('.html', '')}-${scheme}-${label}.png`);
       await page.screenshot({ path: out, fullPage: true });
       await page.close();
@@ -26,4 +27,4 @@ for (const file of fs.readdirSync(dir).filter(f => f.endsWith('.html') && (!only
   }
 }
 await browser.close();
-console.log('done');
+process.stdout.write('done\n');
