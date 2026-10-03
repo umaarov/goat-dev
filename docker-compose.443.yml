@@ -81,7 +81,7 @@ services:
   worker:
     image: goat-app:latest
     restart: unless-stopped
-    command: php artisan queue:work --tries=3 --timeout=90
+    command: php artisan queue:work --queue=default,scoring --tries=3 --timeout=90
     healthcheck:
       disable: true
       test: [ "CMD-SHELL", "pgrep -f 'php artisan queue:work' || exit 1" ]

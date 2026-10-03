@@ -1,0 +1,142 @@
+groups:
+  - name: security
+    rules:
+      - alert: TokenTheftDetected
+        expr: |
+          sum(count_over_time({job="laravel", file="audit_trail"} |= "TOKEN_THEFT" [5m])) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: A revoked refresh token was reused
+          description: "{{ $value | printf \"%.0f\" }} reuse(s) in 5 minutes. All sessions of that user were revoked. Search the audit trail for TOKEN_THEFT."
+
+      - alert: LoginFailureBurst
+        expr: |
+          sum(count_over_time({job="laravel", file="audit_trail"} |~ "\\[(AUTH|API)\\] \\[LOGIN\\] Failed attempt" [5m])) > 30
+        labels:
+          severity: warning
+        annotations:
+          summary: Many failed logins
+          description: "{{ $value | printf \"%.0f\" }} failed logins in 5 minutes (credential stuffing?)."
+
+      - alert: LoginFailureStorm
+        expr: |
+          sum(count_over_time({job="laravel", file="audit_trail"} |~ "\\[(AUTH|API)\\] \\[LOGIN\\] Failed attempt" [5m])) > 150
+        labels:
+          severity: critical
+        annotations:
+          summary: Failed logins are exploding
+          description: "{{ $value | printf \"%.0f\" }} failed logins in 5 minutes."
+
+      - alert: InvalidVerificationLinks
+        expr: |
+          sum(count_over_time({job="laravel", file="audit_trail"} |= "[VERIFY]" |~ "Invalid signature|Token mismatch" [10m])) > 10
+        labels:
+          severity: warning
+        annotations:
+          summary: Email verification links are being forged or guessed
+
+      - alert: UnauthorizedAccessAttempts
+        expr: |
+          sum(count_over_time({job="laravel", file="audit_trail"} |= "Unauthorized" [10m])) > 10
+        labels:
+          severity: warning
+        annotations:
+          summary: Users keep trying to change content they do not own
+
+      - alert: HttpErrorsFromOneIp
+        expr: |
+          sum by (ip) (
+            count_over_time(
+              {service="app", status=~"401|403|429"} | json | label_format ip=request_client_ip [5m]
+            )
+          ) > 60
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.ip }} is being refused again and again"
+          description: "{{ $value | printf \"%.0f\" }} 401/403/429 answers in 5 minutes: brute force or scanning."
+
+      - alert: PathScanning
+        expr: |
+          sum by (ip) (
+            count_over_time(
+              {service="app", status="404"} | json | label_format ip=request_client_ip [5m]
+            )
+          ) > 100
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.ip }} is probing for paths"
+          description: "{{ $value | printf \"%.0f\" }} not-found answers in 5 minutes."
+
+      - alert: RateLimitSurge
+        expr: |
+          sum(count_over_time({service="app", status="429"} | json [5m])) > 200
+        labels:
+          severity: warning
+        annotations:
+          summary: The rate limiters are rejecting a lot of requests
+
+      - alert: CspReportFlood
+        expr: |
+          sum(count_over_time({service="app"} |= "/csp-report" [10m])) > 200
+        labels:
+          severity: warning
+        annotations:
+          summary: Browsers report many CSP violations
+          description: A new script or style source is blocked, or someone is injecting content.
+
+  - name: errors
+    rules:
+      - alert: Http5xxBurst
+        expr: |
+          sum(count_over_time({service="app", status=~"5.."} [5m])) > 25
+        labels:
+          severity: critical
+        annotations:
+          summary: The site is answering with server errors
+          description: "{{ $value | printf \"%.0f\" }} responses with status 5xx in 5 minutes."
+
+      - alert: ApplicationCritical
+        expr: |
+          sum(count_over_time({job="laravel", level=~"CRITICAL|ALERT|EMERGENCY"} [5m])) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: The application logged a CRITICAL error
+          description: "Check laravel.log (for example missing moderation prompts)."
+
+      - alert: ApplicationErrors
+        expr: |
+          sum(count_over_time({job="laravel", file="laravel", level="ERROR"} [5m])) > 10
+        labels:
+          severity: warning
+        annotations:
+          summary: Many application errors
+          description: "{{ $value | printf \"%.0f\" }} ERROR lines in 5 minutes."
+
+      - alert: ModerationProviderFailing
+        expr: |
+          sum(count_over_time({job="laravel"} |~ "ModerationService: (API Failure|Critical Exception|Empty response)" [10m])) > 5
+        labels:
+          severity: warning
+        annotations:
+          summary: Content moderation calls are failing
+          description: DeepSeek or Groq is down, out of credit or rejecting the key.
+
+      - alert: SocialSharingFailing
+        expr: |
+          sum(count_over_time({job="laravel"} |~ "(Telegram|Instagram|X) Share Failed" [30m])) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: Posting a new question to social media failed
+
+      - alert: ImageGenerationFailing
+        expr: |
+          sum(count_over_time({job="laravel"} |~ "Cloudflare AI API (request failed|did not return)" [30m])) > 3
+        labels:
+          severity: warning
+        annotations:
+          summary: AI picture generation keeps failing

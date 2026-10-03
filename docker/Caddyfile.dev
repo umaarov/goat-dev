@@ -1,3 +1,9 @@
+{
+    servers {
+        metrics
+    }
+}
+
 :80 {
     root * /app/public
     encode zstd gzip
@@ -5,6 +11,22 @@
     php_server {
                    resolve_root_symlink
                }
+
+    # JSON access log; secrets in cookies, auth headers and URLs never reach the log
+    log {
+        output stdout
+        format filter {
+            wrap json
+            fields {
+                request>headers>Cookie delete
+                request>headers>Authorization delete
+                request>headers>X-Xsrf-Token delete
+                request>headers>Referer regexp `(?i)(/reset-password/|/notifications/unsubscribe/|/email/verify/\d+/|[?&](?:token|code|state|signature|hash|id_token|access_token|refresh_token|oauth_token|oauth_verifier|password|auth_date)=)[^/?&\s"]+` `${1}REDACTED`
+                request>uri regexp `(?i)(/reset-password/|/notifications/unsubscribe/|/email/verify/\d+/|[?&](?:token|code|state|signature|hash|id_token|access_token|refresh_token|oauth_token|oauth_verifier|password|auth_date)=)[^/?&\s"]+` `${1}REDACTED`
+                resp_headers>Set-Cookie delete
+            }
+        }
+    }
 
     # /storage is user uploads: images only
     @storageNonImage {
@@ -28,4 +50,8 @@
     handle /up {
                    respond "Health OK" 200
                }
+}
+
+:2020 {
+    metrics
 }

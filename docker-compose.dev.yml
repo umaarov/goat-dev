@@ -20,7 +20,7 @@ services:
     build:
       context: .
       target: dev
-    command: php artisan queue:work
+    command: php artisan queue:work --queue=default,scoring
     volumes:
       - ./:/app
     environment:

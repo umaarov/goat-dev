@@ -7,6 +7,8 @@
                 trusted_proxies static 173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/13 104.24.0.0/14 172.64.0.0/13 131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32 2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32
 
                 client_ip_headers CF-Connecting-IP
+
+                metrics
             }
 }
 
@@ -37,6 +39,22 @@ www.goat.uz {
         -Server
         -X-Powered-By
         defer
+    }
+
+    # JSON access log; secrets in cookies, auth headers and URLs never reach the log
+    log {
+        output stdout
+        format filter {
+            wrap json
+            fields {
+                request>headers>Cookie delete
+                request>headers>Authorization delete
+                request>headers>X-Xsrf-Token delete
+                request>headers>Referer regexp `(?i)(/reset-password/|/notifications/unsubscribe/|/email/verify/\d+/|[?&](?:token|code|state|signature|hash|id_token|access_token|refresh_token|oauth_token|oauth_verifier|password|auth_date)=)[^/?&\s"]+` `${1}REDACTED`
+                request>uri regexp `(?i)(/reset-password/|/notifications/unsubscribe/|/email/verify/\d+/|[?&](?:token|code|state|signature|hash|id_token|access_token|refresh_token|oauth_token|oauth_verifier|password|auth_date)=)[^/?&\s"]+` `${1}REDACTED`
+                resp_headers>Set-Cookie delete
+            }
+        }
     }
 
 #    @emptyQuery {
@@ -102,4 +120,9 @@ docs.goat.uz {
                Content-Type "application/pdf"
                Content-Disposition "inline"
            }
+}
+
+# internal only (not published): Prometheus scrapes it over the docker network
+:2020 {
+    metrics
 }

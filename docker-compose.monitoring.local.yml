@@ -1,0 +1,32 @@
+# local test: same stack, but alerts go to a mock Telegram and the real bot token is never mounted
+services:
+  alertmanager:
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.local.yml:/etc/alertmanager/alertmanager.yml:ro
+    depends_on:
+      - mock-telegram
+
+  prometheus:
+    volumes:
+      - ./monitoring/prometheus/targets/blackbox.local.yml:/etc/prometheus/targets/blackbox.yml:ro
+      - ./monitoring/prometheus/targets/cadvisor.local.yml:/etc/prometheus/targets/cadvisor.yml:ro
+
+  # cannot see containers inside the Docker Desktop VM; enable with --profile linux-only on a Linux host
+  cadvisor:
+    profiles: [ "linux-only" ]
+
+  mock-telegram:
+    image: python:3.13-alpine
+    restart: unless-stopped
+    command: python /server.py
+    ports:
+      - "127.0.0.1:8081:8081"
+    volumes:
+      - ./monitoring/mock-telegram/server.py:/server.py:ro
+    networks:
+      - monitoring
+    mem_limit: 64m
+
+secrets:
+  telegram_bot_token:
+    file: ./monitoring/secrets/telegram_bot_token.local

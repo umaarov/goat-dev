@@ -1,0 +1,263 @@
+# metrics, logs and alerts for the app stack (own project, joins the app network)
+# prod:  docker compose --env-file .env --env-file monitoring/.env -f docker-compose.monitoring.yml up -d
+# local: make monitoring-up
+name: goat-monitoring
+
+x-svc: &svc
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  prometheus:
+    <<: *svc
+    image: prom/prometheus:v3.15.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+      - --storage.tsdb.retention.size=20GB
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/rules:/etc/prometheus/rules:ro
+      - ./monitoring/prometheus/targets/blackbox.prod.yml:/etc/prometheus/targets/blackbox.yml:ro
+      - ./monitoring/prometheus/targets/cadvisor.prod.yml:/etc/prometheus/targets/cadvisor.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - monitoring
+      - app
+    mem_limit: 1g
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  alertmanager:
+    <<: *svc
+    image: prom/alertmanager:v0.34.1
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+      - --data.retention=120h
+    ports:
+      - "127.0.0.1:9093:9093"
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./monitoring/alertmanager/templates:/etc/alertmanager/templates:ro
+      - alertmanager-data:/alertmanager
+    secrets:
+      - telegram_bot_token
+    networks:
+      - monitoring
+    mem_limit: 256m
+    cap_drop:
+      - ALL
+    read_only: true
+
+  loki:
+    <<: *svc
+    image: grafana/loki:3.7.8
+    command:
+      - -config.file=/etc/loki/loki.yml
+    volumes:
+      - ./monitoring/loki/loki.yml:/etc/loki/loki.yml:ro
+      - ./monitoring/loki/rules:/etc/loki/rules:ro
+      - loki-data:/loki
+    networks:
+      - monitoring
+    mem_limit: 1g
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  alloy:
+    <<: *svc
+    image: grafana/alloy:v1.20.1
+    user: "473:473"
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./monitoring/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - ./storage/logs:/var/log/goat:ro
+      - alloy-data:/var/lib/alloy/data
+    networks:
+      - monitoring
+    depends_on:
+      - docker-proxy
+      - loki
+    mem_limit: 512m
+    cap_drop:
+      - ALL
+
+  # Alloy reads container logs through this: list/inspect/logs only, no writes
+  docker-proxy:
+    <<: *svc
+    image: tecnativa/docker-socket-proxy:v0.5.0
+    environment:
+      CONTAINERS: 1
+      NETWORKS: 1
+      POST: 0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - monitoring
+    mem_limit: 64m
+    read_only: true
+    tmpfs:
+      - /run
+      - /tmp
+
+  grafana:
+    <<: *svc
+    image: grafana/grafana:13.2.3
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://localhost:3000}
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_password
+      GF_SECURITY_COOKIE_SAMESITE: strict
+      GF_SECURITY_COOKIE_SECURE: ${GRAFANA_COOKIE_SECURE:-false}
+      GF_SECURITY_DISABLE_GRAVATAR: "true"
+      GF_SECURITY_ALLOW_EMBEDDING: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+      GF_PLUGINS_PLUGIN_ADMIN_ENABLED: "false"
+      GF_LOG_LEVEL: warn
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/overview.json
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    secrets:
+      - grafana_admin_password
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+      - loki
+    mem_limit: 512m
+    cap_drop:
+      - ALL
+
+  node-exporter:
+    <<: *svc
+    image: prom/node-exporter:v1.12.1
+    # host pid namespace: the real mount table, not the container's bind mounts
+    pid: host
+    command:
+      - --path.rootfs=/host
+      - --collector.textfile.directory=/textfile
+      - --collector.filesystem.mount-points-exclude=^/(dev|proc|run|sys|etc/(hostname|hosts|resolv\.conf)|var/lib/(docker|containers)/.+|host_mnt/.+)($$|/)
+    volumes:
+      - /:/host:ro
+      - goat-metrics:/textfile:ro
+    networks:
+      - monitoring
+    mem_limit: 128m
+    cap_drop:
+      - ALL
+    read_only: true
+
+  # per-container CPU/memory/OOM; needs a Linux docker host (the standard cAdvisor mounts)
+  cadvisor:
+    <<: *svc
+    image: gcr.io/cadvisor/cadvisor:v0.55.1
+    command:
+      - --housekeeping_interval=15s
+      - --docker_only=true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - monitoring
+    mem_limit: 384m
+
+  mysqld-exporter:
+    <<: *svc
+    image: prom/mysqld-exporter:v0.20.0
+    command:
+      - --config.my-cnf=/run/secrets/mysql_exporter_cnf
+      - --mysqld.address=db:3306
+    secrets:
+      - mysql_exporter_cnf
+    networks:
+      - monitoring
+      - app
+    mem_limit: 128m
+    cap_drop:
+      - ALL
+    read_only: true
+
+  redis-exporter:
+    <<: *svc
+    image: oliver006/redis_exporter:v1.93.0
+    environment:
+      REDIS_ADDR: redis://redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    networks:
+      - monitoring
+      - app
+    mem_limit: 128m
+    cap_drop:
+      - ALL
+    read_only: true
+
+  blackbox:
+    <<: *svc
+    image: prom/blackbox-exporter:v0.28.0
+    command:
+      - --config.file=/etc/blackbox/blackbox.yml
+    volumes:
+      - ./monitoring/blackbox/blackbox.yml:/etc/blackbox/blackbox.yml:ro
+    networks:
+      - monitoring
+      - app
+    mem_limit: 128m
+    cap_drop:
+      - ALL
+    read_only: true
+
+networks:
+  monitoring: {}
+  app:
+    external: true
+    name: ${APP_NETWORK:-goat-dev_goat-network}
+
+volumes:
+  prometheus-data:
+  alertmanager-data:
+  loki-data:
+  grafana-data:
+  alloy-data:
+  goat-metrics:
+    external: true
+    name: ${METRICS_VOLUME:-goat-dev_goat-metrics}
+
+# files live in monitoring/secrets (gitignored, directory 0700)
+secrets:
+  telegram_bot_token:
+    file: ./monitoring/secrets/telegram_bot_token
+  grafana_admin_password:
+    file: ./monitoring/secrets/grafana_admin_password
+  mysql_exporter_cnf:
+    file: ./monitoring/secrets/mysql_exporter.cnf

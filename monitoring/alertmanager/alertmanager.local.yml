@@ -1,0 +1,52 @@
+# LOCAL: same routing as production, but Telegram is a mock server and the real bot token is never mounted
+global:
+  resolve_timeout: 5m
+
+templates:
+  - /etc/alertmanager/templates/*.tmpl
+
+route:
+  receiver: telegram
+  group_by: [ alertname, instance ]
+  group_wait: 20s
+  group_interval: 3m
+  repeat_interval: 6h
+  routes:
+    - matchers: [ alertname="Watchdog" ]
+      receiver: "null"
+    - matchers: [ severity="none" ]
+      receiver: "null"
+    - matchers: [ severity="critical" ]
+      receiver: telegram-critical
+      group_wait: 10s
+      repeat_interval: 1h
+
+receivers:
+  - name: "null"
+  - name: telegram
+    telegram_configs:
+      - api_url: http://mock-telegram:8081
+        bot_token_file: /run/secrets/telegram_bot_token
+        chat_id: 1
+        parse_mode: HTML
+        message: '{{ template "telegram.message.local" . }}'
+        send_resolved: true
+        disable_notifications: true
+  - name: telegram-critical
+    telegram_configs:
+      - api_url: http://mock-telegram:8081
+        bot_token_file: /run/secrets/telegram_bot_token
+        chat_id: 1
+        parse_mode: HTML
+        message: '{{ template "telegram.message.local" . }}'
+        send_resolved: true
+        disable_notifications: false
+
+inhibit_rules:
+  # a critical alert already says it; skip the warning twin
+  - source_matchers: [ severity="critical" ]
+    target_matchers: [ severity="warning" ]
+    equal: [ alertname, instance ]
+  # nothing else matters while the whole site is down
+  - source_matchers: [ alertname="SiteDown" ]
+    target_matchers: [ alertname=~"SiteSlow|Http5xxBurst|Http5xxRatioHigh|HttpLatencyHigh|HttpErrorsFromOneIp" ]

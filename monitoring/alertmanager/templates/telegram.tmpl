@@ -1,0 +1,35 @@
+{{ define "telegram.alert" -}}
+{{ if eq .Labels.severity "critical" }}🔴{{ else }}🟠{{ end }} <b>{{ .Labels.alertname | html }}</b>
+{{ .Annotations.summary | html }}
+{{- if .Annotations.description }}
+{{ .Annotations.description | html }}
+{{- end }}
+{{- if .Labels.instance }}
+<code>{{ .Labels.instance | html }}</code>
+{{- end }}
+<i>since {{ .StartsAt.Format "15:04:05 MST" }}</i>
+{{- end }}
+
+{{ define "telegram.resolved" -}}
+✅ <b>{{ .Labels.alertname | html }}</b> resolved
+{{ .Annotations.summary | html }}
+{{- end }}
+
+{{ define "telegram.body" -}}
+{{ range $i, $a := .Alerts.Firing }}{{ if lt $i 8 }}{{ template "telegram.alert" $a }}
+
+{{ end }}{{ end }}
+{{- if gt (len .Alerts.Firing) 8 }}…and more, {{ len .Alerts.Firing }} firing in total
+{{ end }}
+{{- range $i, $a := .Alerts.Resolved }}{{ if lt $i 8 }}{{ template "telegram.resolved" $a }}
+{{ end }}{{ end }}
+{{- end }}
+
+{{ define "telegram.message" -}}
+{{ template "telegram.body" . }}
+{{- end }}
+
+{{ define "telegram.message.local" -}}
+🧪 <b>LOCAL TEST</b> (not production)
+{{ template "telegram.body" . }}
+{{- end }}

@@ -1,0 +1,218 @@
+groups:
+  - name: meta
+    rules:
+      # always firing: proves rules -> Alertmanager works (routed nowhere, see the optional dead-man switch in the README)
+      - alert: Watchdog
+        expr: vector(1)
+        labels:
+          severity: none
+        annotations:
+          summary: Alerting pipeline heartbeat
+
+      - alert: TargetDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.job }} is not scraped"
+          description: "{{ $labels.instance }} has not answered for 2 minutes."
+
+  - name: host
+    rules:
+      - alert: HostHighCpu
+        expr: 100 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: CPU above 85%
+          description: "Average CPU use is {{ $value | printf \"%.0f\" }}% for 10 minutes."
+
+      - alert: HostHighMemory
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > 90
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Memory above 90%
+          description: "{{ $value | printf \"%.0f\" }}% of RAM is in use."
+
+      - alert: HostOomKill
+        expr: increase(node_vmstat_oom_kill[5m]) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: The kernel killed a process (out of memory)
+
+      - alert: HostDiskSpaceLow
+        expr: |
+          node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs|fuse.*|nsfs|vfat|iso9660"}
+            / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs|fuse.*|nsfs|vfat|iso9660"} * 100 < 15
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk {{ $labels.mountpoint }} is under 15% free"
+          description: "{{ $value | printf \"%.1f\" }}% free."
+
+      - alert: HostDiskSpaceCritical
+        expr: |
+          node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs|fuse.*|nsfs|vfat|iso9660"}
+            / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs|fuse.*|nsfs|vfat|iso9660"} * 100 < 5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk {{ $labels.mountpoint }} is almost full"
+          description: "{{ $value | printf \"%.1f\" }}% free."
+
+      - alert: HostDiskFillingUp
+        expr: |
+          predict_linear(node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs|fuse.*|nsfs|vfat|iso9660"}[6h], 24 * 3600) < 0
+          and node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs|fuse.*|nsfs|vfat|iso9660"} > 0
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk {{ $labels.mountpoint }} will be full within a day"
+
+      - alert: HostLoadHigh
+        expr: node_load5 / count(node_cpu_seconds_total{mode="idle"}) > 2
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: Load average is more than twice the CPU count
+
+      - alert: HostRebooted
+        expr: changes(node_boot_time_seconds[10m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: The server rebooted
+
+  - name: containers
+    rules:
+      - alert: ServiceContainerMissing
+        expr: |
+          (
+            absent(container_last_seen{container_label_com_docker_compose_service="app"})
+            or absent(container_last_seen{container_label_com_docker_compose_service="worker"})
+            or absent(container_last_seen{container_label_com_docker_compose_service="scheduler"})
+            or absent(container_last_seen{container_label_com_docker_compose_service="db"})
+            or absent(container_last_seen{container_label_com_docker_compose_service="redis"})
+          )
+          # only when cAdvisor reports compose labels at all, otherwise this would always fire
+          and on() (count(container_last_seen{container_label_com_docker_compose_service!=""}) > 0)
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container {{ $labels.container_label_com_docker_compose_service }} is not running"
+
+      - alert: ContainerRestartLoop
+        expr: changes(container_start_time_seconds{container_label_com_docker_compose_service!=""}[15m]) > 2
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.container_label_com_docker_compose_service }} restarted {{ $value | printf \"%.0f\" }} times in 15 minutes"
+
+      - alert: ContainerOomKilled
+        expr: increase(container_oom_events_total{container_label_com_docker_compose_service!=""}[5m]) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.container_label_com_docker_compose_service }} was killed for exceeding its memory limit"
+
+      - alert: ContainerMemoryNearLimit
+        expr: |
+          container_memory_working_set_bytes{container_label_com_docker_compose_service!=""}
+            / (container_spec_memory_limit_bytes{container_label_com_docker_compose_service!=""} > 0) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.container_label_com_docker_compose_service }} uses {{ $value | printf \"%.0f\" }}% of its memory limit"
+
+  - name: mysql
+    rules:
+      - alert: MysqlDown
+        expr: mysql_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: MySQL is not answering
+
+      - alert: MysqlTooManyConnections
+        expr: mysql_global_status_threads_connected / mysql_global_variables_max_connections * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MySQL connections at {{ $value | printf \"%.0f\" }}% of the limit"
+
+      - alert: MysqlSlowQueries
+        expr: rate(mysql_global_status_slow_queries[5m]) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: MySQL is logging slow queries continuously
+
+      - alert: MysqlAbortedConnects
+        expr: rate(mysql_global_status_aborted_connects[5m]) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Many failed connection attempts to MySQL
+          description: Wrong credentials or a connection storm against the database.
+
+      - alert: MysqlRestarted
+        expr: mysql_global_status_uptime < 300
+        labels:
+          severity: warning
+        annotations:
+          summary: MySQL restarted in the last 5 minutes
+
+  - name: redis
+    rules:
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Redis is not answering
+
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / (redis_memory_max_bytes > 0) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis memory at {{ $value | printf \"%.0f\" }}% of maxmemory"
+
+      - alert: RedisEvictingKeys
+        expr: increase(redis_evicted_keys_total[10m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: Redis is evicting keys (sessions, cache or queue jobs may be lost)
+
+      - alert: RedisRejectingConnections
+        expr: increase(redis_rejected_connections_total[5m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: Redis rejects connections (maxclients reached)
+
+      - alert: RedisPersistenceFailing
+        expr: redis_rdb_last_bgsave_status == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: Redis cannot save its snapshot to disk

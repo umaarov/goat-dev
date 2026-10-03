@@ -1,0 +1,8 @@
+- targets:
+    - https://www.goat.uz/
+  labels:
+    check: public-site
+- targets:
+    - http://app/up
+  labels:
+    check: origin-health

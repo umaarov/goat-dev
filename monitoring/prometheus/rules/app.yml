@@ -1,0 +1,107 @@
+groups:
+  - name: app
+    rules:
+      - alert: MetricsExportStale
+        expr: time() - goat_metrics_export_timestamp_seconds > 180
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: The scheduler stopped exporting app metrics
+          description: "app:export-metrics runs every minute from the scheduler; last export {{ $value | humanizeDuration }} ago. Scheduled tasks (digests, cleanup, sitemap) are probably not running either."
+
+      - alert: MetricsExportMissing
+        expr: absent(goat_metrics_export_timestamp_seconds)
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: No app metrics are arriving
+          description: The metrics file is missing or the textfile collector cannot read it.
+
+      - alert: MetricsCollectorFailing
+        expr: goat_metrics_collector_success == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "App metrics collector {{ $labels.collector }} fails"
+
+      - alert: QueueWorkerStalled
+        expr: time() - goat_queue_heartbeat_timestamp_seconds > 300
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: The queue worker is not processing jobs
+          description: "The last heartbeat job ran {{ $value | humanizeDuration }} ago. Emails, notifications and comment scores are not being processed."
+
+      - alert: QueueBacklog
+        expr: goat_queue_size > 200
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Queue {{ $labels.queue }} has {{ $value | printf \"%.0f\" }} waiting jobs"
+          description: Is the worker running and keeping up?
+
+      - alert: QueueBacklogCritical
+        expr: goat_queue_size > 2000
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Queue {{ $labels.queue }} has {{ $value | printf \"%.0f\" }} waiting jobs"
+
+      - alert: FailedJobs
+        expr: goat_failed_jobs_last_hour > 5
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $value | printf \"%.0f\" }} jobs failed in the last hour"
+          description: Inspect with php artisan queue:failed
+
+      - alert: MassTokenRevocation
+        expr: goat_refresh_tokens_revoked_last_hour > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $value | printf \"%.0f\" }} refresh tokens revoked in the last hour"
+          description: Many users are being signed out. A bug, an attack or token theft handling.
+
+  - name: uptime
+    rules:
+      - alert: SiteDown
+        expr: probe_success{job="probe-http"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.check }} is down"
+          description: "{{ $labels.instance }} fails its health check for 2 minutes."
+
+      - alert: SiteSlow
+        expr: probe_duration_seconds{job="probe-http"} > 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.check }} answers slowly"
+          description: "{{ $labels.instance }} took {{ $value | printf \"%.1f\" }}s."
+
+      - alert: TlsCertificateExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry{job="probe-http"} - time() < 14 * 86400
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "TLS certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}"
+
+      - alert: TlsCertificateExpiresVerySoon
+        expr: probe_ssl_earliest_cert_expiry{job="probe-http"} - time() < 3 * 86400
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "TLS certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}"

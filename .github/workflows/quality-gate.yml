@@ -63,6 +63,15 @@ jobs:
         with:
           args: detect --source . -v
 
+  monitoring:
+    name: Monitoring config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate rules, alert routing, Loki, Alloy, compose, scripts
+        run: monitoring/scripts/test.sh static
+
   tests:
     name: Tests (sqlite + MySQL)
     runs-on: ubuntu-latest

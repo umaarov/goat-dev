@@ -1,0 +1,2 @@
+- targets:
+    - cadvisor:8080

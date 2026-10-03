@@ -40,3 +40,8 @@ public/build.zip
 
 # moderation prompts, never publish
 /resources/prompts
+
+# monitoring secrets (bot token, grafana password, exporter credentials)
+/monitoring/secrets/*
+!/monitoring/secrets/.gitkeep
+/monitoring/.env

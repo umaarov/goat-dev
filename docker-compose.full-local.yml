@@ -36,6 +36,7 @@ x-app: &app
     - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     - goat-storage:/app/storage/app/public
     - ./storage/logs:/app/storage/logs
+    - goat-metrics:/app/storage/metrics
   networks:
     - goat-network
   depends_on:
@@ -43,6 +44,8 @@ x-app: &app
       condition: service_healthy
     redis:
       condition: service_healthy
+    metrics-init:
+      condition: service_completed_successfully
 
 services:
   app:
@@ -78,9 +81,19 @@ services:
       retries: 5
       start_period: 30s
 
+  # named volumes start root-owned; the app runs as 10001
+  metrics-init:
+    image: goat-app:local
+    pull_policy: never
+    user: "0:0"
+    entrypoint: [ "/bin/sh", "-c", "chown 10001:10001 /m && chmod 755 /m" ]
+    volumes:
+      - goat-metrics:/m
+    restart: "no"
+
   worker:
     <<: *app
-    command: php artisan queue:work --tries=3 --timeout=90
+    command: php artisan queue:work --queue=default,scoring --tries=3 --timeout=90
     healthcheck:
       test: [ "CMD-SHELL", "pgrep -f 'queue:work' || exit 1" ]
       interval: 30s
@@ -199,4 +212,5 @@ volumes:
   goat-db-data:
   goat-redis-data:
   goat-storage:
+  goat-metrics:
   goat-vendor-dev:

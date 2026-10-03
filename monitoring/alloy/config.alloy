@@ -1,0 +1,114 @@
+logging {
+  level = "warn"
+}
+
+// ---- docker containers (stdout/stderr) via the read-only socket proxy
+discovery.docker "containers" {
+  host             = "tcp://docker-proxy:2375"
+  refresh_interval = "10s"
+}
+
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
+  }
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+    target_label  = "project"
+  }
+}
+
+loki.source.docker "containers" {
+  host          = "tcp://docker-proxy:2375"
+  targets       = discovery.docker.containers.targets
+  relabel_rules = discovery.relabel.containers.rules
+  forward_to    = [loki.process.containers.receiver]
+}
+
+loki.process "containers" {
+  // Caddy access log: the status code is a label (few values), everything else is read at query time (| json)
+  stage.match {
+    selector = "{service=\"app\"} |= \"http.log.access\""
+
+    stage.json {
+      expressions = { status = "status" }
+    }
+    stage.labels {
+      values = { status = "" }
+    }
+  }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+// ---- laravel files. The audit trail rolls over daily: new files are read from the first line, and
+// anything older than 30 minutes is dropped, so a restart never replays history as if it just happened.
+local.file_match "audit" {
+  path_targets = [{ "__path__" = "/var/log/goat/audit_trail-*.log", "job" = "laravel" }]
+  sync_period  = "10s"
+}
+
+loki.source.file "audit" {
+  targets    = local.file_match.audit.targets
+  forward_to = [loki.process.laravel.receiver]
+}
+
+// laravel.log is one fixed file without a timezone in its lines: tail from the end
+local.file_match "app" {
+  path_targets = [{ "__path__" = "/var/log/goat/laravel*.log", "job" = "laravel" }]
+  sync_period  = "10s"
+}
+
+loki.source.file "app" {
+  targets       = local.file_match.app.targets
+  tail_from_end = true
+  forward_to    = [loki.process.laravel.receiver]
+}
+
+loki.process "laravel" {
+  stage.multiline {
+    firstline     = "^\\[\\d{4}-\\d{2}-\\d{2}"
+    max_wait_time = "3s"
+    max_lines     = 400
+  }
+  stage.regex {
+    expression = "^\\[(?P<ts>[^\\]]+)\\] (?P<channel>\\w+)\\.(?P<level>[A-Z]+): "
+  }
+  stage.regex {
+    source     = "filename"
+    expression = "/(?P<file>[A-Za-z_]+?)(?:-\\d{4}-\\d{2}-\\d{2})?\\.log$"
+  }
+  // only audit lines carry an offset (+05:00); on failure the ingestion time is kept
+  stage.timestamp {
+    source            = "ts"
+    format            = "2006-01-02 15:04:05 -07:00"
+    action_on_failure = "skip"
+  }
+  stage.drop {
+    older_than          = "30m"
+    drop_counter_reason = "stale_log_line"
+  }
+  stage.labels {
+    values = { channel = "", level = "", file = "" }
+  }
+  // the date in the file name would start a new stream every day
+  stage.label_drop {
+    values = ["filename"]
+  }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

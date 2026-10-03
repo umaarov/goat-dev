@@ -14,3 +14,11 @@ storage/logs/*.log
 storage/framework/cache/data/*
 storage/framework/sessions/*
 storage/framework/views/*
+
+# never bake data, backups or credentials into an image
+backup
+monitoring
+storage/metrics
+**/*.sql
+**/*.sql.gz
+**/*.enc

@@ -1,0 +1,39 @@
+groups:
+  - name: web
+    rules:
+      - alert: Http5xxRatioHigh
+        expr: |
+          sum(rate(caddy_http_request_duration_seconds_count{handler="encode",code=~"5.."}[5m]))
+            / sum(rate(caddy_http_request_duration_seconds_count{handler="encode"}[5m])) > 0.05
+          and sum(rate(caddy_http_request_duration_seconds_count{handler="encode"}[5m])) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $value | humanizePercentage }} of responses are server errors"
+
+      - alert: HttpLatencyHigh
+        expr: |
+          histogram_quantile(0.95, sum by (le) (rate(caddy_http_request_duration_seconds_bucket{handler="encode"}[5m]))) > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 response time is {{ $value | printf \"%.1f\" }}s"
+
+      - alert: PhpThreadsSaturated
+        expr: frankenphp_busy_threads / frankenphp_total_threads > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Almost every PHP thread is busy
+          description: New requests wait for a free thread; raise the thread count or find the slow request.
+
+      - alert: PhpRequestsQueued
+        expr: frankenphp_queue_depth > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Requests are queueing for a PHP thread

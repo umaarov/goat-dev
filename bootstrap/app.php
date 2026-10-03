@@ -211,6 +211,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('sitemap:generate')->dailyAt('02:00');
         $schedule->command('app:schedule-daily-digests')->dailyAt('01:00');
         $schedule->command('app:process-notification-schedules')->everyMinute();
+        $schedule->job(new \App\Jobs\QueueHeartbeat)->everyMinute();
+        $schedule->command('app:export-metrics')->everyMinute()->withoutOverlapping(5);
     })
     ->withProviders([
         Illuminate\Auth\AuthServiceProvider::class,

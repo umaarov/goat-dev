@@ -124,7 +124,7 @@ services: #  traefik:
         build: .
         image: goat-app:latest
         restart: unless-stopped
-        command: php artisan queue:work --tries=3 --timeout=90
+        command: php artisan queue:work --queue=default,scoring --tries=3 --timeout=90
         cap_drop:
             - ALL
         security_opt:
@@ -211,6 +211,7 @@ services: #  traefik:
             - /app/public/build
             - ./docker/php.ini:/usr/local/etc/php/conf.d/custom.ini
             - goat-storage:/app/storage/app/public
+            - goat-metrics:/app/storage/metrics
         depends_on:
             - db
             - redis
@@ -314,4 +315,5 @@ volumes:
     goat-redis-data:
     goat-search-data:
     goat-storage:
+    goat-metrics:
     portainer_data:

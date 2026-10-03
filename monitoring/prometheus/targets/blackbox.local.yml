@@ -1,0 +1,8 @@
+- targets:
+    - http://app/up
+  labels:
+    check: origin-health
+- targets:
+    - http://app/
+  labels:
+    check: public-site
