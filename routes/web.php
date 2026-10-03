@@ -53,6 +53,10 @@ Route::get('/@{username}/post/{post}', [PostController::class, 'showUserPost'])
     ->name('posts.show.user-scoped')
     ->where('post', '[0-9]+');
 
+Route::get('/@{username}/post/{post}/card.jpg', \App\Http\Controllers\PostCardController::class)
+    ->name('posts.card')
+    ->where('post', '[0-9]+')
+    ->middleware('throttle:240,1');
 Route::get('/@{username}', [UserController::class, 'showProfile'])->name('profile.show');
 Route::get('/check-username', [UserController::class, 'checkUsername'])->name('check.username')->middleware('throttle:search');
 

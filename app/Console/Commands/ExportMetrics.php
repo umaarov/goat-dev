@@ -26,6 +26,7 @@ class ExportMetrics extends Command
             'content' => fn () => $this->content(),
             'tokens' => fn () => $this->tokens(),
             'backups' => fn () => $this->backups(),
+            'product' => fn () => $this->product(),
         ];
 
         foreach ($collectors as $name => $collect) {
@@ -79,6 +80,72 @@ class ExportMetrics extends Command
     {
         $this->gauge('goat_refresh_tokens_active', 'Refresh tokens that can still be used', DB::table('refresh_tokens')->whereNull('revoked_at')->where('expires_at', '>', now())->count());
         $this->gauge('goat_refresh_tokens_revoked_last_hour', 'Refresh tokens revoked in the last hour', DB::table('refresh_tokens')->where('revoked_at', '>=', now()->subHour())->count());
+    }
+
+    // who uses the product, not just how much exists; heavier queries, so cached for five minutes
+    private function product(): void
+    {
+        $p = Cache::remember('metrics:product', 300, fn () => $this->productNumbers());
+
+        foreach ($p['active'] as $window => $count) {
+            $this->gauge('goat_active_users', 'Distinct users who voted, commented or asked a question in the window', $count, ['window' => $window]);
+        }
+        foreach ($p['ratios'] as $name => [$ratio, $cohort]) {
+            $this->gauge("goat_{$name}_ratio", "Share of the cohort ({$name})", $ratio, []);
+            $this->gauge("goat_{$name}_cohort_size", "Size of the cohort behind goat_{$name}_ratio", $cohort, []);
+        }
+        foreach ($p['retention'] as $window => [$ratio, $cohort]) {
+            $this->gauge('goat_retention_ratio', 'Share of a signup cohort that came back', $ratio, ['window' => $window]);
+            $this->gauge('goat_retention_cohort_size', 'Size of the cohort behind goat_retention_ratio', $cohort, ['window' => $window]);
+        }
+        foreach ($p['funnel'] as $stage => $count) {
+            $this->gauge('goat_funnel_users', 'Users who signed up in the last 30 days and reached the stage', $count, ['stage' => $stage]);
+        }
+    }
+
+    private function productNumbers(): array
+    {
+        $activity = 'SELECT user_id, created_at FROM votes UNION ALL SELECT user_id, created_at FROM comments UNION ALL SELECT user_id, created_at FROM posts';
+        $now = now();
+
+        $active = [];
+        foreach (['1d' => 1, '7d' => 7, '30d' => 30] as $window => $days) {
+            $active[$window] = (int) DB::scalar("SELECT COUNT(DISTINCT user_id) FROM ({$activity}) a WHERE created_at >= ?", [$now->copy()->subDays($days)]);
+        }
+
+        // acted within a day of signing up: cohort = signed up 1 to 8 days ago, so everyone had a full day
+        $acted = fn (\Closure $within) => "(EXISTS (SELECT 1 FROM votes x WHERE x.user_id = u.id AND {$within('x')}) OR EXISTS (SELECT 1 FROM comments x WHERE x.user_id = u.id AND {$within('x')}) OR EXISTS (SELECT 1 FROM posts x WHERE x.user_id = u.id AND {$within('x')}))";
+        $ratios = [];
+
+        $activation = DB::selectOne('SELECT COUNT(*) AS cohort, COALESCE(SUM'.$acted(fn ($t) => "{$t}.created_at < DATE_ADD(u.created_at, INTERVAL 1 DAY)").', 0) AS hit FROM users u WHERE u.deleted_at IS NULL AND u.created_at >= ? AND u.created_at < ?', [$now->copy()->subDays(8), $now->copy()->subDay()]);
+        if ($activation->cohort > 0) {
+            $ratios['activation'] = [round($activation->hit / $activation->cohort, 4), (int) $activation->cohort];
+        }
+
+        // a question has traction when it gets five votes in its first day: cohort = asked 1 to 8 days ago
+        $traction = DB::selectOne('SELECT COUNT(*) AS cohort, COALESCE(SUM((SELECT COUNT(*) FROM votes v WHERE v.post_id = p.id AND v.created_at < DATE_ADD(p.created_at, INTERVAL 1 DAY)) >= 5), 0) AS hit FROM posts p WHERE p.deleted_at IS NULL AND p.created_at >= ? AND p.created_at < ?', [$now->copy()->subDays(8), $now->copy()->subDay()]);
+        if ($traction->cohort > 0) {
+            $ratios['question_traction'] = [round($traction->hit / $traction->cohort, 4), (int) $traction->cohort];
+        }
+
+        // classic day-N retention (active on day N after signup) and "came back at all in the first week"
+        $retention = [];
+        $windows = [
+            'd1' => ['from' => 1, 'to' => 2, 'min_age' => 2],
+            'd7' => ['from' => 7, 'to' => 8, 'min_age' => 8],
+            'within7d' => ['from' => 1, 'to' => 8, 'min_age' => 8],
+        ];
+        foreach ($windows as $name => $w) {
+            $row = DB::selectOne('SELECT COUNT(*) AS cohort, COALESCE(SUM'.$acted(fn ($t) => "{$t}.created_at >= DATE_ADD(u.created_at, INTERVAL {$w['from']} DAY) AND {$t}.created_at < DATE_ADD(u.created_at, INTERVAL {$w['to']} DAY)").', 0) AS hit FROM users u WHERE u.deleted_at IS NULL AND u.created_at >= ? AND u.created_at < ?', [$now->copy()->subDays(30), $now->copy()->subDays($w['min_age'])]);
+            if ($row->cohort > 0) {
+                $retention[$name] = [round($row->hit / $row->cohort, 4), (int) $row->cohort];
+            }
+        }
+
+        $row = DB::selectOne('SELECT COUNT(*) AS signed_up, COALESCE(SUM(EXISTS (SELECT 1 FROM votes x WHERE x.user_id = u.id)), 0) AS voted, COALESCE(SUM(EXISTS (SELECT 1 FROM comments x WHERE x.user_id = u.id)), 0) AS commented, COALESCE(SUM(EXISTS (SELECT 1 FROM posts x WHERE x.user_id = u.id)), 0) AS posted FROM users u WHERE u.deleted_at IS NULL AND u.created_at >= ?', [$now->copy()->subDays(30)]);
+        $funnel = ['signed_up' => (int) $row->signed_up, 'voted' => (int) $row->voted, 'commented' => (int) $row->commented, 'posted' => (int) $row->posted];
+
+        return ['active' => $active, 'ratios' => $ratios, 'retention' => $retention, 'funnel' => $funnel];
     }
 
     private function backups(): void

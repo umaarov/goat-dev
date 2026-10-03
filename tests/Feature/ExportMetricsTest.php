@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Jobs\QueueHeartbeat;
+use Illuminate\Support\Carbon;
 use App\Models\Comment;
 use App\Models\Post;
 use App\Models\RefreshToken;
@@ -139,5 +140,84 @@ class ExportMetricsTest extends TestCase
         (new QueueHeartbeat)->handle();
 
         $this->assertEqualsWithDelta(time(), $this->value($this->export(), 'goat_queue_heartbeat_timestamp_seconds'), 5);
+    }
+
+    public function test_product_metrics_describe_activity_activation_and_retention(): void
+    {
+        Carbon::setTestNow('2026-10-10 12:00:00');
+        $author = User::factory()->create(['created_at' => '2026-01-01']);
+        $post = Post::factory()->create(['user_id' => $author->id, 'created_at' => '2026-10-01']);
+        $act = function (int $userId, string $at) use ($post) {
+            DB::table('comments')->insert(['post_id' => $post->id, 'user_id' => $userId, 'content' => 'x', 'created_at' => $at, 'updated_at' => $at]);
+        };
+        $mk = fn (string $n, string $created) => DB::table('users')->insertGetId(['first_name' => $n, 'last_name' => 'T', 'username' => $n, 'email' => "{$n}@t.test", 'password' => 'x', 'created_at' => $created, 'updated_at' => $created]);
+
+        // signed up 3 days ago, acted 2 hours after signing up: activated, not back on day 1
+        $a = $mk('a', '2026-10-07 12:00:00');
+        $act($a, '2026-10-07 14:00:00');
+        // signed up 4 days ago, never did anything
+        $mk('b', '2026-10-06 12:00:00');
+        // signed up 20 days ago: acted on day 1 and on day 7, and again today
+        $c = $mk('c', '2026-09-20 12:00:00');
+        $act($c, '2026-09-21 15:00:00');
+        $act($c, '2026-09-27 15:00:00');
+        $act($c, '2026-10-10 09:00:00');
+        // signed up 12 days ago, acted on day 3 only: back within the week, not on day 1 or 7
+        $d = $mk('d', '2026-09-28 12:00:00');
+        $act($d, '2026-10-01 12:30:00');
+
+        $text = $this->export();
+
+        // activity today: only c; this week: a (3d ago) and c (d acted 9 days ago); this month: a, c, d and the author (asked on Oct 1)
+        $this->assertSame(1.0, $this->value($text, 'goat_active_users{window="1d"}'));
+        $this->assertSame(2.0, $this->value($text, 'goat_active_users{window="7d"}'), 'a and c, d acted 9 days ago');
+        $this->assertSame(4.0, $this->value($text, 'goat_active_users{window="30d"}'));
+
+        // activation cohort = signed up 1-8 days ago = a, b, d(12d: no) -> a and b; a acted within a day
+        $this->assertSame(0.5, $this->value($text, 'goat_activation_ratio'));
+        $this->assertSame(2.0, $this->value($text, 'goat_activation_cohort_size'));
+
+        // day 1: cohort signed up 2-30 days ago = a, b, c, d; only c acted on day 1
+        $this->assertSame(0.25, $this->value($text, 'goat_retention_ratio{window="d1"}'));
+        $this->assertSame(4.0, $this->value($text, 'goat_retention_cohort_size{window="d1"}'));
+        // day 7: cohort 8-30 days ago = c, d; c acted on day 7
+        $this->assertSame(0.5, $this->value($text, 'goat_retention_ratio{window="d7"}'));
+        // came back within the first week: c and d of c, d
+        $this->assertSame(1.0, $this->value($text, 'goat_retention_ratio{window="within7d"}'));
+
+        // funnel over the last 30 days: a, b, c, d signed up (the author is older); 3 of them commented
+        $this->assertSame(4.0, $this->value($text, 'goat_funnel_users{stage="signed_up"}'));
+        $this->assertSame(3.0, $this->value($text, 'goat_funnel_users{stage="commented"}'));
+        $this->assertSame(0.0, $this->value($text, 'goat_funnel_users{stage="posted"}'));
+    }
+
+    public function test_ratios_are_left_out_instead_of_shown_as_zero_when_nobody_is_in_the_cohort(): void
+    {
+        Carbon::setTestNow('2026-10-10 12:00:00');
+
+        $text = $this->export();
+
+        $this->assertStringNotContainsString('goat_activation_ratio', $text);
+        $this->assertStringNotContainsString('goat_retention_ratio', $text);
+        $this->assertSame(0.0, $this->value($text, 'goat_active_users{window="30d"}'));
+        $this->assertSame(1.0, $this->value($text, 'goat_metrics_collector_success{collector="product"}'));
+    }
+
+    public function test_question_traction_counts_posts_that_got_five_votes_on_their_first_day(): void
+    {
+        Carbon::setTestNow('2026-10-10 12:00:00');
+        $author = User::factory()->create(['created_at' => '2026-01-01']);
+        $hot = Post::factory()->create(['user_id' => $author->id, 'created_at' => '2026-10-05 10:00:00']);
+        Post::factory()->create(['user_id' => $author->id, 'created_at' => '2026-10-06 10:00:00']); // no votes
+        Post::factory()->create(['user_id' => $author->id, 'created_at' => '2026-10-09 18:00:00']); // too young for the cohort
+        foreach (range(1, 5) as $i) {
+            $voter = User::factory()->create(['created_at' => '2026-02-01']);
+            DB::table('votes')->insert(['user_id' => $voter->id, 'post_id' => $hot->id, 'vote_option' => 'option_one', 'created_at' => '2026-10-05 11:00:00', 'updated_at' => '2026-10-05 11:00:00']);
+        }
+
+        $text = $this->export();
+
+        $this->assertSame(0.5, $this->value($text, 'goat_question_traction_ratio'));
+        $this->assertSame(2.0, $this->value($text, 'goat_question_traction_cohort_size'));
     }
 }

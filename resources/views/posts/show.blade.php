@@ -4,7 +4,7 @@
 
 @php
     $postUrl = route('posts.show.user-scoped', ['username' => $post->user->username, 'post' => $post->id]);
-    $ogImage = $post->option_one_image ? asset('storage/' . $post->option_one_image) : ($post->option_two_image ? asset('storage/' . $post->option_two_image) : asset('images/goat.jpg'));
+    $ogImage = route('posts.card', ['username' => $post->user->username, 'post' => $post->id, 'v' => app(\App\Services\PostCardImage::class)->version($post)]);
 @endphp
 
 @section('title', $post->question . ' - GOAT.uz')

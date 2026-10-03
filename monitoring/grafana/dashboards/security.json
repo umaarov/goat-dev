@@ -29,6 +29,12 @@
       "icon": "dashboard"
     },
     {
+      "title": "Product",
+      "type": "link",
+      "url": "/d/goat-product",
+      "icon": "dashboard"
+    },
+    {
       "title": "Security",
       "type": "link",
       "url": "/d/goat-security",
