@@ -17,12 +17,12 @@
                    respond "Health OK" 200
                }
     handle {
-               redir https://www.goat.uz {uri} permanent
+               redir https://www.goat.uz{uri} permanent
            }
 }
 
 goat.uz {
-    redir https://www.goat.uz {uri} permanent
+    redir https://www.goat.uz{uri} permanent
 }
 
 www.goat.uz {
