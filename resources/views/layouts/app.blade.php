@@ -158,6 +158,7 @@
             integrity="sha512-9KkIqdfN7ipEW6B6k+Aq20PV31bjODg4AA52W+tYtAE0jE0kMx49bjJ3FgvS56wzmyfMUHbQ4Km2b7l9+Y/+Eg=="
             crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
     <meta name="title" content="GOAT.uz - Social Debate Platform">
+    <meta name="yandex-verification" content="1d0b571e64b514a5" />
     <meta name="description" content="@yield('meta_description', __('messages.app.meta_description_default'))">
     <meta name="keywords" content="@yield('meta_keywords', __('messages.app.meta_keywords_default', ['default' => 'Debate Platform, Social Media, Polls, GOAT.uz']))">
     {{--    <link rel="canonical" href="@yield('canonical_url', url()->current())"/>--}}
