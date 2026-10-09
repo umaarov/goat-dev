@@ -19,6 +19,7 @@
     <meta name="msapplication-config" content="/browserconfig.xml">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="color-scheme" content="light dark">
+    <style>html{background-color:#f3f4f6;color-scheme:light}html.dark{background-color:#111827;color-scheme:dark}</style>
     <script nonce="{{ $cspNonce ?? '' }}" type="speculationrules">
         {
           "prerender": [
