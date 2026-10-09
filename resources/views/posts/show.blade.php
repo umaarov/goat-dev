@@ -32,7 +32,7 @@
                 <ul class="space-y-1">
                     @foreach ($related as $item)
                         <li>
-                            <a href="{{ $item['url'] }}" class="text-blue-600 dark:text-blue-400 hover:underline">{{ $item['question'] }}</a>
+                            <a href="{{ $item['url'] }}" class="text-blue-600 dark:text-blue-400 underline underline-offset-2 hover:no-underline">{{ $item['question'] }}</a>
                             <span class="text-sm text-gray-500 dark:text-gray-400">· {{ __('messages.related_votes', ['count' => $item['votes']]) }}</span>
                         </li>
                     @endforeach

@@ -35,7 +35,7 @@ class InstagramService
         }
     }
 
-    public function share(Post $post): void
+    public function share(Post $post, ?string $captionOverride = null): void
     {
         if (!App::isProduction()) {
             Log::info('Skipping Instagram share, not production.', ['post_id' => $post->id]);
@@ -56,7 +56,7 @@ class InstagramService
         $publicImageUrl = Storage::disk('public')->url($tempFileName);
 
         try {
-            $caption = $this->createCaption($post);
+            $caption = $captionOverride ?? $this->createCaption($post);
             $containerId = $this->createPhotoContainer($publicImageUrl, $caption);
             $this->publishContainer($containerId);
 

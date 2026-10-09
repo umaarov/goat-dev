@@ -46,7 +46,7 @@
                 style="font-size: 1rem; font-weight: 600;">{{ __('messages.ads.reach_out_heading') }}</h3>
             <p class="text-gray-600 dark:text-gray-300 text-sm">
                 {{ __('messages.ads.reach_out_prompt') }} <a href="mailto:info@goat.uz"
-                                                             class="text-blue-600 dark:text-blue-400 hover:underline">info@goat.uz</a>
+                                                             class="text-blue-600 dark:text-blue-400 underline underline-offset-2 hover:no-underline">info@goat.uz</a>
                 {{ __('messages.sponsorship.reach_out_for_proposals') }}
             </p>
         </div>

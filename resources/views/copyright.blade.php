@@ -49,7 +49,7 @@
                 {{ __('messages.copyright.reporting_heading') }}
             </h3>
             <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">
-                {!! __('messages.copyright.reporting_text', ['email' => '<a href="mailto:legal@goat.uz" class="text-blue-600 dark:text-blue-400 hover:underline">legal@goat.uz</a>']) !!}
+                {!! __('messages.copyright.reporting_text', ['email' => '<a href="mailto:legal@goat.uz" class="text-blue-600 dark:text-blue-400 underline underline-offset-2 hover:no-underline">legal@goat.uz</a>']) !!}
             </p>
 
             <h3 class="text-md font-semibold mb-1 text-gray-900 dark:text-gray-100"

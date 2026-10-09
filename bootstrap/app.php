@@ -212,6 +212,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('users:cleanup-unverified')->everyTenMinutes();
         $schedule->command('app:schedule-daily-digests')->dailyAt('01:00');
         $schedule->command('app:process-notification-schedules')->everyMinute();
+        // app timezone (Asia/Tashkent): the question of the day at peak time, milestones hourly, win-back at noon
+        $schedule->command('promote:run daily')->dailyAt('19:00')->withoutOverlapping(30);
+        $schedule->command('promote:run milestone')->hourlyAt(20)->withoutOverlapping(30);
+        $schedule->command('mail:win-back')->dailyAt('12:00')->withoutOverlapping(30);
         // encrypted backups to the backup Telegram channel (production only, see config/backup.php)
         $backups = fn () => (bool) config('backup.telegram.enabled');
         // 23:55 sends the day so far, 00:10 the lines written in between: each line goes out exactly once

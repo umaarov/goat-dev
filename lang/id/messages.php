@@ -597,6 +597,14 @@ return [
     'profile.online' => 'Online',
     'profile.last_seen' => 'Terakhir dilihat :time',
     'delete_confirm_title' => 'Hapus Postingan?',
-    'meta_keywords_default' => 'Platform Debat, Media Sosial, Polling, GOAT.uz, Voting Online, Opini Publik'
+    'meta_keywords_default' => 'Platform Debat, Media Sosial, Polling, GOAT.uz, Voting Online, Opini Publik',
 
+    'tags_nav' => 'Topik',
+    'tags_index_title' => 'Pertanyaan menurut topik - GOAT.uz',
+    'tags_index_heading' => 'Topik',
+    'tags_index_intro' => 'Pilih topik dan beri suara pada pertanyaan yang sedang diperdebatkan komunitas.',
+    'tags_page_title' => ':tag: polling dan pertanyaan - GOAT.uz',
+    'tags_page_description' => ':count pertanyaan “ini atau itu” tentang :tag. Beri suara dan lihat pendapat komunitas.',
+    'tags_count' => ':count pertanyaan',
+    'tags_all' => 'Semua topik',
 ];

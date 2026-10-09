@@ -12,6 +12,8 @@ return [
         'help' => 'Need help? Just reply to this email.',
         'preferences' => 'Notification settings',
         'unsubscribe' => 'Unsubscribe',
+        'author' => 'You received this email because you asked a question on GOAT.uz.',
+        'winback' => 'You received this email because you have an account on GOAT.uz and haven’t visited in a while.',
     ],
     'verify' => [
         'subject' => 'Confirm your email for GOAT.uz',
@@ -90,5 +92,21 @@ return [
         'invalid_title' => 'This link doesn’t work',
         'invalid_text' => 'It may be incomplete or have been changed. Use the link in your latest email, or change your notification settings in your profile.',
         'home' => 'Back to GOAT.uz',
+    ],
+    'milestone' => [
+        'subject' => 'Your question just hit :count votes 🎉',
+        'preheader' => 'See how the community voted on “:question”.',
+        'title' => 'Your question reached :count votes! 🎉',
+        'intro' => 'Hi :name, the community is weighing in on your question. Here’s the current split:',
+        'cta' => 'See live results',
+        'tip' => 'Share it with friends to push the numbers even higher.',
+    ],
+    'winback' => [
+        'subject' => 'We saved you a seat on GOAT.uz',
+        'preheader' => 'See which debates the community is voting on right now.',
+        'title' => 'Hi :name, we missed your vote',
+        'intro' => 'A lot has happened since your last visit. Here are the debates people are talking about:',
+        'cta' => 'See what’s new',
+        'outro' => 'Not interested anymore? You can unsubscribe with one click below.',
     ],
 ];

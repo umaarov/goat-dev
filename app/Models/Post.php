@@ -36,6 +36,15 @@ class Post extends Model
         'option_two_percentage',
     ];
 
+    protected static function booted(): void
+    {
+        static::saved(function (Post $post) {
+            if ($post->wasChanged('ai_generated_tags') || ($post->wasRecentlyCreated && filled($post->ai_generated_tags))) {
+                \App\Support\TagIndex::sync($post);
+            }
+        });
+    }
+
     final public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
@@ -56,6 +65,16 @@ class Post extends Model
     final public function comments(): HasMany
     {
         return $this->hasMany(Comment::class)->orderBy('created_at', 'desc');
+    }
+
+    final public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class);
+    }
+
+    final public function promotions(): HasMany
+    {
+        return $this->hasMany(SocialPromotion::class);
     }
 
     final public function shares(): HasMany

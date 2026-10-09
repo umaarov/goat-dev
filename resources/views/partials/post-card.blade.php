@@ -197,10 +197,10 @@
                         </div>
                     @endif
 
-                    <h3 class="flex items-center gap-2 text-xs font-bold text-blue-800 dark:text-blue-300 uppercase tracking-wider mb-2">
+                    <h2 class="flex items-center gap-2 text-xs font-bold text-blue-800 dark:text-blue-300 uppercase tracking-wider mb-2">
                         <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.573L16.5 21.75l-.398-1.177a3.375 3.375 0 00-2.496-2.496L12.25 18l1.177-.398a3.375 3.375 0 002.496-2.496L16.5 14.25l.398 1.177a3.375 3.375 0 002.496 2.496l1.177.398-1.177.398a3.375 3.375 0 00-2.496 2.496z" /></svg>
                         AI Insight
-                    </h3>
+                    </h2>
 
                     <div class="relative transition-all duration-500 ease-in-out {{ $insightPreference === 'expanded' ? 'max-h-screen' : 'max-h-24 overflow-hidden' }}" :class="bodyClass">
                         <p class="text-gray-800 dark:text-gray-200 leading-relaxed">{!! nl2br(e($post->ai_generated_context)) !!}</p>
@@ -337,7 +337,7 @@
         @endphp
         <div class="px-4 pb-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5">
             @foreach($tags->take(7) as $tag)
-                <a href="{{ route('search', ['q' => $tag]) }}" class="block bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-semibold px-2.5 py-1 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:text-blue-800 dark:hover:text-blue-300 transition-colors duration-200">#{{ \Illuminate\Support\Str::of($tag)->camel()->ucfirst() }}</a>
+                <a href="{{ ($slug = \App\Support\TagIndex::slug($tag)) !== '' ? route('tags.show', ['slug' => $slug]) : route('search', ['q' => $tag]) }}" class="block bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-semibold px-2.5 py-1 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:text-blue-800 dark:hover:text-blue-300 transition-colors duration-200">#{{ \Illuminate\Support\Str::of($tag)->camel()->ucfirst() }}</a>
             @endforeach
         </div>
     @endif

@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\CommentLikeController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\TagController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\RatingController;
@@ -47,6 +48,8 @@ Route::get('/auth/github/redirect', [AuthController::class, 'githubRedirect'])->
 Route::get('/auth/github/callback', [AuthController::class, 'githubCallback']);
 
 Route::get('/', [PostController::class, 'index'])->name('home')->middleware('cache.response:10');
+Route::get('/tags', [TagController::class, 'index'])->name('tags.index')->middleware('cache.response:10');
+Route::get('/tag/{slug}', [TagController::class, 'show'])->where('slug', '[a-z0-9-]+')->name('tags.show')->middleware('cache.response:10');
 Route::get('/search', [PostController::class, 'search'])->name('search')->middleware('throttle:search');
 //Route::get('/p/{id}/{slug?}', [PostController::class, 'showBySlug'])->name('posts.showSlug')->middleware('cache.response:60');
 Route::get('/@{username}/post/{post}', [PostController::class, 'showUserPost'])
@@ -210,6 +213,7 @@ Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap.i
 Route::get('/sitemaps/static.xml', [SitemapController::class, 'static'])->name('sitemap.static');
 Route::get('/sitemaps/posts.xml', [SitemapController::class, 'posts'])->name('sitemap.posts');
 Route::get('/sitemaps/users.xml', [SitemapController::class, 'users'])->name('sitemap.users');
+Route::get('/sitemaps/tags.xml', [SitemapController::class, 'tags'])->name('sitemap.tags');
 
 Route::get('/load-more-posts', [PostController::class, 'loadMorePosts'])->name('posts.load_more')->middleware('throttle:search');
 

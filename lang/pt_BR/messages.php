@@ -599,4 +599,12 @@ return [
     'profile.last_seen' => 'Visto por último :time',
     'delete_confirm_title' => 'Excluir Post?',
     'meta_keywords_default' => 'Plataforma de Debate, Mídia Social, Enquetes, GOAT.uz, Votação Online, Opinião Pública',
+    'tags_nav' => 'Tópicos',
+    'tags_index_title' => 'Perguntas por tópico - GOAT.uz',
+    'tags_index_heading' => 'Tópicos',
+    'tags_index_intro' => 'Escolha um assunto e vote nas perguntas que a comunidade está debatendo.',
+    'tags_page_title' => ':tag: enquetes e perguntas - GOAT.uz',
+    'tags_page_description' => ':count perguntas de «isto ou aquilo» sobre :tag. Vote e veja o que a comunidade pensa.',
+    'tags_count' => ':count perguntas',
+    'tags_all' => 'Todos os tópicos',
 ];

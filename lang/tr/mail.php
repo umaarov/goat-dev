@@ -12,6 +12,8 @@ return [
         'help' => 'Yardım mı lazım? Bu e-postayı yanıtlamanız yeterli.',
         'preferences' => 'Bildirim ayarları',
         'unsubscribe' => 'Abonelikten çık',
+        'author' => 'GOAT.uz’da bir soru sorduğun için bu e-postayı aldın.',
+        'winback' => 'GOAT.uz’da hesabın olduğu ve bir süredir uğramadığın için bu e-postayı aldın.',
     ],
     'verify' => [
         'subject' => 'GOAT.uz için e-postanızı onaylayın',
@@ -90,5 +92,21 @@ return [
         'invalid_title' => 'Bu bağlantı çalışmıyor',
         'invalid_text' => 'Eksik olabilir veya değiştirilmiş olabilir. Son e-postanızdaki bağlantıyı kullanın ya da profilinizden bildirim ayarlarını değiştirin.',
         'home' => 'GOAT.uz’a dön',
+    ],
+    'milestone' => [
+        'subject' => 'Sorun :count oya ulaştı 🎉',
+        'preheader' => '“:question” sorusunda topluluğun nasıl oy verdiğini gör.',
+        'title' => 'Sorun :count oya ulaştı! 🎉',
+        'intro' => 'Merhaba :name! Topluluk sorunuza oy veriyor. İşte şu anki dağılım:',
+        'cta' => 'Canlı sonuçları gör',
+        'tip' => 'Daha da fazla oy almak için arkadaşlarınla paylaş.',
+    ],
+    'winback' => [
+        'subject' => 'GOAT.uz’da senin için bir yer ayırdık',
+        'preheader' => 'Topluluğun şu anda hangi tartışmalara oy verdiğini gör.',
+        'title' => 'Merhaba :name, oyunu özledik',
+        'intro' => 'Son ziyaretinden bu yana çok şey oldu. İşte konuşulan tartışmalar:',
+        'cta' => 'Yenilikleri gör',
+        'outro' => 'Artık ilgilenmiyor musun? Aşağıdan tek tıkla abonelikten çıkabilirsin.',
     ],
 ];

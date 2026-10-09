@@ -4,7 +4,6 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -43,7 +42,7 @@ class SecurityHeaders
         }
 
         if (config('security.csp.enabled')) {
-            $headers->set('Content-Security-Policy', $this->enforcedPolicy($secure, $nonce).'; report-uri '.URL::to('/csp-report', [], false));
+            $headers->set('Content-Security-Policy', $this->enforcedPolicy($secure, $nonce).'; report-uri /csp-report');
             $headers->set('Content-Security-Policy-Report-Only', $this->monitoredPolicy($secure));
         }
 
@@ -112,7 +111,7 @@ class SecurityHeaders
             "connect-src {$connect}",
             'frame-src https:',
             "media-src 'self' blob: https:",
-            'report-uri '.URL::to('/csp-report', [], false),
+            'report-uri /csp-report',
         ];
 
         return implode('; ', $directives);

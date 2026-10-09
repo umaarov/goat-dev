@@ -36,7 +36,7 @@ class XService
         $this->client->setApiVersion('2');
     }
 
-    public function share(Post $post): void
+    public function share(Post $post, ?string $captionOverride = null): void
     {
         if (!App::isProduction()) {
             Log::info('Skipping X post share because environment is not production.', ['post_id' => $post->id]);
@@ -73,6 +73,7 @@ class XService
             $tweetText .= "1️⃣ " . $post->option_one_title . "\n";
             $tweetText .= "2️⃣ " . $post->option_two_title . "\n\n";
             $tweetText .= "👉 Vote here: " . $postUrl;
+            $tweetText = $captionOverride ?? $tweetText;
 
             $payload = [
                 'text' => $tweetText,

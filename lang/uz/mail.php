@@ -12,6 +12,8 @@ return [
         'help' => 'Yordam kerakmi? Shu xatga javob yozing.',
         'preferences' => 'Bildirishnoma sozlamalari',
         'unsubscribe' => 'Obunani bekor qilish',
+        'author' => 'Siz GOAT.uz da savol bergansiz, shuning uchun bu xatni oldingiz.',
+        'winback' => 'Siz GOAT.uz da hisobingiz borligi va uzoq vaqt kirmaganingiz uchun bu xatni oldingiz.',
     ],
     'verify' => [
         'subject' => 'GOAT.uz uchun emailingizni tasdiqlang',
@@ -90,5 +92,21 @@ return [
         'invalid_title' => 'Havola ishlamayapti',
         'invalid_text' => 'U to‘liq emas yoki o‘zgartirilgan bo‘lishi mumkin. Oxirgi xatdagi havoladan foydalaning yoki profilingizda bildirishnoma sozlamalarini o‘zgartiring.',
         'home' => 'GOAT.uz ga qaytish',
+    ],
+    'milestone' => [
+        'subject' => 'Savolingiz :count ovoz oldi 🎉',
+        'preheader' => '«:question» savoliga jamoa qanday ovoz berganini ko‘ring.',
+        'title' => 'Savolingiz :count ovozga yetdi! 🎉',
+        'intro' => 'Salom, :name! Jamoa savolingizga ovoz bermoqda. Hozirgi natija:',
+        'cta' => 'Natijalarni ko‘rish',
+        'tip' => 'Do‘stlaringiz bilan ulashing — ovozlar yanada ko‘paysin.',
+    ],
+    'winback' => [
+        'subject' => 'GOAT.uz da siz uchun joy saqlab qo‘ydik',
+        'preheader' => 'Jamoa hozir qaysi bahslarga ovoz berayotganini ko‘ring.',
+        'title' => 'Salom, :name! Ovozingiz yetishmadi',
+        'intro' => 'Oxirgi tashrifingizdan beri ko‘p narsa bo‘ldi. Mana, hozir muhokama qilinayotgan bahslar:',
+        'cta' => 'Yangiliklarni ko‘rish',
+        'outro' => 'Endi qiziq emasmi? Quyida bir bosishda obunani bekor qilishingiz mumkin.',
     ],
 ];

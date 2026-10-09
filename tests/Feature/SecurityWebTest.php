@@ -94,6 +94,14 @@ class SecurityWebTest extends TestCase
             ->assertNoContent();
     }
 
+    public function test_csp_reports_go_to_a_relative_address_so_https_pages_do_not_drop_them(): void
+    {
+        $header = $this->get('https://localhost/login')->headers->get('Content-Security-Policy');
+
+        $this->assertStringContainsString('report-uri /csp-report', $header);
+        $this->assertStringNotContainsString('http://', $header);
+    }
+
     public function test_sonar_webhook_requires_a_valid_signature(): void
     {
         Http::fake();

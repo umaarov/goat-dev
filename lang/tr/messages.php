@@ -598,5 +598,13 @@ return [
     'profile.online' => 'Çevrimiçi',
     'profile.last_seen' => 'Son görülme :time',
     'delete_confirm_title' => 'Gönderi Silinsin mi?',
-    'meta_keywords_default' => 'Tartışma Platformu, Sosyal Medya, Anketler, GOAT.uz, Çevrimiçi Oylama, Kamuoyu'
+    'meta_keywords_default' => 'Tartışma Platformu, Sosyal Medya, Anketler, GOAT.uz, Çevrimiçi Oylama, Kamuoyu',
+    'tags_nav' => 'Konular',
+    'tags_index_title' => 'Konuya göre sorular - GOAT.uz',
+    'tags_index_heading' => 'Konular',
+    'tags_index_intro' => 'Bir konu seç ve topluluğun tartıştığı sorulara oy ver.',
+    'tags_page_title' => ':tag: anketler ve sorular - GOAT.uz',
+    'tags_page_description' => ':tag hakkında :count “bu mu şu mu” sorusu. Oy ver ve topluluğun ne düşündüğünü gör.',
+    'tags_count' => ':count soru',
+    'tags_all' => 'Tüm konular',
 ];

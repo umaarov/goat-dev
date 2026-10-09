@@ -12,4 +12,10 @@
         <loc>{{ route('sitemap.users') }}</loc>
         <lastmod>{{ $latestUser ? $latestUser->updated_at->tz('Asia/Tashkent')->toAtomString() : now()->tz('Asia/Tashkent')->toAtomString() }}</lastmod>
     </sitemap>
+    @if ($hasTags)
+        <sitemap>
+            <loc>{{ route('sitemap.tags') }}</loc>
+            <lastmod>{{ $latestPost ? $latestPost->updated_at->tz('Asia/Tashkent')->toAtomString() : now()->tz('Asia/Tashkent')->toAtomString() }}</lastmod>
+        </sitemap>
+    @endif
 </sitemapindex>

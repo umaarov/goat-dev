@@ -598,4 +598,12 @@ return [
     'seo_sponsorship_description' => 'GOAT.uz homiysi bo‘ling: platformani qanday qo‘llab-quvvatlash va har kuni ovoz berib munozara qiladigan jamoaga yetib borish.',
     'seo_ads_description' => 'GOAT.uz da reklama: har kuni ovoz berib munozara qiladigan faol auditoriyaga yetib boring.',
     'seo_contribution_description' => 'GOAT.uz ga hissa qo‘shing: ochiq manbali munozara platformasini kod, tarjima va g‘oyalar bilan rivojlantirishga yordam bering.',
+    'tags_nav' => 'Mavzular',
+    'tags_index_title' => 'Mavzular bo‘yicha savollar - GOAT.uz',
+    'tags_index_heading' => 'Mavzular',
+    'tags_index_intro' => 'Mavzuni tanlang va jamoa muhokama qilayotgan savollarga ovoz bering.',
+    'tags_page_title' => ':tag: so‘rovnomalar va savollar - GOAT.uz',
+    'tags_page_description' => ':tag haqida :count ta «bu yoki u» savoli. Ovoz bering va jamoa nima deb o‘ylashini ko‘ring.',
+    'tags_count' => ':count ta savol',
+    'tags_all' => 'Barcha mavzular',
 ];

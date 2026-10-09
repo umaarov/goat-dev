@@ -12,6 +12,8 @@ return [
         'help' => '¿Necesitas ayuda? Responde a este correo.',
         'preferences' => 'Ajustes de notificaciones',
         'unsubscribe' => 'Cancelar suscripción',
+        'author' => 'Recibes este correo porque hiciste una pregunta en GOAT.uz.',
+        'winback' => 'Recibes este correo porque tienes una cuenta en GOAT.uz y hace tiempo que no entras.',
     ],
     'verify' => [
         'subject' => 'Confirma tu correo para GOAT.uz',
@@ -90,5 +92,21 @@ return [
         'invalid_title' => 'Este enlace no funciona',
         'invalid_text' => 'Puede estar incompleto o haberse modificado. Usa el enlace de tu último correo o cambia los ajustes de notificaciones en tu perfil.',
         'home' => 'Volver a GOAT.uz',
+    ],
+    'milestone' => [
+        'subject' => 'Tu pregunta ya tiene :count votos 🎉',
+        'preheader' => 'Mira cómo ha votado la comunidad en «:question».',
+        'title' => '¡Tu pregunta llegó a :count votos! 🎉',
+        'intro' => 'Hola, :name. La comunidad está votando tu pregunta. Este es el reparto actual:',
+        'cta' => 'Ver resultados en vivo',
+        'tip' => 'Compártela con tus amigos para conseguir aún más votos.',
+    ],
+    'winback' => [
+        'subject' => 'Te guardamos un sitio en GOAT.uz',
+        'preheader' => 'Mira qué debates está votando la comunidad ahora mismo.',
+        'title' => 'Hola, :name. Echamos de menos tu voto',
+        'intro' => 'Han pasado muchas cosas desde tu última visita. Estos son los debates de los que se habla:',
+        'cta' => 'Ver las novedades',
+        'outro' => '¿Ya no te interesa? Puedes darte de baja con un clic más abajo.',
     ],
 ];

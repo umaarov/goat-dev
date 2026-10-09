@@ -600,7 +600,15 @@ return [
     'delete_confirm_title' => 'पोस्ट हटाएं?',
 
 //    'meta_keywords_default' => 'Debate Platform, Social Media, Polls, GOAT.uz, Online Voting, Public Opinion',
-    'meta_keywords_default' => 'बहस मंच, सोशल मीडिया, पोल, GOAT.uz, ऑनलाइन वोटिंग, सार्वजनिक राय'
+    'meta_keywords_default' => 'बहस मंच, सोशल मीडिया, पोल, GOAT.uz, ऑनलाइन वोटिंग, सार्वजनिक राय',
 
 
+    'tags_nav' => 'विषय',
+    'tags_index_title' => 'विषय के अनुसार सवाल - GOAT.uz',
+    'tags_index_heading' => 'विषय',
+    'tags_index_intro' => 'कोई विषय चुनें और समुदाय में चल रहे सवालों पर वोट करें।',
+    'tags_page_title' => ':tag: पोल और सवाल - GOAT.uz',
+    'tags_page_description' => ':tag के बारे में :count “यह या वह” सवाल। वोट करें और देखें समुदाय क्या सोचता है।',
+    'tags_count' => ':count सवाल',
+    'tags_all' => 'सभी विषय',
 ];

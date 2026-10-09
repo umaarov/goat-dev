@@ -4,9 +4,11 @@ namespace App\Console\Commands;
 
 use App\Mail\EmailVerification;
 use App\Mail\NewPostsNotification;
+use App\Mail\QuestionMilestone;
 use App\Mail\RegistrationExpired;
 use App\Mail\UnsubscribedNotification;
 use App\Mail\WelcomeMessage;
+use App\Mail\WinBack;
 use App\Models\Post;
 use App\Models\User;
 use App\Notifications\QueuedResetPassword;
@@ -50,6 +52,8 @@ class MailSamples extends Command
             'expired' => new RegistrationExpired($user),
             'unsubscribed' => new UnsubscribedNotification($user, '203.0.113.7'),
             'digest' => new NewPostsNotification($user, $posts->first(), $posts->slice(1)),
+            'milestone' => new QuestionMilestone($user, $posts->first(), 100),
+            'winback' => new WinBack($user, $posts->take(3)),
         ];
 
         if ($to = $this->option('to')) {

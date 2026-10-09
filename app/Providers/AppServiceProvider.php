@@ -9,6 +9,7 @@ use App\Http\Middleware\EnforceSessionRevocation;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\View;
 use Illuminate\Validation\Rules\Password;
@@ -43,6 +44,11 @@ class AppServiceProvider extends ServiceProvider
 
             return config('security.password.check_breached') ? $rule->uncompromised(3) : $rule;
         });
+
+        // the From address is a no-reply: replies go to a real inbox
+        if ($replyTo = config('mail.reply_to.address')) {
+            Mail::alwaysReplyTo($replyTo, config('mail.reply_to.name'));
+        }
 
         Gate::define('viewPulse', function (User $user) {
             return $user->isAdmin();

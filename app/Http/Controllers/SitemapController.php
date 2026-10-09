@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
@@ -26,6 +27,7 @@ class SitemapController extends Controller
         return $this->xml('sitemap.index', fn () => view('sitemap.index', [
             'latestPost' => Post::latest('updated_at')->first(),
             'latestUser' => User::whereHas('posts')->latest('updated_at')->first(),
+            'hasTags' => $this->topics()->isNotEmpty(),
         ])->render());
     }
 
@@ -50,6 +52,22 @@ class SitemapController extends Controller
         return $this->xml('sitemap.users', fn () => view('sitemap.users', [
             'users' => User::whereHas('posts')->latest('updated_at')->get(),
         ])->render());
+    }
+
+    // topics with enough questions to be more than a thin page
+    private function topics()
+    {
+        return Tag::query()
+            ->withCount('posts')
+            ->withMax('posts', 'updated_at')
+            ->having('posts_count', '>=', TagController::minQuestions())
+            ->orderBy('slug')
+            ->get();
+    }
+
+    public function tags(): Response
+    {
+        return $this->xml('sitemap.tags', fn () => view('sitemap.tags', ['tags' => $this->topics()])->render());
     }
 
     private function xml(string $key, \Closure $render): Response

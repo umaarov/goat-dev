@@ -58,7 +58,7 @@
                     <p class="text-gray-600 dark:text-gray-300 text-sm">
                         {{ __('messages.contribution.bugs_text') }}
                         <a href="https://github.com/umaarov/goat-dev/issues" target="_blank"
-                           class="text-blue-600 dark:text-blue-400 hover:underline">{{ __('messages.contribution.issue_tracker_link') }}</a>.
+                           class="text-blue-600 dark:text-blue-400 underline underline-offset-2 hover:no-underline">{{ __('messages.contribution.issue_tracker_link') }}</a>.
                     </p>
                 </div>
 
@@ -90,7 +90,7 @@
                 <p class="text-gray-600 dark:text-gray-300 text-sm">
                     {{ __('messages.contribution.coc_text') }}
                     <a href="https://github.com/umaarov/goat-dev/blob/master/CODE_OF_CONDUCT.md"
-                       class="text-blue-600 dark:text-blue-400 hover:underline">{{ __('messages.contribution.coc_link_text') }}</a>.
+                       class="text-blue-600 dark:text-blue-400 underline underline-offset-2 hover:no-underline">{{ __('messages.contribution.coc_link_text') }}</a>.
                 </p>
             </div>
 

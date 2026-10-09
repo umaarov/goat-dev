@@ -63,6 +63,12 @@ return [
         ],
 
     ],
+    // replies to the emails (the From address is a no-reply)
+    'reply_to' => [
+        'address' => env('MAIL_REPLY_TO'),
+        'name' => env('MAIL_REPLY_TO_NAME', 'GOAT.uz'),
+    ],
+
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
         'name' => env('MAIL_FROM_NAME', 'Example'),

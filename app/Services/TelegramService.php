@@ -15,7 +15,7 @@ use Throwable;
 
 class TelegramService
 {
-    public function share(Post $post): void
+    public function share(Post $post, ?string $captionOverride = null): void
     {
         if (!App::isProduction()) {
             Log::info('Skipping Telegram share, not production.', ['post_id' => $post->id]);
@@ -45,6 +45,7 @@ class TelegramService
         $caption .= "1️⃣ " . $post->option_one_title . "\n";
         $caption .= "2️⃣ " . $post->option_two_title . "\n\n";
         $caption .= "👉 Vote and see the results:\n" . $postUrl;
+        $caption = $captionOverride ?? $caption;
 
         $apiUrl = "https://api.telegram.org/bot{$botToken}/sendPhoto";
 

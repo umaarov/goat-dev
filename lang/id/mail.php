@@ -12,6 +12,8 @@ return [
         'help' => 'Butuh bantuan? Cukup balas email ini.',
         'preferences' => 'Pengaturan notifikasi',
         'unsubscribe' => 'Berhenti berlangganan',
+        'author' => 'Kamu menerima email ini karena kamu membuat pertanyaan di GOAT.uz.',
+        'winback' => 'Kamu menerima email ini karena punya akun di GOAT.uz dan sudah lama tidak berkunjung.',
     ],
     'verify' => [
         'subject' => 'Konfirmasi email Anda untuk GOAT.uz',
@@ -90,5 +92,21 @@ return [
         'invalid_title' => 'Tautan ini tidak berfungsi',
         'invalid_text' => 'Mungkin tidak lengkap atau sudah diubah. Gunakan tautan di email terbaru Anda, atau ubah pengaturan notifikasi di profil.',
         'home' => 'Kembali ke GOAT.uz',
+    ],
+    'milestone' => [
+        'subject' => 'Pertanyaanmu sudah mendapat :count suara 🎉',
+        'preheader' => 'Lihat bagaimana komunitas memilih di “:question”.',
+        'title' => 'Pertanyaanmu mencapai :count suara! 🎉',
+        'intro' => 'Halo :name! Komunitas sedang memberikan suara untuk pertanyaanmu. Ini pembagian saat ini:',
+        'cta' => 'Lihat hasil langsung',
+        'tip' => 'Bagikan ke teman-temanmu agar suaranya makin banyak.',
+    ],
+    'winback' => [
+        'subject' => 'Kami menyimpan tempat untukmu di GOAT.uz',
+        'preheader' => 'Lihat debat yang sedang dipilih komunitas sekarang.',
+        'title' => 'Halo :name, kami rindu suaramu',
+        'intro' => 'Banyak yang terjadi sejak kunjungan terakhirmu. Ini debat yang sedang ramai dibicarakan:',
+        'cta' => 'Lihat yang baru',
+        'outro' => 'Sudah tidak tertarik? Kamu bisa berhenti berlangganan dengan satu klik di bawah.',
     ],
 ];

@@ -55,6 +55,7 @@ class User extends Authenticatable implements HasLocalePreference
         'email_verified_at' => 'datetime',
         'last_notified_at' => 'datetime',
         'last_active_at' => 'datetime',
+        'winback_sent_at' => 'datetime',
         'password' => 'hashed',
         'receives_notifications' => 'boolean',
         'show_voted_posts_publicly' => 'boolean',

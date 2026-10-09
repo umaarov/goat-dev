@@ -600,5 +600,13 @@ return [
     'delete_confirm_title' => '¿Eliminar Publicación?',
 
 //    'meta_keywords_default' => 'Debate Platform, Social Media, Polls, GOAT.uz, Online Voting, Public Opinion',
-    'meta_keywords_default' => 'Plataforma de Debate, Redes Sociales, Encuestas, GOAT.uz, Votación en Línea, Opinión Pública'
+    'meta_keywords_default' => 'Plataforma de Debate, Redes Sociales, Encuestas, GOAT.uz, Votación en Línea, Opinión Pública',
+    'tags_nav' => 'Temas',
+    'tags_index_title' => 'Preguntas por tema - GOAT.uz',
+    'tags_index_heading' => 'Temas',
+    'tags_index_intro' => 'Elige un tema y vota las preguntas que debate la comunidad.',
+    'tags_page_title' => ':tag: encuestas y preguntas - GOAT.uz',
+    'tags_page_description' => ':count preguntas de «esto o aquello» sobre :tag. Vota y descubre qué piensa la comunidad.',
+    'tags_count' => ':count preguntas',
+    'tags_all' => 'Todos los temas',
 ];

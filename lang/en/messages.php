@@ -617,4 +617,12 @@ return [
     'seo_sponsorship_description' => 'Sponsor GOAT.uz: how to support the platform and reach a community that votes and debates every day.',
     'seo_ads_description' => 'Advertise on GOAT.uz: reach an engaged audience of people who vote and debate every day.',
     'seo_contribution_description' => 'Contribute to GOAT.uz: help build the open-source debate platform with code, translations and ideas.',
+    'tags_nav' => 'Topics',
+    'tags_index_title' => 'Browse questions by topic - GOAT.uz',
+    'tags_index_heading' => 'Topics',
+    'tags_index_intro' => 'Pick a subject and vote on the questions the community is debating.',
+    'tags_page_title' => ':tag polls & questions - GOAT.uz',
+    'tags_page_description' => ':count "this or that" questions about :tag. Vote and see what the community thinks.',
+    'tags_count' => ':count questions',
+    'tags_all' => 'All topics',
 ];
