@@ -17,8 +17,6 @@ class InstagramService
 {
     private const CANVAS_WIDTH = 1080;
     private const CANVAS_HEIGHT = 1080;
-    private const FONT_BOLD_PATH_KEY = 'app/fonts/Inter-Bold.ttf';
-    private const FONT_BLACK_PATH_KEY = 'app/fonts/Inter-Black.ttf';
     private ?string $accountId;
     private ?string $accessToken;
     private string $graphApiUrl;
@@ -85,8 +83,8 @@ class InstagramService
         try {
             $imageOnePath = Storage::disk('public')->path($post->option_one_image);
             $imageTwoPath = Storage::disk('public')->path($post->option_two_image);
-            $fontBoldPath = storage_path(self::FONT_BOLD_PATH_KEY);
-            $fontBlackPath = storage_path(self::FONT_BLACK_PATH_KEY);
+            $fontBoldPath = \App\Support\Fonts::bold();
+            $fontBlackPath = \App\Support\Fonts::black();
 
             if (!File::exists($imageOnePath) || !File::exists($imageTwoPath) || !File::exists($fontBoldPath) || !File::exists($fontBlackPath)) {
                 Log::error('Source image or font file not found for Instagram post generation.', ['post_id' => $post->id]);

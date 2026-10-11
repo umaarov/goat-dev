@@ -117,8 +117,8 @@ class XService
         try {
             $imageOnePath = Storage::disk('public')->path($post->option_one_image);
             $imageTwoPath = Storage::disk('public')->path($post->option_two_image);
-            $fontPath = storage_path('app/fonts/Inter-Bold.ttf');
-            $logoFontPath = storage_path('app/fonts/Inter-Black.ttf');
+            $fontPath = \App\Support\Fonts::bold();
+            $logoFontPath = \App\Support\Fonts::black();
 
             if (!File::exists($imageOnePath) || !File::exists($imageTwoPath) || !File::exists($fontPath) || !File::exists($logoFontPath)) {
                 Log::error('Required image or font file not found for GD generation.', ['post_id' => $post->id]);

@@ -84,8 +84,8 @@ class TelegramService
         try {
             $imageOnePath = Storage::disk('public')->path($post->option_one_image);
             $imageTwoPath = Storage::disk('public')->path($post->option_two_image);
-            $fontPath = storage_path('app/fonts/Inter-Bold.ttf');
-            $logoFontPath = storage_path('app/fonts/Inter-Black.ttf');
+            $fontPath = \App\Support\Fonts::bold();
+            $logoFontPath = \App\Support\Fonts::black();
 
             if (!function_exists('imagettftext')) {
                 Log::error('GD FreeType support is missing on this server!');

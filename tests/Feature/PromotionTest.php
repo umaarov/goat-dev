@@ -309,4 +309,11 @@ class PromotionTest extends TestCase
         $message = app('mail.manager')->mailer('array')->getSymfonyTransport()->messages()->last()->getOriginalMessage();
         $this->assertSame('help@example.test', $message->getReplyTo()[0]->getAddress());
     }
+
+    public function test_social_images_fall_back_to_the_bundled_font_when_inter_is_not_installed(): void
+    {
+        $this->assertFileExists(\App\Support\Fonts::bold());
+        $this->assertFileExists(\App\Support\Fonts::black());
+        $this->assertStringEndsWith('DejaVuSans-Bold.ttf', \App\Support\Fonts::bold());
+    }
 }
